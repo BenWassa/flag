@@ -354,6 +354,7 @@ Requirements:
 - Never crop the flag.
 - Do not use a surrounding UI color derived from the flag.
 - Before answer submission, image alt text must not reveal the country name.
+- Only the active quiz flag is eager/high-priority; ledger and result thumbnails lazy-load.
 
 ## 15. Navigation model
 
@@ -366,10 +367,11 @@ Primary hierarchy:
 Shows:
 
 - World Mastered / Learning / Unseen totals.
-- Continue Learning.
-- Test Me.
-- Six continent cards.
+- Learn World.
+- Test World.
+- Six continent index rows rather than a decorative card grid.
 - Per-continent progress.
+- Direct access to the full Progress ledger.
 
 ### Continent
 
@@ -415,8 +417,16 @@ Screen contains:
 - Exit control.
 - Scope label.
 - Round progress.
+- Learn/Test state.
 - Flag image.
 - Four large country options.
+
+### Efficiency controls
+
+- Number keys `1`–`4` select the matching answer.
+- `Enter` advances after Learn-mode feedback.
+- `Escape` exits the current quiz.
+- Numeric shortcuts supplement normal button operation; they are never required.
 
 ### Learn answer behavior
 
@@ -425,14 +435,14 @@ Correct answer:
 - Highlight correct choice.
 - Show country name.
 - Show current mastery state.
-- User taps Next.
+- User taps Next or presses Enter.
 
 Incorrect answer:
 
 - Highlight selected wrong option.
 - Highlight correct option.
 - Show correct country and current state.
-- User taps Next.
+- User taps Next or presses Enter.
 
 ### Test answer behavior
 
@@ -449,6 +459,8 @@ Every round result should answer:
 - Which answer was chosen for each miss?
 - Which flags became Mastered?
 - What can the learner do next?
+
+Newly mastered flags should be named and shown when present. Mastery is the product-specific success moment; it may receive stronger emphasis than routine answers without becoming a reward economy.
 
 Primary actions:
 
@@ -492,38 +504,55 @@ Every attempt should preserve:
 
 ## 19. Visual design system
 
+The shipped source of truth is `/DESIGN.md`. The core thesis is **the flag is the color system**: flags provide the visual richness while product chrome stays precise and quiet.
+
 ### Character
 
-- Modern atlas.
-- Editorial but fast.
-- Geographic without decorative map clutter.
-- Warm neutral paper rather than sterile white.
-- Deep ocean-teal interaction color.
+- Modern atlas index / international identification desk.
+- Operate-first: fast, scan-friendly, predictable, and touch-friendly.
+- Cool neutral canvas and white working surfaces.
+- Graphite text with registration blue reserved for primary actions, selection, focus, and round progress.
+- Flat ruled lists and proximity instead of repetitive rounded content cards.
+- Minimal elevation; a subtle border/shadow is allowed on flag images so white flags remain legible.
 - Flag colors remain visually dominant.
+
+### Explicit anti-patterns
+
+- No warm-paper + display-serif editorial treatment in the operational product.
+- No decorative world-map/grid texture.
+- No continent/card bento as the default page scaffold.
+- No ornamental label/eyebrow above every heading.
+- No glass, gradient text, decorative glow, or reward-style chrome.
+- No emoji or text glyphs as interface icons when the shared SVG icon primitive can express the action.
 
 ### Interaction principles
 
-- Touch targets at least approximately 44 px.
+- Touch targets at least 44px.
 - Primary actions large enough for one-handed mobile use.
 - Minimal modal behavior.
-- Motion under roughly 220 ms for UI transitions.
-- Reduced-motion support.
+- Routine motion approximately 100–220ms and tied to state.
+- Reduced-motion support without hiding state changes.
+- Hover styling only where hover and a fine pointer exist.
+- Mobile safe-area insets respected.
+- Short landscape receives structural adaptation rather than simple scale reduction.
 - No hidden swipe-only controls.
 
 ### Typography
 
-A restrained editorial serif may be used for major headings; all operational UI stays in a highly legible system sans-serif stack. No external font dependency is required for MVP.
+Use one fixed-role system sans-serif stack across headings, controls, metadata, and data. Product hierarchy comes from size, weight, spacing, and tone. Comparable progress numerals use tabular figures. Do not introduce a display serif or monospace-as-costume into the core product UI.
 
 ## 20. Accessibility
 
 - Keyboard-operable controls.
 - Visible focus states.
-- Sufficient text contrast.
+- Sufficient text/control contrast.
 - Status communicated with text as well as color.
 - Reduced-motion media query.
-- Dynamic mobile viewport support.
+- Forced-colors fallback consideration.
+- Dynamic mobile viewport and safe-area support.
 - Generic `Flag to identify` alt text before answer reveal.
 - Country-specific alt text after reveal.
+- Responsive structure supports portrait and short-landscape quiz use.
 
 ## 21. Persistence and offline strategy
 
@@ -547,7 +576,7 @@ The application is divided into:
 - `state` — application orchestration.
 - `ui` — render-only components/views.
 
-UI code must not own mastery rules. Storage code must not decide what gets tested next. Country data must not be embedded in screen components.
+UI code must not own mastery rules. Storage code must not decide what gets tested next. Country data must not be embedded in screen components. Shared interface icons, progress presentation, and flag rendering belong in reusable UI components rather than repeated view markup.
 
 See `docs/ARCHITECTURE.md` for implementation details.
 
@@ -632,6 +661,8 @@ Useful product metrics:
 - A region can be reached in one additional tap.
 - Flag description is never shown before an answer.
 - Test mode does not reveal correctness during the round.
+- Every quiz answer is reachable by touch, keyboard tab navigation, and optional `1`–`4` shortcut.
+- Exiting World returns Home; exiting continent/region practice returns to that selected scope.
 
 ## 26. MVP implementation checklist
 
@@ -652,6 +683,9 @@ Useful product metrics:
 - [x] Local persistence.
 - [x] Mobile-first PWA shell.
 - [x] GitHub Pages workflow.
+- [x] Impeccable visual-system review and Atlas Index redesign.
+- [x] Shared SVG UI icon primitive and keyboard quiz accelerators.
+- [x] Lazy-load noncritical flag thumbnails.
 - [ ] Vendor all 195 SVG assets for guaranteed offline use.
 - [ ] Deep adaptive-mastery literature review and v2 scheduler proposal.
 - [ ] Production accessibility audit.
