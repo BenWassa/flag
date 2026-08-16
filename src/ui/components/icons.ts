@@ -4,7 +4,7 @@ const PATHS: Record<IconName, string> = {
   back: '<path d="M15 18l-6-6 6-6"/>',
   close: '<path d="M7 7l10 10M17 7L7 17"/>',
   chevron: '<path d="M9 6l6 6-6 6"/>',
-  ledger: '<path d="M6 7h12M6 12h12M6 17h12"/>',
+  ledger: '<path d="M5 19v-6M12 19V5M19 19V9"/>',
 };
 
 export function icon(name: IconName, className = ''): string {
