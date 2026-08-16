@@ -15,7 +15,7 @@ Flag Atlas combines Seterra-style speed and geographic organization with a persi
 - Balanced answer-position randomization.
 - Local-first progress with PWA support.
 
-Read the full product specification in [`docs/PRD.md`](docs/PRD.md) and technical boundaries in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Product truth lives in [`PRODUCT.md`](PRODUCT.md), the full requirements in [`docs/PRD.md`](docs/PRD.md), technical boundaries in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the shipped visual system in [`DESIGN.md`](DESIGN.md). The Impeccable redesign review is recorded in [`docs/IMPECCABLE_REVIEW.md`](docs/IMPECCABLE_REVIEW.md).
 
 ## Run locally
 
@@ -33,6 +33,14 @@ Serve `dist/` with any static server, for example:
 ```bash
 npx serve dist
 ```
+
+## Interaction shortcuts
+
+During a quiz:
+
+- `1`–`4` selects an answer.
+- `Enter` advances after Learn-mode feedback.
+- `Esc` exits the quiz.
 
 ## Deploy
 
