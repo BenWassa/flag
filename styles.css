@@ -462,8 +462,8 @@ button:focus-visible { outline: 3px solid rgba(31, 79, 214, .34); outline-offset
 }
 .flag-image--ledger { width: 44px; max-height: 30px; box-shadow: none; }
 .ledger-row__country { display: grid; gap: 2px; min-width: 0; }
-.ledger-row__country strong { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ledger-row__country small { color: var(--text-muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ledger-row__country strong { overflow-wrap: anywhere; }
+.ledger-row__country small { color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
 .status-chip {
   padding: 5px 7px;
   border-radius: var(--radius-sm);
