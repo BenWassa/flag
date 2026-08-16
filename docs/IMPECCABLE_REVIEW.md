@@ -61,6 +61,31 @@ Round results showed the number of newly mastered flags but did not identify the
 - Safe-area insets are respected.
 - Hover styling only activates where hover and a fine pointer exist.
 
+## Finish review
+
+The CI-built artifact was rendered and visually inspected at the following representative viewports:
+
+- **412×915** — portrait mobile Home, continent scope, and quiz.
+- **1440×1000** — desktop Home.
+- **844×390** — short landscape quiz.
+
+### Finish findings
+
+1. **Mobile Progress icon initially resembled a navigation menu.** Replaced the list glyph with a compact three-bar progress glyph so the icon remains legible when its text label is hidden on small screens.
+2. **Numeric answer shortcuts could intercept browser shortcuts such as Ctrl+1.** Keyboard accelerators now ignore Ctrl, Meta, and Alt modified input.
+3. **Long country names in the global ledger were truncated.** Country identity and evidence text now wrap safely rather than hiding content.
+
+### Finish verdict
+
+- Home reads as an atlas index rather than a card dashboard.
+- Scope hierarchy is legible without nested panel chrome.
+- The active flag dominates portrait quiz composition while the answer controls remain in the lower thumb zone.
+- Short-landscape layout reflows structurally into flag and answer columns instead of compressing the portrait stack.
+- Desktop retains a compact operational width and scan-friendly row rhythm.
+- Product state uses text plus semantic color; primary blue remains reserved for action/selection/progress.
+- Routine surfaces remain visually quiet; mastery is the designated stronger success moment.
+- The final source tree passes the automated build, curriculum, mastery-transition, quiz-integrity, and answer-randomization checks in CI.
+
 ## Remaining product-level work
 
 These are outside the visual redesign rather than hidden design defects:
