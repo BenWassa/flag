@@ -125,6 +125,7 @@ root.addEventListener('click', (event) => {
 
 window.addEventListener('keydown', (event) => {
   if (store.view.name !== 'quiz' || !store.session) return;
+  if (event.metaKey || event.ctrlKey || event.altKey) return;
 
   if (event.key === 'Escape') {
     event.preventDefault();
