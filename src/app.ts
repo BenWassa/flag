@@ -42,6 +42,25 @@ function render(): void {
   window.scrollTo({ top: 0, behavior: 'instant' });
 }
 
+function exitQuiz(): void {
+  if (!store.session || store.session.scope.kind === 'world') {
+    store.navigate({ name: 'home' });
+    return;
+  }
+  store.navigate({ name: 'scope', scope: store.session.scope });
+}
+
+function submitAnswer(countryId: string): void {
+  if (!store.session || store.answeredCountryId !== null) return;
+  store.answer(countryId);
+  if (store.session.mode === 'test') {
+    window.setTimeout(() => {
+      store.advance();
+      render();
+    }, 180);
+  }
+}
+
 root.addEventListener('click', (event) => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('[data-action]');
   if (!target) return;
@@ -83,22 +102,13 @@ root.addEventListener('click', (event) => {
       if (store.view.name === 'scope') store.startSession(store.view.scope, 'test');
       break;
     case 'answer':
-      if (id && store.answeredCountryId === null) {
-        store.answer(id);
-        if (store.session?.mode === 'test') {
-          window.setTimeout(() => {
-            store.advance();
-            render();
-          }, 180);
-        }
-      }
+      if (id) submitAnswer(id);
       break;
     case 'next-question':
       store.advance();
       break;
     case 'exit-quiz':
-      if (store.session) store.navigate({ name: 'scope', scope: store.session.scope });
-      else store.navigate({ name: 'home' });
+      exitQuiz();
       break;
     case 'review-mistakes':
       if (lastResultScope && lastMissedIds.length) {
@@ -111,6 +121,34 @@ root.addEventListener('click', (event) => {
   }
 
   render();
+});
+
+window.addEventListener('keydown', (event) => {
+  if (store.view.name !== 'quiz' || !store.session) return;
+
+  if (event.key === 'Escape') {
+    event.preventDefault();
+    exitQuiz();
+    render();
+    return;
+  }
+
+  if (store.answeredCountryId === null && /^[1-4]$/.test(event.key)) {
+    const question = store.session.questions[store.session.currentIndex];
+    const countryId = question?.optionCountryIds[Number(event.key) - 1];
+    if (countryId) {
+      event.preventDefault();
+      submitAnswer(countryId);
+      render();
+    }
+    return;
+  }
+
+  if (store.answeredCountryId !== null && store.session.mode === 'learn' && event.key === 'Enter') {
+    event.preventDefault();
+    store.advance();
+    render();
+  }
 });
 
 if ('serviceWorker' in navigator) {

@@ -2,7 +2,8 @@ import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
-import { progressStrip, statPills } from '../components/progress.js';
+import { icon } from '../components/icons.js';
+import { progressStrip, statLegend } from '../components/progress.js';
 
 export function renderHome(progress: ProgressState): string {
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
@@ -10,53 +11,60 @@ export function renderHome(progress: ProgressState): string {
 
   return `
     <main class="page page--home">
-      <header class="app-header">
-        <div>
-          <p class="eyebrow">FLAG ATLAS</p>
-          <h1>Learn the world by sight.</h1>
+      <header class="topbar">
+        <div class="brand-block">
+          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          <span class="brand-name">Flag Atlas</span>
         </div>
-        <button class="icon-button" data-action="open-progress" aria-label="Open learning ledger"><svg viewBox="0 0 24 24" width="19" height="19" aria-hidden="true"><path d="M5 7h14M5 12h14M5 17h14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg></button>
+        <button class="text-icon-button" data-action="open-progress" aria-label="Open progress">
+          ${icon('ledger')}
+          <span>Progress</span>
+        </button>
       </header>
 
-      <section class="hero-card">
-        <div class="hero-card__topline">
-          <span>World progress</span>
-          <strong>${world.mastered}<small> / ${world.total}</small></strong>
+      <section class="world-overview" aria-labelledby="world-heading">
+        <div class="overview-heading">
+          <div>
+            <h1 id="world-heading">World flags</h1>
+            <p>Learn by region. Keep what you know.</p>
+          </div>
+          <div class="mastery-total" aria-label="${world.mastered} of ${world.total} flags mastered">
+            <strong>${world.mastered}</strong><span>/ ${world.total}</span>
+            <small>mastered</small>
+          </div>
         </div>
         ${progressStrip(world)}
-        ${statPills(world)}
-        <div class="hero-actions">
-          <button class="button button--primary" data-action="start-world-learn">Continue learning</button>
-          <button class="button button--quiet" data-action="start-world-test">Test me</button>
+        ${statLegend(world)}
+        <div class="primary-actions">
+          <button class="button button--primary" data-action="start-world-learn">Learn world</button>
+          <button class="button button--secondary" data-action="start-world-test">Test world</button>
         </div>
       </section>
 
-      <section class="section-heading">
-        <div>
-          <p class="eyebrow">BY CONTINENT</p>
-          <h2>Choose a field of study</h2>
+      <section class="atlas-section" aria-labelledby="continents-heading">
+        <div class="list-heading">
+          <h2 id="continents-heading">Continents</h2>
+          <span>${world.total} flags</span>
+        </div>
+        <div class="continent-list">
+          ${CONTINENTS.map((continent) => {
+            const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+            const stats = getScopeStats(COUNTRIES, progress, scope);
+            const regions = REGIONS.filter((region) => region.continentId === continent.id).length;
+            return `
+              <button class="continent-row" data-action="open-continent" data-id="${continent.id}">
+                <span class="continent-row__identity">
+                  <strong>${continent.name}</strong>
+                  <small>${stats.total} flags · ${regions} regions</small>
+                </span>
+                <span class="continent-row__progress">${progressStrip(stats)}</span>
+                <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+                ${icon('chevron')}
+              </button>
+            `;
+          }).join('')}
         </div>
       </section>
-
-      <div class="continent-grid">
-        ${CONTINENTS.map((continent, index) => {
-          const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
-          const stats = getScopeStats(COUNTRIES, progress, scope);
-          const regions = REGIONS.filter((region) => region.continentId === continent.id).length;
-          return `
-            <button class="continent-card" data-action="open-continent" data-id="${continent.id}">
-              <span class="continent-card__index">${String(index + 1).padStart(2, '0')}</span>
-              <span class="continent-card__body">
-                <strong>${continent.name}</strong>
-                <small>${stats.total} flags · ${regions} regions</small>
-                ${progressStrip(stats)}
-                <span class="continent-card__meta">${stats.mastered} mastered · ${stats.learning} learning · ${stats.unseen} unseen</span>
-              </span>
-              <span class="continent-card__arrow">→</span>
-            </button>
-          `;
-        }).join('')}
-      </div>
     </main>
   `;
 }

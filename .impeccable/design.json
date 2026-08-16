@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "surface": "Flag Atlas web app",
+  "visitorMode": "operate",
+  "tokens": {
+    "shadows": {
+      "flag": "0 8px 22px rgba(16, 19, 24, 0.08)"
+    },
+    "motion": {
+      "routineMs": 160,
+      "fastMs": 120,
+      "progressMs": 180
+    },
+    "breakpoints": {
+      "compact": "639px",
+      "answersTwoColumn": "700px",
+      "shortLandscape": "700px width / 600px height"
+    }
+  },
+  "principles": [
+    "The flag is the color system",
+    "Operate-mode scanability over decorative expression",
+    "Use rules and proximity before containers",
+    "Action blue is semantic, not decorative",
+    "Mastery feedback earns personality; routine navigation stays quiet"
+  ]
+}

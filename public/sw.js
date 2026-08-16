@@ -1,4 +1,4 @@
-const VERSION = 'flag-atlas-v1';
+const VERSION = 'flag-atlas-v2';
 const SHELL = ['./', './index.html', './styles.css', './app.js', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {
@@ -23,9 +23,13 @@ self.addEventListener('fetch', (event) => {
       caches.open(VERSION).then(async (cache) => {
         const cached = await cache.match(request);
         if (cached) return cached;
-        const response = await fetch(request);
-        cache.put(request, response.clone());
-        return response;
+        try {
+          const response = await fetch(request);
+          if (response.ok) cache.put(request, response.clone());
+          return response;
+        } catch {
+          return Response.error();
+        }
       }),
     );
     return;

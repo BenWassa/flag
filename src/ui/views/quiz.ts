@@ -2,6 +2,7 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { masteryGoal } from '../../domain/progress.js';
 import type { ProgressState, QuizSession } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
+import { icon } from '../components/icons.js';
 
 export function renderQuiz(
   session: QuizSession,
@@ -19,25 +20,27 @@ export function renderQuiz(
   return `
     <main class="quiz-shell">
       <header class="quiz-header">
-        <button class="back-button" data-action="exit-quiz" aria-label="Exit quiz">×</button>
+        <button class="icon-button" data-action="exit-quiz" aria-label="Exit quiz">${icon('close')}</button>
         <div class="quiz-header__center">
-          <span>${session.scope.label}</span>
-          <div class="quiz-progress"><i style="width:${pct}%"></i></div>
+          <strong>${session.scope.label}</strong>
+          <div class="quiz-progress" role="progressbar" aria-label="Round progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}">
+            <i style="width:${pct}%"></i>
+          </div>
         </div>
-        <span class="quiz-count">${session.currentIndex + 1}/${session.questions.length}</span>
+        <span class="quiz-count">${session.currentIndex + 1}<span>/</span>${session.questions.length}</span>
       </header>
 
       <section class="question-stage">
         <div class="question-meta">
-          <span class="mode-badge">${session.mode}</span>
-          <span>${session.mode === 'learn' ? 'Identify the flag' : 'Test'}</span>
+          <strong>${session.mode === 'learn' ? 'Learn' : 'Test'}</strong>
+          <span>Choose the country</span>
         </div>
         <div class="flag-stage">
-          ${flagImage(target, isAnswered && session.mode === 'learn')}
+          ${flagImage(target, isAnswered && session.mode === 'learn', '', true)}
         </div>
       </section>
 
-      <section class="answer-panel ${isAnswered ? 'answer-panel--answered' : ''}">
+      <section class="answer-panel ${isAnswered ? 'answer-panel--answered' : ''}" aria-label="Answer choices">
         ${question.optionCountryIds.map((countryId, index) => {
           const country = COUNTRY_BY_ID.get(countryId)!;
           const selected = answeredCountryId === countryId;
@@ -51,8 +54,8 @@ export function renderQuiz(
           }
 
           return `
-            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" ${isAnswered ? 'disabled' : ''}>
-              <span class="answer-key">${String.fromCharCode(65 + index)}</span>
+            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${country.name}" ${isAnswered ? 'disabled' : ''}>
+              <span class="answer-key" aria-hidden="true">${index + 1}</span>
               <strong>${country.name}</strong>
             </button>
           `;
@@ -73,13 +76,16 @@ function feedback(
   correct: boolean,
 ): string {
   if (session.mode === 'test') {
-    return `<div class="test-advance" aria-live="polite">Answer recorded</div>`;
+    return '<div class="test-advance" aria-live="polite">Answer recorded</div>';
   }
 
   const statusLabel = status === 'mastered' ? 'Mastered' : `Learning ${streak}/${goal}`;
   return `
-    <div class="answer-feedback ${correct ? 'answer-feedback--correct' : 'answer-feedback--wrong'}">
-      <div><span>${correct ? 'Correct' : 'Review'}</span><strong>${countryName}</strong><small>${statusLabel}</small></div>
+    <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}" aria-live="polite">
+      <div class="feedback-copy">
+        <strong>${correct ? 'Correct' : `Correct: ${countryName}`}</strong>
+        <span>${statusLabel}</span>
+      </div>
       <button class="button button--primary" data-action="next-question">${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>
     </div>
   `;
