@@ -41,6 +41,14 @@ export class AppStore {
     this.view = view;
   }
 
+  /** Return every flag to Unseen. Storage is cleared separately by the caller. */
+  resetProgress(): void {
+    this.progress = createInitialProgress(COUNTRIES);
+    this.session = null;
+    this.answeredCountryId = null;
+    this.currentAttempt = null;
+  }
+
   startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): void {
     const id = crypto.randomUUID();
     const questions = buildQuiz({

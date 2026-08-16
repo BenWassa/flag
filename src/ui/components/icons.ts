@@ -10,3 +10,14 @@ const PATHS: Record<IconName, string> = {
 export function icon(name: IconName, className = ''): string {
   return `<svg class="ui-icon ${className}" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PATHS[name]}</svg>`;
 }
+
+/** Two-tone product mark. Mirrors the swallowtail pennant in public/icons/app-icon.svg. */
+export function brandMark(): string {
+  return `
+    <svg class="brand-mark" viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" focusable="false">
+      <path class="brand-mark__pole" d="M6.5 4.5v15.5" fill="none" stroke-width="1.9" stroke-linecap="round"/>
+      <path class="brand-mark__cloth" d="M7.6 5.6h10.2l-2.3 3.1 2.3 3.1H7.6z"/>
+      <circle class="brand-mark__finial" cx="6.5" cy="4.1" r="1.5"/>
+    </svg>
+  `;
+}

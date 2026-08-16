@@ -4,6 +4,7 @@ import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { icon } from '../components/icons.js';
 import { progressStrip, statLegend } from '../components/progress.js';
+import { statusLabel } from '../format.js';
 
 export function renderScope(progress: ProgressState, scope: StudyScope): string {
   const stats = getScopeStats(COUNTRIES, progress, scope);
@@ -16,7 +17,7 @@ export function renderScope(progress: ProgressState, scope: StudyScope): string 
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('back')}</button>
         <div class="screen-title">
-          <h1>${scope.label}</h1>
+          <h1 tabindex="-1" data-autofocus>${scope.label}</h1>
           <span>${scope.kind === 'region' ? 'Region' : 'Continent'} · ${stats.total} flags</span>
         </div>
       </header>
@@ -36,7 +37,7 @@ export function renderScope(progress: ProgressState, scope: StudyScope): string 
           </button>
           <button class="study-action" data-action="start-test">
             <strong>Test</strong>
-            <span>Balanced scope sample</span>
+            <span>Random flags, no answers shown</span>
           </button>
         </div>
       </section>
@@ -83,21 +84,14 @@ function renderCountryLedger(progress: ProgressState, scope: StudyScope): string
       <div class="mini-ledger">
         ${countries.map((country) => {
           const record = progress.records[country.id];
-          const label = record.status === 'learning'
-            ? `${record.masteryStreak}/${record.lapseCount ? 2 : 3}`
-            : title(record.status);
           return `
             <div class="mini-ledger__row">
               <span>${country.name}</span>
-              <span class="status-text status-text--${record.status}">${label}</span>
+              <span class="status-text status-text--${record.status}">${statusLabel(record)}</span>
             </div>
           `;
         }).join('')}
       </div>
     </section>
   `;
-}
-
-function title(value: string): string {
-  return value.charAt(0).toUpperCase() + value.slice(1);
 }

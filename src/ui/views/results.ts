@@ -14,7 +14,7 @@ export function renderResults(result: SessionResult): string {
       <header class="topbar topbar--detail results-header">
         <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('close')}</button>
         <div class="screen-title">
-          <h1>${result.session.scope.label}</h1>
+          <h1 tabindex="-1" data-autofocus>${result.session.scope.label}</h1>
           <span>Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Test'}</span>
         </div>
       </header>
@@ -35,7 +35,7 @@ export function renderResults(result: SessionResult): string {
           <div class="mastery-list">
             ${mastered.map((country) => `
               <div class="mastery-row">
-                ${flagImage(country, true, 'flag-image--tiny')}
+                ${flagImage(country, true, 'flag-frame--tiny')}
                 <strong>${country.name}</strong>
                 <span>Mastered</span>
               </div>
@@ -53,7 +53,7 @@ export function renderResults(result: SessionResult): string {
               const selected = COUNTRY_BY_ID.get(attempt.selectedCountryId)!;
               return `
                 <div class="mistake-row">
-                  ${flagImage(correct, true, 'flag-image--tiny')}
+                  ${flagImage(correct, true, 'flag-frame--tiny')}
                   <span><strong>${correct.name}</strong><small>You chose ${selected.name}</small></span>
                 </div>
               `;

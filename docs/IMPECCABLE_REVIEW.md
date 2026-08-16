@@ -86,6 +86,73 @@ The CI-built artifact was rendered and visually inspected at the following repre
 - Routine surfaces remain visually quiet; mastery is the designated stronger success moment.
 - The final source tree passes the automated build, curriculum, mastery-transition, quiz-integrity, and answer-randomization checks in CI.
 
+## Second critique pass — 2026-08-16
+
+Re-reviewed the shipped MVP as a **product** register surface. Heuristic total: **28/40** before this pass. The visual system held up; the failures were concentrated in state handling, recoverability, and things the interface never explains.
+
+### P1 — Every re-render destroyed focus and swallowed announcements
+
+`render()` replaces the whole of `#app`, so focus fell to `<body>` after every answer, filter change, and navigation. Keyboard users restarted the tab order each time; screen-reader users lost their position. The `aria-live` regions were themselves recreated in the same paint as their content, which is the one arrangement that reliably does not announce.
+
+**Resolution:** a persistent live region now sits outside `#app` in `index.html` and carries answer results, round summaries, round starts, and reset confirmation. After each render, focus returns to the control the user just used if it still exists, otherwise to a single `data-autofocus` landing element per view. In the quiz that landing point is the first answer choice, not the heading, so the scope is not re-announced on every question.
+
+### P1 — The platform Back gesture left the app
+
+A five-view single-document app with no history integration. On Android, Back from a quiz or the ledger exited Flag Atlas rather than moving up the atlas hierarchy.
+
+**Resolution:** each view change records a history entry against an in-memory view stack, and `popstate` restores it. Quiz entries are transient: leaving a round replaces its entry, so Back never lands inside a finished quiz. Document titles now track the current view.
+
+### P1 — A failed flag image was an unanswerable question
+
+Flags resolve through FlagCDN, and the service worker only caches a flag after one successful fetch. Offline on a fresh scope produced a broken-image icon mid-round with no explanation and no way to answer.
+
+**Resolution:** `flagImage` now emits a frame that reserves the space and carries a labelled fallback, revealed by `markFailedFlags` on error. Thumbnails show a mark with visually hidden wording rather than shrinking type.
+
+### P1 — Test mode could yank the user out of a screen they had chosen
+
+Answering in Test mode queued a 180ms auto-advance that nothing cancelled. Leaving the round inside that window let the timer fire against a dead session and, on the last question, replaced the screen the user had just navigated to with a results view.
+
+**Resolution:** the pending advance is tracked and cancelled on exit, on `popstate`, and on starting a new round; the callback also re-checks that a round is still in progress.
+
+### P1 — Three of the four ledger filters were blank on a first run
+
+Filtering to Learning or Mastered before studying anything rendered tabs above empty space.
+
+**Resolution:** each filter has an empty state naming the condition and what produces rows.
+
+### P2 — The core mechanic was never explained, and was implemented twice
+
+Nothing in the interface said what mastery requires. Separately, the region ledger recomputed the goal inline as `record.lapseCount ? 2 : 3` instead of calling `masteryGoal`, so the rule had two implementations.
+
+**Resolution:** the rule is stated once on the Progress screen, `src/ui/format.ts` holds the shared status vocabulary, and every surface reads the goal from `masteryGoal`. Learn feedback reads `Learning · 1 of 3 rounds` rather than a bare `1/3`. Keyboard accelerators are now advertised in the quiz on fine-pointer devices.
+
+### P2 — Progress could be built but never erased
+
+`resetAllProgress` existed in storage and was called from nowhere. A local-first ledger with no reset is a one-way door.
+
+**Resolution:** a quiet reset lives at the foot of the Progress ledger, appearing only once there is progress to erase, and confirming through a two-step inline exchange rather than a modal.
+
+### P2 — Token drift, a contrast failure, and type below the documented floor
+
+Nine color literals sat outside the token block. `unseen` at `#6B7480` measured 4.44:1 on canvas, below AA. Status chips rendered at 10px and dropped to 9px on small screens, against DESIGN.md's own 11px metadata floor. The product mark was CSS-drawn while a shared SVG icon system existed, and did not match `app-icon.svg`.
+
+**Resolution:** all literals are tokens, `unseen` moved to `#626B78` (5.09:1), 11px is enforced as a floor, and the mark is now an SVG primitive matching the app icon.
+
+### P3 — The round-progress bar animated a layout property
+
+Caught by the deterministic scan: `transition: width` on the quiz progress fill.
+
+**Resolution:** the fill scales on the X axis from a left origin.
+
+### Verification
+
+`scripts/verify.mjs` gained view-rendering assertions covering focus landing points, empty states, the shared mastery goal including the post-lapse value of 2, the flag fallback, and the absence of re-rendered live regions. The deterministic scan of the built artifact reports zero findings.
+
+### Deliberately not changed
+
+- **No dark theme.** DESIGN.md commits to a cool near-white field so flags stay dominant, and that reasoning still holds for a daylight study tool. A night-use variant is a product decision, not a defect to patch.
+- **Learn world as the beginner's default.** Starting a novice on 195 flags is arguably the hardest possible entry, but scope control belongs to the learner by principle 2. Worth a usability test rather than a unilateral change.
+
 ## Remaining product-level work
 
 These are outside the visual redesign rather than hidden design defects:

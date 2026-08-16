@@ -3,8 +3,9 @@
 ```yaml
 colors:
   canvas: "#F5F7FA"
-  surface: "#FFFFFF"
+  surface: "#FDFEFF"
   surface-subtle: "#EEF1F5"
+  track: "#E2E6EC"
   text: "#101318"
   text-muted: "#5A6472"
   line: "#D6DCE4"
@@ -12,13 +13,19 @@ colors:
   action: "#1F4FD6"
   action-hover: "#183CA0"
   action-soft: "#E8EEFF"
+  on-action: "#F7F9FF"
+  on-action-muted: "rgba(247,249,255,.8)"
+  focus-ring: "rgba(31,79,214,.34)"
   mastered: "#137A55"
   mastered-soft: "#E7F4ED"
+  mastered-line: "#82BCA3"
   learning: "#9A5B00"
   learning-soft: "#FFF1D6"
-  unseen: "#6B7480"
+  unseen: "#626B78"
   wrong: "#B42318"
   wrong-soft: "#FCE8E6"
+  wrong-line: "#DCA7A2"
+  flag-line: "rgba(16,19,24,.10)"
 typography:
   family: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
   body: "16px / 1.45"
@@ -56,6 +63,8 @@ Learning semantics remain stable everywhere:
 
 Every state is also expressed in text; color is reinforcement only. Soft state backgrounds are allowed only where immediate answer feedback benefits from them.
 
+No color is written as a literal outside the token block at the top of `styles.css`. Neutrals are tinted rather than pure: `surface` is a near-white carrying a trace of the action hue, and `on-action` is an off-white rather than `#FFF`. Every text color meets WCAG AA against the surface it sits on; `unseen` in particular is set at `#626B78` rather than a lighter gray because it must clear 4.5:1 on `canvas`.
+
 ## Typography
 
 Use one system sans-serif family across headings, controls, metadata, and data. This is a task UI: consistency and scan speed outrank display personality.
@@ -63,7 +72,7 @@ Use one system sans-serif family across headings, controls, metadata, and data. 
 - Screen titles: 2rem, tight but readable tracking, strong weight.
 - Section titles: 1.125rem.
 - Operational copy: 0.875–1rem.
-- Metadata: 0.6875–0.75rem only when genuinely secondary.
+- Metadata: 0.6875–0.75rem only when genuinely secondary. 11px is a hard floor; nothing in the product renders text below it, including on small screens. Where a label will not fit at 11px, the label is replaced by a mark plus visually hidden text.
 - Numerals that compare across rows use tabular figures.
 - Do not introduce a display serif, monospace-as-costume, or fluid heading scale into the core product UI.
 
@@ -116,7 +125,15 @@ Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on 
 
 ### Learning ledger
 
-Flat rows with a lazy-loaded flag thumbnail, country identity, evidence summary, and textual state badge. Filters use an underline-tab treatment rather than a pill container.
+Flat rows with a lazy-loaded flag thumbnail, country identity, evidence summary, and textual state badge. Filters use an underline-tab treatment rather than a pill container. Every filter has an empty state that names the condition and says what produces rows, because three of the four filters are empty on a first run. The ledger is also where the mastery rule is stated in plain language, and where progress can be erased through a two-step inline confirmation rather than a modal.
+
+### Flag frame
+
+Flags come from a CDN, so every flag is wrapped in a frame that reserves its space and carries a fallback. When an image fails, the frame swaps to a dashed placeholder that says the image is unavailable, so a missing flag never becomes an unanswerable question with no explanation. Thumbnails show a mark plus visually hidden wording instead of shrinking the message below the type floor.
+
+### Empty and degraded states
+
+Every list that can be empty says why it is empty and what fills it. Every remote asset has a labelled failure state. Neither is left to render as blank space.
 
 ## Do’s & Don’ts
 
@@ -128,7 +145,10 @@ Flat rows with a lazy-loaded flag thumbnail, country identity, evidence summary,
 - Preserve 44px minimum hit areas and mobile safe areas.
 - Use state color consistently and pair it with text.
 - Keep routine motion within roughly 100–220ms and tied to state.
+- Animate transform and opacity only. The round-progress bar scales on the X axis rather than animating its width.
 - Test small-height landscape as well as ordinary portrait widths.
+- Move focus deliberately after every re-render, and announce state changes through the persistent live region in `index.html` rather than through nodes that are themselves replaced.
+- Give every view a history entry so the platform Back gesture moves within the app instead of leaving it.
 
 ### Don’t
 
@@ -137,5 +157,6 @@ Flat rows with a lazy-loaded flag thumbnail, country identity, evidence summary,
 - Add decorative world-map/grid backgrounds.
 - Turn continents, statistics, or result summaries into repetitive rounded cards.
 - Tint the interface from the active flag.
-- Use emoji or Unicode glyphs as interface icons where shared SVG icons exist.
+- Use emoji, Unicode glyphs, or CSS-drawn shapes as interface icons. All marks, including the product mark, come from the shared SVG primitives in `src/ui/components/icons.ts`.
+- Write a color literal anywhere but the token block, or duplicate a domain rule such as the mastery goal in a view.
 - Make mastered flags dominate ordinary Learn sessions simply to show progress.

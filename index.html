@@ -20,6 +20,12 @@
       FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
     -->
     <div id="app"></div>
+    <!--
+      Views re-render by replacing #app wholesale, so a live region inside it
+      would be a brand-new node on every change and would not announce reliably.
+      This one is outside #app and persists for the life of the document.
+    -->
+    <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
     <script type="module" src="./app.js"></script>
   </body>
 </html>

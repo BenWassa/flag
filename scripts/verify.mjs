@@ -88,4 +88,102 @@ assert.equal(getRecord(lapsed, 'GHA').status, 'learning', 'A mastered miss must 
 assert.equal(masteryGoal(getRecord(lapsed, 'GHA')), 2, 'A mastered lapse uses the v1 two-success recovery goal.');
 assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections must feed the confusion graph.');
 
-console.log(`Verified ${COUNTRIES.length} countries, ${REGIONS.length} regions, mastery transitions, quiz integrity, and answer randomization.`);
+// --- View rendering -------------------------------------------------------
+// The views are pure string builders, so their output can be asserted here
+// without a browser. These guard the states that are easy to break silently:
+// empty ledgers, focus landing points, and the single mastery-goal source.
+
+const { renderHome } = await import('../dist/ui/views/home.js');
+const { renderScope } = await import('../dist/ui/views/scope.js');
+const { renderProgress } = await import('../dist/ui/views/progress.js');
+const { renderQuiz } = await import('../dist/ui/views/quiz.js');
+const { renderResults } = await import('../dist/ui/views/results.js');
+const { buildQuiz: build } = await import('../dist/domain/quiz.js');
+
+const fresh = createInitialProgress(COUNTRIES);
+const screens = {
+  home: renderHome(fresh),
+  scope: renderScope(fresh, { kind: 'continent', id: 'africa', label: 'Africa' }),
+  region: renderScope(fresh, { kind: 'region', id: 'west-africa', label: 'West Africa' }),
+  progress: renderProgress(fresh, 'all'),
+};
+
+for (const [name, html] of Object.entries(screens)) {
+  assert.equal(
+    (html.match(/data-autofocus/g) ?? []).length,
+    1,
+    `${name} must declare exactly one focus landing point per render.`,
+  );
+  assert.ok(!html.includes('undefined'), `${name} must not render undefined values.`);
+  assert.ok(!html.includes('NaN'), `${name} must not render NaN values.`);
+}
+
+for (const filter of ['unseen', 'learning', 'mastered']) {
+  const html = renderProgress(fresh, filter);
+  const isEmpty = filter !== 'unseen';
+  assert.equal(
+    html.includes('class="empty-state"'),
+    isEmpty,
+    `The ${filter} ledger filter must show an empty state only when it has no rows.`,
+  );
+}
+
+assert.ok(
+  !renderProgress(fresh, 'all').includes('data-action="reset-request"'),
+  'Reset must stay hidden until there is progress worth erasing.',
+);
+assert.ok(
+  renderProgress(learningState, 'all').includes('data-action="reset-request"'),
+  'Reset must be reachable once flags have been studied.',
+);
+assert.ok(
+  renderProgress(learningState, 'all', true).includes('data-action="reset-confirm"'),
+  'Reset must require a second, explicit confirmation.',
+);
+
+const lapsedProgress = { ...lapsed };
+assert.ok(
+  renderScope(lapsedProgress, { kind: 'region', id: 'west-africa', label: 'West Africa' }).includes('Learning 0/2'),
+  'The region ledger must read its mastery goal from masteryGoal, including the post-lapse goal of 2.',
+);
+
+const quizSession = {
+  id: 'render-session',
+  mode: 'learn',
+  scope: { kind: 'continent', id: 'africa', label: 'Africa' },
+  startedAt: new Date().toISOString(),
+  questions: build({
+    countries: COUNTRIES,
+    progress: fresh,
+    scope: { kind: 'continent', id: 'africa', label: 'Africa' },
+    mode: 'learn',
+    size: 10,
+    sessionId: 'render-session',
+  }),
+  currentIndex: 0,
+  attempts: [],
+};
+
+const unanswered = renderQuiz(quizSession, fresh, null);
+assert.ok(unanswered.includes('<h1'), 'The quiz must expose a heading for assistive navigation.');
+assert.equal((unanswered.match(/data-autofocus/g) ?? []).length, 1, 'Unanswered quiz has one focus landing point.');
+assert.ok(unanswered.includes('Flag to identify'), 'The flag stays anonymous until the answer is revealed.');
+assert.ok(unanswered.includes('flag-fallback'), 'Every flag carries a fallback for a failed image load.');
+
+const answered = renderQuiz(quizSession, fresh, quizSession.questions[0].countryId);
+assert.ok(
+  answered.includes('data-action="next-question" data-autofocus'),
+  'After answering in Learn mode, focus must land on the advance control.',
+);
+assert.ok(!answered.includes('aria-live'), 'Announcements belong to the persistent live region, not re-rendered nodes.');
+
+const emptyResult = renderResults({
+  session: quizSession,
+  correct: 10,
+  total: 10,
+  newlyMastered: [],
+  missed: [],
+});
+assert.ok(emptyResult.includes('Clean round'), 'A perfect round still reports its outcome.');
+
+console.log(`Verified ${COUNTRIES.length} countries, ${REGIONS.length} regions, mastery transitions, quiz integrity, answer randomization, and view rendering.`);

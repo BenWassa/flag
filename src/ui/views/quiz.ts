@@ -10,10 +10,11 @@ export function renderQuiz(
   answeredCountryId: string | null,
 ): string {
   const question = session.questions[session.currentIndex];
-  const target = COUNTRY_BY_ID.get(question.countryId);
-  if (!target) return '<main class="page"><p>Question unavailable.</p></main>';
+  const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
+  if (!question || !target) return unavailable();
 
   const isAnswered = answeredCountryId !== null;
+  const isLearnFeedback = isAnswered && session.mode === 'learn';
   const currentRecord = progress.records[target.id];
   const pct = ((session.currentIndex + (isAnswered ? 1 : 0)) / session.questions.length) * 100;
 
@@ -22,9 +23,9 @@ export function renderQuiz(
       <header class="quiz-header">
         <button class="icon-button" data-action="exit-quiz" aria-label="Exit quiz">${icon('close')}</button>
         <div class="quiz-header__center">
-          <strong>${session.scope.label}</strong>
+          <h1 tabindex="-1">${session.scope.label}</h1>
           <div class="quiz-progress" role="progressbar" aria-label="Round progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}">
-            <i style="width:${pct}%"></i>
+            <i style="--progress:${pct / 100}"></i>
           </div>
         </div>
         <span class="quiz-count">${session.currentIndex + 1}<span>/</span>${session.questions.length}</span>
@@ -36,7 +37,7 @@ export function renderQuiz(
           <span>Choose the country</span>
         </div>
         <div class="flag-stage">
-          ${flagImage(target, isAnswered && session.mode === 'learn', '', true)}
+          ${flagImage(target, isLearnFeedback, 'flag-frame--stage', true)}
         </div>
       </section>
 
@@ -46,15 +47,18 @@ export function renderQuiz(
           const selected = answeredCountryId === countryId;
           const correct = countryId === target.id;
           let stateClass = '';
-          if (isAnswered && session.mode === 'learn') {
+          if (isLearnFeedback) {
             if (correct) stateClass = 'answer-button--correct';
             else if (selected) stateClass = 'answer-button--wrong';
           } else if (selected) {
             stateClass = 'answer-button--selected';
           }
 
+          // Focus lands on the first choice rather than the heading, so the
+          // answers are one Tab apart and the scope is not re-announced on
+          // every question.
           return `
-            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${country.name}" ${isAnswered ? 'disabled' : ''}>
+            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${country.name}" ${isAnswered ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
               <span class="answer-key" aria-hidden="true">${index + 1}</span>
               <strong>${country.name}</strong>
             </button>
@@ -62,7 +66,32 @@ export function renderQuiz(
         }).join('')}
 
         ${isAnswered ? feedback(session, target.name, currentRecord.status, currentRecord.masteryStreak, masteryGoal(currentRecord), answeredCountryId === target.id) : ''}
+        ${isAnswered ? '' : keyboardHint()}
       </section>
+    </main>
+  `;
+}
+
+function keyboardHint(): string {
+  return `
+    <p class="quiz-hint" aria-hidden="true">
+      <span><kbd>1</kbd>–<kbd>4</kbd> choose</span>
+      <span><kbd>Enter</kbd> next</span>
+      <span><kbd>Esc</kbd> exit</span>
+    </p>
+  `;
+}
+
+function unavailable(): string {
+  return `
+    <main class="page">
+      <div class="empty-state">
+        <strong tabindex="-1" data-autofocus>This round could not be built</strong>
+        <span>The question data is missing. Go back and start the round again.</span>
+      </div>
+      <div class="result-actions">
+        <button class="button button--primary" data-action="home">Back to atlas</button>
+      </div>
     </main>
   `;
 }
@@ -76,17 +105,17 @@ function feedback(
   correct: boolean,
 ): string {
   if (session.mode === 'test') {
-    return '<div class="test-advance" aria-live="polite">Answer recorded</div>';
+    return '<div class="test-advance">Answer recorded</div>';
   }
 
-  const statusLabel = status === 'mastered' ? 'Mastered' : `Learning ${streak}/${goal}`;
+  const statusLabel = status === 'mastered' ? 'Mastered' : `Learning · ${streak} of ${goal} rounds`;
   return `
-    <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}" aria-live="polite">
+    <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}">
       <div class="feedback-copy">
         <strong>${correct ? 'Correct' : `Correct: ${countryName}`}</strong>
         <span>${statusLabel}</span>
       </div>
-      <button class="button button--primary" data-action="next-question">${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>
+      <button class="button button--primary" data-action="next-question" data-autofocus>${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>
     </div>
   `;
 }

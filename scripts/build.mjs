@@ -7,6 +7,11 @@ await mkdir('dist', { recursive: true });
 
 const command = process.platform === 'win32' ? 'tsc.cmd' : 'tsc';
 const result = spawnSync(command, ['-p', 'tsconfig.json'], { stdio: 'inherit' });
+if (result.error) {
+  console.error(`Could not run ${command}: ${result.error.message}`);
+  console.error('Run "npm install" first.');
+  process.exit(1);
+}
 if (result.status !== 0) process.exit(result.status ?? 1);
 
 for (const file of ['index.html', 'styles.css']) {

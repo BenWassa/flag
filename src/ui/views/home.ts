@@ -2,7 +2,7 @@ import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
-import { icon } from '../components/icons.js';
+import { brandMark, icon } from '../components/icons.js';
 import { progressStrip, statLegend } from '../components/progress.js';
 
 export function renderHome(progress: ProgressState): string {
@@ -13,7 +13,7 @@ export function renderHome(progress: ProgressState): string {
     <main class="page page--home">
       <header class="topbar">
         <div class="brand-block">
-          <span class="brand-mark" aria-hidden="true"><span></span></span>
+          ${brandMark()}
           <span class="brand-name">Flag Atlas</span>
         </div>
         <button class="text-icon-button" data-action="open-progress" aria-label="Open progress">
@@ -25,7 +25,7 @@ export function renderHome(progress: ProgressState): string {
       <section class="world-overview" aria-labelledby="world-heading">
         <div class="overview-heading">
           <div>
-            <h1 id="world-heading">World flags</h1>
+            <h1 id="world-heading" tabindex="-1" data-autofocus>World flags</h1>
             <p>Learn by region. Keep what you know.</p>
           </div>
           <div class="mastery-total" aria-label="${world.mastered} of ${world.total} flags mastered">
