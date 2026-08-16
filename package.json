@@ -1,0 +1,16 @@
+{
+  "name": "flag-atlas",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A mobile-first adaptive flag-learning PWA.",
+  "scripts": {
+    "check": "tsc -p tsconfig.json --noEmit",
+    "build": "node scripts/build.mjs",
+    "verify": "node scripts/verify.mjs",
+    "test": "npm run build && npm run verify"
+  },
+  "devDependencies": {
+    "typescript": "^5.8.3"
+  }
+}
