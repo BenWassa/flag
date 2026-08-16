@@ -1,9 +1,9 @@
 import { COUNTRIES } from '../../data/countries.js';
 import type { LearningStatus, ProgressState } from '../../domain/models.js';
-import { masteryGoal } from '../../domain/progress.js';
+import { getRecord, masteryGoal } from '../../domain/progress.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
-import { MASTERY_RULE, titleCase } from '../format.js';
+import { MASTERY_RULE, escapeHtml, titleCase } from '../format.js';
 
 const EMPTY_STATES: Record<LearningStatus | 'all', { title: string; body: string }> = {
   all: { title: 'No flags loaded', body: 'The curriculum could not be read. Reload the page to try again.' },
@@ -25,22 +25,23 @@ export function renderProgress(
   progress: ProgressState,
   filter: LearningStatus | 'all' = 'all',
   resetArmed = false,
+  persisting = true,
 ): string {
   const counts = COUNTRIES.reduce(
     (acc, country) => {
-      acc[progress.records[country.id].status] += 1;
+      acc[getRecord(progress, country.id).status] += 1;
       return acc;
     },
     { unseen: 0, learning: 0, mastered: 0 },
   );
 
   const rows = COUNTRIES
-    .filter((country) => filter === 'all' || progress.records[country.id].status === filter)
+    .filter((country) => filter === 'all' || getRecord(progress, country.id).status === filter)
     .sort((a, b) => {
       const statusOrder = { learning: 0, unseen: 1, mastered: 2 } as const;
-      const aRecord = progress.records[a.id];
-      const bRecord = progress.records[b.id];
-      return statusOrder[aRecord.status] - statusOrder[bRecord.status] || a.name.localeCompare(b.name);
+      const aStatus = getRecord(progress, a.id).status;
+      const bStatus = getRecord(progress, b.id).status;
+      return statusOrder[aStatus] - statusOrder[bStatus] || a.name.localeCompare(b.name);
     });
 
   const filterCount = (item: LearningStatus | 'all'): number => item === 'all' ? COUNTRIES.length : counts[item];
@@ -69,7 +70,7 @@ export function renderProgress(
       ${rows.length ? `
         <div class="ledger-list">
           ${rows.map((country) => {
-            const record = progress.records[country.id];
+            const record = getRecord(progress, country.id);
             const detail = record.status === 'learning'
               ? `${record.masteryStreak}/${masteryGoal(record)} toward mastery · ${record.lifetimeIncorrect} missed`
               : record.status === 'mastered'
@@ -78,7 +79,7 @@ export function renderProgress(
             return `
               <div class="ledger-row">
                 ${flagImage(country, true, 'flag-frame--ledger')}
-                <span class="ledger-row__country"><strong>${country.name}</strong><small>${detail}</small></span>
+                <span class="ledger-row__country"><strong>${escapeHtml(country.name)}</strong><small>${detail}</small></span>
                 <span class="status-chip status-chip--${record.status}">${titleCase(record.status)}</span>
               </div>
             `;
@@ -98,7 +99,9 @@ export function renderProgress(
             <button class="button button--danger" data-action="reset-confirm">Erase everything</button>
             <button class="button button--tertiary" data-action="reset-cancel" data-autofocus>Keep my progress</button>
           ` : `
-            <p>Your ledger is stored on this device only.</p>
+            <p>${persisting
+              ? 'Your ledger is stored on this device only.'
+              : 'This browser is not allowing storage, so this ledger lasts until you close the tab.'}</p>
             <button class="button button--tertiary" data-action="reset-request">Reset all progress</button>
           `}
         </div>

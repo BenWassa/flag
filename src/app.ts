@@ -1,8 +1,8 @@
 import { CONTINENTS, REGIONS } from './data/continents.js';
 import { COUNTRY_BY_ID } from './data/countries.js';
 import type { LearningStatus, StudyMode, StudyScope } from './domain/models.js';
-import { masteryGoal } from './domain/progress.js';
-import { resetAllProgress } from './infrastructure/storage.js';
+import { getRecord, masteryGoal } from './domain/progress.js';
+import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { AppStore, type ViewState } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { renderHome } from './ui/views/home.js';
@@ -34,12 +34,20 @@ function cancelPendingAdvance(): void {
 
 // --- Announcements -------------------------------------------------------
 // A single persistent region carries what a sighted user reads from the
-// re-rendered screen. Queued as a microtask so the text change is observed.
+// re-rendered screen. Cleared first and set on a short delay, so the text change
+// is observed as a change rather than collapsing into the same paint.
+
+let pendingAnnouncement: number | null = null;
 
 function announce(message: string): void {
   if (!liveStatus || !message) return;
+  // Answering quickly can queue several of these. Only the newest is wanted, so
+  // the previous timer is dropped rather than left to overwrite the live region
+  // after the one that replaced it.
+  if (pendingAnnouncement !== null) window.clearTimeout(pendingAnnouncement);
   liveStatus.textContent = '';
-  window.setTimeout(() => {
+  pendingAnnouncement = window.setTimeout(() => {
+    pendingAnnouncement = null;
     liveStatus.textContent = message;
   }, 60);
 }
@@ -118,13 +126,13 @@ function restoreFocus(previousSelector: string | null): void {
 function render(previousSelector: string | null = null): void {
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(store.progress);
+      root.innerHTML = renderHome(store.progress, store.persisting);
       break;
     case 'scope':
       root.innerHTML = renderScope(store.progress, store.view.scope);
       break;
     case 'progress':
-      root.innerHTML = renderProgress(store.progress, progressFilter, resetArmed);
+      root.innerHTML = renderProgress(store.progress, progressFilter, resetArmed, store.persisting);
       break;
     case 'quiz':
       if (!store.session) return;
@@ -150,7 +158,14 @@ function render(previousSelector: string | null = null): void {
  */
 function beginSession(scope: StudyScope, mode: StudyMode, size?: number, reviewIds?: string[]): void {
   cancelPendingAdvance();
-  store.startSession(scope, mode, size, reviewIds);
+
+  // A scope with nothing to ask would open a round with no question in it. Stay
+  // on the current screen and say why rather than navigating into a dead view.
+  if (!store.startSession(scope, mode, size, reviewIds)) {
+    announce(`${scope.label} has no flags to practise right now.`);
+    return;
+  }
+
   const count = store.session?.questions.length ?? 0;
   announce(`${scope.label}. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${count} flags. Question 1.`);
 }
@@ -171,7 +186,7 @@ function answerAnnouncement(countryId: string): string {
   if (!target) return '';
   if (store.session.mode === 'test') return 'Answer recorded.';
 
-  const record = store.progress.records[target.id];
+  const record = getRecord(store.progress, target.id);
   const state = record.status === 'mastered'
     ? 'Now mastered.'
     : `Learning, ${record.masteryStreak} of ${masteryGoal(record)} rounds.`;
@@ -322,6 +337,14 @@ window.addEventListener('keydown', (event) => {
     announceResult();
     finishInteraction(null);
   }
+});
+
+// The attempt log is written on a trailing delay so answering stays cheap. A
+// PWA is usually left by being backgrounded rather than closed, so both events
+// are needed to be sure the tail of a round survives.
+window.addEventListener('pagehide', flushAttempts);
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') flushAttempts();
 });
 
 if ('serviceWorker' in navigator) {

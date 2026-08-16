@@ -2,6 +2,7 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import type { SessionResult } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
+import { escapeHtml } from '../format.js';
 
 export function renderResults(result: SessionResult): string {
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
@@ -9,12 +10,20 @@ export function renderResults(result: SessionResult): string {
     .map((id) => COUNTRY_BY_ID.get(id))
     .filter((country) => country !== undefined);
 
+  // Both sides of a mistake are resolved up front. An attempt can outlive a
+  // catalog change, and an unresolved id used to throw from inside the template.
+  const missed = result.missed.flatMap((attempt) => {
+    const correct = COUNTRY_BY_ID.get(attempt.countryId);
+    if (!correct) return [];
+    return [{ correct, selected: COUNTRY_BY_ID.get(attempt.selectedCountryId) }];
+  });
+
   return `
     <main class="page results-page">
       <header class="topbar topbar--detail results-header">
         <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('close')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>${result.session.scope.label}</h1>
+          <h1 tabindex="-1" data-autofocus>${escapeHtml(result.session.scope.label)}</h1>
           <span>Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Test'}</span>
         </div>
       </header>
@@ -36,7 +45,7 @@ export function renderResults(result: SessionResult): string {
             ${mastered.map((country) => `
               <div class="mastery-row">
                 ${flagImage(country, true, 'flag-frame--tiny')}
-                <strong>${country.name}</strong>
+                <strong>${escapeHtml(country.name)}</strong>
                 <span>Mastered</span>
               </div>
             `).join('')}
@@ -44,26 +53,25 @@ export function renderResults(result: SessionResult): string {
         </section>
       ` : ''}
 
-      ${result.missed.length ? `
+      ${missed.length ? `
         <section class="result-section" aria-labelledby="review-heading">
-          <div class="list-heading"><h2 id="review-heading">Review</h2><span>${result.missed.length} missed</span></div>
+          <div class="list-heading"><h2 id="review-heading">Review</h2><span>${missed.length} missed</span></div>
           <div class="mistake-list">
-            ${result.missed.map((attempt) => {
-              const correct = COUNTRY_BY_ID.get(attempt.countryId)!;
-              const selected = COUNTRY_BY_ID.get(attempt.selectedCountryId)!;
-              return `
-                <div class="mistake-row">
-                  ${flagImage(correct, true, 'flag-frame--tiny')}
-                  <span><strong>${correct.name}</strong><small>You chose ${selected.name}</small></span>
-                </div>
-              `;
-            }).join('')}
+            ${missed.map(({ correct, selected }) => `
+              <div class="mistake-row">
+                ${flagImage(correct, true, 'flag-frame--tiny')}
+                <span>
+                  <strong>${escapeHtml(correct.name)}</strong>
+                  <small>${selected ? `You chose ${escapeHtml(selected.name)}` : 'Answered incorrectly'}</small>
+                </span>
+              </div>
+            `).join('')}
           </div>
         </section>
       ` : '<p class="clean-round"><strong>Clean round.</strong> No missed flags.</p>'}
 
       <div class="result-actions">
-        ${result.missed.length ? '<button class="button button--primary" data-action="review-mistakes">Review mistakes</button>' : ''}
+        ${missed.length ? '<button class="button button--primary" data-action="review-mistakes">Review mistakes</button>' : ''}
         <button class="button button--secondary" data-action="repeat-scope">Another round</button>
         <button class="button button--tertiary" data-action="home">Back to atlas</button>
       </div>

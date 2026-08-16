@@ -1,10 +1,10 @@
 import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
-import { getScopeStats } from '../../domain/progress.js';
+import { getRecord, getScopeStats } from '../../domain/progress.js';
 import { icon } from '../components/icons.js';
 import { progressStrip, statLegend } from '../components/progress.js';
-import { statusLabel } from '../format.js';
+import { escapeHtml, statusLabel } from '../format.js';
 
 export function renderScope(progress: ProgressState, scope: StudyScope): string {
   const stats = getScopeStats(COUNTRIES, progress, scope);
@@ -17,12 +17,12 @@ export function renderScope(progress: ProgressState, scope: StudyScope): string 
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>${scope.label}</h1>
+          <h1 tabindex="-1" data-autofocus>${escapeHtml(scope.label)}</h1>
           <span>${scope.kind === 'region' ? 'Region' : 'Continent'} · ${stats.total} flags</span>
         </div>
       </header>
 
-      <section class="scope-overview" aria-label="${scope.label} learning status">
+      <section class="scope-overview" aria-label="${escapeHtml(scope.label)} learning status">
         <div class="scope-status-line">
           <strong>${stats.mastered} mastered</strong>
           <span>${stats.learning} learning · ${stats.unseen} unseen</span>
@@ -63,7 +63,7 @@ function renderRegions(progress: ProgressState, regions: typeof REGIONS): string
           return `
             <button class="region-row" data-action="open-region" data-id="${region.id}">
               <span class="region-row__identity">
-                <strong>${region.name}</strong>
+                <strong>${escapeHtml(region.name)}</strong>
                 <small>${regionStats.total} flags · ${regionStats.mastered}/${regionStats.total} mastered</small>
               </span>
               <span class="region-row__status">${status}</span>
@@ -83,10 +83,10 @@ function renderCountryLedger(progress: ProgressState, scope: StudyScope): string
       <div class="list-heading"><h2 id="countries-heading">Countries</h2><span>${countries.length}</span></div>
       <div class="mini-ledger">
         ${countries.map((country) => {
-          const record = progress.records[country.id];
+          const record = getRecord(progress, country.id);
           return `
             <div class="mini-ledger__row">
-              <span>${country.name}</span>
+              <span>${escapeHtml(country.name)}</span>
               <span class="status-text status-text--${record.status}">${statusLabel(record)}</span>
             </div>
           `;

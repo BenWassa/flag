@@ -153,6 +153,68 @@ Caught by the deterministic scan: `transition: width` on the quiz progress fill.
 - **No dark theme.** DESIGN.md commits to a cool near-white field so flags stay dominant, and that reasoning still holds for a daylight study tool. A night-use variant is a product decision, not a defect to patch.
 - **Learn world as the beginner's default.** Starting a novice on 195 flags is arguably the hardest possible entry, but scope control belongs to the learner by principle 2. Worth a usability test rather than a unilateral change.
 
+## Hardening pass — 2026-08-16
+
+Ran `$impeccable harden` over the shipped MVP. The visual system and the interaction model were not the problem this time; every finding was a way that real conditions, rather than the idealised data the code was written against, take the app down.
+
+### P0 — A blocked localStorage froze the round mid-question
+
+`saveProgress` and `appendAttempt` called `localStorage.setItem` unguarded. Safari private browsing throws on every write, a blocked-cookie policy throws on every read, and a full origin quota throws once the log grows. Any of those propagated out of `store.answer()` through `submitAnswer()` and into the root click handler, so the render that follows an answer never ran. The app did not report an error; it simply stopped responding on the question the learner had just answered, and every subsequent tap did nothing.
+
+**Resolution:** every access is guarded in `src/infrastructure/storage.ts`, failure flips a `persisting` flag instead of throwing, and studying continues from memory. The Progress footer stops claiming the ledger is saved on a device that refuses to save it, and Home carries one quiet notice explaining that the session will not outlive the tab.
+
+### P1 — The cost of answering grew with study history
+
+`appendAttempt` re-read, parsed, and re-serialised the entire attempt log on every single answer. At the 5000-entry cap that is well over a megabyte of synchronous JSON work on the main thread, at the exact moment of the tap, and it got slower the longer someone had studied.
+
+**Resolution:** the log is held in memory, capped at 2000, and written on a 500ms trailing delay. `flushAttempts` runs on `pagehide` and on `visibilitychange`, because a PWA is usually left by being backgrounded rather than closed.
+
+### P1 — A corrupted ledger reached the views as an exception or a NaN
+
+`loadProgress` cast `JSON.parse` straight to `ProgressState` on the strength of `version === 1`. Six view sites then indexed `progress.records[id]` directly. A truncated write, a hand-edited record, or a single `null` produced either a thrown TypeError that took out the whole Progress screen, or arithmetic on `undefined` rendered as `NaN` in the ledger.
+
+**Resolution:** the ledger is rebuilt field by field at the storage boundary, with unknown statuses and malformed counts dropped rather than trusted, and records for countries no longer in the catalog discarded. Every view now reads through `getRecord`. The defensive work sits at the boundary so the views stay written against well-formed data.
+
+### P1 — Learn did nothing at all over plain http
+
+`startSession` called `crypto.randomUUID()`, which needs a secure context and is simply absent otherwise. That is exactly how a mobile-first PWA gets tested: from a phone, against a laptop's IP, over http. The call threw, the click handler died, and the button appeared inert.
+
+**Resolution:** a fallback id when `crypto.randomUUID` is unavailable.
+
+### P1 — A shipped fix could sit invisible behind a warm cache
+
+The service worker served same-origin requests cache-first, so a returning learner kept running the previously installed build until the hardcoded cache name happened to change. A deploy that did not also edit `VERSION` reached nobody who had already visited.
+
+**Resolution:** the shell is network-first with cache fallback, so the network decides which build runs and the cache is what makes the app work offline. Flags stay cache-first, which is correct because they are content-addressed by country code and never change.
+
+### P2 — Catalog text was interpolated raw into markup and attributes
+
+The curriculum already carries `Australia & New Zealand` and `Côte d'Ivoire`, and both go into `aria-label` attributes. Nothing broke today, but a single future entry containing a quote would have silently truncated an attribute.
+
+**Resolution:** `escapeHtml` in `src/ui/format.ts`, applied at every country name, region name, and scope label.
+
+### P2 — Two dead ends built from stale ids
+
+`renderQuiz` and `renderResults` asserted catalog lookups with `!` inside their templates, so an id the catalog no longer knew threw from mid-render and took the screen down. Separately, `buildQuiz` clamps its size to the scope, so a review list of unresolvable ids produced a round with zero questions and `beginSession` navigated into it regardless.
+
+**Resolution:** options and mistake pairs are resolved before the template, and a question survives losing a distractor. `startSession` returns false when there is nothing to ask, and the learner stays where they were with the live region explaining why.
+
+### P2 — Two mobile layout defects
+
+The quiz flag was sized in `vh`, which is the large viewport: with the mobile URL bar visible the flag pushed the answer buttons below the fold at the exact moment they were needed. The short-landscape layout was gated at `min-width: 700px`, so a 667×375 phone held sideways missed it and fell back to a portrait stack that does not fit in 375px of height.
+
+**Resolution:** `dvh` throughout the quiz stage, and the landscape breakpoint lowered to 600px with tightened columns and a 46px answer height, still above the 44px minimum target.
+
+### P3 — Stacked announcement timers, and a live region inside the replaced tree
+
+Rapid answers queued several 60ms announcement timers, any of which could overwrite the live region after the one that replaced it. The new storage notice initially carried `role="status"`, which contradicts the app's own documented rule that live regions do not belong inside `#app`.
+
+**Resolution:** the pending timer is cancelled before a new one is queued, and the notice is static copy.
+
+### Verification
+
+`scripts/verify.mjs` grew coverage for escaping, ledger sanitisation, missing records, stale distractors and targets, unresolvable mistakes, both storage notices, and the refused empty round. It also drives `AppStore` through three answers against a `localStorage` that throws on write and one that throws on read, asserting that answering does not throw, that progress is still tracked in memory, and that the failure is reported. That last test is the regression guard for the P0.
+
 ## Remaining product-level work
 
 These are outside the visual redesign rather than hidden design defects:

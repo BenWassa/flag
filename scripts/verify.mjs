@@ -186,4 +186,178 @@ const emptyResult = renderResults({
 });
 assert.ok(emptyResult.includes('Clean round'), 'A perfect round still reports its outcome.');
 
-console.log(`Verified ${COUNTRIES.length} countries, ${REGIONS.length} regions, mastery transitions, quiz integrity, answer randomization, and view rendering.`);
+// --- Hardening ------------------------------------------------------------
+// Everything below covers a way the real world breaks the idealised data the
+// views are written against: hostile text, a corrupted ledger, a scope with
+// nothing in it, and an id the catalog no longer knows.
+
+const { escapeHtml } = await import('../dist/ui/format.js');
+const { sanitizeRecord } = await import('../dist/infrastructure/storage.js');
+
+assert.equal(
+  escapeHtml('Australia & New Zealand'),
+  'Australia &amp; New Zealand',
+  'Catalog text is escaped before it reaches markup.',
+);
+assert.equal(escapeHtml(`a"b'c<d>e&f`), 'a&quot;b&#39;c&lt;d&gt;e&amp;f', 'Every attribute-breaking character is escaped.');
+
+const hostileHtml = renderScope(fresh, { kind: 'region', id: 'west-africa', label: '"><b>x</b>' });
+assert.ok(!hostileHtml.includes('<script>'), 'A scope label cannot inject markup.');
+assert.ok(!hostileHtml.includes('"><b>'), 'A scope label cannot break out of an attribute.');
+
+assert.equal(sanitizeRecord('GHA', null), null, 'A null record is discarded rather than trusted.');
+assert.equal(sanitizeRecord('GHA', { status: 'bogus' }), null, 'An unknown learning status is discarded.');
+
+const repaired = sanitizeRecord('GHA', {
+  status: 'learning',
+  masteryStreak: null,
+  lifetimeCorrect: 'seven',
+  lifetimeIncorrect: -3,
+  retentionLevel: Number.NaN,
+  confusionCounts: { MLI: 2, SEN: 'lots' },
+});
+assert.equal(repaired.masteryStreak, 0, 'A null count is repaired to zero rather than rendered as NaN.');
+assert.equal(repaired.lifetimeCorrect, 0, 'A non-numeric count is repaired.');
+assert.equal(repaired.lifetimeIncorrect, 0, 'A negative count is repaired.');
+assert.equal(repaired.retentionLevel, 0, 'NaN never survives into a record.');
+assert.deepEqual(repaired.confusionCounts, { MLI: 2 }, 'Only well-formed confusion counts are kept.');
+
+// Corruption is repaired once, at the storage boundary, so the views can stay
+// written against well-formed records. This asserts that contract end to end.
+const repairedState = {
+  version: 1,
+  records: {
+    ...fresh.records,
+    GHA: sanitizeRecord('GHA', { status: 'learning', masteryStreak: null, lifetimeIncorrect: undefined }),
+    MLI: sanitizeRecord('MLI', { status: 'mastered', lifetimeCorrect: '9', lapseCount: null }),
+  },
+};
+const repairedHtml = renderProgress(repairedState, 'all');
+assert.ok(!repairedHtml.includes('NaN'), 'A repaired ledger cannot render NaN into the progress screen.');
+assert.ok(!repairedHtml.includes('undefined'), 'A repaired ledger cannot render undefined into the progress screen.');
+assert.ok(
+  !renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' }).includes('NaN'),
+  'A repaired ledger cannot render NaN into a region ledger.',
+);
+
+// A record the ledger never had at all: `getRecord` must supply the default
+// rather than let the view index into undefined.
+const missingRecords = { version: 1, records: {} };
+assert.doesNotThrow(() => renderProgress(missingRecords, 'all'), 'A ledger missing every record still renders.');
+assert.ok(!renderProgress(missingRecords, 'all').includes('undefined'), 'Missing records fall back to Unseen.');
+
+const emptyScopeQuiz = build({
+  countries: COUNTRIES,
+  progress: fresh,
+  scope: { kind: 'region', id: 'west-africa', label: 'West Africa' },
+  mode: 'learn',
+  size: 10,
+  sessionId: 'empty-round',
+  targetCountryIds: ['NOT-A-COUNTRY'],
+});
+assert.equal(emptyScopeQuiz.length, 0, 'A review list of unknown ids builds no questions.');
+
+const staleOptions = {
+  ...quizSession,
+  questions: [{ ...quizSession.questions[0], optionCountryIds: [quizSession.questions[0].countryId, 'NOPE', 'GONE', 'MISSING'] }],
+  currentIndex: 0,
+};
+const staleHtml = renderQuiz(staleOptions, fresh, null);
+assert.ok(!staleHtml.includes('This round could not be built'), 'A stale distractor still leaves an answerable question.');
+assert.equal((staleHtml.match(/data-action="answer"/g) ?? []).length, 1, 'Options the catalog no longer knows are dropped.');
+
+const staleTarget = { ...quizSession, questions: [{ ...quizSession.questions[0], countryId: 'NOPE' }], currentIndex: 0 };
+assert.ok(
+  renderQuiz(staleTarget, fresh, null).includes('This round could not be built'),
+  'An unresolvable target falls back to the explained dead end, not a thrown render.',
+);
+
+const staleMissed = renderResults({
+  session: quizSession,
+  correct: 0,
+  total: 1,
+  newlyMastered: [],
+  missed: [{ countryId: 'GHA', selectedCountryId: 'NOPE', correct: false }],
+});
+assert.ok(staleMissed.includes('Answered incorrectly'), 'A mistake against an unknown option still renders a review row.');
+
+assert.ok(renderHome(fresh, false).includes('storage-notice'), 'A browser that blocks storage is told so on the atlas.');
+assert.ok(!renderHome(fresh, true).includes('storage-notice'), 'The storage notice stays out of the way when storage works.');
+assert.ok(
+  !renderHome(fresh, false).includes('role="status"') && !renderHome(fresh, false).includes('aria-live'),
+  'The storage notice is static copy, not another live region inside the replaced #app.',
+);
+assert.ok(
+  renderProgress(learningState, 'all', false, false).includes('not allowing storage'),
+  'The ledger does not claim to be saved on a device that refuses to save it.',
+);
+
+// --- Studying without storage --------------------------------------------
+// Safari private browsing throws on every write and a blocked-cookie policy
+// throws on every read. Both used to escape `answer()` into the click handler
+// and freeze the round on the question that had just been answered, so the
+// store is driven here against a localStorage that refuses to cooperate.
+
+const timers = new Set();
+globalThis.window = {
+  setTimeout: (fn, ms) => {
+    const handle = setTimeout(fn, ms);
+    timers.add(handle);
+    return handle;
+  },
+  clearTimeout: (handle) => {
+    clearTimeout(handle);
+    timers.delete(handle);
+  },
+};
+globalThis.performance ??= { now: () => Date.now() };
+
+let storageMode = 'throw-write';
+globalThis.localStorage = {
+  getItem() {
+    if (storageMode === 'throw-read') throw new Error('SecurityError');
+    return null;
+  },
+  setItem() {
+    if (storageMode !== 'ok') throw new Error('QuotaExceededError');
+  },
+  removeItem() {},
+};
+
+const { AppStore } = await import('../dist/state/store.js');
+
+for (const mode of ['ok', 'throw-write', 'throw-read']) {
+  storageMode = mode;
+  const store = new AppStore();
+  assert.ok(
+    store.startSession({ kind: 'region', id: 'west-africa', label: 'West Africa' }, 'learn'),
+    `A round still starts with storage in "${mode}".`,
+  );
+
+  assert.doesNotThrow(() => {
+    for (let index = 0; index < 3; index += 1) {
+      const question = store.session.questions[store.session.currentIndex];
+      store.answer(question.optionCountryIds[0]);
+      store.advance();
+    }
+  }, `Answering must not throw with storage in "${mode}".`);
+
+  const touched = Object.values(store.progress.records).filter((record) => record.status !== 'unseen');
+  assert.equal(touched.length, 3, `Progress is tracked in memory with storage in "${mode}".`);
+  assert.equal(store.persisting, mode === 'ok', `Storage failure is reported for "${mode}".`);
+}
+
+const noScope = new AppStore();
+assert.equal(
+  noScope.startSession({ kind: 'region', id: 'west-africa', label: 'West Africa' }, 'learn', 10, ['NOT-A-COUNTRY']),
+  false,
+  'A round with nothing to ask reports failure instead of opening an empty quiz.',
+);
+assert.equal(noScope.view.name, 'home', 'A refused round leaves the learner where they were.');
+
+for (const handle of timers) clearTimeout(handle);
+
+console.log(
+  `Verified ${COUNTRIES.length} countries, ${REGIONS.length} regions, mastery transitions, quiz integrity, ` +
+    'answer randomization, view rendering, escaping, ledger sanitisation, degraded states, and storage-denied study.',
+);

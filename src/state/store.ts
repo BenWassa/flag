@@ -9,7 +9,7 @@ import type {
   StudyScope,
 } from '../domain/models.js';
 import { buildQuiz } from '../domain/quiz.js';
-import { appendAttempt, loadProgress, saveProgress } from '../infrastructure/storage.js';
+import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
 
 export type ViewState =
   | { name: 'home' }
@@ -17,6 +17,19 @@ export type ViewState =
   | { name: 'progress' }
   | { name: 'quiz' }
   | { name: 'results'; result: SessionResult };
+
+/**
+ * `crypto.randomUUID` needs a secure context, so it is simply absent when the
+ * app is opened over plain http, which is exactly how a mobile-first PWA gets
+ * tested from a phone against a laptop on the same network. Calling it there
+ * threw out of `startSession` and left the Learn button doing nothing at all.
+ */
+function sessionId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 export class AppStore {
   progress: ProgressState;
@@ -26,15 +39,26 @@ export class AppStore {
   answeredCountryId: string | null = null;
   currentAttempt: QuizAttempt | null = null;
 
+  /** False once a write has failed, so the app can say progress is not being kept. */
+  persisting = true;
+
   constructor() {
     const persisted = loadProgress();
     const initial = createInitialProgress(COUNTRIES);
-    this.progress = persisted
-      ? {
-          ...initial,
-          records: { ...initial.records, ...persisted.records },
-        }
-      : initial;
+    this.progress = initial;
+
+    if (persisted) {
+      // Only records for countries still in the catalog are carried forward, so
+      // a ledger written by an older curriculum cannot accumulate dead keys.
+      const records = { ...initial.records };
+      for (const country of COUNTRIES) {
+        const record = persisted.records[country.id];
+        if (record) records[country.id] = record;
+      }
+      this.progress = { ...initial, records };
+    }
+
+    this.persisting = storageIsWritable();
   }
 
   navigate(view: ViewState): void {
@@ -49,8 +73,13 @@ export class AppStore {
     this.currentAttempt = null;
   }
 
-  startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): void {
-    const id = crypto.randomUUID();
+  /**
+   * Returns false when the scope yields no questions. A round of zero is a dead
+   * screen with nothing to answer, so the caller keeps the user where they are
+   * rather than navigating into it.
+   */
+  startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): boolean {
+    const id = sessionId();
     const questions = buildQuiz({
       countries: COUNTRIES,
       progress: this.progress,
@@ -60,6 +89,8 @@ export class AppStore {
       sessionId: id,
       targetCountryIds: reviewIds,
     });
+
+    if (questions.length === 0) return false;
 
     this.session = {
       id,
@@ -74,6 +105,7 @@ export class AppStore {
     this.currentAttempt = null;
     this.questionStartedAt = performance.now();
     this.view = { name: 'quiz' };
+    return true;
   }
 
   answer(selectedCountryId: string): QuizAttempt {
@@ -91,7 +123,7 @@ export class AppStore {
     });
 
     this.progress = result.state;
-    saveProgress(this.progress);
+    if (!saveProgress(this.progress)) this.persisting = false;
     appendAttempt(result.attempt);
     this.session.attempts.push(result.attempt);
     this.answeredCountryId = selectedCountryId;

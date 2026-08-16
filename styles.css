@@ -306,7 +306,10 @@ button:focus-visible,
   padding: 8px 4px;
   border-bottom: 1px solid var(--line);
 }
-.status-text { font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
+/* Flex items refuse to shrink past their content by default, so the longest
+   country names used to push the status out of the row. */
+.mini-ledger__row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.status-text { flex: 0 0 auto; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .status-text--unseen { color: var(--unseen); }
 .status-text--learning { color: var(--learning); }
 .status-text--mastered { color: var(--mastered); }
@@ -365,7 +368,9 @@ button:focus-visible,
 .flag-image {
   display: block;
   width: min(100%, 470px);
-  max-height: 46vh;
+  /* Dynamic, not large: with a visible mobile URL bar a vh-sized flag pushed the
+     answers below the fold at the exact moment they are needed. */
+  max-height: 46dvh;
   object-fit: contain;
   border: 1px solid var(--flag-line);
   box-shadow: var(--flag-shadow);
@@ -404,7 +409,7 @@ button:focus-visible,
   transition: background-color 140ms ease, border-color 140ms ease, color 140ms ease, transform 100ms ease;
 }
 .answer-button:disabled { cursor: default; }
-.answer-button strong { font-size: 15px; line-height: 1.25; }
+.answer-button strong { font-size: 15px; line-height: 1.25; overflow-wrap: anywhere; }
 .answer-key {
   width: 26px;
   height: 26px;
@@ -485,9 +490,12 @@ button:focus-visible,
   border-bottom: 1px solid var(--line);
 }
 .mastery-row { grid-template-columns: 58px minmax(0, 1fr) auto; gap: 12px; }
-.mastery-row > span:not(.flag-frame) { color: var(--mastered); font-size: 12px; font-weight: 700; }
+.mastery-row > strong { min-width: 0; overflow-wrap: anywhere; }
+.mastery-row > span:not(.flag-frame) { color: var(--mastered); font-size: 12px; font-weight: 700; white-space: nowrap; }
 .mistake-row { grid-template-columns: 58px minmax(0, 1fr); gap: 12px; }
 .mistake-row > span:not(.flag-frame) { display: grid; gap: 2px; min-width: 0; }
+.mistake-row strong,
+.mistake-row small { overflow-wrap: anywhere; }
 .mistake-row small { color: var(--text-muted); font-size: 12px; }
 .flag-frame--tiny { width: 54px; min-height: 36px; }
 .flag-frame--tiny .flag-image { width: 54px; max-height: 36px; box-shadow: none; }
@@ -549,6 +557,17 @@ button:focus-visible,
 
 .ledger-note {
   margin: 0 0 var(--space-5);
+  color: var(--text-muted);
+  font-size: 13px;
+  max-width: 62ch;
+}
+
+/* Shown only when the browser refuses to persist. A rule and honest copy, not
+   an alert box: the app still works, it just cannot remember. */
+.storage-notice {
+  margin: var(--space-6) 0 0;
+  padding-top: var(--space-4);
+  border-top: 2px solid var(--learning);
   color: var(--text-muted);
   font-size: 13px;
   max-width: 62ch;
@@ -640,16 +659,18 @@ button:focus-visible,
 @media (max-height: 720px) {
   .question-stage { padding-top: 8px; }
   .flag-stage { min-height: 180px; padding-block: 12px; }
-  .flag-image { max-height: 38vh; }
+  .flag-image { max-height: 38dvh; }
   .answer-button { min-height: 52px; }
 }
 
-@media (orientation: landscape) and (max-height: 600px) and (min-width: 700px) {
+/* 600px rather than 700px: a 667x375 phone in landscape used to miss this and
+   fall back to the portrait stack, which does not fit in 375px of height. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 600px) {
   .quiz-shell {
     width: min(100%, 1040px);
-    grid-template-columns: minmax(280px, 1.1fr) minmax(330px, .9fr);
+    grid-template-columns: minmax(240px, 1.1fr) minmax(290px, .9fr);
     grid-template-rows: auto minmax(0, 1fr);
-    column-gap: var(--space-8);
+    column-gap: var(--space-6);
   }
   .quiz-header { grid-column: 1 / -1; }
   .question-stage { grid-column: 1; grid-row: 2; }
@@ -657,7 +678,10 @@ button:focus-visible,
   .answer-feedback,
   .test-advance,
   .quiz-hint { grid-column: 1; }
-  .flag-image { max-height: 60vh; }
+  .flag-image { max-height: 60dvh; }
+  /* Still above the 44px minimum target, but four choices plus feedback have to
+     fit in 375px of height on a phone held sideways. */
+  .answer-button { min-height: 46px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

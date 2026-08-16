@@ -1,5 +1,6 @@
 import type { Country } from '../../domain/models.js';
 import { flagUrl } from '../../infrastructure/flags.js';
+import { escapeHtml } from '../format.js';
 
 /**
  * Flags are fetched from a CDN, so any render can fail offline before the
@@ -13,7 +14,7 @@ export function flagImage(
   frameClass = '',
   priority = false,
 ): string {
-  const alt = revealed ? `${country.name} flag` : 'Flag to identify';
+  const alt = revealed ? `${escapeHtml(country.name)} flag` : 'Flag to identify';
   const loading = priority ? 'eager' : 'lazy';
   const fetchPriority = priority ? 'high' : 'auto';
   // Thumbnails have no room for a sentence, so they show a mark and keep the

@@ -4,8 +4,9 @@ import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { brandMark, icon } from '../components/icons.js';
 import { progressStrip, statLegend } from '../components/progress.js';
+import { escapeHtml } from '../format.js';
 
-export function renderHome(progress: ProgressState): string {
+export function renderHome(progress: ProgressState, persisting = true): string {
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
   const world = getScopeStats(COUNTRIES, progress, worldScope);
 
@@ -41,6 +42,13 @@ export function renderHome(progress: ProgressState): string {
         </div>
       </section>
 
+      ${persisting ? '' : `
+        <p class="storage-notice">
+          This browser is blocking storage, so today's progress will be lost when you close the tab.
+          Leaving private browsing keeps your ledger.
+        </p>
+      `}
+
       <section class="atlas-section" aria-labelledby="continents-heading">
         <div class="list-heading">
           <h2 id="continents-heading">Continents</h2>
@@ -54,7 +62,7 @@ export function renderHome(progress: ProgressState): string {
             return `
               <button class="continent-row" data-action="open-continent" data-id="${continent.id}">
                 <span class="continent-row__identity">
-                  <strong>${continent.name}</strong>
+                  <strong>${escapeHtml(continent.name)}</strong>
                   <small>${stats.total} flags · ${regions} regions</small>
                 </span>
                 <span class="continent-row__progress">${progressStrip(stats)}</span>

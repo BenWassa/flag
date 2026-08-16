@@ -1,8 +1,9 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
-import { masteryGoal } from '../../domain/progress.js';
+import { getRecord, masteryGoal } from '../../domain/progress.js';
 import type { ProgressState, QuizSession } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
+import { escapeHtml } from '../format.js';
 
 export function renderQuiz(
   session: QuizSession,
@@ -13,9 +14,17 @@ export function renderQuiz(
   const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
   if (!question || !target) return unavailable();
 
+  // Options are resolved before rendering rather than asserted inside the map.
+  // An id the catalog no longer knows used to throw from the template and take
+  // the whole round down; dropping it leaves a shorter but answerable question.
+  const options = question.optionCountryIds
+    .map((countryId) => COUNTRY_BY_ID.get(countryId))
+    .filter((country) => country !== undefined);
+  if (!options.some((country) => country.id === target.id)) return unavailable();
+
   const isAnswered = answeredCountryId !== null;
   const isLearnFeedback = isAnswered && session.mode === 'learn';
-  const currentRecord = progress.records[target.id];
+  const currentRecord = getRecord(progress, target.id);
   const pct = ((session.currentIndex + (isAnswered ? 1 : 0)) / session.questions.length) * 100;
 
   return `
@@ -23,7 +32,7 @@ export function renderQuiz(
       <header class="quiz-header">
         <button class="icon-button" data-action="exit-quiz" aria-label="Exit quiz">${icon('close')}</button>
         <div class="quiz-header__center">
-          <h1 tabindex="-1">${session.scope.label}</h1>
+          <h1 tabindex="-1">${escapeHtml(session.scope.label)}</h1>
           <div class="quiz-progress" role="progressbar" aria-label="Round progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="${Math.round(pct)}">
             <i style="--progress:${pct / 100}"></i>
           </div>
@@ -42,10 +51,9 @@ export function renderQuiz(
       </section>
 
       <section class="answer-panel ${isAnswered ? 'answer-panel--answered' : ''}" aria-label="Answer choices">
-        ${question.optionCountryIds.map((countryId, index) => {
-          const country = COUNTRY_BY_ID.get(countryId)!;
-          const selected = answeredCountryId === countryId;
-          const correct = countryId === target.id;
+        ${options.map((country, index) => {
+          const selected = answeredCountryId === country.id;
+          const correct = country.id === target.id;
           let stateClass = '';
           if (isLearnFeedback) {
             if (correct) stateClass = 'answer-button--correct';
@@ -58,9 +66,9 @@ export function renderQuiz(
           // answers are one Tab apart and the scope is not re-announced on
           // every question.
           return `
-            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${country.name}" ${isAnswered ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
+            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${escapeHtml(country.name)}" ${isAnswered ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
               <span class="answer-key" aria-hidden="true">${index + 1}</span>
-              <strong>${country.name}</strong>
+              <strong>${escapeHtml(country.name)}</strong>
             </button>
           `;
         }).join('')}
@@ -112,7 +120,7 @@ function feedback(
   return `
     <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}">
       <div class="feedback-copy">
-        <strong>${correct ? 'Correct' : `Correct: ${countryName}`}</strong>
+        <strong>${correct ? 'Correct' : `Correct: ${escapeHtml(countryName)}`}</strong>
         <span>${statusLabel}</span>
       </div>
       <button class="button button--primary" data-action="next-question" data-autofocus>${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>

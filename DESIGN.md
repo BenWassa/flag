@@ -135,6 +135,16 @@ Flags come from a CDN, so every flag is wrapped in a frame that reserves its spa
 
 Every list that can be empty says why it is empty and what fills it. Every remote asset has a labelled failure state. Neither is left to render as blank space.
 
+A scope with nothing to ask never opens a round. The learner stays on the screen they were on and the live region says why, because a quiz with no question in it is a dead end dressed as a task surface.
+
+### Storage notice
+
+Persistence is an enhancement, never a precondition for studying. When the browser refuses to store, the app keeps working from memory and says so once: a quiet rule and a sentence under the World overview, plus honest wording in the ledger footer, which otherwise claims a ledger is saved on the device that is refusing to save it. It is not an alert box and not a modal, because nothing is broken; the session simply will not outlive the tab.
+
+### Data boundaries
+
+Two boundaries do the defensive work so no view has to. A persisted ledger is rebuilt field by field on load, so a truncated write or a hand-edited record cannot reach a view as a thrown exception or a rendered `NaN`. All catalog text is escaped on the way into markup, because the curriculum already carries `Australia & New Zealand` and `Côte d'Ivoire`. Inside those boundaries the views stay written against well-formed data.
+
 ## Do’s & Don’ts
 
 ### Do
@@ -149,6 +159,8 @@ Every list that can be empty says why it is empty and what fills it. Every remot
 - Test small-height landscape as well as ordinary portrait widths.
 - Move focus deliberately after every re-render, and announce state changes through the persistent live region in `index.html` rather than through nodes that are themselves replaced.
 - Give every view a history entry so the platform Back gesture moves within the app instead of leaving it.
+- Size the quiz flag in `dvh`, so a visible mobile URL bar cannot push the answers below the fold.
+- Read learning records through `getRecord` and resolve catalog ids before the template, never with `!` inside it.
 
 ### Don’t
 
@@ -160,3 +172,5 @@ Every list that can be empty says why it is empty and what fills it. Every remot
 - Use emoji, Unicode glyphs, or CSS-drawn shapes as interface icons. All marks, including the product mark, come from the shared SVG primitives in `src/ui/components/icons.ts`.
 - Write a color literal anywhere but the token block, or duplicate a domain rule such as the mastery goal in a view.
 - Make mastered flags dominate ordinary Learn sessions simply to show progress.
+- Let a storage write escape into an interaction handler. Studying continues when persistence fails.
+- Serve the app shell cache-first. The network decides which build runs; the cache is what makes it work offline.
