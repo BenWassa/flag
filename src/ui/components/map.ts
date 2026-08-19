@@ -18,8 +18,9 @@ function circlePath(cx: number, cy: number, radius: number): string {
 function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interactive: boolean): string {
   if (!interactive) return '';
   const targetId = session.countryIds[session.currentIndex];
+  const targetState = targetId ? session.targets[targetId] : undefined;
   const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
-  if (!targetId || !assist) return '';
+  if (!targetId || targetState?.resolved || !assist) return '';
 
   // Aim for roughly a 44px effective diameter at the pilot's normal mobile
   // scale. Expansion is clipped around all real geography, so assistance can
@@ -94,17 +95,22 @@ export function renderMapSvg(
             && showFeedback
             && geometry.countryId === currentTargetId
             && state?.resolved
-            && state.resolution !== 'revealed'
-            && state.resolution !== 'incorrect';
+            && state.resolution === 'first-try';
           const recorded = geometry.countryId === recordedCountryId;
           const classes = `map-country${resolutionClass(state, showFeedback)}${currentCorrect ? ' map-country--current-correct' : ''}${recorded ? ' map-country--recorded' : ''}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
-          const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
+          const selectable = interactive && !state?.resolved;
+          const action = selectable ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
           return `
             <g class="${classes}"${action}>
               ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
               ${geometry.locator ? `
                 <circle class="map-country__locator-halo" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r + 5}" />
                 <circle class="map-country__locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />
+              ` : ''}
+              ${geometry.callout ? `
+                <line class="map-country__callout-line" x1="${geometry.callout.anchor.cx}" y1="${geometry.callout.anchor.cy}" x2="${geometry.callout.target.cx}" y2="${geometry.callout.target.cy}" />
+                <circle class="map-country__callout-target" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${geometry.callout.target.r}" />
+                <circle class="map-country__callout-hit" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${Math.max(geometry.callout.target.r, 22)}" />
               ` : ''}
             </g>
           `;
