@@ -111,7 +111,7 @@ These are now separate states:
 
 1. **Immediate correct tap:** temporary green fill + green geographic outline.
 2. **After advancing:** country settles to persistent round score:
-   - first try → very pale success-tinted off-white;
+   - first try → off-white;
    - one miss → light amber;
    - two misses → stronger amber/orange;
    - reveal → red/error tint.
@@ -164,6 +164,72 @@ Automated verification now requires:
 - production shell loading `map-viewport.js`;
 - service worker caching the viewport helper.
 
-## Current status
+### 09:54 — First full CI verification passed
 
-Implementation pass complete on branch. Next steps: run the full repository CI suite, inspect any failures, red-team the diff, then merge only if the final head is green.
+**Run:** GitHub Actions CI #26 (`32259704594`).
+
+**Result**
+
+- TypeScript/build: pass.
+- Existing flag tests: pass.
+- Map domain/persistence tests: pass.
+- New continent-context/mobile-gameplay contract: pass.
+- CI artifact `flag-atlas-dist` produced successfully (artifact `9367729285`, digest `sha256:31c8a159c417ff718e48bec604a58ece44137b42e0b6f299ff5191f7edbc98cb`).
+
+### 09:56 — CI artifact and geometry visually red-teamed
+
+**Artifact inspection**
+
+Verified the compiled production artifact contains:
+
+- `map-viewport.js`;
+- `map-target-hit-clip`;
+- `data-map-focus` / session viewport metadata;
+- full Africa context paths;
+- `map-country--current-correct` state;
+- service-worker shell entry for the viewport helper.
+
+**Geometry preview**
+
+Rendered the actual compiled map geometry to a static image for visual inspection. Findings:
+
+- Africa reads coherently as the parent geography.
+- West Africa is visibly stronger than the faded continent context.
+- Active and context borders remain distinguishable without turning the rest of Africa into visual noise.
+- Cabo Verde remains visible as an explicit locator west of the mainland.
+- The initial West Africa focus covers the intended active cluster while leaving the rest of Africa accessible through pan.
+
+### 09:57 — Color semantics red-team
+
+**Finding**
+
+The first implementation of this pass gave the persistent first-try state a slight mastery-green tint. That unnecessarily reused the durable mastery semantic for a different concept: round performance.
+
+**Resolution**
+
+- Green is now reserved for the immediate correct-tap confirmation.
+- Persistent score returns to the intended stepped language: **off-white → amber → orange → red**.
+- Unanswered active countries remain neutral gray, so an off-white first-try fill still reads clearly as completed.
+- Text feedback remains present, so color is evidence rather than the sole carrier of meaning.
+
+### 09:59 — Final head CI passed
+
+**Run:** GitHub Actions CI #27 (`32260192528`).
+
+**Result:** success after the final color-semantics correction.
+
+### Final red-team evaluation
+
+- **Rectangle artifact:** removed; focus follows country geometry.
+- **Region context:** full Africa remains visible; West Africa is active, other countries are faded and non-scoring.
+- **Pan:** native two-axis pan is available and position survives application rerenders.
+- **Tap precision:** narrow-country assistance targets ~44px effective diameter and cannot cross into another country's geometry.
+- **Correct feedback:** immediate green confirmation is visually strong; completed country then retains its scored fill.
+- **Wrong feedback:** red is transient on the selected wrong country; it does not become permanently solved.
+- **Score palette:** off-white / amber / orange / red remains conceptually separate from long-term mastery.
+- **Mobile topology:** bounded map viewport keeps the prompt stable while allowing geographic exploration; short landscape still reflows structurally.
+- **Regression safety:** existing flag domain/state/storage behavior remains untouched.
+
+## Merge recommendation
+
+**Ready to merge.** Final PR head is green, the exact CI artifact has been inspected, and the map-specific behavior requested in production feedback is now part of automated verification rather than relying on visual convention alone.
