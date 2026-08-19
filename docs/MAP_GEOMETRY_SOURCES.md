@@ -1,14 +1,16 @@
 # Map geometry sources and fidelity
 
-**Status:** MVP geometry accepted; production-fidelity upgrade backlog  
+**Status:** Africa MVP geometry accepted; production-fidelity upgrade backlog  
 **Reviewed:** 2026-08-19  
 **Tracking:** issue #1
 
 ## Current MVP
 
-The West Africa pilot currently uses coarse Natural Earth Admin-0-derived geometry generated from a low-resolution dataset available in the build environment. It is adequate for validating the learning loop, continent context, panning, scoring, small-country treatment, and mobile interaction model.
+Africa location learning currently uses one shared coarse Natural Earth Admin-0-derived geometry catalog covering all 54 application countries. It extends the original West Africa pilot projection across North, Central, East, and Southern Africa so regional drills and the all-Africa round use the same cartographic frame.
 
-It is **not the final geometry standard**.
+Five island countries that disappear or become impractical at the coarse source scale are represented by explicit point locators: Cabo Verde, São Tomé and Príncipe, Comoros, Mauritius, and Seychelles. Western Sahara is retained as non-scoring contextual geography rather than being silently removed from the continental silhouette.
+
+This geometry is adequate for validating the learning loop, continent context, panning, scoring, small-country treatment, regional navigation, and mobile interaction model. It is **not the final geometry standard**.
 
 Known MVP limitations:
 
@@ -29,7 +31,7 @@ Why it is a strong product fit:
 
 - global coverage from one consistent dataset;
 - public-domain cartographic data;
-- materially more detail than the pilot geometry;
+- materially more detail than the MVP geometry;
 - ISO-coded country attributes;
 - companion Admin-0 boundary-line data;
 - explicit documentation of de facto/de jure and point-of-view variants.
@@ -73,6 +75,10 @@ The production pipeline should make shared borders a **topology problem**, not a
 - border-policy decisions are documented for disputed territories;
 - representative Pixel/iPhone portrait and landscape screenshots are visually reviewed before release.
 
-## Decision for the current pilot
+## Decision for the current Africa release
 
-Do **not** block the MVP on replacing the entire Africa asset now. Fix material gameplay defects and obvious seam rendering problems, keep the current geometry labeled as MVP-grade, then replace the geometry through one dedicated data-pipeline change rather than accumulating manual SVG edits.
+Do **not** block the Africa MVP on replacing the entire geometry pipeline now. The interaction model has reached the point where broader real-device play is more valuable than manually polishing coarse SVG borders.
+
+Keep the current shared Africa geometry explicitly labeled MVP-grade, fix material gameplay defects and obvious seam rendering problems, and replace it later through one dedicated topology-aware data-pipeline change rather than accumulating manual per-border SVG edits.
+
+Before expanding map learning beyond Africa, revisit this decision: the higher-fidelity geometry pipeline should be treated as a release-quality gate, not indefinitely deferred polish.
