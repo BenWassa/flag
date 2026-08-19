@@ -39,7 +39,10 @@ for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
 assert.ok(home.includes('4 available'), 'Home reports all four learning domains as available.');
-assert.ok(home.includes('Outlines') && home.includes("domainDisplayName('neighbors')"), 'Home exposes Outlines and the canonical Neighbours display name together.');
+assert.ok(
+  home.includes("domainDisplayName('outlines')") && home.includes("domainDisplayName('neighbors')"),
+  'Home exposes Outlines and Neighbours through the canonical display-name contract.',
+);
 
 const domain = await readFile('dist/ui/views/domain.js', 'utf8');
 assert.ok(domain.includes('Country silhouettes') && domain.includes('Land-border sets'), 'Shared domain IA exposes both new learning families.');
