@@ -1,8 +1,9 @@
-const VERSION = 'flag-atlas-v3';
+const VERSION = 'flag-atlas-v4';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
+  './map.css',
   './app.js',
   './manifest.webmanifest',
   './icons/app-icon.svg',
@@ -20,10 +21,6 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-/**
- * Flags are content-addressed by country code and never change, so serving them
- * from the cache is both correct and the fastest path.
- */
 async function flagFirstFromCache(request) {
   const cache = await caches.open(VERSION);
   const cached = await cache.match(request);
@@ -38,13 +35,6 @@ async function flagFirstFromCache(request) {
   }
 }
 
-/**
- * The app shell is versioned by deploy, not by URL. Serving it cache-first meant
- * a returning learner kept running the previously installed build until the
- * cache name happened to change, so a shipped fix could sit invisible behind a
- * warm cache. The network decides, and the cache is what makes the app work
- * offline rather than what defines which build runs.
- */
 async function shellFromNetwork(request) {
   const cache = await caches.open(VERSION);
   try {
@@ -54,7 +44,6 @@ async function shellFromNetwork(request) {
   } catch {
     const cached = await cache.match(request);
     if (cached) return cached;
-    // A navigation to any in-app URL still resolves to the one document.
     if (request.mode === 'navigate') {
       const shell = await cache.match('./index.html');
       if (shell) return shell;

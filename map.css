@@ -1,0 +1,337 @@
+/* Country-location mode. Kept separate from the flag stylesheet so the map can evolve independently. */
+.map-mode-label,
+.map-quiz-topbar > span {
+  color: #52606b;
+  font-size: 0.82rem;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.map-pilot-card {
+  margin: 18px 0 4px;
+  padding: 18px;
+  border: 1px solid #d9e0e6;
+  border-radius: 16px;
+  background: #eef4f8;
+}
+
+.map-pilot-card__eyebrow,
+.map-eyebrow,
+.map-prompt__kicker {
+  margin: 0 0 6px;
+  color: #52606b;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+.map-pilot-card h2,
+.map-intro h1,
+.map-prompt h1,
+.map-result-summary h1 {
+  margin: 0;
+}
+
+.map-pilot-card p,
+.map-intro > p,
+.map-how p,
+.map-result-summary p,
+.map-prompt__hint {
+  color: #5f6c76;
+  line-height: 1.45;
+}
+
+.map-pilot-card__action {
+  margin-top: 12px;
+}
+
+.page--map-home,
+.page--map-results {
+  max-width: 900px;
+}
+
+.map-intro,
+.map-how,
+.map-result-summary {
+  margin-top: 22px;
+}
+
+.map-intro > p {
+  max-width: 560px;
+}
+
+.map-progress-card {
+  margin-top: 22px;
+  padding: 18px;
+  border: 1px solid #d9e0e6;
+  border-radius: 16px;
+  background: #fff;
+}
+
+.map-progress-card__score {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.map-progress-card__score strong {
+  font-size: 2rem;
+}
+
+.map-progress-card__score small {
+  margin-left: 6px;
+  color: #67737d;
+}
+
+.map-progress-bar {
+  display: flex;
+  height: 8px;
+  margin-top: 14px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #e7ebef;
+}
+
+.map-progress-bar__mastered { background: #254f70; }
+.map-progress-bar__learning { background: #8ca8bc; }
+
+.map-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 8px;
+  color: #687681;
+  font-size: 0.78rem;
+}
+
+.map-primary-actions {
+  margin-top: 18px;
+}
+
+.map-how {
+  padding-top: 22px;
+  border-top: 1px solid #dfe5ea;
+}
+
+.map-how h2 {
+  margin: 0 0 12px;
+  font-size: 1rem;
+}
+
+.map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  color: #52606b;
+  font-size: 0.82rem;
+}
+
+.map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.map-swatch {
+  width: 14px;
+  height: 14px;
+  border: 1px solid #87939c;
+  border-radius: 4px;
+}
+.map-swatch--first { background: #f8f8f2; }
+.map-swatch--one { background: #f1d56f; }
+.map-swatch--two { background: #e9a054; }
+.map-swatch--reveal { background: #cf625d; }
+
+.page--map-quiz {
+  width: min(100%, 1080px);
+  max-width: none;
+  min-height: 100dvh;
+  display: flex;
+  flex-direction: column;
+  padding-bottom: 0;
+}
+
+.map-quiz-topbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 10px;
+  min-height: 56px;
+}
+
+.map-quiz-topbar > :last-child {
+  justify-self: end;
+}
+
+.map-stage {
+  margin-top: 10px;
+  border: 1px solid #d9e0e6;
+  border-radius: 20px;
+  background: #edf3f6;
+  overflow: hidden;
+}
+
+.map-stage__scroll {
+  overflow: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.map-stage__scroll:focus-visible {
+  outline: 3px solid #245a83;
+  outline-offset: -3px;
+}
+
+.map-svg {
+  display: block;
+  width: 100%;
+  min-width: 700px;
+  height: auto;
+  max-height: 66dvh;
+}
+
+.map-ocean {
+  fill: #e9f0f4;
+}
+
+.map-country {
+  cursor: pointer;
+}
+
+.map-country__shape,
+.map-country__locator {
+  fill: #d9e0e4;
+  stroke: #697782;
+  stroke-width: 1.35;
+  vector-effect: non-scaling-stroke;
+  transition: fill 120ms ease, stroke 120ms ease;
+}
+
+.map-country__locator-halo {
+  fill: #f7fafc;
+  stroke: #8998a4;
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-current-target-hit {
+  fill: transparent;
+  stroke: transparent;
+  pointer-events: all;
+}
+
+.map-country:hover .map-country__shape,
+.map-country:hover .map-country__locator,
+.map-country:focus-visible .map-country__shape,
+.map-country:focus-visible .map-country__locator {
+  stroke: #163d5a;
+  stroke-width: 2.5;
+}
+
+.map-country:focus-visible {
+  outline: none;
+}
+
+.map-country--first .map-country__shape,
+.map-country--first .map-country__locator { fill: #f8f8f2; }
+.map-country--one-miss .map-country__shape,
+.map-country--one-miss .map-country__locator { fill: #f1d56f; }
+.map-country--two-miss .map-country__shape,
+.map-country--two-miss .map-country__locator { fill: #e9a054; }
+.map-country--revealed .map-country__shape,
+.map-country--revealed .map-country__locator { fill: #cf625d; }
+
+.map-country--wrong-pulse .map-country__shape,
+.map-country--wrong-pulse .map-country__locator {
+  animation: map-wrong 360ms ease-out;
+}
+
+@keyframes map-wrong {
+  0%, 100% { stroke: #697782; stroke-width: 1.35; }
+  35% { stroke: #8b2d2a; stroke-width: 4; }
+}
+
+.map-prompt {
+  position: sticky;
+  bottom: 0;
+  z-index: 3;
+  margin: 12px -2px 0;
+  padding: 16px 18px calc(16px + env(safe-area-inset-bottom));
+  border: 1px solid #d5dde3;
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  background: rgba(255,255,255,0.97);
+  box-shadow: 0 -10px 30px rgba(42,57,68,0.08);
+  backdrop-filter: blur(10px);
+}
+
+.map-prompt h1 {
+  font-size: clamp(1.55rem, 5vw, 2.2rem);
+  line-height: 1.05;
+}
+
+.map-prompt__hint {
+  margin: 7px 0 0;
+  font-size: 0.84rem;
+}
+
+.map-result-summary {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  column-gap: 18px;
+  align-items: end;
+}
+
+.map-result-summary .map-eyebrow,
+.map-result-summary p {
+  grid-column: 1 / -1;
+}
+
+.map-result-percent {
+  color: #254f70;
+  font-size: 2rem;
+}
+
+.map-stage--results {
+  margin-top: 18px;
+}
+
+.map-stage--results .map-svg {
+  min-width: 620px;
+}
+
+.map-stage--results .map-country {
+  cursor: default;
+}
+
+.map-results-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 18px;
+  padding-bottom: calc(18px + env(safe-area-inset-bottom));
+}
+
+.button--ghost {
+  border: 1px solid transparent;
+  background: transparent;
+  color: #39566d;
+}
+
+@media (min-width: 760px) {
+  .map-svg { min-width: 0; }
+  .map-stage__scroll { overflow: hidden; }
+  .map-prompt {
+    position: static;
+    margin: 14px 0 0;
+    border-bottom: 1px solid #d5dde3;
+    border-radius: 18px;
+    box-shadow: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-country--wrong-pulse .map-country__shape,
+  .map-country--wrong-pulse .map-country__locator { animation: none; stroke: #8b2d2a; stroke-width: 3; }
+}
