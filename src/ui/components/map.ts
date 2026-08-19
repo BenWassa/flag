@@ -29,13 +29,13 @@ export function renderMapSvg(
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
 
   return `
-    <div class="map-stage__scroll" tabindex="0" aria-label="Scrollable map area">
+    <div class="map-stage__scroll">
       <svg class="map-svg" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
-        <rect class="map-ocean" x="0" y="0" width="100%" height="100%" rx="18" />
+        <rect class="map-ocean" x="0" y="0" width="100%" height="100%" />
         ${asset.countries.map((geometry) => {
           const state = session.targets[geometry.countryId];
           const classes = `map-country${resolutionClass(state, showFeedback)}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
-          const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Country area"` : '';
+          const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
           return `
             <g class="${classes}"${action}>
               ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
@@ -51,7 +51,8 @@ export function renderMapSvg(
           const targetId = session.countryIds[session.currentIndex];
           const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
           if (!targetId || !assist) return '';
-          return `<circle class="map-current-target-hit" cx="${assist.cx}" cy="${assist.cy}" r="${assist.r}" data-action="map-answer" data-id="${targetId}" aria-hidden="true" />`;
+          const usableRadius = Math.max(assist.r, 26);
+          return `<circle class="map-current-target-hit" cx="${assist.cx}" cy="${assist.cy}" r="${usableRadius}" data-action="map-answer" data-id="${targetId}" aria-hidden="true" />`;
         })()}
       </svg>
     </div>
