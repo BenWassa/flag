@@ -72,6 +72,10 @@ export function renderMapSvg(
   const wrongId = options.lastWrongCountryId ?? null;
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
+  const currentTargetState = currentTargetId ? session.targets[currentTargetId] : undefined;
+  const recordedCountryId = interactive && !showFeedback && currentTargetState?.resolved
+    ? currentTargetState.selectedCountryId ?? null
+    : null;
   const focus = asset.initialFocus;
   const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
 
@@ -86,12 +90,14 @@ export function renderMapSvg(
         ` : ''}
         ${asset.countries.map((geometry) => {
           const state = session.targets[geometry.countryId];
-          const currentCorrect = showFeedback
+          const currentCorrect = interactive
+            && showFeedback
             && geometry.countryId === currentTargetId
             && state?.resolved
             && state.resolution !== 'revealed'
             && state.resolution !== 'incorrect';
-          const classes = `map-country${resolutionClass(state, showFeedback)}${currentCorrect ? ' map-country--current-correct' : ''}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
+          const recorded = geometry.countryId === recordedCountryId;
+          const classes = `map-country${resolutionClass(state, showFeedback)}${currentCorrect ? ' map-country--current-correct' : ''}${recorded ? ' map-country--recorded' : ''}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
           const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
           return `
             <g class="${classes}"${action}>
