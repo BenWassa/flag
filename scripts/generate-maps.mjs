@@ -132,6 +132,10 @@ function isSomaliland(featureValue) {
   return sourceName(featureValue).toLowerCase().includes('somaliland');
 }
 
+function isBirTawil(featureValue) {
+  return sourceName(featureValue).toLowerCase() === 'bir tawil';
+}
+
 function geometryCoordinateCount(geometry) {
   if (!geometry) return 0;
   if (geometry.type === 'GeometryCollection') {
@@ -179,6 +183,7 @@ function normalizeCountries(countries, catalog) {
   const appFeatures = new Map();
   let somaliland = null;
   let westernSahara = null;
+  let birTawil = null;
   const unexpectedAfrica = [];
 
   for (const sourceFeature of countries.features) {
@@ -196,6 +201,10 @@ function normalizeCountries(countries, catalog) {
       westernSahara = sourceFeature;
       continue;
     }
+    if (isBirTawil(sourceFeature)) {
+      birTawil = sourceFeature;
+      continue;
+    }
     if (String(sourceFeature.properties?.CONTINENT ?? '').toLowerCase() === 'africa') {
       unexpectedAfrica.push(sourceName(sourceFeature) || '(unnamed)');
     }
@@ -208,10 +217,12 @@ function normalizeCountries(countries, catalog) {
   }
   if (!somaliland) throw new Error('Expected Natural Earth Somaliland de-facto feature was not found.');
   if (!westernSahara) throw new Error('Expected Natural Earth Western Sahara context feature was not found.');
+  if (!birTawil) throw new Error('Expected Natural Earth Bir Tawil context feature was not found.');
 
   // Natural Earth defaults to a de-facto POV. The application curriculum follows
   // canonical ISO3/UN country identities, so Somaliland is dissolved into SOM for
-  // scoring/adjacency while Western Sahara remains explicit non-scoring context.
+  // scoring/adjacency. Western Sahara and Bir Tawil remain explicit non-scoring
+  // context rather than being silently assigned to a neighboring scored country.
   const rawFeatures = [
     ...catalog.map((row) => ({
       type: 'Feature',
@@ -227,6 +238,11 @@ function normalizeCountries(countries, catalog) {
       type: 'Feature',
       properties: { sourceKey: 'ESH-CONTEXT', role: 'context', name: 'Western Sahara' },
       geometry: westernSahara.geometry,
+    },
+    {
+      type: 'Feature',
+      properties: { sourceKey: 'BIR-TAWIL-CONTEXT', role: 'context', name: 'Bir Tawil' },
+      geometry: birTawil.geometry,
     },
   ];
 
@@ -250,6 +266,11 @@ function normalizeCountries(countries, catalog) {
     type: 'Feature',
     properties: { contextId: 'ESH', role: 'context', name: 'Western Sahara' },
     geometry: feature(rawTopology, byKey.get('ESH-CONTEXT')).geometry,
+  });
+  normalized.push({
+    type: 'Feature',
+    properties: { contextId: 'BIR-TAWIL', role: 'context', name: 'Bir Tawil' },
+    geometry: feature(rawTopology, byKey.get('BIR-TAWIL-CONTEXT')).geometry,
   });
   return featureCollection(normalized);
 }
@@ -472,6 +493,7 @@ async function main() {
       scoredCountries: 54,
       somaliland: 'dissolved into canonical SOM scoring geometry; no separate target',
       westernSahara: 'non-scoring context; not merged into MAR',
+      birTawil: 'non-scoring context; not merged into EGY or SDN',
       unRole: 'policy/dispute/disclaimer audit reference, not runtime redistribution source',
     },
   };
