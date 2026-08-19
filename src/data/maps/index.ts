@@ -55,8 +55,8 @@ export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | nu
     coastlinePaths: [...data.AFRICA_COASTLINE_PATHS],
     water: {
       oceanPath: data.AFRICA_WATER.oceanPath,
-      lakes: data.AFRICA_WATER.lakes.map((item) => ({ ...item })),
-      rivers: data.AFRICA_WATER.rivers.map((item) => ({ ...item })),
+      lakes: (data.AFRICA_WATER.lakes ?? []).map((item) => ({ ...item })),
+      rivers: (data.AFRICA_WATER.rivers ?? []).map((item) => ({ ...item })),
     },
     initialFocus: data.AFRICA_SCOPE_FOCUS[scopeId],
   };
