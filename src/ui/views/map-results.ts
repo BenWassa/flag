@@ -41,7 +41,7 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
       </section>
 
       <div class="map-results-actions">
-        ${result.missedCountryIds.length ? `<button class="button button--primary" data-action="review-map-mistakes">Review mistakes</button>` : '<span></span>'}
+        ${result.missedCountryIds.length ? `<button class="button button--primary" data-action="review-map-mistakes">Review mistakes</button>` : ''}
         <button class="button button--secondary" data-action="repeat-map">Repeat ${mode}</button>
         <button class="button button--tertiary" data-action="open-map-pilot">Map home</button>
       </div>
