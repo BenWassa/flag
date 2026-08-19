@@ -1,4 +1,4 @@
-// v10 adds the neighboring-countries learning domain and its mobile entry surface.
+// v10 supersedes flag-atlas-v9 after Neighbors; the cartography/routing cache lineage began at flag-atlas-v8.
 const VERSION = 'flag-atlas-v10';
 const SHELL = [
   './',
