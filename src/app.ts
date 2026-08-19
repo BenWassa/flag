@@ -30,6 +30,7 @@ let lastResultMode: StudyMode = 'learn';
 let lastMissedIds: string[] = [];
 let pendingAdvance: number | null = null;
 let pendingMapAdvance: number | null = null;
+let lastRenderedRouteKey: string | null = null;
 
 function cancelPendingAdvance(): void {
   if (pendingAdvance === null) return;
@@ -113,6 +114,16 @@ function documentTitle(): string {
   return TITLES[view.name];
 }
 
+function currentRouteKey(): string {
+  const view = store.view;
+  if (view.name === 'scope') return `scope:${view.scope.kind}:${view.scope.id ?? 'world'}`;
+  if (view.name === 'quiz') return `quiz:${store.session?.id ?? 'none'}`;
+  if (view.name === 'results') return `results:${view.result.session.id}`;
+  if (view.name === 'map-quiz') return `map-quiz:${store.mapSession?.id ?? 'none'}`;
+  if (view.name === 'map-results') return `map-results:${view.result.session.id}`;
+  return view.name;
+}
+
 function restoreFocus(previousSelector: string | null): void {
   if (previousSelector) {
     const previous = root.querySelector<HTMLElement>(previousSelector);
@@ -125,6 +136,9 @@ function restoreFocus(previousSelector: string | null): void {
 }
 
 function render(previousSelector: string | null = null): void {
+  const routeKey = currentRouteKey();
+  const routeChanged = routeKey !== lastRenderedRouteKey;
+
   switch (store.view.name) {
     case 'home':
       root.innerHTML = renderHome(store.progress, store.persisting);
@@ -160,7 +174,8 @@ function render(previousSelector: string | null = null): void {
 
   markFailedFlags(root);
   document.title = documentTitle();
-  window.scrollTo({ top: 0, behavior: 'instant' });
+  if (routeChanged) window.scrollTo({ top: 0, behavior: 'instant' });
+  lastRenderedRouteKey = routeKey;
   restoreFocus(previousSelector);
 }
 
@@ -260,6 +275,15 @@ function submitMapAnswer(countryId: string, selector: string): void {
   if (!currentId || store.mapSession.targets[currentId]?.resolved) return;
 
   const outcome = store.answerMap(countryId);
+  const advanceDelay = store.mapSession.mode === 'test'
+    ? 180
+    : outcome.revealed
+      ? 1400
+      : outcome.misses >= 2
+        ? 850
+        : outcome.misses === 1
+          ? 700
+          : 520;
   announce(mapAnswerAnnouncement());
   finishInteraction(selector);
 
@@ -276,7 +300,7 @@ function submitMapAnswer(countryId: string, selector: string): void {
       if (next) announce(`Next country. Find ${next.name}.`);
     }
     finishInteraction(null);
-  }, store.mapSession.mode === 'test' ? 180 : 620);
+  }, advanceDelay);
 }
 
 function finishInteraction(previousSelector: string | null): void {
