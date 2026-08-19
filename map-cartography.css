@@ -6,15 +6,17 @@
 }
 
 .map-stage__frame {
-  position: relative;
   width: 100%;
   height: 100%;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
   overflow: hidden;
 }
 
 .map-stage__scroll {
   width: 100%;
-  height: 100%;
+  height: auto;
+  min-height: 0;
   overflow: hidden;
   overscroll-behavior: contain;
   touch-action: none;
@@ -115,42 +117,35 @@
   paint-order: stroke fill;
 }
 
+/* Controls occupy their own toolbar row. They never overlay or intercept
+   country geography, including Madagascar/Mauritius at full-continent fit. */
 .map-viewport-controls {
-  position: absolute;
-  right: 8px;
-  bottom: 8px;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: repeat(2, 56px);
+  min-height: 50px;
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
   gap: 6px;
-  pointer-events: none;
+  padding: 3px 6px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
 }
 
 .map-viewport-control {
-  width: 56px;
+  min-width: 48px;
   height: 44px;
   display: inline-grid;
   place-items: center;
-  padding: 0;
+  padding: 0 8px;
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-sm);
   background: var(--surface);
   color: var(--text);
   cursor: pointer;
-  pointer-events: auto;
 }
 
 .map-viewport-control:hover { background: var(--track); }
 .map-viewport-control:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
-.map-viewport-control--label { font-size: 11px; font-weight: 750; }
-
-@media (max-height: 600px) and (orientation: landscape) {
-  .map-viewport-controls {
-    right: 6px;
-    bottom: 6px;
-    grid-template-columns: repeat(4, 56px);
-  }
-}
+.map-viewport-control--label { min-width: 56px; font-size: 11px; font-weight: 750; }
 
 @media (forced-colors: active) {
   .map-coastline,
