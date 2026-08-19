@@ -29,7 +29,7 @@ import {
 import { renderNeighborQuiz } from '../dist/ui/views/neighbor-quiz.js';
 
 const asset = await loadMapAsset('africa');
-assert.ok(asset, 'Canonical Issue #9 Africa asset loads for Neighbors map presentation.');
+assert.ok(asset, 'Canonical Issue #9 Africa asset loads for Neighbours map presentation.');
 const geometryById = new Map(asset.countries.map((geometry) => [geometry.countryId, geometry]));
 const nameForId = (id) => COUNTRY_BY_ID.get(id)?.name ?? id;
 const htmlText = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
@@ -63,17 +63,17 @@ assert.deepEqual(
   new Set(AFRICA_LAND_ADJACENCY.GHA),
   'Only direct topology-derived adjacency members are unresolved puzzle slots.',
 );
-assert.ok(!AFRICA_LAND_ADJACENCY.GHA.includes('GHA'), 'Target is never its own neighbor.');
+assert.ok(!AFRICA_LAND_ADJACENCY.GHA.includes('GHA'), 'Target is never its own neighbour.');
 assert.ok(model.contextCountries.every((country) => !AFRICA_LAND_ADJACENCY.GHA.includes(country.countryId)), 'Context countries are never answer slots.');
 
 const initialHtml = renderNeighborMap(asset, model, 'neighbor-map-ui:GHA', '|');
 assert.ok(initialHtml.includes('Ghana, target country'));
-assert.equal((initialHtml.match(/>\?<\/text>/g) ?? []).length, AFRICA_LAND_ADJACENCY.GHA.length, 'Every unresolved neighbor has one visible question mark.');
-assert.equal((initialHtml.match(/Unresolved neighboring country/g) ?? []).length, AFRICA_LAND_ADJACENCY.GHA.length, 'Every unresolved polygon has a generic non-answer accessible name.');
+assert.equal((initialHtml.match(/>\?<\/text>/g) ?? []).length, AFRICA_LAND_ADJACENCY.GHA.length, 'Every unresolved neighbour has one visible question mark.');
+assert.equal((initialHtml.match(/Unresolved neighbouring country/g) ?? []).length, AFRICA_LAND_ADJACENCY.GHA.length, 'Every unresolved polygon has a generic non-answer accessible name.');
 for (const id of AFRICA_LAND_ADJACENCY.GHA) {
   assert.ok(!initialHtml.includes(nameForId(id)), `Initial unresolved DOM does not leak ${nameForId(id)}.`);
 }
-assert.ok(neighborMapSummary(model).includes('3 unresolved neighboring countries'));
+assert.ok(neighborMapSummary(model).includes('3 unresolved neighbouring countries'));
 assert.ok(!neighborMapSummary(model).includes('Burkina Faso'), 'Accessible text equivalent does not leak unresolved country names.');
 
 // The quiz host itself contains no unresolved IDs; the runtime derives membership from the lightweight fixture.
@@ -90,12 +90,12 @@ progress = result.progress;
 target = session.targets.GHA;
 model = deriveNeighborMapModel(asset, roundState(target), nameForId);
 assert.equal(model.puzzleCountries.find((country) => country.countryId === 'BFA')?.state, 'solved');
-assert.ok(renderNeighborMap(asset, model, 'neighbor-map-ui:GHA', 'BFA|').includes('Burkina Faso, neighbor found'));
+assert.ok(renderNeighborMap(asset, model, 'neighbor-map-ui:GHA', 'BFA|').includes('Burkina Faso, neighbour found'));
 result = applyNeighborGuess(session, progress, 'CIV', 170);
 session = result.session;
 progress = result.progress;
 model = deriveNeighborMapModel(asset, roundState(session.targets.GHA), nameForId);
-assert.equal(model.puzzleCountries.find((country) => country.countryId === 'BFA')?.state, 'solved', 'Previously solved neighbors stay solved.');
+assert.equal(model.puzzleCountries.find((country) => country.countryId === 'BFA')?.state, 'solved', 'Previously solved neighbours stay solved.');
 assert.equal(model.puzzleCountries.find((country) => country.countryId === 'CIV')?.state, 'solved');
 
 // Wrong and duplicate guesses do not mutate any visual resolution state or labels.
@@ -130,9 +130,9 @@ for (const wrongId of ['BWA', 'NAM', 'ZWE']) {
 const exhaustedModel = deriveNeighborMapModel(asset, roundState(exhaustedSession.targets.LSO), nameForId);
 assert.equal(exhaustedModel.puzzleCountries.find((country) => country.countryId === 'ZAF')?.state, 'revealed');
 const exhaustedHtml = renderNeighborMap(asset, exhaustedModel, 'neighbor-map-exhaust:LSO', '|ZAF');
-assert.ok(exhaustedHtml.includes('South Africa, missed neighbor revealed'));
+assert.ok(exhaustedHtml.includes('South Africa, missed neighbour revealed'));
 assert.ok(exhaustedHtml.includes('neighbor-map-country--revealed'));
-assert.ok(!exhaustedHtml.includes('South Africa, neighbor found'), 'Revealed miss is not presented as learner-solved.');
+assert.ok(!exhaustedHtml.includes('South Africa, neighbour found'), 'Revealed miss is not presented as learner-solved.');
 
 // Completion names and solves every member without changing the mastery/game state machine.
 let completeProgress = createInitialNeighborProgress(['GHA']);
@@ -221,7 +221,7 @@ assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography st
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v12'"), 'Neighbor map shell change bumps the PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v13'"), 'British-English shell change bumps the PWA cache.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime is cached in the app shell.');
 const css = await readFile('dist/neighbors.css', 'utf8');
 assert.ok(css.includes('neighbor-map-country--target') && css.includes('neighbor-map-country--unresolved') && css.includes('neighbor-map-country--solved') && css.includes('neighbor-map-country--revealed'));
@@ -236,4 +236,4 @@ for (const forbidden of ['GMB', 'TGO', 'LSO', 'COD', 'TZA', 'AGO', 'GNQ']) {
 }
 assert.ok(modelSource.includes('geometry.callout'), 'Only canonical presentation metadata is reused for exceptional label callouts.');
 
-console.log('Neighbor-map verification passed: canonical geometry, progressive states, framing, deterministic labels, no answer leakage, shell reuse, responsiveness, accessibility, and PWA lazy-loading contracts.');
+console.log('Neighbour-map verification passed: canonical geometry, progressive states, framing, deterministic labels, no answer leakage, shell reuse, responsiveness, accessibility, and PWA lazy-loading contracts.');
