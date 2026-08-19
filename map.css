@@ -55,8 +55,8 @@
   border-radius: 3px;
 }
 .map-swatch--first {
-  background: color-mix(in srgb, var(--mastered) 8%, var(--surface));
-  border-color: color-mix(in srgb, var(--mastered) 45%, var(--line-strong));
+  background: var(--surface);
+  border-color: var(--line-strong);
 }
 .map-swatch--one { background: color-mix(in srgb, var(--learning) 25%, var(--surface)); }
 .map-swatch--two { background: color-mix(in srgb, var(--learning) 52%, var(--surface)); }
@@ -196,8 +196,8 @@
    feedback channel; the prompt also states the outcome in text. */
 .map-country--first .map-country__shape,
 .map-country--first .map-country__locator {
-  fill: color-mix(in srgb, var(--mastered) 8%, var(--surface));
-  stroke: color-mix(in srgb, var(--mastered) 45%, var(--line-strong));
+  fill: var(--surface);
+  stroke: var(--line-strong);
 }
 .map-country--one-miss .map-country__shape,
 .map-country--one-miss .map-country__locator {
