@@ -72,9 +72,11 @@ export function renderMapSvg(
   const wrongId = options.lastWrongCountryId ?? null;
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
+  const focus = asset.initialFocus;
+  const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
 
   return `
-    <div class="map-stage__scroll" data-map-viewport>
+    <div class="map-stage__scroll" data-map-viewport data-map-session="${session.id}" data-map-viewbox="${asset.viewBox}"${focus ? ` data-map-focus="${focusData}"` : ''}>
       <svg class="map-svg" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
         <rect class="map-ocean" x="0" y="0" width="100%" height="100%" />
         ${(asset.contextPaths ?? []).length ? `
