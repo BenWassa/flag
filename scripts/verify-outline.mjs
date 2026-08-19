@@ -1,0 +1,182 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
+import {
+  AFRICA_MAP_COUNTRY_IDS,
+  WEST_AFRICA_MAP_COUNTRY_IDS,
+} from '../dist/data/map-scopes.js';
+import { AFRICA_GEOMETRY } from '../dist/data/maps/africa.js';
+import {
+  buildOutlineAsset,
+  buildOutlineQuiz,
+  chooseOutlineDistractors,
+  normalizeOutlineGeometry,
+} from '../dist/domain/outline.js';
+import { applyAttempt, createInitialProgress, getRecord } from '../dist/domain/progress.js';
+import { createSeededRandom } from '../dist/domain/quiz.js';
+import { outlineSilhouette } from '../dist/ui/components/outline.js';
+import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
+import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
+import { parentRoute, parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+
+const africaIds = [...AFRICA_MAP_COUNTRY_IDS];
+const africaSet = new Set(africaIds);
+const geometryIds = Object.keys(AFRICA_GEOMETRY).filter((id) => africaSet.has(id)).sort();
+assert.deepEqual(geometryIds, [...africaIds].sort(), 'Every scored Africa ISO3 must reconcile to canonical production geometry.');
+
+for (const id of africaIds) {
+  const country = COUNTRY_BY_ID.get(id);
+  assert.ok(country, `Curriculum country missing for ${id}.`);
+  assert.equal(country.id, country.iso3, `${id} must use ISO3 as the identity key.`);
+
+  const geometry = AFRICA_GEOMETRY[id];
+  assert.ok(geometry?.path, `Canonical production path missing for ${id}.`);
+  const normalized = normalizeOutlineGeometry(geometry);
+  assert.equal(normalized.countryId, id);
+
+  const coords = [...normalized.path.matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)]
+    .flatMap((match) => [Number(match[1]), Number(match[2])]);
+  assert.ok(coords.length >= 6, `${id} normalized silhouette must retain polygon coordinates.`);
+  assert.ok(Math.min(...coords) >= 7.99 && Math.max(...coords) <= 92.01, `${id} must fit the fixed normalized frame.`);
+}
+
+const islandIds = ['CPV', 'STP', 'COM', 'MUS', 'SYC'];
+for (const id of islandIds) {
+  const normalized = normalizeOutlineGeometry(AFRICA_GEOMETRY[id]);
+  assert.ok(normalized.subpathCount >= 2, `${id} must preserve multipart/island geometry rather than collapse to one locator.`);
+  const withoutLocator = { ...AFRICA_GEOMETRY[id], locator: undefined, hitAssist: undefined, callout: undefined };
+  assert.equal(
+    normalizeOutlineGeometry(withoutLocator).path,
+    normalized.path,
+    `${id} silhouette must derive from canonical country polygons, not map locator/callout metadata.`,
+  );
+}
+
+const westScope = { kind: 'region', id: 'west-africa', label: 'West Africa' };
+const westIds = new Set(WEST_AFRICA_MAP_COUNTRY_IDS);
+const westAsset = buildOutlineAsset(
+  westScope,
+  WEST_AFRICA_MAP_COUNTRY_IDS.map((id) => AFRICA_GEOMETRY[id]),
+  africaIds.filter((id) => !westIds.has(id)).map((id) => AFRICA_GEOMETRY[id]),
+);
+assert.equal(Object.keys(westAsset.geometries).length, 54, 'Outline asset keeps same-continent context for plausible distractors.');
+assert.deepEqual([...westAsset.countryIds].sort(), [...WEST_AFRICA_MAP_COUNTRY_IDS].sort(), 'Active outline scope must not expand beyond the requested region.');
+
+const outlineProgress = createInitialProgress(COUNTRIES.filter((country) => africaSet.has(country.id)));
+const questions = buildOutlineQuiz({
+  countries: COUNTRIES,
+  progress: outlineProgress,
+  scope: westScope,
+  mode: 'learn',
+  size: 10,
+  sessionId: 'outline-verify',
+  asset: westAsset,
+});
+assert.equal(questions.length, 10, 'A normal regional outline round should contain ten questions.');
+
+const correctPositions = [0, 0, 0, 0];
+for (const question of questions) {
+  assert.ok(westIds.has(question.countryId), 'Targets must stay inside the selected region.');
+  assert.equal(question.optionCountryIds.length, 4, 'Each outline question must have exactly four options.');
+  assert.equal(new Set(question.optionCountryIds).size, 4, 'Outline options must not contain duplicates.');
+  assert.equal(question.optionCountryIds[question.correctIndex], question.countryId, 'Correct index must identify the target country.');
+  assert.ok(question.optionCountryIds.every((id) => africaSet.has(id)), 'Africa outline distractors must remain within supported curriculum.');
+  const distractors = question.optionCountryIds.filter((id) => id !== question.countryId);
+  assert.ok(distractors.every((id) => COUNTRY_BY_ID.get(id)?.regionId === 'west-africa'), 'Fresh regional questions should use same-region distractors when enough exist.');
+  correctPositions[question.correctIndex] += 1;
+}
+assert.ok(Math.max(...correctPositions) - Math.min(...correctPositions) <= 1, 'Correct option ordering must stay balanced across positions.');
+
+const confused = structuredClone(outlineProgress);
+confused.records.DZA.confusionCounts.ZAF = 4;
+const targetDza = COUNTRY_BY_ID.get('DZA');
+assert.ok(targetDza);
+const africaAsset = buildOutlineAsset(
+  { kind: 'continent', id: 'africa', label: 'Africa' },
+  africaIds.map((id) => AFRICA_GEOMETRY[id]),
+);
+const confusedDistractors = chooseOutlineDistractors(
+  targetDza,
+  COUNTRIES.filter((country) => africaSet.has(country.id)),
+  confused,
+  africaAsset,
+  3,
+  createSeededRandom(17),
+);
+assert.ok(confusedDistractors.some((country) => country.id === 'ZAF'), 'Recorded outline confusions should outrank generic similarity signals.');
+
+// The generic mastery transition is reused, but the state object is separate.
+const flagProgress = createInitialProgress(COUNTRIES);
+let outlineLedger = createInitialProgress(COUNTRIES.filter((country) => africaSet.has(country.id)));
+for (const sessionId of ['outline-a', 'outline-b', 'outline-c']) {
+  outlineLedger = applyAttempt(outlineLedger, 'GHA', {
+    sessionId,
+    countryId: 'GHA',
+    selectedCountryId: 'GHA',
+    responseTimeMs: 900,
+    now: new Date('2026-08-19T12:00:00Z'),
+  }).state;
+}
+assert.equal(getRecord(outlineLedger, 'GHA').status, 'mastered', 'Outline Learn must use established mastery semantics.');
+assert.equal(getRecord(flagProgress, 'GHA').status, 'unseen', 'Outline mastery must not contaminate flag mastery.');
+
+const sample = questions[0];
+const sampleTarget = COUNTRY_BY_ID.get(sample.countryId);
+assert.ok(sampleTarget);
+const sampleGeometry = westAsset.geometries[sample.countryId];
+assert.ok(sampleGeometry);
+const silhouette = outlineSilhouette(sampleGeometry);
+assert.ok(silhouette.includes('viewBox="0 0 100 100"'), 'Every silhouette must expose the same fixed SVG viewport.');
+assert.ok(silhouette.includes('aria-label="Country silhouette to identify"'), 'Unanswered silhouette needs useful generic screen-reader text.');
+assert.equal(silhouette.includes(sampleTarget.id), false, 'Silhouette markup must not expose the answer ISO3.');
+assert.equal(silhouette.includes(sampleTarget.name), false, 'Silhouette accessibility/DOM metadata must not expose the answer name.');
+assert.equal(/data-(?:country|answer|id)=/.test(silhouette), false, 'Silhouette renderer must not carry answer-bearing data attributes.');
+
+const learnSession = {
+  id: 'learn-render',
+  mode: 'learn',
+  scope: westScope,
+  startedAt: '2026-08-19T12:00:00.000Z',
+  questions: [sample],
+  currentIndex: 0,
+  attempts: [],
+};
+const testSession = { ...learnSession, id: 'test-render', mode: 'test' };
+const wrongId = sample.optionCountryIds.find((id) => id !== sample.countryId);
+assert.ok(wrongId);
+
+const unansweredHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, null);
+const svgMarkup = unansweredHtml.match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
+assert.ok(svgMarkup, 'Outline quiz must render the silhouette SVG.');
+assert.equal(svgMarkup.includes(sampleTarget.name), false, 'Unanswered SVG subtree must not contain the answer name.');
+assert.equal(svgMarkup.includes(sampleTarget.id), false, 'Unanswered SVG subtree must not contain the answer ISO3.');
+assert.ok(unansweredHtml.includes('data-action="outline-answer"'), 'Outline quiz must render four answer controls.');
+
+const learnedHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, wrongId);
+assert.ok(learnedHtml.includes(`Correct: ${sampleTarget.name}`), 'Learn mode must reveal the correct answer immediately after a miss.');
+const testedHtml = renderOutlineQuiz(westAsset, testSession, outlineProgress, wrongId);
+assert.equal(testedHtml.includes('Correct:'), false, 'Test mode must withhold correctness during the round.');
+assert.ok(testedHtml.includes('Answer recorded'), 'Test mode should acknowledge input without revealing correctness.');
+
+const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, true);
+assert.ok(homeHtml.includes('Outlines · Continent · 54 countries'), 'Africa outline scope must render through the shared scope hierarchy.');
+assert.ok(homeHtml.includes('data-domain="outlines"'), 'Outline regions must route through the shared domain router.');
+
+const outlineRoute = parseRoutePath('/outlines/africa/west-africa/learn');
+assert.ok(outlineRoute, 'Shared router must parse outline activity routes.');
+assert.equal(serializeRoutePath(outlineRoute), '/outlines/africa/west-africa/learn');
+assert.equal(serializeRoutePath(parentRoute(outlineRoute)), '/outlines/africa/west-africa', 'Outline activity Back must return to its stable shared scope.');
+
+const outlineDataSource = await readFile('src/data/outlines.ts', 'utf8');
+assert.ok(outlineDataSource.includes("loadMapAsset"), 'Outlines must consume canonical production map geometry.');
+assert.equal(outlineDataSource.includes('AFRICA_GEOMETRY'), false, 'Outline data layer must not create a second direct geometry dataset.');
+const outlineStorage = await readFile('dist/infrastructure/outline-storage.js', 'utf8');
+assert.ok(outlineStorage.includes('flag-atlas:outline-progress:v1'), 'Outline mastery must use its own persisted ledger key.');
+assert.equal(outlineStorage.includes('flag-atlas:progress:v1'), false, 'Outline storage must not write into flag progress.');
+assert.equal(outlineStorage.includes('flag-atlas:location-progress:v1'), false, 'Outline storage must not write into location progress.');
+
+const outlineCss = await readFile('dist/outline.css', 'utf8');
+assert.ok(outlineCss.includes('orientation: landscape') && outlineCss.includes('max-height: 600px'), 'Outline quiz must include a short-landscape layout contract.');
+assert.ok(outlineCss.includes('.outline-frame--stage'), 'Silhouette must dominate the question stage with a dedicated fixed frame.');
+
+console.log('Outline verification passed: canonical geometry, ISO3, multipart islands, normalized framing, distractors, Learn/Test, mastery isolation, routing, rendering, accessibility, and responsive layout.');
