@@ -128,7 +128,7 @@ assert.ok(html.includes('data-autofocus'));
 assert.ok(html.includes('enterkeyhint="go"'));
 assert.ok(html.includes('autocomplete="off"'));
 assert.ok(html.includes('aria-autocomplete="list"'));
-assert.ok(html.includes('<strong>0 of 3</strong> neighbors found'), 'Initial UI shows zero completed neighbors and the correct total.');
+assert.ok(html.includes('<strong>0 of 3</strong> neighbours found'), 'Initial UI shows zero completed neighbours and the correct total.');
 const uiStep = applyNeighborGuess(uiSession, createInitialNeighborProgress(['GHA']), 'BFA', 200);
 const suggestionHtml = renderNeighborSuggestions(uiStep.session, 'burk');
 assert.ok(!suggestionHtml.includes('data-id="BFA"'), 'Completed neighbors disappear from autocomplete suggestions.');
@@ -143,7 +143,7 @@ assert.ok(storageSource.includes('flag-atlas:neighbor-attempts:v1'));
 assert.ok(!storageSource.includes('flag-atlas:location-progress:v1'));
 assert.ok(!storageSource.includes('flag-atlas:progress:v2'));
 const appSource = await readFile('src/app.ts', 'utf8');
-assert.ok(appSource.includes("routeForScope('neighbors'"), 'Neighbors uses the shared Issue #10 route constructor.');
+assert.ok(appSource.includes("routeForScope('neighbors'"), 'Neighbours uses the shared Issue #10 route constructor.');
 assert.ok(appSource.includes("finishInteraction(outcome.resolved ? null : '[data-neighbor-input]')"), 'Sequential guesses restore input focus while the target remains active.');
 assert.ok(appSource.includes("root.addEventListener('submit'"), 'Enter-to-submit uses the native form path.');
 const css = await readFile('neighbors.css', 'utf8');
@@ -160,4 +160,4 @@ assert.equal(regeneration.status, 0, regeneration.stderr || 'Neighbor fixture re
 const fixtureAfter = await readFile('src/data/neighbors/africa.ts', 'utf8');
 assert.equal(fixtureAfter, fixtureBefore, 'Regenerating from unchanged Issue #9 topology is byte-stable.');
 
-console.log('Neighbor verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, routes, and byte-stable regeneration.');
+console.log('Neighbours verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, routes, and byte-stable regeneration.');
