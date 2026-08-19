@@ -12,7 +12,7 @@ BEN|BJ|Benin|west-africa
 BFA|BF|Burkina Faso|west-africa
 CPV|CV|Cabo Verde|west-africa
 CIV|CI|Côte d'Ivoire|west-africa
-GMB|GM|Gambia|west-africa
+GMB|GM|The Gambia|west-africa
 GHA|GH|Ghana|west-africa
 GIN|GN|Guinea|west-africa
 GNB|GW|Guinea-Bissau|west-africa
@@ -202,7 +202,7 @@ TUV|TV|Tuvalu|polynesia
 const ALIASES: Record<string, string[]> = {
   "CIV": ["Ivory Coast", "Cote d'Ivoire"],
   "CPV": ["Cape Verde"],
-  "GMB": ["The Gambia"],
+  "GMB": ["Gambia"],
   "COD": ["DR Congo", "DRC", "Congo-Kinshasa"],
   "COG": ["Congo", "Congo-Brazzaville"],
   "STP": ["Sao Tome and Principe"],
