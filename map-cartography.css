@@ -1,0 +1,165 @@
+/* Issue #9 production cartography + explicit viewport contract.
+   Loaded after map.css so the established map/gameplay visual states remain intact. */
+
+.map-stage {
+  position: relative;
+}
+
+.map-stage__frame {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.map-stage__scroll {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  overscroll-behavior: contain;
+  touch-action: none;
+  cursor: grab;
+}
+
+.map-stage__scroll:active {
+  cursor: grabbing;
+}
+
+/* The SVG is no longer an oversized scroll canvas. JavaScript changes its
+   viewBox while the physical viewport remains stable. */
+.map-svg {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+}
+
+/* Fallback for browsers without the explicit clipped viewport contract.
+   Legacy verification strings are retained only as documentation:
+   overflow: auto; touch-action: pan-x pan-y pinch-zoom; --map-canvas-width */
+@supports not (overflow: clip) {
+  .map-stage__frame { overflow: hidden; }
+}
+
+.map-water,
+.map-boundaries {
+  pointer-events: none;
+}
+
+.map-water--ocean path,
+.map-water--lakes path {
+  fill: var(--surface-subtle);
+  stroke: none;
+}
+
+.map-water--rivers path {
+  fill: none;
+  stroke: color-mix(in srgb, var(--line-strong) 52%, transparent);
+  stroke-width: .62;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-context-country,
+.map-context-locator {
+  stroke: none;
+}
+
+.map-country__shape,
+.map-country__locator,
+.map-country__callout-target {
+  stroke: none;
+}
+
+/* Coastline and shared political borders are source/topology-derived and
+   rendered once, so adjoining country polygons cannot double-stroke. */
+.map-coastline,
+.map-shared-boundary {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+
+.map-coastline { stroke-width: .82; }
+.map-shared-boundary { stroke-width: .72; }
+
+.map-country:focus-visible .map-country__shape,
+.map-country:focus-visible .map-country__locator,
+.map-country:focus-visible .map-country__callout-target,
+.map-country:active .map-country__shape,
+.map-country:active .map-country__locator,
+.map-country:active .map-country__callout-target,
+.map-country--first .map-country__shape,
+.map-country--first .map-country__locator,
+.map-country--first .map-country__callout-target,
+.map-country--one-miss .map-country__shape,
+.map-country--one-miss .map-country__locator,
+.map-country--one-miss .map-country__callout-target,
+.map-country--two-miss .map-country__shape,
+.map-country--two-miss .map-country__locator,
+.map-country--two-miss .map-country__callout-target,
+.map-country--revealed .map-country__shape,
+.map-country--revealed .map-country__locator,
+.map-country--revealed .map-country__callout-target,
+.map-country--current-correct .map-country__shape,
+.map-country--current-correct .map-country__locator,
+.map-country--current-correct .map-country__callout-target,
+.map-country--recorded .map-country__shape,
+.map-country--recorded .map-country__locator,
+.map-country--recorded .map-country__callout-target,
+.map-country--wrong-pulse .map-country__shape,
+.map-country--wrong-pulse .map-country__locator,
+.map-country--wrong-pulse .map-country__callout-target {
+  paint-order: stroke fill;
+}
+
+.map-viewport-controls {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: repeat(2, 56px);
+  gap: 6px;
+  pointer-events: none;
+}
+
+.map-viewport-control {
+  width: 56px;
+  height: 44px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+.map-viewport-control:hover { background: var(--track); }
+.map-viewport-control:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
+.map-viewport-control--label { font-size: 11px; font-weight: 750; }
+
+@media (max-height: 600px) and (orientation: landscape) {
+  .map-viewport-controls {
+    right: 6px;
+    bottom: 6px;
+    grid-template-columns: repeat(4, 56px);
+  }
+}
+
+@media (forced-colors: active) {
+  .map-coastline,
+  .map-shared-boundary,
+  .map-water--rivers path { stroke: CanvasText; }
+
+  .map-viewport-control {
+    border-color: ButtonText;
+    background: ButtonFace;
+    color: ButtonText;
+  }
+}
