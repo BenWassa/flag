@@ -9,6 +9,13 @@ export interface MapPoint {
   r: number;
 }
 
+export interface MapViewportFocus {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export interface MapCountryGeometry {
   countryId: string;
   path?: string;
@@ -20,6 +27,10 @@ export interface MapRegionAsset {
   scope: StudyScope;
   viewBox: string;
   countries: MapCountryGeometry[];
+  /** Non-interactive surrounding geography used to preserve continent context. */
+  contextPaths?: string[];
+  /** Preferred first viewport within the full continent canvas. */
+  initialFocus?: MapViewportFocus;
 }
 
 export interface MapTargetState {
