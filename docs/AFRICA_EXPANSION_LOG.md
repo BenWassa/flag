@@ -164,6 +164,68 @@ The product model was correct; the assertion scope was wrong.
 
 This preserves the desired cartographic behavior: approved mainland callouts are persistent map landmarks, while an island nation's own representation remains a single dot target.
 
-## Next gate
+### 11:03 — Corrected full suite passed
 
-Rerun the complete CI suite on the corrected branch, inspect the exact production artifact, then red-team regional navigation, context contrast contracts, scope persistence, island targets, and all-Africa coverage before merge.
+**Run:** GitHub Actions CI #47 (`32267697133`).  
+**Result:** success.
+
+Passed:
+
+- TypeScript/build;
+- existing 195-country flag suite;
+- 54-country Africa map coverage;
+- all five regional active/context contracts;
+- island-dot/callout behavior;
+- feedback/Test edge regressions;
+- scoped navigation and PWA checks.
+
+### 11:04 — Production artifact red-team and canonical-source cleanup
+
+CI #47's exact artifact was downloaded and inspected. It contained the new Africa scope/navigation, structured context locators, island hit targets, and `flag-atlas-v7`.
+
+**Finding**
+
+The old standalone `src/data/maps/west-africa.ts` was no longer imported but still compiled into `dist/data/maps/west-africa.js`. Keeping two Africa geometry sources would create a future divergence risk.
+
+**Change**
+
+- deleted the superseded standalone West Africa asset;
+- retained `src/data/maps/africa.ts` as the single canonical Africa geometry source;
+- removed a temporary CI-pending note once the actual worklog contained the failure/result history.
+
+### 11:05 — Cleanup head passed and exact artifact inspected
+
+**Run:** GitHub Actions CI #49 (`32267850529`).  
+**Result:** success.
+
+Exact artifact:
+
+- name: `flag-atlas-dist`;
+- artifact ID: `9370926802`;
+- size: `56,207` bytes;
+- digest: `sha256:8063266428204583f679bde2000effae75bc51b27fc710f35e14974cf79014c4`.
+
+Artifact checks:
+
+- `data/maps/africa.js` present;
+- obsolete `data/maps/west-africa.js` absent;
+- home copy contains `54 countries · 5 regions`;
+- context-island rendering and locator-hit targets compiled;
+- service worker uses `flag-atlas-v7`.
+
+A static rendering generated from the compiled geometry was also inspected. The continental silhouette is coherent at the MVP fidelity, all five island locators remain on the shared canvas, and regional/context layering is visually plausible. This does not supersede the documented higher-fidelity topology backlog.
+
+## Final evaluation
+
+- **Context legibility:** materially improved without removing active-region hierarchy.
+- **Small-country model:** simplified and internally consistent — callout only where mainland motor precision warrants it; islands remain one dot.
+- **Coverage:** all 54 African country IDs are available in one continent scope and five regional scopes.
+- **Spatial context:** every regional drill remains situated inside the full African continent.
+- **State integrity:** existing map mastery survives expansion; scoped rounds/results/review do not reuse stale assets.
+- **Interaction integrity:** first-try-only green, direct amber/orange after prior misses, Test non-leakage, solved-country inertness, pan preservation, and accessible focus remain intact.
+- **Architecture:** one canonical Africa geometry source replaces the pilot-specific duplicate.
+- **Cartography:** acceptable MVP for Africa; explicitly not the final production-fidelity topology.
+
+## Merge recommendation
+
+**Ready to merge after the final documentation-only PR head is green.** No remaining code defect was identified in the red-team pass. The next useful QA after deployment is real mobile play across the newly enabled North/Central/East/Southern Africa scopes, especially to discover whether any additional mainland countries genuinely need callouts.
