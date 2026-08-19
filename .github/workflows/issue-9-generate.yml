@@ -1,0 +1,37 @@
+name: Issue 9 map data generation
+
+on:
+  push:
+    branches:
+      - agent/issue-9-production-cartography
+    paths:
+      - .github/workflows/issue-9-generate.yml
+      - package.json
+      - scripts/generate-maps.mjs
+      - scripts/map-sources/natural-earth.json
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message, '[generated-map]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run maps:generate -- --update-hashes
+      - name: Commit generated cartography
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json scripts/map-sources/natural-earth.json src/data/maps/africa.ts docs/CARTOGRAPHY_PROVENANCE.json
+          if git diff --cached --quiet; then
+            echo "Generated map data is already current."
+            exit 0
+          fi
+          git commit -m "chore: generate pinned Africa cartography [generated-map]"
+          git push
