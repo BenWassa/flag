@@ -2,9 +2,9 @@ import type { MapCountryCallout, MapRegionAsset } from '../../domain/map-models.
 
 /**
  * Phone-scale callouts for West Africa countries whose true polygon/locator is
- * too small or narrow for reliable touch selection at the default continent
- * scale. Targets are deliberately placed in nearby ocean/neutral space and are
- * spaced so their ~44px effective hit circles do not overlap one another.
+ * too small or compact for reliable touch selection at the default continent
+ * scale. Targets are placed in nearby ocean/neutral space and spaced so their
+ * ~44px effective hit circles do not overlap one another.
  */
 const WEST_AFRICA_CALLOUTS: Readonly<Record<string, MapCountryCallout>> = {
   // Cabo Verde: retain the real island locator; callout sits north-west at sea.
@@ -32,11 +32,6 @@ const WEST_AFRICA_CALLOUTS: Readonly<Record<string, MapCountryCallout>> = {
     anchor: { cx: 270.0, cy: 314.5 },
     target: { cx: 250, cy: 350, r: 12 },
   },
-  // Benin: likewise narrow; separate Gulf target avoids Togo/Nigeria ambiguity.
-  BEN: {
-    anchor: { cx: 276, cy: 312 },
-    target: { cx: 285, cy: 365, r: 12 },
-  },
 };
 
 function applyWestAfricaGameplayMetadata(asset: MapRegionAsset): MapRegionAsset {
@@ -49,7 +44,8 @@ function applyWestAfricaGameplayMetadata(asset: MapRegionAsset): MapRegionAsset 
         ...country,
         callout,
         // Visible cartographic callouts replace invisible enlarged targets for
-        // phone-small pilot countries: the learner can see why the target exists.
+        // the most phone-constrained pilot countries. Benin remains on the
+        // clipped neutral-space assist because its full shape is still legible.
         hitAssist: undefined,
       };
     }),
