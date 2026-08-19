@@ -1,7 +1,7 @@
 # Map Learning Pilot — West Africa
 
 **Tracking:** issue #1  
-**Status:** core merged via PR #4; visual/behavior refinement via PR #5; mobile gameplay refinement via PR #6  
+**Status:** core via PR #4; visual/behavior refinement via PR #5; continent/mobile gameplay via PR #6; feedback/callouts/naming via PR #7  
 **Pilot scope:** West Africa (16 scored countries inside full-Africa context)  
 **Architecture target:** reusable for later continent and region assets
 
@@ -11,13 +11,15 @@ The map feature is complete as a product loop while scored geography is delibera
 
 - Dedicated **Country locations** entry point from the Flag Atlas home screen.
 - **Learn** mode with Seterra-style guided feedback:
-  - first-try correct → off-white;
-  - one prior miss → amber/yellow;
-  - two prior misses → orange;
+  - first-try correct → strong transient green confirmation, then stored off-white;
+  - correct after one prior miss → amber/yellow immediately;
+  - correct after two prior misses → orange immediately;
   - third miss → target resolved/revealed red.
-- Immediate correct taps receive transient green confirmation before settling to their persistent score fill.
+- Green is reserved for **first-try correctness only**. A later correct answer never flashes green before amber/orange.
 - Wrongly selected countries receive transient red feedback and never remain filled as solved.
-- **Test** mode gives one scored tap per country and withholds correctness until results.
+- Resolved countries become non-interactive for the remainder of the round.
+- **Test** mode gives one scored tap per country, visibly acknowledges the tap with a neutral state, and withholds correctness until results.
+- Test feedback is guarded so a previous selection cannot carry into the next question and accidentally cue the answer.
 - Every target appears once per standard round in deterministic shuffled order.
 - Results map, first-try score, repeat, and mistake-only review.
 - Separate persistent location-mastery ledger. Map answers never alter flag mastery.
@@ -30,13 +32,19 @@ The map feature is complete as a product loop while scored geography is delibera
 
 ## Pilot geometry
 
-The scored West Africa polygons and faded full-Africa context are projected from Natural Earth's public-domain Admin-0 low-resolution data. Cabo Verde is represented by an explicit island locator because coarse global polygon sets omit tiny island states.
+The scored West Africa polygons and faded full-Africa context are projected from a **coarse Natural Earth-derived Admin-0 dataset**. Cabo Verde is represented by an explicit island locator because coarse global polygon sets can omit tiny island states.
 
-The expansion pipeline should replace the pilot polygon source with **Natural Earth 1:50m Admin-0 Countries v5.1.1**, preserving the same `MapRegionAsset` contract. The contract now supports:
+This geometry is explicitly **MVP-grade**, not the final fidelity standard. A quantitative audit of the compiled polygons found measurable positive-area intersections at some shared borders, especially around small/narrow states. Styling reduces the visual seam amplification but does not repair source topology.
+
+The production expansion pipeline should move to one consistent high-detail source/topology. The current near-term candidate is **Natural Earth 1:10m Admin-0 Countries with companion boundary data**; UN Maps authoritative boundary products should also be evaluated before final broad rollout. See [`MAP_GEOMETRY_SOURCES.md`](MAP_GEOMETRY_SOURCES.md).
+
+`MapRegionAsset` now supports:
 
 - active/scored `countries`;
 - faded, non-interactive `contextPaths`;
-- an `initialFocus` rectangle for opening the continent canvas around the selected region.
+- an `initialFocus` rectangle for opening the continent canvas around the selected region;
+- optional explicit `callout` metadata for phone-small states/islands;
+- optional clipped `hitAssist` metadata where a visible callout would add unnecessary clutter.
 
 ## Regional mobile interaction decision — refined 2026-08-19
 
@@ -50,26 +58,52 @@ The current contract is:
 4. open the pannable continent canvas focused on the chosen region;
 5. allow native two-axis panning around the continent and preserve pan position across answer rerenders;
 6. keep the active country prompt outside/stable above the pannable map;
-7. use narrow-country hit assistance only where metadata requests it;
-8. aim for roughly a **44px effective target diameter** where practical rather than arbitrarily oversized invisible circles;
-9. clip enlarged assistance around every other active and context country, so a geographically wrong tap can never be silently credited as correct;
-10. use a visible island locator when the source geometry cannot preserve a tiny state;
-11. retain the true polygon as the visible scoring shape wherever a polygon exists.
+7. retain the true country polygon/locator as the geography being taught;
+8. for genuinely phone-small geography, prefer an explicit nearby cartographic callout with a leader line and roughly 44px effective touch area;
+9. ensure callout hit areas do not overlap active country geometry or one another;
+10. use clipped neutral-space assistance only where it remains geographically honest and a visible callout would add needless clutter;
+11. make resolved countries and their callouts/assists inert for the remainder of the round.
 
-The earlier PR #5 rule that the entire **region itself** should fit phone width without panning is superseded by PR #6. The better compromise is region-focused initial framing plus a larger pannable **continent** canvas: spatial context is preserved, but learners are not forced to hunt for the active region on every question.
+The earlier PR #5 rule that the entire **region itself** should fit phone width without panning is superseded. The better compromise is region-focused initial framing plus a larger pannable **continent** canvas: spatial context is preserved, but learners are not forced to hunt for the active region on every question.
+
+### Current small-country treatment
+
+Visible callouts:
+
+- Cabo Verde;
+- The Gambia;
+- Guinea-Bissau;
+- Sierra Leone;
+- Togo.
+
+Benin currently retains clipped neutral-space hit assistance rather than another Gulf callout.
 
 ## Country focus and feedback decision — refined 2026-08-19
 
 - Do **not** show a rectangular SVG element bounding-box outline around a selected/focused country.
-- Keyboard focus remains visible by highlighting the actual country border in action blue.
-- Correct tap confirmation and persistent score are separate states:
-  - immediate correct → transient green;
-  - stored first try → off-white;
-  - stored one miss → amber;
-  - stored two misses → orange;
-  - reveal → red.
-- This keeps round-performance colors separate from durable mastery colors.
+- Keyboard focus remains visible by highlighting the actual country geometry in action blue.
+- Physical press gets a neutral action response before scoring.
+- Learn feedback and persistent score are separate states:
+  - first-try correct → transient green, then off-white;
+  - correct after 1 miss → amber immediately;
+  - correct after 2 misses → orange immediately;
+  - reveal → red;
+  - wrong selection → transient red only.
+- Test uses a visible neutral/blue “recorded” response with no correctness leakage.
+- Unanswered countries remain neutral gray enough that an off-white completed first-try state reads as a real visual change.
 - Color is not the only feedback channel; prompt text and live announcements communicate outcomes too.
+
+## Country naming decision
+
+Country names are not maintained ad hoc. See [`COUNTRY_NAMING.md`](COUNTRY_NAMING.md).
+
+- **UNGEGN / UNTERM** is the primary reference for current English short/formal country names and article treatment.
+- **UN Statistics Division M49** is the reference for ISO-alpha3 linkage, UN regional grouping, current-name tables, and recent country-name changes.
+- National government sources may confirm natural English display treatment where useful.
+- ISO3 remains the stable application country ID.
+- Familiar/legacy forms can remain aliases when useful to learners.
+
+Current example: the primary UI label is **The Gambia**; `Gambia` remains an alias.
 
 ## Visual-system decision
 
@@ -78,13 +112,14 @@ Map mode is an extension of the Flag Atlas **Atlas Index** system, not a separat
 - Shared typography, progress strips, state vocabulary, action hierarchy, spacing, radii, and color tokens are reused.
 - Large promotional cards, glass/blur surfaces, decorative shadows, oversized radii, and bespoke map-progress colors are excluded.
 - The map itself is the dominant visual object during a round.
-- Test confirms that a tap was recorded without revealing correctness.
 - Results emphasize error structure (first try / one miss / two misses / revealed) and mistake review rather than a decorative percentage.
 
 Detailed audits:
 
 - [`MAP_UX_REFINEMENT_LOG.md`](MAP_UX_REFINEMENT_LOG.md) — visual-system and first interaction refinement.
-- [`MAP_GAMEPLAY_REFINEMENT_LOG.md`](MAP_GAMEPLAY_REFINEMENT_LOG.md) — production gameplay feedback, continent-context/panning redesign, scoring colors, target sizing, CI/artifact review, and merge closeout.
+- [`MAP_GAMEPLAY_REFINEMENT_LOG.md`](MAP_GAMEPLAY_REFINEMENT_LOG.md) — continent-context/panning redesign and first mobile gameplay pass.
+- [`MAP_FEEDBACK_V4_LOG.md`](MAP_FEEDBACK_V4_LOG.md) — on-device feedback, naming, callouts, quantitative border audit, CI/artifact review, and final evaluation.
+- [`MAP_FEEDBACK_V4_RELEASE.md`](MAP_FEEDBACK_V4_RELEASE.md) — final PR-head gate and merge closeout.
 
 ## Accessibility boundary
 
@@ -96,20 +131,25 @@ Target-size guidance recognizes essential spatial map geometry, but the product 
 
 Before enabling another scope:
 
+- upgrade the geography pipeline to the approved high-fidelity topology/source standard;
 - add a lazily loaded `MapRegionAsset`;
 - include the full parent-continent context for regional scopes;
 - define an appropriate `initialFocus` for the active region;
 - reconcile every scored asset ID to the canonical `COUNTRIES` ISO3 ID;
-- verify every curriculum country in the scope has either a path or explicit locator;
-- inspect narrow states/islands at real phone scale and add targeted assistance where needed;
-- ensure enlarged hit assistance cannot cross into any other active or context country geometry;
+- verify every curriculum country in the scope has a validated path or explicit locator/callout treatment;
+- inspect small/narrow states at real phone scale and choose callout vs clipped assistance intentionally;
+- ensure callout/hit assistance cannot cross into another country or another callout;
+- verify shared-border geometry does not contain material polygon overlaps/gaps at normal gameplay scale;
 - verify country focus follows geography rather than SVG bounding boxes;
-- verify immediate tap feedback and stored round score are visually distinct;
+- verify first-try-only green and direct amber/orange behavior after prior misses;
+- verify resolved countries are inert;
+- verify Test acknowledgment cannot cue a later answer;
+- verify current country names against the UN-first naming policy;
 - add the scope to automated geometry/interaction verification;
-- visually inspect borders and political-boundary implications;
+- document political/disputed-boundary implications;
 - test Learn, Test, review-mistakes, pan preservation, keyboard selection, storage failure, reduced motion, forced colors, and offline revisit;
 - perform production-device QA at representative portrait and short-landscape sizes before declaring the scope complete.
 
 ## Explicitly still pilot-limited
 
-The engine supports multiple assets, modes, independent mastery, review, continent context, and pan preservation. The repository intentionally exposes only **West Africa** until additional geometry passes the same coverage, mobile-hit, interaction, and production-device validation. World-map mode remains deferred because it is a different interaction problem on phones.
+The engine supports multiple assets, modes, independent mastery, review, continent context, pan preservation, explicit callouts, and separate flag/location learning. The repository intentionally exposes only **West Africa** until additional geography passes the same coverage, naming, topology, mobile-hit, interaction, and production-device validation. World-map mode remains deferred because it is a different interaction problem on phones.
