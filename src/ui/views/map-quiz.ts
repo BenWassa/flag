@@ -38,7 +38,7 @@ export function renderMapQuiz(
         <p class="map-prompt__status ${feedback.className}">${feedback.text}</p>
       </section>
 
-      <section class="map-stage" aria-label="West Africa country map">
+      <section class="map-stage" aria-label="Africa map with West Africa active">
         ${renderMapSvg(asset, session, {
           interactive: true,
           showFeedback,
@@ -59,7 +59,7 @@ function visibleFeedback(
   if (session.mode === 'test') {
     if (resolution) return { text: 'Answer recorded', className: '' };
     return {
-      text: session.currentIndex === 0 ? 'One tap each · results at the end.' : 'Tap one country.',
+      text: session.currentIndex === 0 ? 'One tap each · swipe or drag to pan Africa · results at the end.' : 'Tap one country.',
       className: '',
     };
   }
@@ -86,5 +86,8 @@ function visibleFeedback(
     };
   }
 
-  return { text: 'Tap the country on the map.', className: '' };
+  return {
+    text: session.currentIndex === 0 ? 'Tap the country · swipe or drag to pan Africa.' : 'Tap the country on the map.',
+    className: '',
+  };
 }
