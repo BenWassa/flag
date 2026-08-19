@@ -70,5 +70,15 @@
     "westernSahara": "non-scoring context; not merged into MAR",
     "birTawil": "non-scoring context; not merged into EGY or SDN",
     "unRole": "policy/dispute/disclaimer audit reference, not runtime redistribution source"
+  },
+  "runtimeOptimization": {
+    "pathDigits": 1,
+    "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
+    "canvasUnits": "835x723 projected canvas units",
+    "physicalTolerance": {
+      "ocean": 0.4,
+      "lakes": 0.15,
+      "rivers": 0.2
+    }
   }
 }
