@@ -1,19 +1,25 @@
 # Flag Atlas
 
-A mobile-first adaptive app for learning the flags of the world.
+A mobile-first adaptive app for learning world geography through **Flags, Locations, Outlines, and Neighbours**.
 
 ## Product
 
-Flag Atlas combines Seterra-style speed and geographic organization with a persistent learning model:
+Flag Atlas combines Seterra-style speed and geographic organisation with a persistent learning model:
 
 - **195** core national flags.
-- World → continent → region study scopes.
+- World → continent → region study scopes where supported.
+- **Flags** for visual flag recognition across the full 195-country curriculum.
+- **Locations** for map-based country identification in Africa and its five learning regions.
+- **Outlines** for country-silhouette identification in Africa and its five learning regions.
+- **Neighbours** for naming every land-border neighbour, currently using Africa production topology.
 - **Learn** mode for adaptive practice and immediate feedback.
 - **Test** mode for clean scope-level assessment.
 - Persistent **Unseen → Learning → Mastered** state.
-- Confusion-aware distractors and mistake review.
-- Balanced answer-position randomization.
+- Confusion-aware distractors and mistake review where applicable.
+- Balanced answer-position randomisation for multiple-choice domains.
 - Local-first progress with PWA support.
+
+The product language is modern British English (`en-GB`). User-facing domain labels use **Neighbours** while stable implementation identifiers such as the `/neighbors` route remain unchanged.
 
 Product truth lives in [`PRODUCT.md`](PRODUCT.md), the full requirements in [`docs/PRD.md`](docs/PRD.md), technical boundaries in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the shipped visual system in [`DESIGN.md`](DESIGN.md). The Impeccable redesign review is recorded in [`docs/IMPECCABLE_REVIEW.md`](docs/IMPECCABLE_REVIEW.md).
 
@@ -26,7 +32,7 @@ npm install
 npm test
 ```
 
-`npm test` compiles the TypeScript application and verifies curriculum + quiz invariants. The built static app is written to `dist/`.
+`npm test` compiles the TypeScript application and verifies curriculum, routing, cartography, learning-domain and product-copy invariants. The built static app is written to `dist/`.
 
 Serve `dist/` with any static server, for example:
 
@@ -36,11 +42,11 @@ npx serve dist
 
 ## Interaction shortcuts
 
-During a quiz:
+During supported quizzes:
 
-- `1`–`4` selects an answer.
-- `Enter` advances after Learn-mode feedback.
-- `Esc` exits the quiz.
+- `1`–`4` selects a multiple-choice answer.
+- `Enter` advances after Learn-mode feedback where applicable.
+- `Esc` exits the active round.
 
 ## Deploy
 
@@ -51,11 +57,12 @@ Firebase Hosting can replace GitHub Pages later without changing the application
 ## Architecture
 
 ```text
-src/data             curriculum
-src/domain           mastery + quiz engine
+src/data             curriculum + generated geography fixtures
+src/domain           mastery + learning engines
 src/infrastructure   persistence + flag assets
+src/routing          stable hash-route model
 src/state            application/session state
 src/ui               components and screens
 ```
 
-The domain layer has no browser UI dependency, so the adaptive learning engine can evolve independently of presentation technology.
+The domain layer has no browser UI dependency, so the adaptive learning engines can evolve independently of presentation technology.
