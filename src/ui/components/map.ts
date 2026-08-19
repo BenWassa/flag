@@ -11,6 +11,49 @@ function resolutionClass(state: MapTargetState | undefined, showFeedback: boolea
   }
 }
 
+function circlePath(cx: number, cy: number, radius: number): string {
+  return `M${cx - radius},${cy}a${radius},${radius} 0 1,0 ${radius * 2},0a${radius},${radius} 0 1,0 -${radius * 2},0Z`;
+}
+
+function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interactive: boolean): string {
+  if (!interactive) return '';
+  const targetId = session.countryIds[session.currentIndex];
+  const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
+  if (!targetId || !assist) return '';
+
+  // On a fitted phone map, narrow countries need a larger effective target. The
+  // assist is clipped around every *other* country so enlargement can use ocean
+  // and neutral space without making a neighbouring country count as correct.
+  const usableRadius = Math.max(assist.r, 46);
+  const exclusionPaths = asset.countries
+    .filter((item) => item.countryId !== targetId)
+    .flatMap((item) => [
+      item.path ?? '',
+      item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
+    ])
+    .filter(Boolean)
+    .join(' ');
+  const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
+
+  return `
+    <defs>
+      <clipPath id="map-target-hit-clip">
+        <path d="${clipPath}" fill-rule="evenodd" clip-rule="evenodd" />
+      </clipPath>
+    </defs>
+    <circle
+      class="map-current-target-hit"
+      cx="${assist.cx}"
+      cy="${assist.cy}"
+      r="${usableRadius}"
+      clip-path="url(#map-target-hit-clip)"
+      data-action="map-answer"
+      data-id="${targetId}"
+      aria-hidden="true"
+    />
+  `;
+}
+
 export interface RenderMapOptions {
   interactive?: boolean;
   showFeedback?: boolean;
@@ -29,13 +72,13 @@ export function renderMapSvg(
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
 
   return `
-    <div class="map-stage__scroll" tabindex="0" aria-label="Scrollable map area">
+    <div class="map-stage__scroll">
       <svg class="map-svg" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
-        <rect class="map-ocean" x="0" y="0" width="100%" height="100%" rx="18" />
+        <rect class="map-ocean" x="0" y="0" width="100%" height="100%" />
         ${asset.countries.map((geometry) => {
           const state = session.targets[geometry.countryId];
           const classes = `map-country${resolutionClass(state, showFeedback)}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
-          const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Country area"` : '';
+          const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
           return `
             <g class="${classes}"${action}>
               ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
@@ -46,13 +89,7 @@ export function renderMapSvg(
             </g>
           `;
         }).join('')}
-        ${(() => {
-          if (!interactive) return '';
-          const targetId = session.countryIds[session.currentIndex];
-          const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
-          if (!targetId || !assist) return '';
-          return `<circle class="map-current-target-hit" cx="${assist.cx}" cy="${assist.cy}" r="${assist.r}" data-action="map-answer" data-id="${targetId}" aria-hidden="true" />`;
-        })()}
+        ${assistedHitTarget(asset, session, interactive)}
       </svg>
     </div>
   `;

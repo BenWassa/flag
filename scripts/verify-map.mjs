@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { WEST_AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
@@ -12,6 +13,7 @@ import {
   locationMasteryGoal,
 } from '../dist/domain/map-game.js';
 import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
+import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
 import { renderMapResults } from '../dist/ui/views/map-results.js';
 
@@ -46,6 +48,14 @@ for (let miss = 1; miss <= 3; miss += 1) {
 assert.equal(learn.targets.GHA.resolution, 'revealed', 'Third miss reveals the target red.');
 assert.equal(getLocationRecord(progress, 'GHA').revealCount, 1, 'Guided reveal is persisted separately.');
 assert.equal(getLocationRecord(progress, 'GHA').confusionCounts.MLI, 3, 'Repeated wrong selections feed location confusions.');
+const revealedHtml = renderMapQuiz(asset, learn, 'MLI');
+assert.ok(revealedHtml.includes('Revealed after 3 misses'), 'Reveal feedback explicitly tells the learner what happened.');
+
+const oneMissSession = buildMapSession(asset, 'learn', 'one-miss-feedback', ['GHA']);
+const oneMiss = applyMapGuess(oneMissSession, createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS), 'MLI', 600);
+const oneMissHtml = renderMapQuiz(asset, oneMiss.session, 'MLI');
+assert.ok(oneMissHtml.includes('Not Mali.'), 'A wrong map tap names the selected country instead of only showing a countdown.');
+assert.ok(oneMissHtml.includes('map-prompt__status--wrong'), 'Wrong feedback has a text-visible semantic state.');
 
 progress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
 for (let round = 1; round <= 3; round += 1) {
@@ -69,13 +79,20 @@ assert.equal(testWrong.session.targets.GHA.resolution, 'incorrect', 'Test wrong 
 assert.equal(testWrong.outcome.revealed, false, 'Test mode does not reveal correctness during the round.');
 const testHtml = renderMapQuiz(asset, testWrong.session, 'MLI');
 assert.ok(!testHtml.includes('map-country--wrong-pulse'), 'Test mode must not leak correctness through transient map feedback.');
+assert.ok(testHtml.includes('Answer recorded'), 'Test confirms input without revealing whether the answer was right.');
 
 const fullSession = buildMapSession(asset, 'learn', 'render-round');
 const quizHtml = renderMapQuiz(asset, fullSession, null);
 const renderedMapIds = [...quizHtml.matchAll(/data-action="map-answer" data-id="([^"]+)"/g)].map((match) => match[1]);
 assert.deepEqual(new Set(renderedMapIds), new Set(WEST_AFRICA_MAP_COUNTRY_IDS), 'Every pilot country is directly interactive.');
 assert.equal((quizHtml.match(/data-autofocus/g) ?? []).length, 1, 'Map quiz has one focus landing point.');
-assert.ok(quizHtml.includes('map-stage__scroll'), 'Mobile map is placed in a scrollable precision viewport.');
+assert.ok(quizHtml.indexOf('map-prompt') < quizHtml.indexOf('map-stage'), 'The active target stays above the geography while scanning.');
+
+const narrowSession = buildMapSession(asset, 'learn', 'narrow-target', ['TGO']);
+const narrowHtml = renderMapQuiz(asset, narrowSession, null);
+assert.ok(narrowHtml.includes('r="46"'), 'Narrow targets receive a roughly 44px effective hit region on a phone-width fitted map.');
+assert.ok(narrowHtml.includes('clip-path="url(#map-target-hit-clip)"'), 'Expanded target assistance is clipped so neighbouring countries remain real wrong answers.');
+assert.ok(narrowHtml.includes('fill-rule="evenodd"'), 'The assist clip explicitly subtracts other country geometry.');
 
 let resultSession = buildMapSession(asset, 'learn', 'result-round', ['GHA']);
 let resultProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
@@ -87,6 +104,13 @@ const result = finishMapSession(resultSession);
 const resultHtml = renderMapResults(asset, result);
 assert.ok(resultHtml.includes('1 of 1 first try'), 'Map results report first-try accuracy.');
 assert.ok(resultHtml.includes('map-country--first'), 'Completed map retains resolution color evidence.');
+assert.ok(resultHtml.includes('map-result-breakdown'), 'Results expose performance structure instead of only a percentage.');
+assert.ok(!resultHtml.includes('map-result-percent'), 'Generic percentage emphasis is removed from map results.');
+
+const mapHomeHtml = renderMapHome(createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS));
+assert.ok(mapHomeHtml.includes('study-action--primary'), 'Map home uses the same Learn/Test hierarchy as flag scopes.');
+assert.ok(mapHomeHtml.includes('status-strip'), 'Map mastery uses the shared progress visual language.');
+assert.ok(!mapHomeHtml.includes('map-progress-card'), 'Map home no longer introduces a separate rounded progress card system.');
 
 const twoTarget = buildMapSession(asset, 'learn', 'advance', ['GHA', 'MLI']);
 const firstId = twoTarget.countryIds[0];
@@ -104,4 +128,11 @@ assert.equal(repaired.masteryStreak, 0);
 assert.equal(repaired.lifetimeFirstTryCorrect, 0);
 assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 
-console.log('Map pilot verification passed.');
+const mapCss = await readFile('map.css', 'utf8');
+assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses the shared token system instead of literal color drift.');
+assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
+assert.ok(!mapCss.includes('min-width: 700px'), 'Mobile map does not require the old 700px horizontal-search canvas.');
+assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
+assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
+
+console.log('Map pilot verification passed, including refined UX contract.');
