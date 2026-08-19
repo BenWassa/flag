@@ -1,10 +1,10 @@
 import type { MapRegionAsset, MapSessionResult } from '../../domain/map-models.js';
 import { icon } from '../components/icons.js';
 import { renderMapSvg } from '../components/map.js';
+import { escapeHtml } from '../format.js';
 
 export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult): string {
   const mode = result.session.mode;
-  const scopeId = result.session.scope.id ?? 'africa';
   const states = result.session.countryIds.map((countryId) => result.session.targets[countryId]);
   const oneMiss = states.filter((state) => state?.resolution === 'one-miss').length;
   const twoMiss = states.filter((state) => state?.resolution === 'two-miss').length;
@@ -14,10 +14,10 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
   return `
     <main class="page page--map-results">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="open-map-scope" data-id="${scopeId}" aria-label="Back to ${result.session.scope.label} locations">${icon('back')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} locations">${icon('back')}</button>
         <div class="screen-title">
           <h1 id="map-result-heading" tabindex="-1" data-autofocus>Round complete</h1>
-          <span>${result.session.scope.label} · ${mode === 'learn' ? 'Learn' : 'Test'}</span>
+          <span>Locations · ${escapeHtml(result.session.scope.label)} · ${mode === 'learn' ? 'Learn' : 'Test'}</span>
         </div>
       </header>
 
@@ -37,14 +37,14 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
             </div>`}
       </section>
 
-      <section class="map-stage map-stage--results" aria-label="Completed ${result.session.scope.label} map">
+      <section class="map-stage map-stage--results" aria-label="Completed ${escapeHtml(result.session.scope.label)} map">
         ${renderMapSvg(asset, result.session, { interactive: false, showFeedback: true, labelledBy: 'map-result-heading' })}
       </section>
 
       <div class="map-results-actions">
         ${result.missedCountryIds.length ? `<button class="button button--primary" data-action="review-map-mistakes">Review mistakes</button>` : ''}
         <button class="button button--secondary" data-action="repeat-map">Repeat ${mode}</button>
-        <button class="button button--tertiary" data-action="open-map-scope" data-id="${scopeId}">Map home</button>
+        <button class="button button--tertiary" data-action="exit-round">Back to ${escapeHtml(result.session.scope.label)}</button>
       </div>
     </main>
   `;
