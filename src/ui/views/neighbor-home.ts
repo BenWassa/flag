@@ -1,6 +1,10 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { AFRICA_MAP_REGION_CONFIGS } from '../../data/map-scopes.js';
-import { AFRICA_LAND_ADJACENCY, getAfricaNeighborScopeConfig } from '../../data/neighbors/index.js';
+import {
+  AFRICA_LAND_ADJACENCY,
+  AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
+  getAfricaNeighborScopeConfig,
+} from '../../data/neighbors/index.js';
 import { getNeighborRecord, getNeighborScopeStats, neighborMasteryGoal } from '../../domain/neighbor-game.js';
 import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { StudyScope } from '../../domain/models.js';
@@ -59,6 +63,7 @@ export function renderNeighborHome(
         <div class="list-heading"><h2 id="neighbor-rules-heading">Round rules</h2><span>n + 2 attempts</span></div>
         <p class="neighbor-policy">Each country starts with two guesses beyond the number of correct land neighbors. Repeating any previous guess is free. A clean full-set completion earns one mastery credit; three distinct clean sessions master a country.</p>
         ${zeroCount ? `<p class="neighbor-policy">${zeroCount} ${zeroCount === 1 ? 'country has' : 'countries have'} zero land neighbors in this scope. The data keeps those empty sets, but standard rounds exclude them.</p>` : ''}
+        ${isAfrica ? `<p class="neighbor-policy">${AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS.length} countries are temporarily excluded because their complete application-country land-border sets cross the current Africa-only production topology. They return when the canonical topology expands.</p>` : ''}
       </section>
 
       ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so neighbor progress will last only for this visit.</p>`}
@@ -71,15 +76,22 @@ function renderRegions(progress: NeighborProgressState): string {
     <section class="atlas-section" aria-labelledby="neighbor-regions-heading">
       <div class="list-heading"><h2 id="neighbor-regions-heading">Regions</h2><span>${AFRICA_MAP_REGION_CONFIGS.length}</span></div>
       <div class="region-list">
-        ${AFRICA_MAP_REGION_CONFIGS.map((config) => {
-          const stats = getNeighborScopeStats(progress, config.countryIds, AFRICA_LAND_ADJACENCY);
-          const zeros = config.countryIds.length - stats.total;
+        ${AFRICA_MAP_REGION_CONFIGS.map((mapConfig) => {
+          const config = getAfricaNeighborScopeConfig(mapConfig.scope.id ?? '');
+          const countryIds = config?.countryIds ?? [];
+          const stats = getNeighborScopeStats(progress, countryIds, AFRICA_LAND_ADJACENCY);
+          const zeros = countryIds.filter((countryId) => (AFRICA_LAND_ADJACENCY[countryId]?.length ?? 0) === 0).length;
+          const deferred = mapConfig.countryIds.length - countryIds.length;
           const status = stats.unseen > 0 ? `${stats.unseen} unseen` : stats.learning > 0 ? `${stats.learning} learning` : 'Mastered';
+          const exclusions = [
+            zeros ? `${zeros} zero-neighbor excluded` : '',
+            deferred ? `${deferred} coverage-deferred` : '',
+          ].filter(Boolean).join(' · ');
           return `
-            <button class="region-row" data-action="open-scope" data-domain="neighbors" data-id="${config.scope.id}">
+            <button class="region-row" data-action="open-scope" data-domain="neighbors" data-id="${mapConfig.scope.id}">
               <span class="region-row__identity">
-                <strong>${escapeHtml(config.scope.label)}</strong>
-                <small>${stats.total} targets${zeros ? ` · ${zeros} zero-neighbor excluded` : ''}</small>
+                <strong>${escapeHtml(mapConfig.scope.label)}</strong>
+                <small>${stats.total} targets${exclusions ? ` · ${exclusions}` : ''}</small>
               </span>
               <span class="region-row__status">${status}</span>
               ${icon('chevron')}
