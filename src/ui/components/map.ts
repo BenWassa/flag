@@ -30,6 +30,7 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
       .flatMap((item) => [
         item.path ?? '',
         item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
+        item.callout ? circlePath(item.callout.target.cx, item.callout.target.cy, item.callout.target.r + 5) : '',
       ]),
   ].filter(Boolean).join(' ');
   const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
