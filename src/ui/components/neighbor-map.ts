@@ -33,10 +33,10 @@ function renderBoundaries(asset: MapRegionAsset): string {
 }
 
 function ariaLabel(country: NeighborMapCountry): string {
-  if (country.state === 'unresolved') return 'Unresolved neighboring country';
+  if (country.state === 'unresolved') return 'Unresolved neighbouring country';
   if (country.state === 'target') return `${country.name ?? 'Target'}, target country`;
-  if (country.state === 'revealed') return `${country.name ?? 'Country'}, missed neighbor revealed`;
-  return `${country.name ?? 'Country'}, neighbor found`;
+  if (country.state === 'revealed') return `${country.name ?? 'Country'}, missed neighbour revealed`;
+  return `${country.name ?? 'Country'}, neighbour found`;
 }
 
 function renderCountry(country: NeighborMapCountry): string {
@@ -71,8 +71,8 @@ export function renderNeighborLabelLayer(model: NeighborMapModel): string {
 export function neighborMapSummary(model: NeighborMapModel): string {
   const parts = [
     `Target: ${model.targetName}.`,
-    `${model.foundNames.length} neighbors found.`,
-    `${model.unresolvedCount} unresolved neighboring ${model.unresolvedCount === 1 ? 'country' : 'countries'}.`,
+    `${model.foundNames.length} neighbours found.`,
+    `${model.unresolvedCount} unresolved neighbouring ${model.unresolvedCount === 1 ? 'country' : 'countries'}.`,
   ];
   if (model.foundNames.length) parts.push(`Found: ${model.foundNames.join(', ')}.`);
   if (model.revealedNames.length) parts.push(`Missed and revealed: ${model.revealedNames.join(', ')}.`);
@@ -84,7 +84,7 @@ function renderControls(): string {
     <div class="map-viewport-controls" aria-label="Map view controls">
       <button class="map-viewport-control" type="button" data-map-command="zoom-in" aria-label="Zoom in">${icon('zoom-in')}</button>
       <button class="map-viewport-control" type="button" data-map-command="zoom-out" aria-label="Zoom out">${icon('zoom-out')}</button>
-      <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-region" aria-label="Fit target and all neighbors">Fit</button>
+      <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-region" aria-label="Fit target and all neighbours">Fit</button>
       <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-continent" aria-label="Fit all of Africa">Africa</button>
     </div>
   `;
