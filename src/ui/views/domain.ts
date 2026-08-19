@@ -1,8 +1,16 @@
 import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
+import {
+  AFRICA_LAND_ADJACENCY,
+  AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
+  AFRICA_ZERO_LAND_NEIGHBOR_IDS,
+  getAfricaNeighborScopeConfig,
+} from '../../data/neighbors/index.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
+import { getNeighborScopeStats } from '../../domain/neighbor-game.js';
+import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { LearningDomain, ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { icon } from '../components/icons.js';
@@ -14,14 +22,16 @@ export function renderDomainHome(
   progress: ProgressState,
   locationProgress: LocationProgressState,
   outlineProgress: ProgressState,
+  neighborProgress: NeighborProgressState,
   persisting = true,
   mapPersisting = true,
   outlinePersisting = true,
+  neighborPersisting = true,
 ): string {
   if (domain === 'flags') return renderFlagsHome(progress, persisting);
   if (domain === 'locations') return renderLocationsHome(locationProgress, mapPersisting);
   if (domain === 'outlines') return renderOutlinesHome(outlineProgress, outlinePersisting);
-  return renderPlannedNeighbors();
+  return renderNeighborsHome(neighborProgress, neighborPersisting);
 }
 
 function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
@@ -165,21 +175,34 @@ function renderOutlinesHome(progress: ProgressState, persisting: boolean): strin
   `;
 }
 
-function renderPlannedNeighbors(): string {
+function renderNeighborsHome(progress: NeighborProgressState, persisting: boolean): string {
+  const countryIds = getAfricaNeighborScopeConfig('africa')?.countryIds ?? [];
+  const stats = getNeighborScopeStats(progress, countryIds, AFRICA_LAND_ADJACENCY);
+  const progressStats = { ...stats, due: 0 };
   return `
     <main class="page">
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>Neighbors</h1>
-          <span>Planned learning domain</span>
+          <span>Land-border sets · Africa available</span>
         </div>
       </header>
-
-      <div class="empty-state">
-        <strong>Reserved in the Atlas hierarchy</strong>
-        <span>Land-border neighbor learning is planned in Issue #3. Its routes will reuse the same continent, region, Learn, Test, and review structure rather than adding another navigation system.</span>
-      </div>
+      <section class="atlas-section" aria-labelledby="neighbor-continents-heading">
+        <div class="list-heading"><h2 id="neighbor-continents-heading">Continents</h2><span>1 available</span></div>
+        <div class="continent-list">
+          <button class="continent-row" data-action="open-scope" data-domain="neighbors" data-id="africa">
+            <span class="continent-row__identity">
+              <strong>Africa</strong>
+              <small>${stats.total} standard targets · ${AFRICA_ZERO_LAND_NEIGHBOR_IDS.length} zero-neighbor excluded · ${AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS.length} coverage-deferred</small>
+            </span>
+            <span class="continent-row__progress">${progressStrip(progressStats)}</span>
+            <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+            ${icon('chevron')}
+          </button>
+        </div>
+      </section>
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so neighbor progress will last only for this visit.</p>`}
     </main>
   `;
 }
