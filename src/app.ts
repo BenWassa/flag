@@ -1,5 +1,6 @@
 import { CONTINENTS, REGIONS } from './data/continents.js';
 import { COUNTRY_BY_ID } from './data/countries.js';
+import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
 import type { LearningStatus, StudyMode, StudyScope } from './domain/models.js';
 import type { MapMode } from './domain/map-models.js';
@@ -90,7 +91,7 @@ window.addEventListener('popstate', (event) => {
   resetArmed = false;
   historyIndex = index;
   if (restored.name === 'quiz' && !store.session) store.view = { name: 'home' };
-  else if (restored.name === 'map-quiz' && !store.mapSession) store.view = { name: 'map-home' };
+  else if (restored.name === 'map-quiz' && !store.mapSession) store.view = { name: 'map-home', scope: AFRICA_MAP_SCOPE };
   else store.view = restored;
   render();
 });
@@ -110,6 +111,7 @@ function documentTitle(): string {
   const view = store.view;
   if (view.name === 'scope') return `${view.scope.label} · Flag Atlas`;
   if (view.name === 'quiz' && store.session) return `${store.session.scope.label} · Flag Atlas`;
+  if (view.name === 'map-home') return `${view.scope.label} locations · Flag Atlas`;
   if (view.name === 'map-quiz' && store.mapSession) return `${store.mapSession.scope.label} map · Flag Atlas`;
   return TITLES[view.name];
 }
@@ -119,6 +121,7 @@ function currentRouteKey(): string {
   if (view.name === 'scope') return `scope:${view.scope.kind}:${view.scope.id ?? 'world'}`;
   if (view.name === 'quiz') return `quiz:${store.session?.id ?? 'none'}:${store.session?.currentIndex ?? 0}`;
   if (view.name === 'results') return `results:${view.result.session.id}`;
+  if (view.name === 'map-home') return `map-home:${view.scope.id ?? 'africa'}`;
   if (view.name === 'map-quiz') return `map-quiz:${store.mapSession?.id ?? 'none'}:${store.mapSession?.currentIndex ?? 0}`;
   if (view.name === 'map-results') return `map-results:${view.result.session.id}`;
   return view.name;
@@ -160,7 +163,7 @@ function render(previousSelector: string | null = null): void {
       lastMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
       break;
     case 'map-home':
-      root.innerHTML = renderMapHome(store.locationProgress, store.mapPersisting);
+      root.innerHTML = renderMapHome(store.locationProgress, store.view.scope, store.mapPersisting);
       break;
     case 'map-quiz':
       if (!store.mapSession || !store.mapAsset) return;
@@ -190,18 +193,29 @@ function beginSession(scope: StudyScope, mode: StudyMode, size?: number, reviewI
   announce(`${scope.label}. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${count} flags. Question 1.`);
 }
 
-async function beginMapSession(mode: MapMode, targetCountryIds?: readonly string[]): Promise<void> {
+function currentMapScope(): StudyScope {
+  if (store.view.name === 'map-home') return store.view.scope;
+  if (store.view.name === 'map-results') return store.view.result.session.scope;
+  return store.mapSession?.scope ?? AFRICA_MAP_SCOPE;
+}
+
+async function beginMapSession(
+  mode: MapMode,
+  targetCountryIds?: readonly string[],
+  scope: StudyScope = currentMapScope(),
+): Promise<void> {
   cancelAllPending();
-  const asset = store.mapAsset ?? await loadMapAsset('west-africa');
+  const scopeId = scope.id ?? 'africa';
+  const asset = await loadMapAsset(scopeId);
   if (!asset) {
-    announce('The West Africa map could not be loaded.');
+    announce(`${scope.label} map could not be loaded.`);
     return;
   }
   if (!store.startMapSession(asset, mode, targetCountryIds)) {
     announce('No map locations are available for this round.');
     return;
   }
-  announce(`West Africa map. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
+  announce(`${asset.scope.label} map. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
   finishInteraction(null);
 }
 
@@ -216,7 +230,7 @@ function exitQuiz(): void {
 
 function exitMapQuiz(): void {
   cancelAllPending();
-  store.navigate({ name: 'map-home' });
+  store.navigate({ name: 'map-home', scope: store.mapSession?.scope ?? AFRICA_MAP_SCOPE });
 }
 
 function answerAnnouncement(countryId: string): string {
@@ -321,16 +335,25 @@ root.addEventListener('click', (event) => {
     submitMapAnswer(id, selector);
     return;
   }
+  if (action === 'open-map-scope' && id) {
+    const config = getAfricaMapScopeConfig(id);
+    if (config) {
+      cancelAllPending();
+      store.navigate({ name: 'map-home', scope: config.scope });
+      finishInteraction(null);
+    }
+    return;
+  }
   if (action === 'start-map-learn' || action === 'start-map-test') {
     void beginMapSession(action === 'start-map-learn' ? 'learn' : 'test');
     return;
   }
   if (action === 'review-map-mistakes' && store.view.name === 'map-results') {
-    void beginMapSession('learn', store.view.result.missedCountryIds);
+    void beginMapSession('learn', store.view.result.missedCountryIds, store.view.result.session.scope);
     return;
   }
   if (action === 'repeat-map' && store.view.name === 'map-results') {
-    void beginMapSession(store.view.result.session.mode);
+    void beginMapSession(store.view.result.session.mode, undefined, store.view.result.session.scope);
     return;
   }
 
@@ -343,7 +366,7 @@ root.addEventListener('click', (event) => {
       break;
     case 'open-map-pilot':
       cancelAllPending();
-      store.navigate({ name: 'map-home' });
+      store.navigate({ name: 'map-home', scope: AFRICA_MAP_SCOPE });
       break;
     case 'open-progress':
       store.navigate({ name: 'progress' });
