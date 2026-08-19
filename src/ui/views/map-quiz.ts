@@ -57,7 +57,11 @@ function visibleFeedback(
   wrongCountryName?: string,
 ): { text: string; className: string } {
   if (session.mode === 'test') {
-    return { text: 'Choose one location. Your result is held until the end.', className: '' };
+    if (resolution) return { text: 'Answer recorded', className: '' };
+    return {
+      text: session.currentIndex === 0 ? 'One tap each · results at the end.' : 'Tap one country.',
+      className: '',
+    };
   }
 
   if (resolution === 'first-try') {
