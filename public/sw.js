@@ -1,4 +1,4 @@
-// v9 integrates the routing/IA and production cartography releases.
+// v9 supersedes flag-atlas-v8 after integrating the routing/IA and production cartography releases.
 const VERSION = 'flag-atlas-v9';
 const SHELL = [
   './',
