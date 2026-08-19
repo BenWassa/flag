@@ -23,8 +23,9 @@ for (const id of ['CPV', 'GNB', 'SLE', 'BEN']) {
 const caboVerde = asset.countries.find((item) => item.countryId === 'CPV');
 assert.ok(caboVerde?.locator, 'Cabo Verde remains a single island dot target.');
 const cpvHtml = renderMapQuiz(asset, buildMapSession(asset, 'learn', 'cpv-dot-edge', ['CPV']), null);
-assert.ok(cpvHtml.includes('map-country__locator-hit'), 'Cabo Verde dot has a larger invisible touch surface.');
-assert.ok(!cpvHtml.includes('map-country__callout-line'), 'Cabo Verde does not duplicate the dot with a line/callout target.');
+const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
+assert.ok(cpvGroup.includes('map-country__locator-hit'), 'Cabo Verde dot has a larger invisible touch surface.');
+assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not duplicate the dot with a line/callout target.');
 
 let session = buildMapSession(asset, 'test', 'recorded-next-target-leak', ['GHA', 'MLI']);
 const firstTarget = session.countryIds[0];
