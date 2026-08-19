@@ -9,8 +9,12 @@ import { progressStrip } from '../components/progress.js';
 
 export function renderHome(
   progress: ProgressState,
-  locationProgress: LocationProgressState = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
+  locationProgressOrPersisting: LocationProgressState | boolean = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
 ): string {
+  const legacyPersisting = typeof locationProgressOrPersisting === 'boolean' ? locationProgressOrPersisting : true;
+  const locationProgress = typeof locationProgressOrPersisting === 'boolean'
+    ? createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS)
+    : locationProgressOrPersisting;
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
   const flags = getScopeStats(COUNTRIES, progress, worldScope);
   const locations = getLocationScopeStats(locationProgress, AFRICA_MAP_COUNTRY_IDS);
@@ -37,6 +41,12 @@ export function renderHome(
           </div>
         </div>
       </section>
+
+      ${legacyPersisting ? '' : `
+        <p class="storage-notice">
+          This browser is blocking storage, so today's progress will be lost when you close the tab.
+        </p>
+      `}
 
       <section class="atlas-section" aria-labelledby="domains-heading">
         <div class="list-heading">
