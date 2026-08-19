@@ -1,10 +1,12 @@
-export type IconName = 'back' | 'close' | 'chevron' | 'ledger';
+export type IconName = 'back' | 'close' | 'chevron' | 'ledger' | 'zoom-in' | 'zoom-out';
 
 const PATHS: Record<IconName, string> = {
   back: '<path d="M15 18l-6-6 6-6"/>',
   close: '<path d="M7 7l10 10M17 7L7 17"/>',
   chevron: '<path d="M9 6l6 6-6 6"/>',
   ledger: '<path d="M5 19v-6M12 19V5M19 19V9"/>',
+  'zoom-in': '<circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.5 14.5L19 19M10.5 7.8v5.4M7.8 10.5h5.4"/>',
+  'zoom-out': '<circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.5 14.5L19 19M7.8 10.5h5.4"/>',
 };
 
 export function icon(name: IconName, className = ''): string {
