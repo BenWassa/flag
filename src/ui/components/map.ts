@@ -21,18 +21,19 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
   const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
   if (!targetId || !assist) return '';
 
-  // On a fitted phone map, narrow countries need a larger effective target. The
-  // assist is clipped around every *other* country so enlargement can use ocean
-  // and neutral space without making a neighbouring country count as correct.
-  const usableRadius = Math.max(assist.r, 46);
-  const exclusionPaths = asset.countries
-    .filter((item) => item.countryId !== targetId)
-    .flatMap((item) => [
-      item.path ?? '',
-      item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
-    ])
-    .filter(Boolean)
-    .join(' ');
+  // Aim for roughly a 44px effective diameter at the pilot's normal mobile
+  // scale. Expansion is clipped around all real geography, so assistance can
+  // use ocean/neutral gaps but can never make another country count as correct.
+  const usableRadius = Math.max(assist.r, 22);
+  const exclusionPaths = [
+    ...(asset.contextPaths ?? []),
+    ...asset.countries
+      .filter((item) => item.countryId !== targetId)
+      .flatMap((item) => [
+        item.path ?? '',
+        item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
+      ]),
+  ].filter(Boolean).join(' ');
   const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
 
   return `
@@ -70,14 +71,25 @@ export function renderMapSvg(
   const showFeedback = options.showFeedback ?? session.mode === 'learn';
   const wrongId = options.lastWrongCountryId ?? null;
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
+  const currentTargetId = session.countryIds[session.currentIndex] ?? null;
 
   return `
-    <div class="map-stage__scroll">
+    <div class="map-stage__scroll" data-map-viewport>
       <svg class="map-svg" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
         <rect class="map-ocean" x="0" y="0" width="100%" height="100%" />
+        ${(asset.contextPaths ?? []).length ? `
+          <g class="map-context" aria-hidden="true">
+            ${(asset.contextPaths ?? []).map((path) => `<path class="map-context-country" d="${path}" />`).join('')}
+          </g>
+        ` : ''}
         ${asset.countries.map((geometry) => {
           const state = session.targets[geometry.countryId];
-          const classes = `map-country${resolutionClass(state, showFeedback)}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
+          const currentCorrect = showFeedback
+            && geometry.countryId === currentTargetId
+            && state?.resolved
+            && state.resolution !== 'revealed'
+            && state.resolution !== 'incorrect';
+          const classes = `map-country${resolutionClass(state, showFeedback)}${currentCorrect ? ' map-country--current-correct' : ''}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
           const action = interactive ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
           return `
             <g class="${classes}"${action}>
