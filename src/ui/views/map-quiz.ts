@@ -20,6 +20,9 @@ export function renderMapQuiz(
   const wrongCountry = lastWrongCountryId ? COUNTRY_BY_ID.get(lastWrongCountryId) : undefined;
   const showFeedback = session.mode === 'learn';
   const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, wrongCountry?.name);
+  const mapLabel = session.scope.kind === 'continent'
+    ? 'Africa country map'
+    : `Africa map with ${session.scope.label} active`;
 
   return `
     <main class="page page--map-quiz">
@@ -38,7 +41,7 @@ export function renderMapQuiz(
         <p class="map-prompt__status ${feedback.className}">${feedback.text}</p>
       </section>
 
-      <section class="map-stage" aria-label="Africa map with West Africa active">
+      <section class="map-stage" aria-label="${escapeHtml(mapLabel)}">
         ${renderMapSvg(asset, session, {
           interactive: true,
           showFeedback,
