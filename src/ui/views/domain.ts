@@ -1,0 +1,150 @@
+import { CONTINENTS, REGIONS } from '../../data/continents.js';
+import { COUNTRIES } from '../../data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
+import { getLocationScopeStats } from '../../domain/map-game.js';
+import type { LocationProgressState } from '../../domain/map-models.js';
+import type { LearningDomain, ProgressState, StudyScope } from '../../domain/models.js';
+import { getScopeStats } from '../../domain/progress.js';
+import { icon } from '../components/icons.js';
+import { progressStrip, statLegend } from '../components/progress.js';
+import { escapeHtml } from '../format.js';
+
+export function renderDomainHome(
+  domain: LearningDomain,
+  progress: ProgressState,
+  locationProgress: LocationProgressState,
+  persisting = true,
+  mapPersisting = true,
+): string {
+  if (domain === 'flags') return renderFlagsHome(progress, persisting);
+  if (domain === 'locations') return renderLocationsHome(locationProgress, mapPersisting);
+  return renderPlannedDomain(domain);
+}
+
+function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
+  const worldScope: StudyScope = { kind: 'world', label: 'World' };
+  const world = getScopeStats(COUNTRIES, progress, worldScope);
+
+  return `
+    <main class="page">
+      <header class="topbar topbar--detail">
+        <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
+        <div class="screen-title">
+          <h1 tabindex="-1" data-autofocus>Flags</h1>
+          <span>World · ${world.total} countries</span>
+        </div>
+      </header>
+
+      <section class="world-overview" aria-labelledby="world-heading">
+        <div class="overview-heading">
+          <div>
+            <h1 id="world-heading">World</h1>
+            <p>Learn by continent or region. Keep what you know.</p>
+          </div>
+          <div class="mastery-total" aria-label="${world.mastered} of ${world.total} flags mastered">
+            <strong>${world.mastered}</strong><span>/ ${world.total}</span>
+            <small>mastered</small>
+          </div>
+        </div>
+        ${progressStrip(world)}
+        ${statLegend(world)}
+        <div class="primary-actions">
+          <button class="button button--primary" data-action="start-learn">Learn world</button>
+          <button class="button button--secondary" data-action="start-test">Test world</button>
+        </div>
+      </section>
+
+      ${persisting ? '' : `
+        <p class="storage-notice">
+          This browser is blocking storage, so today's flag progress will be lost when you close the tab.
+        </p>
+      `}
+
+      <section class="atlas-section" aria-labelledby="continents-heading">
+        <div class="list-heading">
+          <h2 id="continents-heading">Continents</h2>
+          <span>${world.total} flags</span>
+        </div>
+        <div class="continent-list">
+          ${CONTINENTS.map((continent) => {
+            const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+            const stats = getScopeStats(COUNTRIES, progress, scope);
+            const regions = REGIONS.filter((region) => region.continentId === continent.id).length;
+            return `
+              <button class="continent-row" data-action="open-scope" data-domain="flags" data-id="${continent.id}">
+                <span class="continent-row__identity">
+                  <strong>${escapeHtml(continent.name)}</strong>
+                  <small>${stats.total} flags · ${regions} regions</small>
+                </span>
+                <span class="continent-row__progress">${progressStrip(stats)}</span>
+                <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+                ${icon('chevron')}
+              </button>
+            `;
+          }).join('')}
+        </div>
+      </section>
+    </main>
+  `;
+}
+
+function renderLocationsHome(progress: LocationProgressState, persisting: boolean): string {
+  const stats = getLocationScopeStats(progress, AFRICA_MAP_COUNTRY_IDS);
+  const progressStats = { ...stats, due: 0 };
+
+  return `
+    <main class="page">
+      <header class="topbar topbar--detail">
+        <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
+        <div class="screen-title">
+          <h1 tabindex="-1" data-autofocus>Locations</h1>
+          <span>Country locations · Africa available</span>
+        </div>
+      </header>
+
+      <section class="atlas-section" aria-labelledby="location-continents-heading">
+        <div class="list-heading">
+          <h2 id="location-continents-heading">Continents</h2>
+          <span>1 available</span>
+        </div>
+        <div class="continent-list">
+          <button class="continent-row" data-action="open-scope" data-domain="locations" data-id="africa">
+            <span class="continent-row__identity">
+              <strong>Africa</strong>
+              <small>54 countries · 5 regions · Learn or test</small>
+            </span>
+            <span class="continent-row__progress">${progressStrip(progressStats)}</span>
+            <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+            ${icon('chevron')}
+          </button>
+        </div>
+      </section>
+
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so location progress will last only for this visit.</p>`}
+    </main>
+  `;
+}
+
+function renderPlannedDomain(domain: 'outlines' | 'neighbors'): string {
+  const label = domain === 'outlines' ? 'Outlines' : 'Neighbors';
+  const description = domain === 'outlines'
+    ? 'Country-silhouette learning is planned in Issue #2.'
+    : 'Land-border neighbor learning is planned in Issue #3.';
+
+  return `
+    <main class="page">
+      <header class="topbar topbar--detail">
+        <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
+        <div class="screen-title">
+          <h1 tabindex="-1" data-autofocus>${label}</h1>
+          <span>Planned learning domain</span>
+        </div>
+      </header>
+
+      <div class="empty-state">
+        <strong>Reserved in the Atlas hierarchy</strong>
+        <span>${description} Its routes will reuse the same continent, region, Learn, Test, and review structure rather than adding another navigation system.</span>
+      </div>
+    </main>
+  `;
+}
