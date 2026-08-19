@@ -70,10 +70,10 @@ For a learning map, the actionable result is *which places needed help and how m
 ### 00:48 — External behavior/accessibility baseline checked
 
 **Research checked**
-- WCAG 2.2 SC 2.5.8: 24×24 CSS px minimum or sufficient spacing; 44×44 is the enhanced target size.
-- Apple HIG: frequent controls should have at least a 44×44pt hit region and custom controls need visible press state.
-- Material accessibility guidance: 48×48dp touch targets, commonly with ~8dp separation.
-- Retrieval-practice research supports attempting retrieval and receiving corrective feedback rather than passive exposure.
+- W3C WCAG 2.2 SC 2.5.8 requires pointer targets of at least 24×24 CSS px unless an exception applies, and explicitly notes the essential-presentation exception for dense map locations. Larger targets are still recommended where practical: https://www.w3.org/WAI/WCAG22/Understanding/target-size-minimum
+- Apple HIG recommends at least a 44×44pt hit region for buttons and requires a visible press state for custom controls: https://developer.apple.com/design/human-interface-guidelines/buttons
+- Apple accessibility guidance also stresses spacing to reduce accidental activation: https://developer.apple.com/design/human-interface-guidelines/accessibility
+- Retrieval-practice research supports retrieval attempts followed by corrective feedback; feedback improves the benefits of testing and reduces error persistence. Relevant review / experiments: https://pubmed.ncbi.nlm.nih.gov/20951630/ and https://pubmed.ncbi.nlm.nih.gov/18194050/
 
 **Behavior conclusion**
 - Keep **immediate corrective feedback in Learn**.
@@ -95,4 +95,116 @@ For a learning map, the actionable result is *which places needed help and how m
 **Implication for this pass**
 The strongest improvements will be grounded in the current rendered structure/CSS, established product design contract, interaction-state code, and objective mobile/accessibility constraints. A final production-device visual QA remains necessary after deployment.
 
+### 00:52 — First visual-system implementation pass
+
+**Changes**
+- Replaced the Home promotional map card with a flat **Country locations** atlas row.
+- Rebuilt map home using the same title, progress strip, stat legend, and Learn/Test action hierarchy as flag scope pages.
+- Removed map-only progress blues; durable location progress now uses the shared Mastered/Learning/Unseen vocabulary.
+- Removed glass/blur, shadows, 16–20px card radii, and bespoke map chrome.
+- Moved the active country prompt above the geography so the target stays in view during map scanning.
+- Removed the old 700px mobile minimum canvas and horizontal-search requirement; the map now fits available width.
+- Added visible touch-down, keyboard-focus, fine-pointer hover, reduced-motion, and forced-colors states.
+- Strengthened wrong-tap response with a temporary error fill/stroke plus explicit text naming what was selected.
+- Removed percentage emphasis from results and added first-try / one-miss / two-miss / reveal breakdown.
+
+**Evaluation**
+The map now belongs to the same product system as flags. The map itself becomes the dominant visual object, while surrounding UI returns to the quieter Atlas Index language.
+
+### 00:54 — First CI run failed; failure investigated
+
+**Run**
+- PR #5 CI run `32217406620`.
+
+**Failure**
+TypeScript rejected passing `LocationScopeStats` directly to the shared `progressStrip` / `statLegend` renderers because flag `ScopeStats` also contains a `due` field.
+
+**Assessment**
+This is a useful boundary failure, not a reason to duplicate the component or weaken the shared type. Location learning currently has no due scheduler.
+
+**Fix**
+Adapt map stats at the UI boundary with `due: 0`, preserving the shared progress component and flag-domain type contract.
+
+### 00:55 — Corrected CI run passed
+
+**Run**
+- PR #5 CI run `32217490882`.
+
+**Result**
+- `npm install`: pass.
+- Full `npm test`: pass.
+- Existing flag verification remains intact.
+- Map verification remains intact after the first visual-system changes.
+
+### 00:57 — P0 learning-integrity issue found in touch-target assistance
+
+**Finding**
+The initial pilot enlarges only the *current target* with an invisible circle rendered over the map. My first fit-width pass increased its minimum SVG radius to 26 to compensate for the smaller rendered map.
+
+Benin's assist center is `(505.2, 348.2)` and Togo's is `(484.8, 361.8)`: only about **24.5 SVG units apart**. A radius of 26 therefore reaches past the neighbour's center. In the existing overlay order, a learner could tap geographically inside the neighbouring country and still be credited with the target.
+
+**Severity**
+P0 for the learning contract. Accessibility assistance cannot change which geography counts as correct.
+
+**Resolution design**
+- Keep the full region fitted to the phone.
+- Allow a larger effective assist for narrow targets.
+- Clip the assist around every *other* country's real geometry and locator area using an SVG even-odd clip path.
+- Tapping another country therefore remains a real wrong answer; enlargement only gains usable neutral/ocean space around the tiny target.
+- Added regression assertions for the clip and target size.
+
+**Rule established**
+> Accessibility enlargement may make a country easier to hit, but it must never make an adjacent country count as that country.
+
+### 00:58 — Test-mode feedback simplified
+
+**Change**
+- First Test prompt explains the rule once: `One tap each · results at the end.`
+- Later prompts simply say `Tap one country.`
+- After a tap, the transient message is `Answer recorded`, with no correctness leak.
+
+**Reason**
+Mode rules should be learned once and then disappear into the interaction. Repeating a full sentence on all 16 questions adds reading without adding information.
+
+### 00:59 — UX contract converted into automated checks
+
+**Added verification for**
+- explicit wrong-selection text (`Not Mali…`) in Learn;
+- explicit reveal copy after three misses;
+- neutral `Answer recorded` confirmation in Test;
+- prompt appearing before map in the rendered DOM;
+- enlarged narrow-state assistance plus neighbour-excluding clip path;
+- diagnostic results breakdown and removal of percentage emphasis;
+- shared map-home progress/action vocabulary;
+- no map-only progress-card regression;
+- no literal colors in `map.css`;
+- no `backdrop-filter` glass chrome;
+- no return of the 700px minimum horizontal-search canvas;
+- hover gating to fine-pointer devices;
+- forced-colors support.
+
+**Documentation update**
+`docs/MAPS_PILOT.md` now supersedes the original horizontal-pan mobile decision and records the fit-width + safe-hit-assistance contract for future regions.
+
 ---
+
+## Current evaluation
+
+### What is materially better
+
+- **Visual cohesion:** map mode now reads as Flag Atlas rather than an embedded prototype.
+- **Task hierarchy:** target → map → response is explicit and stable.
+- **Mobile cognition:** the learner sees the whole pilot region while searching instead of panning a wide canvas.
+- **Input confidence:** touch/focus/press states are visible and wrong taps produce an unmistakable local response.
+- **Learning integrity:** small-target assistance no longer gets permission to turn a neighbouring-country tap into a correct answer.
+- **Mode clarity:** Learn teaches; Test records without leaking correctness.
+- **Results utility:** the screen points directly at error severity and review rather than a decorative percentage.
+- **Maintainability:** map CSS now derives from the shared design tokens and the UX contract has regression coverage.
+
+### Still to evaluate before merge
+
+- Run the expanded verification suite in GitHub CI.
+- Review CI-built artifact contents after the new safe-hit implementation.
+- Decide whether the fixed Learn auto-advance dwell (currently 620ms after a resolved target) gives a revealed answer enough study time or should become outcome-sensitive.
+- Perform final diff/red-team pass for regressions in existing flag UI.
+- Update this worklog with final CI result and merge/deploy state.
