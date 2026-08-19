@@ -44,7 +44,6 @@ export interface MapWaterLayers {
 
 export interface MapCountryGeometry {
   countryId: string;
-  /** Production map polygon when the country is directly rendered/tappable. */
   path?: string;
   /**
    * Canonical generated polygon retained when map UX substitutes a locator for
@@ -105,25 +104,6 @@ export interface MapSession {
   currentIndex: number;
   targets: Record<string, MapTargetState>;
   attempts: MapAttempt[];
-  startedTargetAt: string;
-}
-
-export interface LocationProgressRecord {
-  countryId: string;
-  status: LearningStatus;
-  evidenceSessions: string[];
-  masterySessionStreak: number;
-  /** Misses in the current learning sequence, used to require recovery after a lapse. */
-  recoveryDebt: number;
-  lastResolution?: MapResolution;
-  firstTryCorrect: number;
-  totalResolved: number;
-  updatedAt: string;
-}
-
-export interface LocationProgressState {
-  version: 1;
-  records: Record<string, LocationProgressRecord>;
 }
 
 export interface MapGuessOutcome {
@@ -140,6 +120,36 @@ export interface MapSessionResult {
   session: MapSession;
   firstTryCorrect: number;
   total: number;
-  resolutionCounts: Record<MapResolution, number>;
+  revealed: number;
   missedCountryIds: string[];
+}
+
+export interface LocationProgressRecord {
+  countryId: string;
+  status: LearningStatus;
+  masteryStreak: number;
+  lifetimeResolved: number;
+  lifetimeFirstTryCorrect: number;
+  lifetimeIncorrectGuesses: number;
+  revealCount: number;
+  lapseCount: number;
+  firstSeenAt?: string;
+  lastSeenAt?: string;
+  lastCorrectAt?: string;
+  lastMissedAt?: string;
+  masteredAt?: string;
+  lastMasteryCreditSessionId?: string;
+  confusionCounts: Record<string, number>;
+}
+
+export interface LocationProgressState {
+  version: 1;
+  records: Record<string, LocationProgressRecord>;
+}
+
+export interface LocationScopeStats {
+  total: number;
+  unseen: number;
+  learning: number;
+  mastered: number;
 }
