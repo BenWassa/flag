@@ -1,10 +1,11 @@
-const VERSION = 'flag-atlas-v4';
+const VERSION = 'flag-atlas-v5';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './map.css',
   './app.js',
+  './map-viewport.js',
   './manifest.webmanifest',
   './icons/app-icon.svg',
 ];
