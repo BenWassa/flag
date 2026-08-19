@@ -10,10 +10,15 @@
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs",
+    "maps:generate": "node scripts/generate-maps.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-cartography.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {
+    "d3-geo": "3.1.1",
+    "topojson-client": "3.1.0",
+    "topojson-server": "3.0.1",
+    "topojson-simplify": "3.0.3",
     "typescript": "5.8.3"
   }
 }
