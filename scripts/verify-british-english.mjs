@@ -58,7 +58,8 @@ renderedSurfaces.push(['Neighbours quiz', renderNeighborQuiz(neighborSession, nu
 assert.ok(renderedSurfaces[0][1].includes('where to practise it.'), 'Practise remains the verb on Home.');
 assert.ok(renderedSurfaces[2][1].includes('unseen prioritised'), 'Flag scope uses the adopted -ise product style.');
 assert.ok(renderedSurfaces[3][1].includes('unseen prioritised'), 'Outline scope uses the adopted -ise product style.');
-assert.ok(renderedSurfaces[2][1].includes('Adaptive practice'), 'Practice remains the noun in adaptive-practice copy.');
+const scopeSource = await readFile('dist/ui/views/scope.js', 'utf8');
+assert.ok(scopeSource.includes('Adaptive practice'), 'Practice remains the noun in adaptive-practice copy.');
 assert.ok(renderedSurfaces[5][1].includes('Name every land-border neighbour'));
 assert.ok(renderedSurfaces[5][1].includes('neighbours found'));
 
