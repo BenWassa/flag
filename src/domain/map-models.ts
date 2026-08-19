@@ -33,7 +33,7 @@ export interface MapCountryGeometry {
   path?: string;
   locator?: MapPoint;
   hitAssist?: MapPoint;
-  /** Explicit cartographic callout for countries too small/narrow for honest phone tapping. */
+  /** Explicit cartographic callout for mainland countries too small/narrow for honest phone tapping. */
   callout?: MapCountryCallout;
 }
 
@@ -41,7 +41,9 @@ export interface MapRegionAsset {
   scope: StudyScope;
   viewBox: string;
   countries: MapCountryGeometry[];
-  /** Non-interactive surrounding geography used to preserve continent context. */
+  /** Non-interactive catalog countries used to preserve parent-continent context. */
+  contextCountries?: MapCountryGeometry[];
+  /** Additional non-catalog geography such as Western Sahara. */
   contextPaths?: string[];
   /** Preferred first viewport within the full continent canvas. */
   initialFocus?: MapViewportFocus;
