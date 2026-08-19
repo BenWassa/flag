@@ -1,4 +1,4 @@
-// v10 adds the country-outline learning domain and its presentation layer.
+// v10 supersedes flag-atlas-v9 and the earlier routing-era flag-atlas-v8 cache while adding the country-outline learning domain.
 const VERSION = 'flag-atlas-v10';
 const SHELL = [
   './',
