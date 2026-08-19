@@ -6,6 +6,7 @@ import { progressStrip, statLegend } from '../components/progress.js';
 
 export function renderMapHome(progress: LocationProgressState, persisting = true): string {
   const stats = getLocationScopeStats(progress, WEST_AFRICA_MAP_COUNTRY_IDS);
+  const progressStats = { ...stats, due: 0 };
   return `
     <main class="page">
       <header class="topbar topbar--detail">
@@ -21,8 +22,8 @@ export function renderMapHome(progress: LocationProgressState, persisting = true
           <strong>${stats.mastered} mastered</strong>
           <span>${stats.learning} learning · ${stats.unseen} unseen</span>
         </div>
-        ${progressStrip(stats)}
-        ${statLegend(stats)}
+        ${progressStrip(progressStats)}
+        ${statLegend(progressStats)}
 
         <div class="study-actions">
           <button class="study-action study-action--primary" data-action="start-map-learn">
