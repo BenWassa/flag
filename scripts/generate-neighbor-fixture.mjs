@@ -23,10 +23,15 @@ for (const countryId of ids) {
   }
 }
 
+const adjacencyLines = ids.map((countryId) => {
+  const neighbors = adjacency[countryId].map((neighborId) => `'${neighborId}'`).join(', ');
+  return `  ${countryId}: [${neighbors}],`;
+}).join('\n');
+
 const output = `// GENERATED FIXTURE. Do not hand-edit adjacency.\n`
   + `// Canonical source: AFRICA_LAND_ADJACENCY emitted by scripts/generate-maps.mjs from the Issue #9 topology.\n`
   + `// Regenerate with: npm run maps:generate\n\n`
-  + `export const AFRICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = ${JSON.stringify(adjacency, null, 2)};\n\n`
+  + `export const AFRICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {\n${adjacencyLines}\n};\n\n`
   + `export const AFRICA_ZERO_LAND_NEIGHBOR_IDS = Object.freeze(\n`
   + `  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => AFRICA_LAND_ADJACENCY[countryId].length === 0),\n`
   + `);\n\n`
