@@ -97,6 +97,7 @@
   stroke: var(--surface);
   stroke-width: 3.2;
   stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
   paint-order: stroke fill;
   font-family: inherit;
   font-weight: 800;
