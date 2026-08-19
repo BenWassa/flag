@@ -8,6 +8,7 @@ import {
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
 } from '../dist/data/neighbors/africa.js';
 import { AFRICA_LAND_ADJACENCY as MAP_ADJACENCY } from '../dist/data/maps/africa.js';
+import { createInitialLocationProgress, getLocationRecord } from '../dist/domain/map-game.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
@@ -18,6 +19,7 @@ import {
   neighborMasteryGoal,
   resolveCountryGuess,
 } from '../dist/domain/neighbor-game.js';
+import { createInitialProgress, getRecord } from '../dist/domain/progress.js';
 import { renderNeighborQuiz, renderNeighborSuggestions } from '../dist/ui/views/neighbor-quiz.js';
 import { parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
 
@@ -100,6 +102,8 @@ function cleanGhanaRound(state, sessionId) {
   return { session: currentSession, progress: currentProgress };
 }
 
+const flagProgress = createInitialProgress(COUNTRIES);
+const locationProgress = createInitialLocationProgress(['GHA']);
 progress = createInitialNeighborProgress(['GHA']);
 for (const sessionId of ['mastery-1', 'mastery-2', 'mastery-3']) {
   progress = cleanGhanaRound(progress, sessionId).progress;
@@ -107,8 +111,10 @@ for (const sessionId of ['mastery-1', 'mastery-2', 'mastery-3']) {
 assert.equal(getNeighborRecord(progress, 'GHA').status, 'mastered');
 assert.equal(getNeighborRecord(progress, 'GHA').masteryStreak, 3);
 assert.equal(neighborMasteryGoal(getNeighborRecord(progress, 'GHA')), 3);
+assert.equal(getRecord(flagProgress, 'GHA').status, 'unseen', 'Neighbor mastery does not change flag mastery.');
+assert.equal(getLocationRecord(locationProgress, 'GHA').status, 'unseen', 'Neighbor mastery does not change location mastery.');
 
-let masteredSession = buildNeighborSession(AFRICA_LAND_ADJACENCY, progress, scope, ['GHA'], 'learn', 'lapse', 1, ['GHA']);
+const masteredSession = buildNeighborSession(AFRICA_LAND_ADJACENCY, progress, scope, ['GHA'], 'learn', 'lapse', 1, ['GHA']);
 const lapse = applyNeighborGuess(masteredSession, progress, 'BEN', 300);
 assert.equal(getNeighborRecord(lapse.progress, 'GHA').status, 'learning');
 assert.equal(getNeighborRecord(lapse.progress, 'GHA').lapseCount, 1);
@@ -121,7 +127,7 @@ assert.ok(html.includes('data-autofocus'));
 assert.ok(html.includes('enterkeyhint="go"'));
 assert.ok(html.includes('autocomplete="off"'));
 assert.ok(html.includes('aria-autocomplete="list"'));
-assert.ok(html.includes('3</strong> neighbors found') === false, 'Initial UI does not claim completed neighbors.');
+assert.ok(html.includes('<strong>0 of 3</strong> neighbors found'), 'Initial UI shows zero completed neighbors and the correct total.');
 const uiStep = applyNeighborGuess(uiSession, createInitialNeighborProgress(['GHA']), 'BFA', 200);
 const suggestionHtml = renderNeighborSuggestions(uiStep.session, 'burk');
 assert.ok(!suggestionHtml.includes('data-id="BFA"'), 'Completed neighbors disappear from autocomplete suggestions.');
@@ -132,7 +138,9 @@ assert.equal(serializeRoutePath(neighborRoute), '/neighbors/africa/west-africa/l
 
 const storageSource = await readFile('src/infrastructure/neighbor-storage.ts', 'utf8');
 assert.ok(storageSource.includes('flag-atlas:neighbor-progress:v1'));
+assert.ok(storageSource.includes('flag-atlas:neighbor-attempts:v1'));
 assert.ok(!storageSource.includes('flag-atlas:location-progress:v1'));
+assert.ok(!storageSource.includes('flag-atlas:progress:v2'));
 const appSource = await readFile('src/app.ts', 'utf8');
 assert.ok(appSource.includes("routeForScope('neighbors'"), 'Neighbors uses the shared Issue #10 route constructor.');
 assert.ok(appSource.includes("finishInteraction(outcome.resolved ? null : '[data-neighbor-input]')"), 'Sequential guesses restore input focus while the target remains active.');
@@ -147,4 +155,4 @@ assert.ok(generationSource.includes('Asymmetric generated adjacency'), 'Fixture 
 const fixtureSource = await readFile('src/data/neighbors/africa.ts', 'utf8');
 assert.ok(fixtureSource.startsWith('// GENERATED FIXTURE. Do not hand-edit adjacency.'));
 
-console.log('Neighbor verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery, mobile autocomplete, storage, and routes.');
+console.log('Neighbor verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, and routes.');
