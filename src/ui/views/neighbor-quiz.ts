@@ -20,8 +20,7 @@ export function renderNeighborQuiz(
   if (!target) return '<main class="page"><p>No neighbor target is active.</p></main>';
   const country = COUNTRY_BY_ID.get(target.countryId);
   const questionNumber = session.currentIndex + 1;
-  const attemptsUsed = target.guessedIds.length;
-  const remainingAttempts = Math.max(0, target.attemptBudget - attemptsUsed);
+  const remainingAttempts = Math.max(0, target.attemptBudget - target.guessedIds.length);
   const progressPercent = target.neighborIds.length === 0 ? 0 : (target.foundIds.length / target.neighborIds.length) * 100;
 
   return `
@@ -70,7 +69,7 @@ function renderEntry(session: NeighborSession, query: string): string {
     <form class="neighbor-entry" data-neighbor-form autocomplete="off">
       <label for="neighbor-country-input">Country</label>
       <div class="neighbor-input-row">
-        <input id="neighbor-country-input" data-neighbor-input name="country" type="search" value="${escapeHtml(query)}" placeholder="Type a country name" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="go" aria-autocomplete="list" aria-controls="neighbor-suggestions" />
+        <input id="neighbor-country-input" data-neighbor-input data-autofocus name="country" type="search" value="${escapeHtml(query)}" placeholder="Type a country name" autocomplete="off" autocapitalize="words" spellcheck="false" enterkeyhint="go" aria-autocomplete="list" aria-controls="neighbor-suggestions" />
         <button class="button button--primary" type="submit">Submit</button>
       </div>
       <div id="neighbor-suggestions" class="neighbor-suggestions" role="listbox" aria-label="Country suggestions">
