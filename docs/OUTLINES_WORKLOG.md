@@ -85,3 +85,27 @@ All timestamps are America/Toronto (EDT), 2026-08-19.
 **Verification:** CI execution and artifact inspection are pending later entries after the implementation branch is synchronized with the then-current `main`.
 
 **Evaluation:** Feature-level automated coverage is in place; release readiness is intentionally not yet claimed.
+
+## 14:34 — Canonical island silhouettes
+
+**Observation:** Issue #9 correctly renders five very small island countries as map locators, which means their production map `path` is intentionally absent. A locator is appropriate for location interaction but cannot represent an outline-recognition question.
+
+**Assessment:** The polygon must remain available at the canonical generator boundary without changing Location rendering and without introducing an outline-only geometry source.
+
+**Change:** Extended `MapCountryGeometry` with optional `outlinePath`. The existing `scripts/generate-maps.mjs` pipeline now emits the simplified canonical country polygon into `outlinePath` for `CPV`, `STP`, `COM`, `MUS`, and `SYC` while continuing to emit the existing locator and no directly rendered map `path` for those countries. Regenerated the committed Africa production cartography from the pinned Natural Earth source.
+
+**Verification:** The outline verifier requires all five locators to remain intact, their normal map paths to remain absent, their canonical multipart `outlinePath` values to exist, and normalization to be invariant when locator/callout metadata is removed. Existing map and cartography suites remained green.
+
+**Evaluation:** Locations keeps its tiny-island interaction behavior; Outlines receives the actual canonical polygon. There is still one production geometry pipeline and one generated Africa asset.
+
+## 14:57 — Final integration, CI, and artifact inspection
+
+**Observation:** Final release readiness required a current `main`, complete repository verification, and inspection of the exact CI-produced build rather than source alone.
+
+**Assessment:** `main` remained at `af31a8390d9265b11f5fda825dca3c73318e6212`, the same Issue #9 integration point already incorporated by the branch, so no additional merge/rebase or conflict resolution was necessary.
+
+**Change:** Fixed the final outline verifier false negative by comparing Learn feedback against the renderer's HTML-escaped canonical country name. No production behavior changed in that fix.
+
+**Verification:** CI run 119 passed the complete `npm test` chain: core learning, map, edge-case map, routing, production cartography, map-generation entry point, and outline verification. The uploaded `flag-atlas-dist` artifact was downloaded and inspected. Its compiled Africa geometry contains real multipart `outlinePath` data for locator islands; its shell includes `outline.css`; and a direct execution smoke test against the compiled modules loaded West Africa, built a 10-question round, rendered exactly four choices, retained the generic silhouette accessibility label, and round-tripped `/outlines/africa/west-africa/learn` through the production router. Automated responsive contracts cover portrait and short-landscape layouts. The local container's browser navigation is blocked by its administrator policy, so no additional screenshot-based browser pass was possible in this environment.
+
+**Evaluation:** The implementation satisfies Issue #2's automated release gates without duplicating geometry or routing architecture. PR #13 is ready for merge on the current `main`.
