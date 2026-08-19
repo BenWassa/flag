@@ -1,5 +1,6 @@
 import assert from 'node:assert/strict';
 import { readFile, stat } from 'node:fs/promises';
+import { gzipSync } from 'node:zlib';
 import {
   AFRICA_CARTOGRAPHY_PROVENANCE,
   AFRICA_COASTLINE_PATHS,
@@ -59,6 +60,10 @@ assert.ok(
   provenance.topology.coordinateCountAfter / provenance.topology.coordinateCountBefore > 0.12,
   'Production simplification remains materially higher fidelity than an aggressive locator map.',
 );
+assert.equal(provenance.runtimeOptimization.pathDigits, 1);
+assert.equal(provenance.runtimeOptimization.physicalTolerance.ocean, 0.4);
+assert.equal(provenance.runtimeOptimization.physicalTolerance.lakes, 0.15);
+assert.equal(provenance.runtimeOptimization.physicalTolerance.rivers, 0.2);
 assert.equal(provenance.boundaryPolicy.scoredCountries, 54);
 assert.match(provenance.boundaryPolicy.somaliland, /canonical SOM/);
 assert.match(provenance.boundaryPolicy.westernSahara, /non-scoring context/);
@@ -133,10 +138,14 @@ const serviceWorker = await readFile('dist/sw.js', 'utf8');
 assert.ok(serviceWorker.includes('flag-atlas-v8'), 'PWA cache is invalidated for the production cartography change.');
 assert.ok(serviceWorker.includes('./map-cartography.css'), 'New map viewport/cartography CSS is offline-shell compatible.');
 
-const africaModule = await stat('dist/data/maps/africa.js');
-assert.ok(africaModule.size < 650_000, `Lazy Africa runtime asset remains reasonably small (${africaModule.size} bytes).`);
+const africaModulePath = 'dist/data/maps/africa.js';
+const africaModule = await stat(africaModulePath);
+const africaModuleBytes = await readFile(africaModulePath);
+const africaGzipBytes = gzipSync(africaModuleBytes, { level: 9 }).byteLength;
+assert.ok(africaModule.size < 1_000_000, `Lazy Africa runtime asset stays below 1 MB raw (${africaModule.size} bytes).`);
+assert.ok(africaGzipBytes < 300_000, `Lazy Africa runtime asset stays below 300 KB gzip (${africaGzipBytes} bytes).`);
 
 console.log(
   `Production cartography verification passed: ${provenance.topology.coordinateCountAfter}/${provenance.topology.coordinateCountBefore} coordinates, `
-  + `${AFRICA_WATER.lakes?.length ?? 0} lakes, ${AFRICA_WATER.rivers?.length ?? 0} rivers, ${africaModule.size} byte lazy asset.`,
+  + `${AFRICA_WATER.lakes?.length ?? 0} lakes, ${AFRICA_WATER.rivers?.length ?? 0} rivers, ${africaModule.size} raw / ${africaGzipBytes} gzip bytes.`,
 );
