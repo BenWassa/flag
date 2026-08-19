@@ -9,6 +9,18 @@ export interface MapPoint {
   r: number;
 }
 
+export interface MapAnchorPoint {
+  cx: number;
+  cy: number;
+}
+
+export interface MapCountryCallout {
+  /** Point on/next to the real country geometry where the leader line starts. */
+  anchor: MapAnchorPoint;
+  /** Visible off-country target connected to the true location by a leader line. */
+  target: MapPoint;
+}
+
 export interface MapViewportFocus {
   x: number;
   y: number;
@@ -21,6 +33,8 @@ export interface MapCountryGeometry {
   path?: string;
   locator?: MapPoint;
   hitAssist?: MapPoint;
+  /** Explicit cartographic callout for countries too small/narrow for honest phone tapping. */
+  callout?: MapCountryCallout;
 }
 
 export interface MapRegionAsset {
