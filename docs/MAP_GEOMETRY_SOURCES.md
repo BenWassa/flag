@@ -112,7 +112,7 @@ A deterministic second stage now:
   - rivers: `0.2`;
 - emits final runtime path precision of **1 decimal digit**.
 
-At the Issue #9 visual maximum of 5.5×, these physical-layer tolerances remain sub-pixel-scale in normal phone rendering. The committed Africa module verified at **918,944 bytes raw / 243,511 bytes gzip** in CI.
+The committed generated TypeScript source is **918,944 bytes**. Standard CI run #84 built `dist/data/maps/africa.js` at **920,449 bytes raw / 243,286 bytes gzip**, within the `<1 MB raw` / `<300 KB gzip` production budget.
 
 ### Why the pinned boundary-line theme is not the rendered shared-border mesh
 
@@ -230,7 +230,7 @@ npm run maps:generate -- --update-hashes
 npm test
 ```
 
-The `maps:generate` wrapper forwards source-control flags to the geodata generator before running deterministic runtime optimization. `--update-hashes` must never be used merely to suppress an unexplained upstream change.
+The `maps:generate` wrapper forwards source-control flags to the geodata generator before running deterministic runtime optimization. An automated regression protects that ordering/flag-forwarding contract. `--update-hashes` must never be used merely to suppress an unexplained upstream change.
 
 ## Verification and release criteria
 
@@ -248,6 +248,7 @@ Automated Issue #9 verification covers:
 - viewport persistence, max zoom, pointer gestures, and browser zoom-modifier preservation;
 - non-interactive water/boundary CSS;
 - continent-lazy loading and PWA shell compatibility;
+- generation-entrypoint source-flag forwarding;
 - Africa runtime budget `< 1 MB raw` and `< 300 KB gzip`.
 
 Artifact visual QA additionally checks portrait and short-landscape full-continent/regional renders for extent, seam quality, water restraint, islands/callouts, and unobstructed geography.
