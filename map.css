@@ -119,8 +119,7 @@
 .map-prompt__status--correct { color: var(--mastered); }
 
 .map-stage {
-  flex: 1 1 auto;
-  min-height: 0;
+  flex: 0 0 auto;
   margin-top: var(--space-3);
   overflow: hidden;
   border: 1px solid var(--line);
@@ -129,14 +128,12 @@
 }
 .map-stage__scroll {
   width: 100%;
-  height: 100%;
   overflow: hidden;
 }
 .map-svg {
   display: block;
   width: 100%;
   height: auto;
-  max-height: calc(100dvh - 178px);
   touch-action: manipulation;
 }
 .map-ocean { fill: var(--surface-subtle); }
@@ -233,8 +230,43 @@
   .page--map-quiz { padding-left: var(--space-3); padding-right: var(--space-3); }
   .map-quiz-topbar__meta { display: none; }
   .map-prompt { padding-top: var(--space-3); }
-  .map-stage { margin-left: calc(-1 * var(--space-3)); margin-right: calc(-1 * var(--space-3)); border-left: 0; border-right: 0; border-radius: 0; }
-  .map-svg { max-height: calc(100dvh - 166px); }
+  .map-stage {
+    margin-left: calc(-1 * var(--space-3));
+    margin-right: calc(-1 * var(--space-3));
+    border-left: 0;
+    border-right: 0;
+    border-radius: 0;
+  }
+}
+
+/* Short landscape is a structural reflow: command at left, geography at right. */
+@media (orientation: landscape) and (max-height: 600px) and (min-width: 600px) {
+  .page--map-quiz {
+    display: grid;
+    grid-template-columns: minmax(210px, 28%) minmax(0, 1fr);
+    grid-template-rows: 48px minmax(0, 1fr);
+    gap: var(--space-3) var(--space-4);
+    height: 100dvh;
+    min-height: 0;
+    padding-top: max(var(--space-3), env(safe-area-inset-top));
+    padding-bottom: max(var(--space-3), env(safe-area-inset-bottom));
+  }
+  .map-quiz-topbar { grid-column: 1 / -1; grid-row: 1; }
+  .map-prompt {
+    grid-column: 1;
+    grid-row: 2;
+    align-content: center;
+    padding: var(--space-4) var(--space-4) var(--space-4) 0;
+    border-right: 1px solid var(--line);
+    border-bottom: 0;
+  }
+  .map-prompt h1 { font-size: clamp(1.55rem, 4vw, 2.1rem); }
+  .map-stage {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+    margin-top: 0;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
