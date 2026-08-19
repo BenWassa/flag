@@ -40,7 +40,7 @@ export function renderOutlineHome(
         <div class="study-actions">
           <button class="study-action study-action--primary" data-action="start-outline-learn">
             <strong>Learn</strong>
-            <span>${stats.unseen > 0 ? `${stats.unseen} unseen prioritized` : 'Adaptive practice'}</span>
+            <span>${stats.unseen > 0 ? `${stats.unseen} unseen prioritised` : 'Adaptive practice'}</span>
           </button>
           <button class="study-action" data-action="start-outline-test">
             <strong>Test</strong>
