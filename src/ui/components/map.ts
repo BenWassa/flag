@@ -11,6 +11,49 @@ function resolutionClass(state: MapTargetState | undefined, showFeedback: boolea
   }
 }
 
+function circlePath(cx: number, cy: number, radius: number): string {
+  return `M${cx - radius},${cy}a${radius},${radius} 0 1,0 ${radius * 2},0a${radius},${radius} 0 1,0 -${radius * 2},0Z`;
+}
+
+function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interactive: boolean): string {
+  if (!interactive) return '';
+  const targetId = session.countryIds[session.currentIndex];
+  const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
+  if (!targetId || !assist) return '';
+
+  // On a fitted phone map, narrow countries need a larger effective target. The
+  // assist is clipped around every *other* country so enlargement can use ocean
+  // and neutral space without making a neighbouring country count as correct.
+  const usableRadius = Math.max(assist.r, 46);
+  const exclusionPaths = asset.countries
+    .filter((item) => item.countryId !== targetId)
+    .flatMap((item) => [
+      item.path ?? '',
+      item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
+    ])
+    .filter(Boolean)
+    .join(' ');
+  const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
+
+  return `
+    <defs>
+      <clipPath id="map-target-hit-clip">
+        <path d="${clipPath}" fill-rule="evenodd" clip-rule="evenodd" />
+      </clipPath>
+    </defs>
+    <circle
+      class="map-current-target-hit"
+      cx="${assist.cx}"
+      cy="${assist.cy}"
+      r="${usableRadius}"
+      clip-path="url(#map-target-hit-clip)"
+      data-action="map-answer"
+      data-id="${targetId}"
+      aria-hidden="true"
+    />
+  `;
+}
+
 export interface RenderMapOptions {
   interactive?: boolean;
   showFeedback?: boolean;
@@ -46,14 +89,7 @@ export function renderMapSvg(
             </g>
           `;
         }).join('')}
-        ${(() => {
-          if (!interactive) return '';
-          const targetId = session.countryIds[session.currentIndex];
-          const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
-          if (!targetId || !assist) return '';
-          const usableRadius = Math.max(assist.r, 26);
-          return `<circle class="map-current-target-hit" cx="${assist.cx}" cy="${assist.cy}" r="${usableRadius}" data-action="map-answer" data-id="${targetId}" aria-hidden="true" />`;
-        })()}
+        ${assistedHitTarget(asset, session, interactive)}
       </svg>
     </div>
   `;
