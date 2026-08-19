@@ -2,6 +2,7 @@
   "name": "Flag Atlas",
   "short_name": "Flag Atlas",
   "description": "Learn flags and country geography with durable progress and focused practice.",
+  "lang": "en-GB",
   "start_url": "./#/",
   "scope": "./",
   "display": "standalone",
