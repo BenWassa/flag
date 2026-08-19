@@ -18,6 +18,7 @@ import type {
 } from '../domain/map-models.js';
 import { applyAttempt, createInitialProgress, getRecord } from '../domain/progress.js';
 import type {
+  LearningDomain,
   ProgressState,
   QuizAttempt,
   QuizSession,
@@ -36,6 +37,7 @@ import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '..
 
 export type ViewState =
   | { name: 'home' }
+  | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
   | { name: 'progress' }
   | { name: 'quiz' }
@@ -56,7 +58,9 @@ export class AppStore {
   locationProgress: LocationProgressState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
+  sessionResult: SessionResult | null = null;
   mapSession: MapSession | null = null;
+  mapSessionResult: MapSessionResult | null = null;
   mapAsset: MapRegionAsset | null = null;
   questionStartedAt = performance.now();
   answeredCountryId: string | null = null;
@@ -85,8 +89,6 @@ export class AppStore {
     const locationPersisted = loadLocationProgress();
     this.locationProgress = locationInitial;
     if (locationPersisted) {
-      // Preserve every existing location record while ensuring all currently
-      // enabled African countries have a well-formed default.
       const records = { ...locationPersisted.records };
       for (const countryId of AFRICA_MAP_COUNTRY_IDS) {
         records[countryId] ??= locationInitial.records[countryId];
@@ -104,15 +106,25 @@ export class AppStore {
 
   resetProgress(): void {
     this.progress = createInitialProgress(COUNTRIES);
-    this.session = null;
-    this.answeredCountryId = null;
-    this.currentAttempt = null;
+    this.abandonSession();
   }
 
   resetMapProgress(): void {
     this.locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
-    this.mapSession = null;
+    this.abandonMapSession();
     this.mapAsset = null;
+  }
+
+  abandonSession(): void {
+    this.session = null;
+    this.sessionResult = null;
+    this.answeredCountryId = null;
+    this.currentAttempt = null;
+  }
+
+  abandonMapSession(): void {
+    this.mapSession = null;
+    this.mapSessionResult = null;
     this.mapLastWrongCountryId = null;
     this.mapLastOutcome = null;
   }
@@ -140,6 +152,7 @@ export class AppStore {
       currentIndex: 0,
       attempts: [],
     };
+    this.sessionResult = null;
     this.answeredCountryId = null;
     this.currentAttempt = null;
     this.questionStartedAt = performance.now();
@@ -184,6 +197,7 @@ export class AppStore {
     }
 
     const result = this.finishSession();
+    this.sessionResult = result;
     this.view = { name: 'results', result };
     return result;
   }
@@ -214,6 +228,7 @@ export class AppStore {
 
     this.mapAsset = asset;
     this.mapSession = mapSession;
+    this.mapSessionResult = null;
     this.mapLastWrongCountryId = null;
     this.mapLastOutcome = null;
     this.questionStartedAt = performance.now();
@@ -247,6 +262,7 @@ export class AppStore {
     const completed = mapSessionIsComplete(this.mapSession);
     if (completed) {
       const result = finishMapSession(this.mapSession);
+      this.mapSessionResult = result;
       this.view = { name: 'map-results', result };
       return result;
     }
