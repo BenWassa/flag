@@ -100,9 +100,10 @@ for (const id of ['CPV', 'STP', 'COM', 'MUS', 'SYC']) {
 }
 const cpvSession = buildMapSession(westAsset, 'learn', 'island-dot-target', ['CPV']);
 const cpvHtml = renderMapQuiz(westAsset, cpvSession, null);
-assert.ok(cpvHtml.includes('map-country__locator'), 'Island locator is visibly rendered.');
-assert.ok(cpvHtml.includes('map-country__locator-hit'), 'Island locator receives an enlarged invisible touch area.');
-assert.ok(!cpvHtml.includes('map-country__callout-line'), 'Cabo Verde does not render a redundant callout line.');
+const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
+assert.ok(cpvGroup.includes('map-country__locator'), 'Cabo Verde locator is visibly rendered in its own country group.');
+assert.ok(cpvGroup.includes('map-country__locator-hit'), 'Cabo Verde locator receives an enlarged invisible touch area.');
+assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not render a redundant callout line.');
 
 let progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 let learn = buildMapSession(westAsset, 'learn', 'learn-three-strikes', ['GHA']);
