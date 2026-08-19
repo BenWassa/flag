@@ -1,125 +1,139 @@
 # Issue #3 — Neighboring countries game worklog
 
-Last updated: 2026-08-19 (America/Toronto)
+Last updated: 2026-08-19 16:07 EDT (America/Toronto)
 
-## Release scope and data model
+## Final release scope
 
-Issue #9 deliberately established an Africa-first production topology. Issue #3 therefore ships the Neighbors domain for Africa and its five existing regions without inventing a second global geopolitical model.
+Issue #3 ships an Africa-first **Neighbors** learning domain for Africa and the five existing Africa regions. It builds on the two required foundations rather than duplicating them:
 
-The canonical source of adjacency remains `AFRICA_LAND_ADJACENCY` emitted by `scripts/generate-maps.mjs`. `scripts/generate-neighbor-fixture.mjs` mechanically extracts that generated ISO3 graph into the lightweight runtime fixture `src/data/neighbors/africa.ts`. `npm run maps:generate` regenerates geometry, runtime optimization, and the neighbor fixture in sequence. Verification asserts exact data equality with the Issue #9 output, symmetry, deterministic sort order, no self-links, representative border cases, and byte-stable regeneration when topology is unchanged.
+- Issue #9 / PR #12: canonical Natural Earth 1:10m production topology and generated Africa land adjacency;
+- Issue #10 / PR #11: typed domain/scope/activity hash routing;
+- Issue #2 / PR #13: concurrently completed Outlines domain, integrated semantically before final release.
 
-This release does **not** hand-author or correct country pairs. Any geography correction must be made in the canonical Issue #9 source/topology normalization and regenerated.
+The canonical geographic source remains `AFRICA_LAND_ADJACENCY` emitted by the Issue #9 map pipeline. `scripts/generate-neighbor-fixture.mjs` mechanically extracts that graph into the lightweight runtime fixture `src/data/neighbors/africa.ts`. The Neighbors runtime does **not** import the heavyweight Africa map module and does not maintain a handwritten border table.
 
-### Political-boundary inheritance
+`npm run maps:generate` regenerates production geometry, runtime optimization, and the Neighbor fixture in sequence. Verification checks equality with the topology-derived graph, symmetry, deterministic ordering, self-link absence, representative difficult cases, and byte-stable regeneration.
+
+## Geographic coverage policy
+
+The production topology is currently Africa-only. The raw generated adjacency graph therefore must not be treated as a complete worldwide application-country graph.
+
+### Boundary inheritance
 
 - Somaliland remains dissolved into canonical `SOM` scoring geometry before adjacency is derived.
-- Western Sahara remains non-scoring context and is not silently merged into Morocco.
+- Western Sahara remains non-scoring context and is not merged into Morocco.
 - Bir Tawil remains non-scoring context and is not assigned to Egypt or Sudan.
-- The 54-country Africa application catalog is the scoring topology used by this release.
-- Non-sovereign overseas territories are not separate application-country targets in this Africa release. Island or territory proximity never creates maritime adjacency.
-- A sovereign border that depends on application geometry outside the 54-country Africa scoring topology is outside this release's coverage. It must be added by extending Issue #9's production topology/political review, not by patching Neighbors data.
-- Global/cross-topology rollout therefore remains a future Issue #9 pipeline extension. The Africa fixture must not be treated as a complete worldwide border graph.
+- Maritime proximity never creates adjacency.
+- Geography corrections belong in the canonical Issue #9 topology pipeline, followed by regeneration. Neighbors does not patch individual country pairs.
 
-### Difficult cases covered
+### Coverage-deferred targets
 
-- **Enclave:** Lesotho has `ZAF` as its sole land neighbor.
-- **Enclosed state:** The Gambia has `SEN` as its sole land neighbor.
-- **Exclave:** Angola's topology includes the Cabinda border with the Republic of the Congo (`COG`).
-- **Multipart country:** Equatorial Guinea keeps Cameroon and Gabon only; island proximity adds no maritime neighbor.
-- **High-degree cases:** DR Congo and Tanzania are regression-tested.
-- **De-facto/disputed geometry:** Somalia, Western Sahara, and Bir Tawil inherit Issue #9 handling exactly.
-- **Zero-neighbor countries in Africa:** Cabo Verde, São Tomé and Príncipe, Comoros, Madagascar, Mauritius, and Seychelles are stored with empty adjacency arrays.
+Final integration review found that **Egypt (`EGY`) and Morocco (`MAR`) cannot safely be standard Neighbor targets while the topology is Africa-only**, because their complete application-country land-border sets cross the current topology boundary.
+
+The release-safe decision is intentionally conservative:
+
+- keep their generated Africa adjacency records unchanged;
+- exclude `EGY` and `MAR` at Neighbor target-scope eligibility;
+- expose the exclusion in UI/policy copy;
+- restore them only after the canonical topology expands across the relevant boundaries.
+
+This avoids teaching a partial neighbor set and preserves one geographic source of truth.
+
+### Difficult cases retained in regression coverage
+
+- **Enclave:** Lesotho → South Africa only.
+- **Enclosed state:** The Gambia → Senegal only.
+- **Exclave:** Angola includes Cabinda-derived land adjacency.
+- **Multipart country:** Equatorial Guinea does not gain maritime neighbors from island proximity.
+- **High-degree cases:** DR Congo and Tanzania.
+- **Political-policy inheritance:** Somalia, Western Sahara, and Bir Tawil follow Issue #9.
 
 ## Zero-neighbor policy
 
-Zero-land-neighbor countries remain valid records in the canonical fixture, but standard Neighbors rounds filter them out. An empty response is not a useful standalone recognition exercise and would make completion ambiguous. Scope totals shown for mastery therefore count standard targets, while region ledgers explicitly identify zero-neighbor exclusions.
+Cabo Verde, São Tomé and Príncipe, Comoros, Madagascar, Mauritius, and Seychelles remain valid canonical records with empty adjacency arrays.
+
+They are excluded from standard `name all neighbors` rounds because an empty-answer round is not a useful recognition task. The UI distinguishes zero-neighbor exclusions from the separate cross-topology coverage deferrals.
 
 ## Gameplay policy
 
-For a target with `n` correct land neighbors, the starting budget is exactly `n + 2` total unique country guesses. Each correct or wrong unique country consumes one guess. Repeating **any** previously guessed country is a duplicate and consumes nothing. Because all `n` correct neighbors are required, `n + 2` gives the learner two recoverable wrong guesses; a third extra wrong guess exhausts the round.
+For a target with `n` correct land neighbors, the learner gets exactly **`n + 2` unique guesses**.
 
-The current topology's largest set is DR Congo at nine neighbors, producing an 11-guess budget. That keeps the same two-error tolerance at both low and high degree without creating a pathological round, so no special-case cap/floor was added.
+- each unique correct or wrong country consumes one guess;
+- repeating any previously guessed country consumes nothing;
+- correct neighbors accumulate visibly;
+- completion occurs when the full set is found;
+- exhaustion reveals every still-missing neighbor;
+- the learner advances deliberately to the next target.
 
-Correct neighbors collect visibly. Guessed countries are removed from autocomplete suggestions. Exhaustion reveals every still-missing neighbor. Completion and exhaustion are explicit terminal states; the learner advances deliberately to the next target.
-
-Country entry reuses `COUNTRIES` canonical display names and aliases. Search is case-insensitive, accent-insensitive, punctuation-tolerant, prefix/substring forgiving, and supports exact alias submission. The input is a native form for Enter-to-submit, stays focused after non-terminal guesses, clears after submission, uses 50px controls/suggestion rows, and bounds the suggestion list by viewport height so the mobile keyboard does not bury the round status.
+Autocomplete resolves against canonical country names and aliases from the shared country catalog. Search is case-insensitive, accent-insensitive, punctuation-tolerant, and supports exact alias submission. The interaction uses a native form/Enter flow, preserves input focus after non-terminal guesses, removes already-guessed countries from suggestions, and bounds the suggestion surface for mobile keyboards.
 
 ## Learn / Test / mastery policy
 
-Neighbors has an independent `NeighborProgressState` and separate `flag-atlas:neighbor-progress:v1` persistence namespace. Flags and Locations records are never read or written for Neighbors mastery.
+Neighbors has an independent `NeighborProgressState` and separate persistence namespace. It does not read or write Flags, Locations, or Outlines mastery.
 
-A mastery-credit event is a **clean full-set completion**: every correct neighbor found with zero wrong guesses. As with existing learning domains, a target earns at most one mastery credit per session. Three clean sessions master a country. A wrong guess resets the current mastery streak; a lapse from mastered increments `lapseCount`, after which two clean sessions are required to remaster. Completed rounds with one or more wrong guesses are useful practice but do not award mastery credit. Exhausted/revealed rounds never award mastery credit.
+A mastery-credit event is a **clean full-set completion**: all correct neighbors found with zero wrong guesses. A country earns at most one credit per session. Three distinct clean sessions master a country; a mastered miss lapses it, after which two clean sessions are required to remaster.
 
-Learn and Test use the same underlying multi-answer task and mastery semantics. Both retain immediate set-building feedback because correct neighbors must visibly become completed and the learner must know what remains. Learn prioritizes unseen/weaker targets; Test uses deterministic randomized ordering and emphasizes the end-of-round clean/completed/exhausted summary. Neither introduces XP, lives, or a parallel scoring model.
+Learn and Test use the same multi-answer task. Immediate set-building feedback remains in both because the learner must know which members of the set have already been found. Test emphasizes the end-of-round clean/completed/exhausted summary rather than hiding intermediate set state. No XP, lives, streak UI, or parallel score model is introduced.
 
-## Timestamped implementation log
+## Concurrent Outlines integration
 
-### 2026-08-19 14:04 EDT
+PR #13 merged first as `0d6395dc9985b7245a415fe5dfad5d47655202f6`.
 
-**Observation:** Issue #3 requires adjacency from production topology, and `main` already contains Issue #9's topology-derived Africa graph plus Issue #10's typed `neighbors` routes.
+PR #14 originally overlapped with Outlines in eight shared shell/orchestration files. The final branch integrated PR #13 as a real merge parent and resolved those overlaps semantically rather than choosing one feature wholesale.
 
-**Assessment:** Rebuilding adjacency or navigation would violate both prerequisites. Africa is the natural release boundary because Issue #9 explicitly made that topology production-ready first.
+The combined release preserves both domains in:
 
-**Change:** Created `agent/issue-3-neighbors` from then-current `main` (`af31a8390d9265b11f5fda825dca3c73318e6212`).
+- `src/app.ts`: routes, active-round refresh fallback, Back, review/repeat, reset, keyboard/form behavior, storage flush;
+- `src/state/store.ts`: independent session/progress/result state for all four domains;
+- Home/domain IA: Flags, Locations, Outlines, and Neighbors all shown as available;
+- build shell: both `outline.css` and `neighbors.css`;
+- PWA shell: active cache `flag-atlas-v11` with both new styles;
+- test chain: standalone Outlines + Neighbors suites plus `verify-domain-integration.mjs`.
 
-**Verification:** Inspected Issue #3, `DESIGN.md`, country naming policy, map source/provenance documentation, generator, cartography verification, routing docs/code, progress models, location mastery, persistence, and UI architecture.
+## Verification history
 
-**Evaluation:** Proceed with an Africa-first Neighbors domain and no second geometry/navigation source.
+### 2026-08-19 14:04–14:23 EDT — initial implementation
 
-### 2026-08-19 14:12 EDT
+The agent inspected Issue #3, design and naming policy, #9 topology/provenance, #10 routing, mastery/storage conventions, and UI architecture. It implemented the lightweight generated adjacency fixture, gameplay state machine, mastery isolation, autocomplete, persistence, Africa/region views, and automated verification.
 
-**Observation:** The production adjacency graph was embedded in the heavyweight Africa map module even though Neighbors itself does not need map geometry.
+Early CI failures were regression-test maintenance issues rather than gameplay failures: first an old service-worker lineage assertion, then an ambiguous substring assertion around `0 of 3 neighbors found`. Both were corrected without weakening the product contracts. The agent's standalone final CI was green before concurrent integration.
 
-**Assessment:** Importing the full map module for a text-entry exercise would create an unnecessary map-sized runtime dependency.
+### 2026-08-19 15:44–16:07 EDT — integration review and closeout
 
-**Change:** Added a generated lightweight adjacency fixture and regeneration step sourced mechanically from Issue #9 output. No pair is curated in gameplay code.
+**Observation:** PR #13 Outlines had already merged, making PR #14 non-mergeable because both features independently extended the shared app/store/Home/domain/build/PWA shell.
 
-**Verification:** Added equality, symmetry, deterministic-order, known-case, zero-neighbor, and byte-stable regeneration assertions to `scripts/verify-neighbors.mjs`.
+**Change:** Integrated current `main` into PR #14 as a true merge parent and composed both features across all shared files.
 
-**Evaluation:** Neighbors can load a cheap graph while the canonical topology remains the single geographic source of truth.
+**Red-team finding:** The Africa-only adjacency graph would allow incomplete target sets for Egypt and Morocco.
 
-### 2026-08-19 14:18 EDT
+**Change:** Added coverage eligibility that defers `EGY` and `MAR` without modifying the generated adjacency fixture. Added a dedicated cross-domain verifier for this policy and the combined shell.
 
-**Observation:** Existing location mastery already provides the closest multi-attempt learning precedent: clean performance receives mastery credit; mistakes reset learning progress; persistence is domain-specific.
+**CI #134:** failed after base app + map suites passed because `verify-routing.mjs` still expected the old `3 available · 1 planned` Home copy from the Outlines-only release.
 
-**Assessment:** A multi-answer neighbor task needs one outcome per target country, not one mastery event per individual guessed neighbor.
+**Change:** Updated routing verification to require all four shipped domains, Neighbor routes/results/review paths, and the combined `v11` PWA shell.
 
-**Change:** Implemented clean full-set mastery, `n + 2` unique-guess accounting, free duplicates, exhaustion reveal, separate storage, alias-aware search, and mobile sequential-entry state.
+**CI #135 (`32296390361`): GREEN** on final head `3a719a5e986ae67a891efd6dff06a4a2e81198eb`.
 
-**Verification:** Added automated cases for aliases, duplicate correct/wrong guesses, wrong accounting, budget, clean completion, reveal, lapse/remastery goal, cross-domain mastery isolation, storage namespace, mobile autocomplete structure, and shared route parsing.
+The full repository path passed:
 
-**Evaluation:** Gameplay uses the app's learning semantics without adding unrelated gamification.
+- 195-country base application verification;
+- Africa location-map verification and small-country/Test edge regressions;
+- typed routing/deep-link/Back-Forward contracts;
+- production cartography/topology/water/viewport checks;
+- map-generation integrity;
+- Outlines verification;
+- Neighbors verification;
+- cross-domain integration verification.
 
-### 2026-08-19 14:22 EDT
+Exact CI artifact:
 
-**Observation:** PR #14's first CI run built successfully and passed the existing flag verification before failing an old map-suite assertion that required the previous service-worker cache marker.
+- name: `flag-atlas-dist`;
+- artifact ID: `9381351135`;
+- uploaded size: `332,632` bytes;
+- SHA-256: `9287794c242927fbfacae465457f650d07c49d45dbeae9b80c24f3eb0fbe991c`.
 
-**Assessment:** The feature correctly needed a new PWA shell version because `neighbors.css` was added; the failure was a stale cache-lineage contract, not a TypeScript or gameplay defect.
+The downloaded artifact hash matched GitHub exactly. Artifact inspection confirmed both new styles, `flag-atlas-v11`, four-domain Home/app orchestration, compiled Egypt/Morocco coverage deferral, and no direct heavyweight map-module dependency in Neighbor data/game/UI.
 
-**Change:** Kept the active cache at `flag-atlas-v10` and preserved the prior cache lineage in the service-worker release comment so the existing regression still proves cache invalidation history.
+## Remaining limitation
 
-**Verification:** The next CI run passed flag, map, edge-case, routing, cartography, and map-generation suites and reached the new Neighbors verification.
-
-**Evaluation:** Existing product behavior remained intact through the new domain integration.
-
-### 2026-08-19 14:23 EDT
-
-**Observation:** The second CI run's sole failure was a test substring that mistook the legitimate UI text `0 of 3 neighbors found` for a claim that three neighbors had already been completed.
-
-**Assessment:** The rendered product state was correct; the assertion itself was ambiguous.
-
-**Change:** Replaced it with an exact initial-progress assertion, added explicit Flags/Locations mastery-isolation checks, aligned package metadata with the existing lockfile, and made neighbor-fixture regeneration byte-stable and directly tested.
-
-**Verification:** These changes are included in the next full CI run rather than bypassing the repository's normal test gate.
-
-**Evaluation:** The verification suite now tests the intended UX and data-generation contract directly instead of relying on fragile source-text inference.
-
-## Verification gate
-
-Before merge readiness:
-
-1. Sync current `main` into the feature branch and resolve conflicts semantically, especially shared `app.ts`, home/domain views, build shell, and any Issue #2 changes.
-2. Run the exact repository CI command (`npm test`) on the integrated head.
-3. Require the GitHub Actions `CI / verify` job to be green.
-4. Download and inspect the `flag-atlas-dist` artifact produced by that exact CI run, including neighbor JS/data modules, `index.html`, `neighbors.css`, and service worker shell references.
-5. Update Issue #3 with the finalized data model, zero-neighbor policy, gameplay/mastery behavior, and geopolitical coverage limits.
+No physical iPhone/Android device was available in this environment. Mobile autocomplete/keyboard and responsive behavior are covered by implementation and automated structural contracts; real-device play remains useful follow-up QA, but no unverified device claim is made.
