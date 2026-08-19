@@ -8,6 +8,7 @@ function run(script, args = []) {
 }
 
 // Forward source-control flags (notably --update-hashes) to the geodata
-// generator itself. Runtime optimization is deterministic and takes no flags.
+// generator itself. Runtime optimization and neighbor-fixture extraction are deterministic.
 run('scripts/generate-maps.mjs', process.argv.slice(2));
 run('scripts/optimize-map-runtime.mjs');
+run('scripts/generate-neighbor-fixture.mjs');
