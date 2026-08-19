@@ -15,14 +15,14 @@ export function renderScope(progress: ProgressState, scope: StudyScope): string 
   return `
     <main class="page">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('back')}</button>
+        <button class="icon-button" data-action="route-parent" aria-label="Back one level">${icon('back')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${escapeHtml(scope.label)}</h1>
-          <span>${scope.kind === 'region' ? 'Region' : 'Continent'} · ${stats.total} flags</span>
+          <span>Flags · ${scope.kind === 'region' ? 'Region' : 'Continent'} · ${stats.total} countries</span>
         </div>
       </header>
 
-      <section class="scope-overview" aria-label="${escapeHtml(scope.label)} learning status">
+      <section class="scope-overview" aria-label="${escapeHtml(scope.label)} flag learning status">
         <div class="scope-status-line">
           <strong>${stats.mastered} mastered</strong>
           <span>${stats.learning} learning · ${stats.unseen} unseen</span>
@@ -61,7 +61,7 @@ function renderRegions(progress: ProgressState, regions: typeof REGIONS): string
               ? `${regionStats.learning} learning`
               : 'Mastered';
           return `
-            <button class="region-row" data-action="open-region" data-id="${region.id}">
+            <button class="region-row" data-action="open-scope" data-domain="flags" data-id="${region.id}">
               <span class="region-row__identity">
                 <strong>${escapeHtml(region.name)}</strong>
                 <small>${regionStats.total} flags · ${regionStats.mastered}/${regionStats.total} mastered</small>

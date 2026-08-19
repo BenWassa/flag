@@ -194,7 +194,10 @@ const resultHtml = renderMapResults(westAsset, result);
 assert.ok(resultHtml.includes('1 of 1 first try'), 'Map results report first-try accuracy.');
 assert.ok(resultHtml.includes('map-country--first'), 'Completed map retains resolution color evidence.');
 assert.ok(!resultHtml.includes('map-country--current-correct'), 'Results do not retain transient in-round success styling.');
-assert.ok(resultHtml.includes('data-action="open-map-scope" data-id="west-africa"'), 'Results return to the same map scope.');
+assert.ok(
+  resultHtml.includes('data-action="exit-round"') && resultHtml.includes('Back to West Africa'),
+  'Results return to the same map scope through the unified route exit.',
+);
 
 // Africa and region map homes expose the new hierarchy without fragmenting mastery.
 const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
@@ -241,7 +244,7 @@ assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads m
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("flag-atlas-v7"), 'Africa expansion bumps the PWA cache so mobile gets new map CSS/code.');
+assert.ok(serviceWorker.includes("flag-atlas-v8"), 'Routing release keeps the latest map code while invalidating the previous PWA shell cache.');
 assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
 // All-Africa engine smoke: a target from each region can coexist in one round.
