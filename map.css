@@ -115,7 +115,7 @@
   margin: 3px 0 0;
   color: var(--text-muted);
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 650;
 }
 .map-prompt__status--wrong,
 .map-prompt__status--reveal { color: var(--wrong); }
@@ -147,98 +147,180 @@
   max-width: none;
   user-select: none;
   -webkit-user-select: none;
+  shape-rendering: geometricPrecision;
 }
 .map-ocean { fill: var(--surface-subtle); }
 .map-context { pointer-events: none; }
 .map-context-country {
   fill: color-mix(in srgb, var(--track) 72%, var(--surface-subtle));
   stroke: var(--line-strong);
-  stroke-width: .85;
-  opacity: .42;
+  stroke-width: .58;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-miterlimit: 2;
+  paint-order: stroke fill;
+  opacity: .28;
   vector-effect: non-scaling-stroke;
 }
-.map-country { cursor: pointer; -webkit-tap-highlight-color: transparent; }
+.map-country { -webkit-tap-highlight-color: transparent; }
+.map-country[data-action="map-answer"] { cursor: pointer; }
+.map-country:not([data-action="map-answer"]) { cursor: default; }
 .map-country__shape,
-.map-country__locator {
-  fill: var(--track);
-  stroke: var(--unseen);
-  stroke-width: 1.3;
+.map-country__locator,
+.map-country__callout-target {
+  fill: color-mix(in srgb, var(--unseen) 18%, var(--surface));
+  stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong));
+  stroke-width: .78;
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  stroke-miterlimit: 2;
+  paint-order: stroke fill;
   vector-effect: non-scaling-stroke;
-  transition: fill 120ms ease, stroke 120ms ease, opacity 120ms ease;
+  transition: fill 90ms ease-out, stroke 90ms ease-out, opacity 90ms ease-out;
 }
 .map-country__locator-halo {
   fill: var(--surface);
   stroke: var(--line-strong);
-  stroke-width: 1;
+  stroke-width: .7;
   vector-effect: non-scaling-stroke;
 }
+.map-country__callout-line {
+  fill: none;
+  stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong));
+  stroke-width: 1.1;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+  transition: stroke 90ms ease-out, opacity 90ms ease-out;
+}
+.map-country__callout-hit,
 .map-current-target-hit {
   fill: transparent;
   stroke: transparent;
-  pointer-events: all;
 }
+.map-country__callout-hit { pointer-events: none; }
+.map-country[data-action="map-answer"] .map-country__callout-hit { pointer-events: all; }
+.map-current-target-hit { pointer-events: all; }
 
-/* SVG groups otherwise inherit the global tabindex focus rectangle. Keep focus
-   visible on the actual geography instead of drawing a country bounding box. */
+/* SVG groups otherwise inherit the global tabindex focus rectangle. Focus is
+   shown on the true geography. Result states below deliberately outrank focus. */
 .map-country[tabindex]:focus,
 .map-country[tabindex]:focus-visible {
   outline: none;
 }
 .map-country:focus-visible .map-country__shape,
-.map-country:focus-visible .map-country__locator {
+.map-country:focus-visible .map-country__locator,
+.map-country:focus-visible .map-country__callout-target {
   stroke: var(--action);
-  stroke-width: 3;
+  stroke-width: 2.4;
 }
-.map-country:active .map-country__shape,
-.map-country:active .map-country__locator { opacity: .68; }
+.map-country:focus-visible .map-country__callout-line { stroke: var(--action); stroke-width: 2; }
 
-/* Persistent round score. Color is deliberately stepped and never the only
-   feedback channel; the prompt also states the outcome in text. */
+/* Immediate physical press acknowledgment. Neutral because it precedes scoring. */
+.map-country:active .map-country__shape,
+.map-country:active .map-country__locator,
+.map-country:active .map-country__callout-target {
+  fill: var(--action-soft);
+  stroke: var(--action);
+  stroke-width: 2.4;
+  opacity: 1;
+}
+.map-country:active .map-country__callout-line { stroke: var(--action); stroke-width: 2; }
+
+/* Persistent Learn round score. Unanswered countries are deliberately gray so
+   first-try off-white reads as completed rather than disappearing. */
 .map-country--first .map-country__shape,
-.map-country--first .map-country__locator {
+.map-country--first .map-country__locator,
+.map-country--first .map-country__callout-target {
   fill: var(--surface);
   stroke: var(--line-strong);
+  stroke-width: 1.05;
 }
+.map-country--first .map-country__callout-line { stroke: var(--line-strong); }
 .map-country--one-miss .map-country__shape,
-.map-country--one-miss .map-country__locator {
+.map-country--one-miss .map-country__locator,
+.map-country--one-miss .map-country__callout-target {
   fill: color-mix(in srgb, var(--learning) 25%, var(--surface));
   stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong));
+  stroke-width: 1.15;
 }
+.map-country--one-miss .map-country__callout-line { stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong)); }
 .map-country--two-miss .map-country__shape,
-.map-country--two-miss .map-country__locator {
+.map-country--two-miss .map-country__locator,
+.map-country--two-miss .map-country__callout-target {
   fill: color-mix(in srgb, var(--learning) 52%, var(--surface));
   stroke: var(--learning);
+  stroke-width: 1.25;
 }
+.map-country--two-miss .map-country__callout-line { stroke: var(--learning); }
 .map-country--revealed .map-country__shape,
-.map-country--revealed .map-country__locator {
+.map-country--revealed .map-country__locator,
+.map-country--revealed .map-country__callout-target {
   fill: var(--wrong-soft);
   stroke: var(--wrong);
+  stroke-width: 1.45;
 }
+.map-country--revealed .map-country__callout-line { stroke: var(--wrong); }
 
-/* Current-answer feedback is intentionally stronger than the stored score.
-   A correct tap flashes green, then settles to its white/amber round score when
-   the next country begins. */
+/* Answer feedback is deliberately much stronger than stored round evidence.
+   Learn: green only for first-try correct; later correct answers go straight to
+   amber/orange. Test: blue means recorded, never correctness. */
 .map-country--current-correct .map-country__shape,
-.map-country--current-correct .map-country__locator {
-  fill: var(--mastered-soft);
+.map-country--current-correct .map-country__locator,
+.map-country--current-correct .map-country__callout-target,
+.map-country.map-country--current-correct:focus-visible .map-country__shape,
+.map-country.map-country--current-correct:focus-visible .map-country__locator,
+.map-country.map-country--current-correct:focus-visible .map-country__callout-target {
+  fill: var(--mastered);
   stroke: var(--mastered);
   stroke-width: 3;
-  animation: map-correct 420ms ease-out;
+  opacity: 1;
+  animation: map-correct 480ms cubic-bezier(.2,.8,.2,1);
 }
+.map-country--current-correct .map-country__callout-line { stroke: var(--mastered); stroke-width: 2.5; }
+.map-country--recorded .map-country__shape,
+.map-country--recorded .map-country__locator,
+.map-country--recorded .map-country__callout-target,
+.map-country.map-country--recorded:focus-visible .map-country__shape,
+.map-country.map-country--recorded:focus-visible .map-country__locator,
+.map-country.map-country--recorded:focus-visible .map-country__callout-target {
+  animation: map-recorded 420ms ease-out forwards;
+}
+.map-country--recorded .map-country__callout-line { animation: map-recorded-line 420ms ease-out forwards; }
 .map-country--wrong-pulse .map-country__shape,
-.map-country--wrong-pulse .map-country__locator {
+.map-country--wrong-pulse .map-country__locator,
+.map-country--wrong-pulse .map-country__callout-target,
+.map-country.map-country--wrong-pulse:focus-visible .map-country__shape,
+.map-country.map-country--wrong-pulse:focus-visible .map-country__locator,
+.map-country.map-country--wrong-pulse:focus-visible .map-country__callout-target {
   fill: var(--wrong-soft);
   stroke: var(--wrong);
-  animation: map-wrong 300ms ease-out;
+  stroke-width: 3;
+  opacity: 1;
+  animation: map-wrong 520ms ease-out both;
 }
+.map-country--wrong-pulse .map-country__callout-line { stroke: var(--wrong); stroke-width: 2.5; animation: map-wrong-line 520ms ease-out both; }
 @keyframes map-correct {
-  0% { opacity: .72; stroke-width: 3.6; }
+  0% { opacity: .5; stroke-width: 4.2; }
+  38% { opacity: 1; stroke-width: 3.5; }
   100% { opacity: 1; stroke-width: 3; }
 }
+@keyframes map-recorded {
+  0%, 42% { fill: var(--action-soft); stroke: var(--action); stroke-width: 3; opacity: 1; }
+  100% { fill: color-mix(in srgb, var(--unseen) 18%, var(--surface)); stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: .78; opacity: 1; }
+}
+@keyframes map-recorded-line {
+  0%, 42% { stroke: var(--action); stroke-width: 2.5; }
+  100% { stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: 1.1; }
+}
 @keyframes map-wrong {
-  0% { opacity: 1; stroke-width: 1.3; }
-  40% { opacity: .66; stroke-width: 3.5; }
-  100% { opacity: 1; stroke-width: 1.3; }
+  0% { opacity: .55; stroke-width: 4; }
+  45% { opacity: 1; stroke-width: 3; }
+  100% { fill: color-mix(in srgb, var(--unseen) 18%, var(--surface)); stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: .78; opacity: 1; }
+}
+@keyframes map-wrong-line {
+  0%, 45% { stroke: var(--wrong); stroke-width: 2.5; }
+  100% { stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: 1.1; }
 }
 
 /* Results favour error structure over a generic percentage score. */
@@ -274,8 +356,10 @@
 
 @media (hover: hover) and (pointer: fine) {
   .map-entry-row:hover { background: var(--surface-subtle); }
-  .map-country:hover .map-country__shape,
-  .map-country:hover .map-country__locator { stroke: var(--action); stroke-width: 2.25; }
+  .map-country[data-action="map-answer"]:hover .map-country__shape,
+  .map-country[data-action="map-answer"]:hover .map-country__locator,
+  .map-country[data-action="map-answer"]:hover .map-country__callout-target { stroke: var(--action); stroke-width: 2; }
+  .map-country[data-action="map-answer"]:hover .map-country__callout-line { stroke: var(--action); }
 }
 
 @media (max-width: 639px) {
@@ -329,19 +413,34 @@
 @media (prefers-reduced-motion: reduce) {
   .map-country--wrong-pulse .map-country__shape,
   .map-country--wrong-pulse .map-country__locator,
+  .map-country--wrong-pulse .map-country__callout-target,
   .map-country--current-correct .map-country__shape,
-  .map-country--current-correct .map-country__locator { animation: none; }
+  .map-country--current-correct .map-country__locator,
+  .map-country--current-correct .map-country__callout-target,
+  .map-country--recorded .map-country__shape,
+  .map-country--recorded .map-country__locator,
+  .map-country--recorded .map-country__callout-target,
+  .map-country--wrong-pulse .map-country__callout-line,
+  .map-country--recorded .map-country__callout-line { animation: none; }
 }
 
 @media (forced-colors: active) {
   .map-context-country,
   .map-country__shape,
-  .map-country__locator { fill: Canvas; stroke: CanvasText; }
+  .map-country__locator,
+  .map-country__callout-target { fill: Canvas; stroke: CanvasText; }
   .map-context-country { opacity: .35; }
+  .map-country__callout-line { stroke: CanvasText; }
   .map-country--wrong-pulse .map-country__shape,
   .map-country--wrong-pulse .map-country__locator,
+  .map-country--wrong-pulse .map-country__callout-target,
   .map-country--revealed .map-country__shape,
   .map-country--revealed .map-country__locator,
+  .map-country--revealed .map-country__callout-target,
   .map-country--current-correct .map-country__shape,
-  .map-country--current-correct .map-country__locator { stroke: Highlight; stroke-width: 3; }
+  .map-country--current-correct .map-country__locator,
+  .map-country--current-correct .map-country__callout-target,
+  .map-country--recorded .map-country__shape,
+  .map-country--recorded .map-country__locator,
+  .map-country--recorded .map-country__callout-target { stroke: Highlight; stroke-width: 3; }
 }

@@ -1,4 +1,4 @@
-const VERSION = 'flag-atlas-v5';
+const VERSION = 'flag-atlas-v6';
 const SHELL = [
   './',
   './index.html',
