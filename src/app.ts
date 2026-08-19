@@ -3,6 +3,7 @@ import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js'
 import { loadMapAsset } from './data/maps/index.js';
 import { AFRICA_LAND_ADJACENCY, getAfricaNeighborScopeConfig } from './data/neighbors/index.js';
 import { loadOutlineAsset } from './data/outlines.js';
+import { domainDisplayName } from './domain/display.js';
 import type {
   LearningActivity,
   LearningDomain,
@@ -224,7 +225,7 @@ function currentDocumentTitle(): string {
     return `Round complete · ${store.view.result.session.scope.label} outlines · Flag Atlas`;
   }
   if (store.view.name === 'neighbor-results') {
-    return `Round complete · ${store.view.result.session.scope.label} neighbors · Flag Atlas`;
+    return `Round complete · ${store.view.result.session.scope.label} ${domainDisplayName('neighbors').toLowerCase()} · Flag Atlas`;
   }
   return routeTitle(currentRoute);
 }
@@ -441,7 +442,7 @@ function beginNeighborSession(
   cancelAllPending();
   const size = targetCountryIds?.length ?? 10;
   if (!store.startNeighborSession(scope, mode, size, targetCountryIds)) {
-    announce(`${scope.label} has no land-neighbor targets to practise right now.`);
+    announce(`${scope.label} has no land-neighbour targets to practise right now.`);
     return;
   }
   neighborQuery = '';
@@ -449,7 +450,7 @@ function beginNeighborSession(
   router.navigate(activeRoundRoute, { replace: replaceRoute });
   const targetId = store.neighborSession?.countryIds[0];
   const target = targetId ? COUNTRY_BY_ID.get(targetId) : undefined;
-  announce(`${scope.label} neighbors. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round. ${target ? `Name every land neighbor of ${target.name}.` : ''}`);
+  announce(`${scope.label} neighbours. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round. ${target ? `Name every land neighbour of ${target.name}.` : ''}`);
 }
 
 function exitActiveRound(): void {
@@ -583,12 +584,12 @@ function neighborAnswerAnnouncement(): string {
   const selected = COUNTRY_BY_ID.get(outcome.selectedCountryId)?.name ?? outcome.selectedCountryId;
   if (outcome.resolved && outcome.resolution === 'exhausted') {
     const remaining = outcome.revealedIds.map((id) => COUNTRY_BY_ID.get(id)?.name ?? id).join(', ');
-    return `Attempts exhausted. Remaining neighbors: ${remaining}.`;
+    return `Attempts exhausted. Remaining neighbours: ${remaining}.`;
   }
-  if (outcome.resolved) return `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbors found.`;
+  if (outcome.resolved) return `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbours found.`;
   return outcome.kind === 'correct'
     ? `Correct. ${selected}. ${outcome.foundCount} of ${outcome.totalNeighbors} found. ${outcome.remainingAttempts} attempts left.`
-    : `Incorrect. ${selected} is not in this neighbor set. ${outcome.remainingAttempts} attempts left.`;
+    : `Incorrect. ${selected} is not in this neighbour set. ${outcome.remainingAttempts} attempts left.`;
 }
 
 function submitNeighborGuess(countryId: string): void {
@@ -665,7 +666,7 @@ root.addEventListener('click', (event) => {
     else if (store.neighborSession) {
       const nextId = store.neighborSession.countryIds[store.neighborSession.currentIndex];
       const next = nextId ? COUNTRY_BY_ID.get(nextId) : undefined;
-      if (next) announce(`Next country. Name every land neighbor of ${next.name}.`);
+      if (next) announce(`Next country. Name every land neighbour of ${next.name}.`);
     }
     finishInteraction(result ? null : '[data-neighbor-input]');
     return;
@@ -742,7 +743,7 @@ root.addEventListener('click', (event) => {
       neighborQuery = '';
       resetArmed = false;
       progressFilter = 'all';
-      announce('All flag, location, outline, and neighbor progress erased.');
+      announce('All flag, location, outline, and neighbour progress erased.');
       break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
@@ -841,7 +842,7 @@ function announceMapResult(): void {
 function announceNeighborResult(): void {
   if (store.view.name !== 'neighbor-results') return;
   const { cleanCompletions, total, missedCountryIds } = store.view.result;
-  announce(`Neighbor round complete. ${cleanCompletions} of ${total} clean completions. ${missedCountryIds.length} to review.`);
+  announce(`Neighbour round complete. ${cleanCompletions} of ${total} clean completions. ${missedCountryIds.length} to review.`);
 }
 
 window.addEventListener('keydown', (event) => {
