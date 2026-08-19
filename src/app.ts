@@ -1,14 +1,33 @@
-import { CONTINENTS, REGIONS } from './data/continents.js';
 import { COUNTRY_BY_ID } from './data/countries.js';
 import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
-import type { LearningStatus, StudyMode, StudyScope } from './domain/models.js';
+import type {
+  LearningActivity,
+  LearningDomain,
+  LearningStatus,
+  StudyMode,
+  StudyScope,
+} from './domain/models.js';
 import type { MapMode } from './domain/map-models.js';
 import { getRecord, masteryGoal } from './domain/progress.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
 import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
-import { AppStore, type ViewState } from './state/store.js';
+import { createHashRouter } from './routing/router.js';
+import {
+  isLearningDomain,
+  parentRoute,
+  routeForScope,
+  routeForScopeId,
+  routeTitle,
+  routesEqual,
+  serializeRoutePath,
+  stableRoute,
+  type AppRoute,
+  type LearningRoute,
+} from './routing/routes.js';
+import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
+import { renderDomainHome } from './ui/views/domain.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
@@ -24,6 +43,9 @@ const root: HTMLDivElement = appRoot;
 const liveStatus = document.querySelector<HTMLElement>('#live-status');
 
 const store = new AppStore();
+const router = createHashRouter(window);
+let currentRoute: AppRoute = { name: 'home' };
+let activeRoundRoute: LearningRoute | null = null;
 let progressFilter: LearningStatus | 'all' = 'all';
 let resetArmed = false;
 let lastResultScope: StudyScope | null = null;
@@ -62,69 +84,106 @@ function announce(message: string): void {
   }, 60);
 }
 
-const viewStack: ViewState[] = [store.view];
-let historyIndex = 0;
+function routeHasActiveRound(route: LearningRoute): boolean {
+  if (!activeRoundRoute || !routesEqual(route, activeRoundRoute)) return false;
+  if (route.domain === 'flags') return store.session !== null;
+  if (route.domain === 'locations') return store.mapSession !== null && store.mapAsset !== null;
+  return false;
+}
 
-function syncHistory(): void {
-  if (store.view === viewStack[historyIndex]) return;
+function normalizeRoute(route: AppRoute): AppRoute {
+  if (route.name !== 'learning') return route;
 
-  const leavingTransientRound = viewStack[historyIndex]?.name === 'quiz' || viewStack[historyIndex]?.name === 'map-quiz';
-  if (leavingTransientRound) {
-    viewStack[historyIndex] = store.view;
-    history.replaceState({ i: historyIndex }, '');
+  if (route.activity !== undefined && !routeHasActiveRound(route)) {
+    return stableRoute(route);
+  }
+
+  if (route.domain === 'flags') return route;
+
+  if (route.domain === 'locations') {
+    if (!route.scope) return route;
+    if (route.scope.id && getAfricaMapScopeConfig(route.scope.id)) return route;
+    return { name: 'learning', domain: 'locations' };
+  }
+
+  if (route.scope || route.activity) return { name: 'learning', domain: route.domain };
+  return route;
+}
+
+function applyRoute(requestedRoute: AppRoute): void {
+  const route = normalizeRoute(requestedRoute);
+  if (!routesEqual(route, requestedRoute)) {
+    router.navigate(route, { replace: true });
     return;
   }
 
-  historyIndex += 1;
-  viewStack.length = historyIndex;
-  viewStack[historyIndex] = store.view;
-  history.pushState({ i: historyIndex }, '');
+  currentRoute = route;
+  switch (route.name) {
+    case 'home':
+      store.navigate({ name: 'home' });
+      break;
+    case 'progress':
+      store.navigate({ name: 'progress' });
+      break;
+    case 'learning':
+      if (route.activity !== undefined) {
+        if (route.domain === 'flags' && store.session) {
+          store.navigate(store.sessionResult
+            ? { name: 'results', result: store.sessionResult }
+            : { name: 'quiz' });
+        } else if (route.domain === 'locations' && store.mapSession && store.mapAsset) {
+          store.navigate(store.mapSessionResult
+            ? { name: 'map-results', result: store.mapSessionResult }
+            : { name: 'map-quiz' });
+        }
+      } else if (!route.scope) {
+        store.navigate({ name: 'domain', domain: route.domain });
+      } else if (route.domain === 'flags') {
+        store.navigate({ name: 'scope', scope: route.scope });
+      } else if (route.domain === 'locations') {
+        store.navigate({ name: 'map-home', scope: route.scope });
+      }
+      break;
+  }
+  render();
 }
 
-window.addEventListener('popstate', (event) => {
-  const state = event.state as { i?: unknown } | null;
-  const index = typeof state?.i === 'number' ? state.i : 0;
-  const restored = viewStack[index];
-  if (!restored) return;
-
+router.subscribe((route) => {
   cancelAllPending();
   resetArmed = false;
-  historyIndex = index;
-  if (restored.name === 'quiz' && !store.session) store.view = { name: 'home' };
-  else if (restored.name === 'map-quiz' && !store.mapSession) store.view = { name: 'map-home', scope: AFRICA_MAP_SCOPE };
-  else store.view = restored;
-  render();
+  applyRoute(route ?? { name: 'home' });
 });
 
-const TITLES: Record<ViewState['name'], string> = {
-  home: 'Flag Atlas',
-  scope: 'Flag Atlas',
-  progress: 'Progress · Flag Atlas',
-  quiz: 'Flag Atlas',
-  results: 'Round complete · Flag Atlas',
-  'map-home': 'Country locations · Flag Atlas',
-  'map-quiz': 'Map round · Flag Atlas',
-  'map-results': 'Map round complete · Flag Atlas',
-};
+function discardActiveRound(): void {
+  if (!activeRoundRoute) return;
+  if (activeRoundRoute.domain === 'flags') store.abandonSession();
+  if (activeRoundRoute.domain === 'locations') store.abandonMapSession();
+  activeRoundRoute = null;
+}
 
-function documentTitle(): string {
-  const view = store.view;
-  if (view.name === 'scope') return `${view.scope.label} · Flag Atlas`;
-  if (view.name === 'quiz' && store.session) return `${store.session.scope.label} · Flag Atlas`;
-  if (view.name === 'map-home') return `${view.scope.label} locations · Flag Atlas`;
-  if (view.name === 'map-quiz' && store.mapSession) return `${store.mapSession.scope.label} map · Flag Atlas`;
-  return TITLES[view.name];
+function navigateStable(route: AppRoute): void {
+  if (activeRoundRoute && !routesEqual(route, stableRoute(activeRoundRoute))) discardActiveRound();
+  router.navigate(route);
+}
+
+function currentDocumentTitle(): string {
+  if (store.view.name === 'results') {
+    return `Round complete · ${store.view.result.session.scope.label} flags · Flag Atlas`;
+  }
+  if (store.view.name === 'map-results') {
+    return `Round complete · ${store.view.result.session.scope.label} locations · Flag Atlas`;
+  }
+  return routeTitle(currentRoute);
 }
 
 function currentRouteKey(): string {
+  const route = serializeRoutePath(currentRoute);
   const view = store.view;
-  if (view.name === 'scope') return `scope:${view.scope.kind}:${view.scope.id ?? 'world'}`;
-  if (view.name === 'quiz') return `quiz:${store.session?.id ?? 'none'}:${store.session?.currentIndex ?? 0}`;
-  if (view.name === 'results') return `results:${view.result.session.id}`;
-  if (view.name === 'map-home') return `map-home:${view.scope.id ?? 'africa'}`;
-  if (view.name === 'map-quiz') return `map-quiz:${store.mapSession?.id ?? 'none'}:${store.mapSession?.currentIndex ?? 0}`;
-  if (view.name === 'map-results') return `map-results:${view.result.session.id}`;
-  return view.name;
+  if (view.name === 'quiz') return `${route}:${store.session?.id ?? 'none'}:${store.session?.currentIndex ?? 0}`;
+  if (view.name === 'results') return `${route}:results:${view.result.session.id}`;
+  if (view.name === 'map-quiz') return `${route}:${store.mapSession?.id ?? 'none'}:${store.mapSession?.currentIndex ?? 0}`;
+  if (view.name === 'map-results') return `${route}:results:${view.result.session.id}`;
+  return route;
 }
 
 function restoreFocus(previousSelector: string | null): void {
@@ -144,7 +203,16 @@ function render(previousSelector: string | null = null): void {
 
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(store.progress, store.persisting);
+      root.innerHTML = renderHome(store.progress, store.locationProgress);
+      break;
+    case 'domain':
+      root.innerHTML = renderDomainHome(
+        store.view.domain,
+        store.progress,
+        store.locationProgress,
+        store.persisting,
+        store.mapPersisting,
+      );
       break;
     case 'scope':
       root.innerHTML = renderScope(store.progress, store.view.scope);
@@ -176,25 +244,43 @@ function render(previousSelector: string | null = null): void {
   }
 
   markFailedFlags(root);
-  document.title = documentTitle();
+  document.title = currentDocumentTitle();
   if (routeChanged) window.scrollTo({ top: 0, behavior: 'instant' });
   lastRenderedRouteKey = routeKey;
   restoreFocus(previousSelector);
 }
 
-function beginSession(scope: StudyScope, mode: StudyMode, size?: number, reviewIds?: string[]): void {
+function currentFlagScope(): StudyScope {
+  if (currentRoute.name === 'learning' && currentRoute.domain === 'flags' && currentRoute.scope) {
+    return currentRoute.scope;
+  }
+  return { kind: 'world', label: 'World' };
+}
+
+function beginSession(
+  scope: StudyScope,
+  mode: StudyMode,
+  size?: number,
+  reviewIds?: string[],
+  activity: LearningActivity = mode,
+  replaceRoute = false,
+): void {
   cancelAllPending();
   if (!store.startSession(scope, mode, size, reviewIds)) {
     announce(`${scope.label} has no flags to practise right now.`);
     return;
   }
 
+  activeRoundRoute = routeForScope('flags', scope, activity);
+  router.navigate(activeRoundRoute, { replace: replaceRoute });
   const count = store.session?.questions.length ?? 0;
-  announce(`${scope.label}. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${count} flags. Question 1.`);
+  announce(`${scope.label}. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${count} flags. Question 1.`);
 }
 
 function currentMapScope(): StudyScope {
-  if (store.view.name === 'map-home') return store.view.scope;
+  if (currentRoute.name === 'learning' && currentRoute.domain === 'locations' && currentRoute.scope) {
+    return currentRoute.scope;
+  }
   if (store.view.name === 'map-results') return store.view.result.session.scope;
   return store.mapSession?.scope ?? AFRICA_MAP_SCOPE;
 }
@@ -203,6 +289,8 @@ async function beginMapSession(
   mode: MapMode,
   targetCountryIds?: readonly string[],
   scope: StudyScope = currentMapScope(),
+  activity: LearningActivity = mode,
+  replaceRoute = false,
 ): Promise<void> {
   cancelAllPending();
   const scopeId = scope.id ?? 'africa';
@@ -215,22 +303,17 @@ async function beginMapSession(
     announce('No map locations are available for this round.');
     return;
   }
-  announce(`${asset.scope.label} map. ${mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
-  finishInteraction(null);
+
+  activeRoundRoute = routeForScope('locations', scope, activity);
+  router.navigate(activeRoundRoute, { replace: replaceRoute });
+  announce(`${asset.scope.label} locations. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
 }
 
-function exitQuiz(): void {
+function exitActiveRound(): void {
+  if (!activeRoundRoute) return;
   cancelAllPending();
-  if (!store.session || store.session.scope.kind === 'world') {
-    store.navigate({ name: 'home' });
-    return;
-  }
-  store.navigate({ name: 'scope', scope: store.session.scope });
-}
-
-function exitMapQuiz(): void {
-  cancelAllPending();
-  store.navigate({ name: 'map-home', scope: store.mapSession?.scope ?? AFRICA_MAP_SCOPE });
+  discardActiveRound();
+  router.back();
 }
 
 function answerAnnouncement(countryId: string): string {
@@ -318,8 +401,18 @@ function submitMapAnswer(countryId: string, selector: string): void {
 }
 
 function finishInteraction(previousSelector: string | null): void {
-  syncHistory();
   render(previousSelector);
+}
+
+function openDomain(id: string | undefined): void {
+  if (!isLearningDomain(id)) return;
+  navigateStable({ name: 'learning', domain: id });
+}
+
+function openScope(domainValue: string | undefined, id: string | undefined): void {
+  if (!isLearningDomain(domainValue) || !id) return;
+  const route = routeForScopeId(domainValue, id);
+  if (route) navigateStable(route);
 }
 
 root.addEventListener('click', (event) => {
@@ -335,13 +428,17 @@ root.addEventListener('click', (event) => {
     submitMapAnswer(id, selector);
     return;
   }
-  if (action === 'open-map-scope' && id) {
-    const config = getAfricaMapScopeConfig(id);
-    if (config) {
-      cancelAllPending();
-      store.navigate({ name: 'map-home', scope: config.scope });
-      finishInteraction(null);
-    }
+  if (action === 'open-domain') {
+    openDomain(id);
+    return;
+  }
+  if (action === 'open-scope') {
+    openScope(element.dataset.domain, id);
+    return;
+  }
+  if (action === 'route-parent') {
+    const parent = parentRoute(currentRoute);
+    if (parent) navigateStable(parent);
     return;
   }
   if (action === 'start-map-learn' || action === 'start-map-test') {
@@ -349,11 +446,27 @@ root.addEventListener('click', (event) => {
     return;
   }
   if (action === 'review-map-mistakes' && store.view.name === 'map-results') {
-    void beginMapSession('learn', store.view.result.missedCountryIds, store.view.result.session.scope);
+    void beginMapSession(
+      'learn',
+      store.view.result.missedCountryIds,
+      store.view.result.session.scope,
+      'review',
+      true,
+    );
     return;
   }
   if (action === 'repeat-map' && store.view.name === 'map-results') {
-    void beginMapSession(store.view.result.session.mode, undefined, store.view.result.session.scope);
+    void beginMapSession(
+      store.view.result.session.mode,
+      undefined,
+      store.view.result.session.scope,
+      store.view.result.session.mode,
+      true,
+    );
+    return;
+  }
+  if (action === 'exit-round' || action === 'exit-quiz' || action === 'exit-map') {
+    exitActiveRound();
     return;
   }
 
@@ -361,16 +474,11 @@ root.addEventListener('click', (event) => {
 
   switch (action) {
     case 'home':
-      cancelAllPending();
-      store.navigate({ name: 'home' });
-      break;
-    case 'open-map-pilot':
-      cancelAllPending();
-      store.navigate({ name: 'map-home', scope: AFRICA_MAP_SCOPE });
-      break;
+      navigateStable({ name: 'home' });
+      return;
     case 'open-progress':
-      store.navigate({ name: 'progress' });
-      break;
+      navigateStable({ name: 'progress' });
+      return;
     case 'filter-progress':
       progressFilter = (id as LearningStatus | 'all') ?? 'all';
       break;
@@ -385,33 +493,22 @@ root.addEventListener('click', (event) => {
       resetMapProgressStorage();
       store.resetProgress();
       store.resetMapProgress();
+      activeRoundRoute = null;
       resetArmed = false;
       progressFilter = 'all';
-      announce('All flag and map progress erased.');
-      break;
-    case 'open-continent': {
-      const continent = CONTINENTS.find((item) => item.id === id);
-      if (continent) {
-        store.navigate({ name: 'scope', scope: { kind: 'continent', id: continent.id, label: continent.name } });
-      }
-      break;
-    }
-    case 'open-region': {
-      const region = REGIONS.find((item) => item.id === id);
-      if (region) store.navigate({ name: 'scope', scope: { kind: 'region', id: region.id, label: region.name } });
-      break;
-    }
-    case 'start-world-learn':
-      beginSession({ kind: 'world', label: 'World' }, 'learn');
-      break;
-    case 'start-world-test':
-      beginSession({ kind: 'world', label: 'World' }, 'test');
+      announce('All flag and location progress erased.');
       break;
     case 'start-learn':
-      if (store.view.name === 'scope') beginSession(store.view.scope, 'learn');
+      if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
+        beginSession(currentFlagScope(), 'learn');
+        return;
+      }
       break;
     case 'start-test':
-      if (store.view.name === 'scope') beginSession(store.view.scope, 'test');
+      if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
+        beginSession(currentFlagScope(), 'test');
+        return;
+      }
       break;
     case 'answer':
       if (id) submitAnswer(id);
@@ -419,19 +516,24 @@ root.addEventListener('click', (event) => {
     case 'next-question':
       store.advance();
       break;
-    case 'exit-quiz':
-      exitQuiz();
-      break;
-    case 'exit-map':
-      exitMapQuiz();
-      break;
     case 'review-mistakes':
       if (lastResultScope && lastMissedIds.length) {
-        beginSession(lastResultScope, 'learn', Math.max(4, Math.min(10, lastMissedIds.length)), lastMissedIds);
+        beginSession(
+          lastResultScope,
+          'learn',
+          Math.max(4, Math.min(10, lastMissedIds.length)),
+          lastMissedIds,
+          'review',
+          true,
+        );
+        return;
       }
       break;
     case 'repeat-scope':
-      if (lastResultScope) beginSession(lastResultScope, lastResultMode);
+      if (lastResultScope) {
+        beginSession(lastResultScope, lastResultMode, undefined, undefined, lastResultMode, true);
+        return;
+      }
       break;
   }
 
@@ -458,8 +560,7 @@ window.addEventListener('keydown', (event) => {
   if (store.view.name === 'map-quiz' && store.mapSession) {
     if (event.key === 'Escape') {
       event.preventDefault();
-      exitMapQuiz();
-      finishInteraction(null);
+      exitActiveRound();
       return;
     }
 
@@ -478,8 +579,7 @@ window.addEventListener('keydown', (event) => {
 
   if (event.key === 'Escape') {
     event.preventDefault();
-    exitQuiz();
-    finishInteraction(null);
+    exitActiveRound();
     return;
   }
 
@@ -519,5 +619,5 @@ if ('serviceWorker' in navigator) {
   });
 }
 
-history.replaceState({ i: 0 }, '');
-render();
+const initialRoute = router.current() ?? { name: 'home' as const };
+router.navigate(initialRoute, { replace: true });
