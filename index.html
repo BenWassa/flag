@@ -4,27 +4,23 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#f5f7fa" />
-    <meta name="description" content="A focused, adaptive way to learn the flags of the world." />
+    <meta name="description" content="A focused, adaptive way to learn world flags and country locations." />
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="./styles.css" />
+    <link rel="stylesheet" href="./map.css" />
     <title>Flag Atlas</title>
   </head>
   <body>
     <!--
-      THESIS: Flags are the visual event; the interface behaves like a precise international identification desk and rejects decorative geography/game chrome.
+      THESIS: Flags are the visual event; map learning is a precise second modality rather than decorative geography chrome.
       OWN-WORLD: Cool white and graphite fields, registration-blue actions, thin rules, one compact system-sans family, flat indexed rows, and modest corners.
-      STORY: Choose a scope, Learn or Test, identify flags quickly, see durable mastery evidence, and continue where recognition is weak.
-      FIRST VIEWPORT: Brand and Progress at top; World status and two actions; a compact continent index below. Mobile stays linear and thumb-friendly.
+      STORY: Choose flags or a supported map scope, practise directly, see durable mastery evidence, and continue where recognition is weak.
+      FIRST VIEWPORT: Brand and Progress at top; World status and two actions; map pilot and continent index below. Mobile stays linear and thumb-friendly.
       FORM: Operate surface; Atlas Index redesign; code-led implementation.
-      FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+      FINISH: unreviewed and undocumented is unfinished; this build ends with validation and tracked implementation notes.
     -->
     <div id="app"></div>
-    <!--
-      Views re-render by replacing #app wholesale, so a live region inside it
-      would be a brand-new node on every change and would not announce reliably.
-      This one is outside #app and persists for the life of the document.
-    -->
     <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
     <script type="module" src="./app.js"></script>
   </body>
