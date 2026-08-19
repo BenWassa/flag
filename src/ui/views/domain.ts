@@ -13,12 +13,15 @@ export function renderDomainHome(
   domain: LearningDomain,
   progress: ProgressState,
   locationProgress: LocationProgressState,
+  outlineProgress: ProgressState,
   persisting = true,
   mapPersisting = true,
+  outlinePersisting = true,
 ): string {
   if (domain === 'flags') return renderFlagsHome(progress, persisting);
   if (domain === 'locations') return renderLocationsHome(locationProgress, mapPersisting);
-  return renderPlannedDomain(domain);
+  if (domain === 'outlines') return renderOutlinesHome(outlineProgress, outlinePersisting);
+  return renderPlannedNeighbors();
 }
 
 function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
@@ -125,25 +128,57 @@ function renderLocationsHome(progress: LocationProgressState, persisting: boolea
   `;
 }
 
-function renderPlannedDomain(domain: 'outlines' | 'neighbors'): string {
-  const label = domain === 'outlines' ? 'Outlines' : 'Neighbors';
-  const description = domain === 'outlines'
-    ? 'Country-silhouette learning is planned in Issue #2.'
-    : 'Land-border neighbor learning is planned in Issue #3.';
+function renderOutlinesHome(progress: ProgressState, persisting: boolean): string {
+  const scope: StudyScope = { kind: 'continent', id: 'africa', label: 'Africa' };
+  const stats = getScopeStats(COUNTRIES, progress, scope);
 
   return `
     <main class="page">
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>${label}</h1>
+          <h1 tabindex="-1" data-autofocus>Outlines</h1>
+          <span>Country silhouettes · Africa available</span>
+        </div>
+      </header>
+
+      <section class="atlas-section" aria-labelledby="outline-continents-heading">
+        <div class="list-heading">
+          <h2 id="outline-continents-heading">Continents</h2>
+          <span>1 available</span>
+        </div>
+        <div class="continent-list">
+          <button class="continent-row" data-action="open-scope" data-domain="outlines" data-id="africa">
+            <span class="continent-row__identity">
+              <strong>Africa</strong>
+              <small>54 countries · 5 regions · Learn or test</small>
+            </span>
+            <span class="continent-row__progress">${progressStrip(stats)}</span>
+            <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+            ${icon('chevron')}
+          </button>
+        </div>
+      </section>
+
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so outline progress will last only for this visit.</p>`}
+    </main>
+  `;
+}
+
+function renderPlannedNeighbors(): string {
+  return `
+    <main class="page">
+      <header class="topbar topbar--detail">
+        <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
+        <div class="screen-title">
+          <h1 tabindex="-1" data-autofocus>Neighbors</h1>
           <span>Planned learning domain</span>
         </div>
       </header>
 
       <div class="empty-state">
         <strong>Reserved in the Atlas hierarchy</strong>
-        <span>${description} Its routes will reuse the same continent, region, Learn, Test, and review structure rather than adding another navigation system.</span>
+        <span>Land-border neighbor learning is planned in Issue #3. Its routes will reuse the same continent, region, Learn, Test, and review structure rather than adding another navigation system.</span>
       </div>
     </main>
   `;
