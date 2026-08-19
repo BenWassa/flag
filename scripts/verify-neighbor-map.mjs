@@ -32,6 +32,7 @@ const asset = await loadMapAsset('africa');
 assert.ok(asset, 'Canonical Issue #9 Africa asset loads for Neighbors map presentation.');
 const geometryById = new Map(asset.countries.map((geometry) => [geometry.countryId, geometry]));
 const nameForId = (id) => COUNTRY_BY_ID.get(id)?.name ?? id;
+const htmlText = (value) => value.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#39;');
 const stateSignature = (model) => model.puzzleCountries.map((country) => [country.countryId, country.state]);
 
 function roundState(target) {
@@ -144,7 +145,10 @@ for (const id of AFRICA_LAND_ADJACENCY.GHA) {
 const completeModel = deriveNeighborMapModel(asset, roundState(completeSession.targets.GHA), nameForId);
 assert.ok(completeModel.puzzleCountries.filter((country) => country.countryId !== 'GHA').every((country) => country.state === 'solved'));
 const completeHtml = renderNeighborMap(asset, completeModel, 'neighbor-map-complete:GHA', 'BFA,CIV,TGO|');
-for (const id of AFRICA_LAND_ADJACENCY.GHA) assert.ok(completeHtml.includes(nameForId(id)), `Completed map labels ${nameForId(id)}.`);
+for (const id of AFRICA_LAND_ADJACENCY.GHA) {
+  assert.equal(completeModel.puzzleCountries.find((country) => country.countryId === id)?.label.text, nameForId(id), `Completed model labels ${nameForId(id)}.`);
+  assert.ok(completeHtml.includes(htmlText(nameForId(id))), `Completed rendered map labels ${nameForId(id)} with safe HTML escaping.`);
+}
 
 // Framing and actual canonical polygon usage across representative difficult cases.
 const representatives = ['GMB', 'LSO', 'COD', 'TZA', 'TGO', 'BEN', 'GHA', 'BFA', 'GNQ', 'AGO', 'ZAF'];
