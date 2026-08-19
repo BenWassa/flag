@@ -1,6 +1,7 @@
 import { COUNTRY_BY_ID } from './data/countries.js';
 import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
+import { loadOutlineAsset } from './data/outlines.js';
 import type {
   LearningActivity,
   LearningDomain,
@@ -11,6 +12,7 @@ import type {
 import type { MapMode } from './domain/map-models.js';
 import { getRecord, masteryGoal } from './domain/progress.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
+import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastructure/outline-storage.js';
 import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
@@ -32,6 +34,9 @@ import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
 import { renderMapResults } from './ui/views/map-results.js';
+import { renderOutlineHome } from './ui/views/outline-home.js';
+import { renderOutlineQuiz } from './ui/views/outline-quiz.js';
+import { renderOutlineResults } from './ui/views/outline-results.js';
 import { renderProgress } from './ui/views/progress.js';
 import { renderQuiz } from './ui/views/quiz.js';
 import { renderResults } from './ui/views/results.js';
@@ -51,8 +56,12 @@ let resetArmed = false;
 let lastResultScope: StudyScope | null = null;
 let lastResultMode: StudyMode = 'learn';
 let lastMissedIds: string[] = [];
+let lastOutlineResultScope: StudyScope | null = null;
+let lastOutlineResultMode: StudyMode = 'learn';
+let lastOutlineMissedIds: string[] = [];
 let pendingAdvance: number | null = null;
 let pendingMapAdvance: number | null = null;
+let pendingOutlineAdvance: number | null = null;
 let lastRenderedRouteKey: string | null = null;
 
 function cancelPendingAdvance(): void {
@@ -67,9 +76,16 @@ function cancelPendingMapAdvance(): void {
   pendingMapAdvance = null;
 }
 
+function cancelPendingOutlineAdvance(): void {
+  if (pendingOutlineAdvance === null) return;
+  window.clearTimeout(pendingOutlineAdvance);
+  pendingOutlineAdvance = null;
+}
+
 function cancelAllPending(): void {
   cancelPendingAdvance();
   cancelPendingMapAdvance();
+  cancelPendingOutlineAdvance();
 }
 
 let pendingAnnouncement: number | null = null;
@@ -88,6 +104,7 @@ function routeHasActiveRound(route: LearningRoute): boolean {
   if (!activeRoundRoute || !routesEqual(route, activeRoundRoute)) return false;
   if (route.domain === 'flags') return store.session !== null;
   if (route.domain === 'locations') return store.mapSession !== null && store.mapAsset !== null;
+  if (route.domain === 'outlines') return store.outlineSession !== null && store.outlineAsset !== null;
   return false;
 }
 
@@ -100,10 +117,10 @@ function normalizeRoute(route: AppRoute): AppRoute {
 
   if (route.domain === 'flags') return route;
 
-  if (route.domain === 'locations') {
+  if (route.domain === 'locations' || route.domain === 'outlines') {
     if (!route.scope) return route;
     if (route.scope.id && getAfricaMapScopeConfig(route.scope.id)) return route;
-    return { name: 'learning', domain: 'locations' };
+    return { name: 'learning', domain: route.domain };
   }
 
   if (route.scope || route.activity) return { name: 'learning', domain: route.domain };
@@ -135,6 +152,10 @@ function applyRoute(requestedRoute: AppRoute): void {
           store.navigate(store.mapSessionResult
             ? { name: 'map-results', result: store.mapSessionResult }
             : { name: 'map-quiz' });
+        } else if (route.domain === 'outlines' && store.outlineSession && store.outlineAsset) {
+          store.navigate(store.outlineSessionResult
+            ? { name: 'outline-results', result: store.outlineSessionResult }
+            : { name: 'outline-quiz' });
         }
       } else if (!route.scope) {
         store.navigate({ name: 'domain', domain: route.domain });
@@ -142,6 +163,8 @@ function applyRoute(requestedRoute: AppRoute): void {
         store.navigate({ name: 'scope', scope: route.scope });
       } else if (route.domain === 'locations') {
         store.navigate({ name: 'map-home', scope: route.scope });
+      } else if (route.domain === 'outlines') {
+        store.navigate({ name: 'outline-home', scope: route.scope });
       }
       break;
   }
@@ -158,6 +181,7 @@ function discardActiveRound(): void {
   if (!activeRoundRoute) return;
   if (activeRoundRoute.domain === 'flags') store.abandonSession();
   if (activeRoundRoute.domain === 'locations') store.abandonMapSession();
+  if (activeRoundRoute.domain === 'outlines') store.abandonOutlineSession();
   activeRoundRoute = null;
 }
 
@@ -173,6 +197,9 @@ function currentDocumentTitle(): string {
   if (store.view.name === 'map-results') {
     return `Round complete · ${store.view.result.session.scope.label} locations · Flag Atlas`;
   }
+  if (store.view.name === 'outline-results') {
+    return `Round complete · ${store.view.result.session.scope.label} outlines · Flag Atlas`;
+  }
   return routeTitle(currentRoute);
 }
 
@@ -183,6 +210,8 @@ function currentRouteKey(): string {
   if (view.name === 'results') return `${route}:results:${view.result.session.id}`;
   if (view.name === 'map-quiz') return `${route}:${store.mapSession?.id ?? 'none'}:${store.mapSession?.currentIndex ?? 0}`;
   if (view.name === 'map-results') return `${route}:results:${view.result.session.id}`;
+  if (view.name === 'outline-quiz') return `${route}:${store.outlineSession?.id ?? 'none'}:${store.outlineSession?.currentIndex ?? 0}`;
+  if (view.name === 'outline-results') return `${route}:results:${view.result.session.id}`;
   return route;
 }
 
@@ -203,15 +232,17 @@ function render(previousSelector: string | null = null): void {
 
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(store.progress, store.locationProgress);
+      root.innerHTML = renderHome(store.progress, store.locationProgress, store.outlineProgress);
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(
         store.view.domain,
         store.progress,
         store.locationProgress,
+        store.outlineProgress,
         store.persisting,
         store.mapPersisting,
+        store.outlinePersisting,
       );
       break;
     case 'scope':
@@ -240,6 +271,19 @@ function render(previousSelector: string | null = null): void {
     case 'map-results':
       if (!store.mapAsset) return;
       root.innerHTML = renderMapResults(store.mapAsset, store.view.result);
+      break;
+    case 'outline-home':
+      root.innerHTML = renderOutlineHome(store.outlineProgress, store.view.scope, store.outlinePersisting);
+      break;
+    case 'outline-quiz':
+      if (!store.outlineSession || !store.outlineAsset) return;
+      root.innerHTML = renderOutlineQuiz(store.outlineAsset, store.outlineSession, store.outlineProgress, store.outlineAnsweredCountryId);
+      break;
+    case 'outline-results':
+      root.innerHTML = renderOutlineResults(store.view.result);
+      lastOutlineResultScope = store.view.result.session.scope;
+      lastOutlineResultMode = store.view.result.session.mode;
+      lastOutlineMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
       break;
   }
 
@@ -309,6 +353,38 @@ async function beginMapSession(
   announce(`${asset.scope.label} locations. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
 }
 
+function currentOutlineScope(): StudyScope {
+  if (currentRoute.name === 'learning' && currentRoute.domain === 'outlines' && currentRoute.scope) {
+    return currentRoute.scope;
+  }
+  if (store.view.name === 'outline-results') return store.view.result.session.scope;
+  return store.outlineSession?.scope ?? AFRICA_MAP_SCOPE;
+}
+
+async function beginOutlineSession(
+  mode: StudyMode,
+  targetCountryIds?: readonly string[],
+  scope: StudyScope = currentOutlineScope(),
+  activity: LearningActivity = mode,
+  replaceRoute = false,
+): Promise<void> {
+  cancelAllPending();
+  const asset = await loadOutlineAsset(scope.id ?? 'africa');
+  if (!asset) {
+    announce(`${scope.label} silhouettes could not be loaded.`);
+    return;
+  }
+  const size = targetCountryIds ? Math.max(1, Math.min(10, targetCountryIds.length)) : 10;
+  if (!store.startOutlineSession(asset, mode, size, targetCountryIds)) {
+    announce('No country outlines are available for this round.');
+    return;
+  }
+
+  activeRoundRoute = routeForScope('outlines', scope, activity);
+  router.navigate(activeRoundRoute, { replace: replaceRoute });
+  announce(`${asset.scope.label} outlines. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.outlineSession?.questions.length ?? 0} countries. Question 1.`);
+}
+
 function exitActiveRound(): void {
   if (!activeRoundRoute) return;
   cancelAllPending();
@@ -344,6 +420,39 @@ function submitAnswer(countryId: string): void {
       if (store.view.name !== 'quiz') return;
       store.advance();
       announceResult();
+      finishInteraction(null);
+    }, 180);
+  }
+}
+
+function outlineAnswerAnnouncement(countryId: string): string {
+  if (!store.outlineSession) return '';
+  const question = store.outlineSession.questions[store.outlineSession.currentIndex];
+  const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
+  if (!target) return '';
+  if (store.outlineSession.mode === 'test') return 'Answer recorded.';
+
+  const record = getRecord(store.outlineProgress, target.id);
+  const state = record.status === 'mastered'
+    ? 'Now mastered.'
+    : `Learning, ${record.masteryStreak} of ${masteryGoal(record)} rounds.`;
+  return countryId === target.id
+    ? `Correct. ${target.name}. ${state}`
+    : `Incorrect. The answer is ${target.name}. ${state}`;
+}
+
+function submitOutlineAnswer(countryId: string): void {
+  if (!store.outlineSession || store.outlineAnsweredCountryId !== null) return;
+  store.answerOutline(countryId);
+  announce(outlineAnswerAnnouncement(countryId));
+
+  if (store.outlineSession.mode === 'test') {
+    cancelPendingOutlineAdvance();
+    pendingOutlineAdvance = window.setTimeout(() => {
+      pendingOutlineAdvance = null;
+      if (store.view.name !== 'outline-quiz') return;
+      store.advanceOutline();
+      announceOutlineResult();
       finishInteraction(null);
     }, 180);
   }
@@ -445,6 +554,10 @@ root.addEventListener('click', (event) => {
     void beginMapSession(action === 'start-map-learn' ? 'learn' : 'test');
     return;
   }
+  if (action === 'start-outline-learn' || action === 'start-outline-test') {
+    void beginOutlineSession(action === 'start-outline-learn' ? 'learn' : 'test');
+    return;
+  }
   if (action === 'review-map-mistakes' && store.view.name === 'map-results') {
     void beginMapSession(
       'learn',
@@ -465,7 +578,15 @@ root.addEventListener('click', (event) => {
     );
     return;
   }
-  if (action === 'exit-round' || action === 'exit-quiz' || action === 'exit-map') {
+  if (action === 'review-outline-mistakes' && store.view.name === 'outline-results') {
+    void beginOutlineSession('learn', lastOutlineMissedIds, store.view.result.session.scope, 'review', true);
+    return;
+  }
+  if (action === 'repeat-outline' && store.view.name === 'outline-results') {
+    void beginOutlineSession(store.view.result.session.mode, undefined, store.view.result.session.scope, store.view.result.session.mode, true);
+    return;
+  }
+  if (action === 'exit-round' || action === 'exit-quiz' || action === 'exit-map' || action === 'exit-outline') {
     exitActiveRound();
     return;
   }
@@ -491,12 +612,14 @@ root.addEventListener('click', (event) => {
     case 'reset-confirm':
       resetAllProgress();
       resetMapProgressStorage();
+      resetOutlineProgressStorage();
       store.resetProgress();
       store.resetMapProgress();
+      store.resetOutlineProgress();
       activeRoundRoute = null;
       resetArmed = false;
       progressFilter = 'all';
-      announce('All flag and location progress erased.');
+      announce('All flag, location, and outline progress erased.');
       break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
@@ -513,8 +636,14 @@ root.addEventListener('click', (event) => {
     case 'answer':
       if (id) submitAnswer(id);
       break;
+    case 'outline-answer':
+      if (id) submitOutlineAnswer(id);
+      break;
     case 'next-question':
       store.advance();
+      break;
+    case 'next-outline-question':
+      store.advanceOutline();
       break;
     case 'review-mistakes':
       if (lastResultScope && lastMissedIds.length) {
@@ -538,6 +667,7 @@ root.addEventListener('click', (event) => {
   }
 
   announceResult();
+  announceOutlineResult();
   finishInteraction(selector);
 });
 
@@ -546,6 +676,13 @@ function announceResult(): void {
   const { correct, total, newlyMastered } = store.view.result;
   const mastery = newlyMastered.length ? ` ${newlyMastered.length} newly mastered.` : '';
   announce(`Round complete. ${correct} of ${total} correct.${mastery}`);
+}
+
+function announceOutlineResult(): void {
+  if (store.view.name !== 'outline-results') return;
+  const { correct, total, newlyMastered } = store.view.result;
+  const mastery = newlyMastered.length ? ` ${newlyMastered.length} newly mastered.` : '';
+  announce(`Outline round complete. ${correct} of ${total} correct.${mastery}`);
 }
 
 function announceMapResult(): void {
@@ -571,6 +708,33 @@ window.addEventListener('keydown', (event) => {
         event.preventDefault();
         submitMapAnswer(id, `[data-action="map-answer"][data-id="${id}"]`);
       }
+    }
+    return;
+  }
+
+  if (store.view.name === 'outline-quiz' && store.outlineSession) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      exitActiveRound();
+      return;
+    }
+
+    if (store.outlineAnsweredCountryId === null && /^[1-4]$/.test(event.key)) {
+      const question = store.outlineSession.questions[store.outlineSession.currentIndex];
+      const countryId = question?.optionCountryIds[Number(event.key) - 1];
+      if (countryId) {
+        event.preventDefault();
+        submitOutlineAnswer(countryId);
+        finishInteraction(null);
+      }
+      return;
+    }
+
+    if (store.outlineAnsweredCountryId !== null && store.outlineSession.mode === 'learn' && event.key === 'Enter') {
+      event.preventDefault();
+      store.advanceOutline();
+      announceOutlineResult();
+      finishInteraction(null);
     }
     return;
   }
@@ -605,11 +769,13 @@ window.addEventListener('keydown', (event) => {
 window.addEventListener('pagehide', () => {
   flushAttempts();
   flushMapAttempts();
+  flushOutlineAttempts();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     flushAttempts();
     flushMapAttempts();
+    flushOutlineAttempts();
   }
 });
 

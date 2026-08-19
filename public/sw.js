@@ -1,11 +1,12 @@
-// v9 supersedes flag-atlas-v8 after integrating the routing/IA and production cartography releases.
-const VERSION = 'flag-atlas-v9';
+// v10 supersedes flag-atlas-v9 and the earlier routing-era flag-atlas-v8 cache while adding the country-outline learning domain.
+const VERSION = 'flag-atlas-v10';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './map.css',
   './map-cartography.css',
+  './outline.css',
   './app.js',
   './map-viewport.js',
   './manifest.webmanifest',
@@ -65,7 +66,7 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // Dynamically imported continent assets are cached here after first map use,
+  // Dynamically imported continent assets are cached here after first geography use,
   // preserving a light initial shell while making revisits offline-capable.
   if (url.origin === self.location.origin) {
     event.respondWith(shellFromNetwork(request));

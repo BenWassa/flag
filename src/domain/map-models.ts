@@ -45,6 +45,12 @@ export interface MapWaterLayers {
 export interface MapCountryGeometry {
   countryId: string;
   path?: string;
+  /**
+   * Canonical generated polygon retained when map UX substitutes a locator for
+   * a tiny island country. Map rendering ignores this field; geometry-derived
+   * learning domains can still consume the same production source topology.
+   */
+  outlinePath?: string;
   locator?: MapPoint;
   hitAssist?: MapPoint;
   /** Explicit cartographic callout for mainland countries too small/narrow for honest phone tapping. */
