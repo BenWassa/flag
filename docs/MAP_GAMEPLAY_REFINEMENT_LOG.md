@@ -2,7 +2,8 @@
 
 **Branch:** `agent/map-gameplay-v3`  
 **Started:** 2026-08-19 09:30 EDT (America/Toronto)  
-**Scope:** regional map gameplay — country selection visuals, continent context, panning, scoring fills, touch precision, and mobile interaction behavior.
+**Scope:** regional map gameplay — country selection visuals, continent context, panning, scoring fills, touch precision, and mobile interaction behavior.  
+**Timestamp note:** entries are minute-level Toronto time. Late-pass timestamps were reconciled against GitHub commit/CI timing at closeout so the audit does not record future times.
 
 ## Method
 
@@ -98,7 +99,7 @@ This misapplied the 44px target-size guidance and made narrow countries material
 - Cabo Verde remains an explicit island locator.
 - Initial focus is defined around West Africa, while the full Africa canvas remains available by panning.
 
-### 09:45 — Click/focus visual model rebuilt
+### 09:42 — Click/focus visual model rebuilt
 
 **Focus**
 
@@ -119,7 +120,7 @@ These are now separate states:
 
 This makes the tap feel acknowledged while preserving the original first-try / one-miss / two-miss / reveal scoring language.
 
-### 09:48 — Mobile continent panning implemented
+### 09:43 — Mobile continent panning implemented
 
 **Viewport**
 
@@ -141,13 +142,11 @@ Added `src/map-viewport.ts`:
 
 The helper is loaded by the production shell and added to the service-worker app shell.
 
-### 09:50 — Gameplay copy refined
+### 09:43 — Gameplay copy and regression contract refined
 
 The first question now teaches the gesture once: **swipe or drag to pan Africa**. Later questions return to minimal instructions.
 
 Out-of-region countries are intentionally visible but not selectable. This avoids penalizing a learner for touching context that is outside the chosen quiz scope.
-
-### 09:52 — Regression contract expanded
 
 Automated verification now requires:
 
@@ -164,7 +163,7 @@ Automated verification now requires:
 - production shell loading `map-viewport.js`;
 - service worker caching the viewport helper.
 
-### 09:54 — First full CI verification passed
+### 09:44 — First full CI verification passed
 
 **Run:** GitHub Actions CI #26 (`32259704594`).
 
@@ -176,7 +175,7 @@ Automated verification now requires:
 - New continent-context/mobile-gameplay contract: pass.
 - CI artifact `flag-atlas-dist` produced successfully (artifact `9367729285`, digest `sha256:31c8a159c417ff718e48bec604a58ece44137b42e0b6f299ff5191f7edbc98cb`).
 
-### 09:56 — CI artifact and geometry visually red-teamed
+### 09:45 — CI artifact and geometry visually red-teamed
 
 **Artifact inspection**
 
@@ -199,7 +198,7 @@ Rendered the actual compiled map geometry to a static image for visual inspectio
 - Cabo Verde remains visible as an explicit locator west of the mainland.
 - The initial West Africa focus covers the intended active cluster while leaving the rest of Africa accessible through pan.
 
-### 09:57 — Color semantics red-team
+### 09:47 — Color semantics red-team
 
 **Finding**
 
@@ -212,11 +211,26 @@ The first implementation of this pass gave the persistent first-try state a slig
 - Unanswered active countries remain neutral gray, so an off-white first-try fill still reads clearly as completed.
 - Text feedback remains present, so color is evidence rather than the sole carrier of meaning.
 
-### 09:59 — Final head CI passed
+### 09:48 — CI #27 passed after color correction
 
 **Run:** GitHub Actions CI #27 (`32260192528`).
 
 **Result:** success after the final color-semantics correction.
+
+### 09:49 — Audit closeout and final PR-head CI
+
+A documentation-only closeout commit reconciled the worklog. The resulting PR head ran the complete suite again.
+
+**Run:** GitHub Actions CI #28 (`32260304005`).  
+**Result:** success.
+
+### 09:50 — PR #6 merged
+
+PR #6, **Refine mobile map gameplay**, was marked ready and squash-merged to `main`.
+
+- Merge commit: `38928cf69182aa9da9f3782330cecf1851a3f1d2`.
+- Issue #1 remains the umbrella tracker for expanding the map system.
+- The CI→Pages workflow remains the production deployment path for `main`.
 
 ### Final red-team evaluation
 
@@ -230,6 +244,6 @@ The first implementation of this pass gave the persistent first-try state a slig
 - **Mobile topology:** bounded map viewport keeps the prompt stable while allowing geographic exploration; short landscape still reflows structurally.
 - **Regression safety:** existing flag domain/state/storage behavior remains untouched.
 
-## Merge recommendation
+## Closeout
 
-**Ready to merge.** Final PR head is green, the exact CI artifact has been inspected, and the map-specific behavior requested in production feedback is now part of automated verification rather than relying on visual convention alone.
+The requested gameplay changes are merged. Future map-region work should reuse the continent-context + active-region layering, native pan/pan-preservation model, geographic focus treatment, and separation between immediate interaction feedback and persistent round score.
