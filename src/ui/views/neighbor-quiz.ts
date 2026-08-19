@@ -22,6 +22,7 @@ export function renderNeighborQuiz(
   const questionNumber = session.currentIndex + 1;
   const remainingAttempts = Math.max(0, target.attemptBudget - target.guessedIds.length);
   const progressPercent = target.neighborIds.length === 0 ? 0 : (target.foundIds.length / target.neighborIds.length) * 100;
+  const mapKey = `${session.id}:${target.countryId}`;
 
   return `
     <main class="page neighbor-quiz-page">
@@ -45,20 +46,21 @@ export function renderNeighborQuiz(
         </div>
         <div class="neighbor-progress" aria-hidden="true"><span style="transform: scaleX(${Math.max(0, Math.min(1, progressPercent / 100))})"></span></div>
 
-        ${renderFound(target.foundIds)}
+        <div
+          class="neighbor-map-host"
+          data-neighbor-map-host
+          data-neighbor-map-key="${escapeHtml(mapKey)}"
+          data-target-id="${escapeHtml(target.countryId)}"
+          data-found-ids="${escapeHtml(target.foundIds.join(','))}"
+          data-revealed-ids="${escapeHtml(target.revealedIds.join(','))}"
+        >
+          <p class="neighbor-map-loading">Loading geographic context…</p>
+        </div>
+
         ${target.resolved ? renderResolution(target) : renderEntry(session, query)}
         ${renderFeedback(lastOutcome)}
       </section>
     </main>
-  `;
-}
-
-function renderFound(foundIds: readonly string[]): string {
-  if (!foundIds.length) return '<p class="neighbor-found-empty">Correct neighbors will collect here.</p>';
-  return `
-    <div class="neighbor-found" aria-label="Neighbors found">
-      ${foundIds.map((countryId) => `<span><strong>${escapeHtml(countryName(countryId))}</strong><small>Found</small></span>`).join('')}
-    </div>
   `;
 }
 
@@ -82,13 +84,14 @@ function renderEntry(session: NeighborSession, query: string): string {
 export function renderNeighborSuggestions(session: NeighborSession, query: string): string {
   const target = currentNeighborTarget(session);
   if (!target) return '';
+  if (!query.trim()) return '';
   const excluded = new Set([...target.guessedIds, target.countryId]);
-  const suggestions = getCountrySuggestions(COUNTRIES, ALLOWED_COUNTRY_IDS, query, excluded, query.trim() ? 8 : 6);
+  const suggestions = getCountrySuggestions(COUNTRIES, ALLOWED_COUNTRY_IDS, query, excluded, 8);
   if (!suggestions.length) return '<p class="neighbor-suggestions__empty">No matching country.</p>';
   return suggestions.map((country) => `
     <button type="button" role="option" class="neighbor-suggestion" data-action="neighbor-guess" data-id="${country.id}">
       <span>${escapeHtml(country.name)}</span>
-      ${country.aliases?.length && query.trim() ? `<small>${escapeHtml(country.aliases[0] ?? '')}</small>` : ''}
+      ${country.aliases?.length ? `<small>${escapeHtml(country.aliases[0] ?? '')}</small>` : ''}
     </button>
   `).join('');
 }

@@ -1,34 +1,200 @@
-.neighbor-quiz-page { max-width: 720px; }
-.neighbor-quiz-header { margin-bottom: var(--space-6); }
-.neighbor-task { display: grid; gap: var(--space-4); }
-.neighbor-status-line { display: flex; align-items: end; justify-content: space-between; gap: var(--space-4); }
+.neighbor-quiz-page {
+  width: min(100%, 980px);
+  max-width: none;
+  min-height: 100dvh;
+  padding-top: max(var(--space-4), env(safe-area-inset-top));
+  padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
+}
+.neighbor-quiz-header { margin-bottom: var(--space-3); }
+.neighbor-task { display: grid; gap: var(--space-3); }
+.neighbor-status-line {
+  display: flex;
+  align-items: end;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
 .neighbor-status-line h2 { margin: 0 0 var(--space-1); font-size: 1.15rem; letter-spacing: -.015em; }
 .neighbor-status-line p { margin: 0; color: var(--text-muted); }
-.neighbor-attempts { flex: 0 0 auto; display: grid; justify-items: end; font-variant-numeric: tabular-nums; }
+.neighbor-attempts {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  font-variant-numeric: tabular-nums;
+}
 .neighbor-attempts strong { font-size: 1.65rem; line-height: 1; }
 .neighbor-attempts span { color: var(--text-muted); font-size: 12px; }
 .neighbor-progress { height: 6px; overflow: hidden; border-radius: 3px; background: var(--track); }
-.neighbor-progress span { display: block; width: 100%; height: 100%; transform-origin: left center; background: var(--mastered); }
-.neighbor-found { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
-.neighbor-found > span { min-height: 52px; padding: 8px 0; display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); border-bottom: 1px solid var(--line); }
-.neighbor-found > span:last-child { border-bottom: 0; }
-.neighbor-found small { color: var(--mastered); font-weight: 700; }
-.neighbor-found-empty, .neighbor-policy { margin: 0; color: var(--text-muted); }
-.neighbor-entry { display: grid; gap: var(--space-2); scroll-margin-bottom: 40dvh; }
+.neighbor-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  background: var(--mastered);
+}
+.neighbor-policy { margin: 0; color: var(--text-muted); }
+
+/* Geography is the primary Neighbors learning surface. The host remains light
+   until the canonical continent module is requested by neighbor-map-runtime. */
+.neighbor-map-host {
+  min-width: 0;
+  min-height: 220px;
+}
+.neighbor-map-loading,
+.neighbor-map-unavailable {
+  min-height: 220px;
+  margin: 0;
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  color: var(--text-muted);
+  text-align: center;
+}
+.neighbor-map-shell { height: 100%; }
+.neighbor-map-stage {
+  height: clamp(260px, 43dvh, 440px);
+  margin: 0;
+  background: var(--surface-subtle);
+}
+.neighbor-map-svg { background: var(--surface-subtle); }
+.neighbor-map-context,
+.neighbor-map-puzzle-layer,
+.neighbor-map-label-layer { pointer-events: none; }
+.neighbor-map-context-country {
+  fill: color-mix(in srgb, var(--track) 74%, var(--surface-subtle));
+  stroke: none;
+}
+.neighbor-map-country__shape {
+  stroke-linejoin: round;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+  transition: fill 150ms ease, stroke 150ms ease, opacity 150ms ease;
+}
+.neighbor-map-country--target .neighbor-map-country__shape {
+  fill: var(--action);
+  stroke: var(--action-hover);
+  stroke-width: 2;
+}
+.neighbor-map-country--unresolved .neighbor-map-country__shape {
+  fill: var(--surface);
+  stroke: var(--line-strong);
+  stroke-width: 1.35;
+}
+.neighbor-map-country--solved .neighbor-map-country__shape {
+  fill: var(--mastered-soft);
+  stroke: var(--mastered);
+  stroke-width: 1.8;
+}
+.neighbor-map-country--revealed .neighbor-map-country__shape {
+  fill: var(--wrong-soft);
+  stroke: var(--wrong);
+  stroke-width: 1.8;
+  stroke-dasharray: 4 2;
+}
+.neighbor-map-label text {
+  fill: var(--text);
+  stroke: var(--surface);
+  stroke-width: 3.2;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+  paint-order: stroke fill;
+  font-family: inherit;
+  font-weight: 800;
+  pointer-events: none;
+}
+.neighbor-map-label--target text {
+  fill: var(--on-action);
+  stroke: var(--action);
+}
+.neighbor-map-label--unresolved text { fill: var(--unseen); }
+.neighbor-map-label--solved text { fill: var(--mastered); }
+.neighbor-map-label--revealed text { fill: var(--wrong); }
+.neighbor-map-label__leader {
+  fill: none;
+  stroke: var(--line-strong);
+  stroke-width: 1.15;
+  stroke-linecap: round;
+  vector-effect: non-scaling-stroke;
+}
+.neighbor-map-label__leader--target { stroke: var(--action); }
+.neighbor-map-label__leader--solved { stroke: var(--mastered-line); }
+.neighbor-map-label__leader--revealed { stroke: var(--wrong-line); stroke-dasharray: 3 2; }
+
+.neighbor-entry {
+  position: sticky;
+  bottom: max(var(--space-2), env(safe-area-inset-bottom));
+  z-index: 4;
+  display: grid;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+  background: var(--canvas);
+  scroll-margin-bottom: 32dvh;
+}
 .neighbor-entry > label { font-size: 13px; font-weight: 700; }
 .neighbor-input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
-.neighbor-input-row input { width: 100%; min-height: 50px; border: 1px solid var(--line-strong); border-radius: var(--radius-md); background: var(--surface); color: var(--text); padding: 0 var(--space-3); }
-.neighbor-input-row input:focus { outline: 3px solid var(--focus-ring); outline-offset: 2px; border-color: var(--action); }
-.neighbor-suggestions { max-height: min(34dvh, 270px); overflow-y: auto; overscroll-behavior: contain; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); background: var(--surface); }
-.neighbor-suggestion { width: 100%; min-height: 50px; padding: 9px var(--space-3); border: 0; border-bottom: 1px solid var(--line); background: var(--surface); display: flex; align-items: center; justify-content: space-between; gap: var(--space-3); text-align: left; cursor: pointer; }
+.neighbor-input-row input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 var(--space-3);
+}
+.neighbor-input-row input:focus {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-color: var(--action);
+}
+.neighbor-suggestions {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: calc(100% + var(--space-1));
+  max-height: min(34dvh, 270px);
+  max-height: min(28dvh, 230px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+}
+.neighbor-suggestions:empty { display: none; }
+.neighbor-suggestion {
+  width: 100%;
+  min-height: 50px;
+  padding: 9px var(--space-3);
+  border: 0;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  text-align: left;
+  cursor: pointer;
+}
 .neighbor-suggestion:last-child { border-bottom: 0; }
-.neighbor-suggestion:hover, .neighbor-suggestion:focus-visible { background: var(--action-soft); }
+.neighbor-suggestion:hover,
+.neighbor-suggestion:focus-visible { background: var(--action-soft); }
 .neighbor-suggestion small { color: var(--text-muted); }
 .neighbor-suggestions__empty { margin: 0; padding: var(--space-3); color: var(--text-muted); }
-.neighbor-feedback { margin: 0; padding: var(--space-3); border-left: 3px solid var(--line-strong); background: var(--surface-subtle); }
+.neighbor-feedback {
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-left: 3px solid var(--line-strong);
+  background: var(--surface-subtle);
+}
 .neighbor-feedback--correct { border-color: var(--mastered); background: var(--mastered-soft); }
 .neighbor-feedback--wrong { border-color: var(--wrong); background: var(--wrong-soft); }
-.neighbor-resolution { display: grid; gap: var(--space-3); padding: var(--space-4); border: 1px solid var(--line); background: var(--surface); }
+.neighbor-resolution {
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-3) 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+}
 .neighbor-resolution > strong { font-size: 1.1rem; }
 .neighbor-resolution p { margin: 0; }
 .neighbor-resolution .button { justify-self: start; }
@@ -36,8 +202,79 @@
 
 @media (max-width: 520px) {
   .neighbor-status-line { align-items: start; }
-  .neighbor-status-line h2 { max-width: 240px; }
+  .neighbor-status-line h2 { max-width: 250px; }
   .neighbor-input-row { grid-template-columns: minmax(0, 1fr) 92px; }
   .neighbor-input-row .button { min-height: 50px; padding-inline: var(--space-2); }
-  .neighbor-found { grid-template-columns: 1fr; }
+}
+
+/* When the mobile keyboard materially shortens the visual viewport, retain a
+   useful geographic slice instead of forcing the learner to scroll away from input. */
+@media (max-height: 560px) and (orientation: portrait) {
+  .neighbor-map-stage { height: 190px; }
+  .neighbor-map-host,
+  .neighbor-map-loading,
+  .neighbor-map-unavailable { min-height: 190px; }
+  .neighbor-task { gap: var(--space-2); }
+}
+
+/* Wide screens use one task split, not a dashboard: map left, entry/status right. */
+@media (min-width: 850px) {
+  .neighbor-task {
+    grid-template-columns: minmax(0, 1.55fr) minmax(300px, .75fr);
+    grid-template-areas:
+      "status status"
+      "progress progress"
+      "map entry"
+      "map feedback";
+    align-items: start;
+    column-gap: var(--space-5);
+  }
+  .neighbor-status-line { grid-area: status; }
+  .neighbor-progress { grid-area: progress; }
+  .neighbor-map-host { grid-area: map; }
+  .neighbor-entry,
+  .neighbor-resolution { grid-area: entry; position: relative; bottom: auto; }
+  .neighbor-feedback { grid-area: feedback; }
+  .neighbor-map-stage { height: clamp(410px, 64dvh, 590px); }
+}
+
+/* Short landscape deliberately moves the interaction beside the map. */
+@media (orientation: landscape) and (max-height: 620px) {
+  .neighbor-quiz-page { width: 100%; padding-top: var(--space-2); padding-bottom: var(--space-2); }
+  .neighbor-quiz-header { margin-bottom: var(--space-2); }
+  .neighbor-task {
+    grid-template-columns: minmax(0, 1.45fr) minmax(280px, .8fr);
+    grid-template-areas:
+      "map status"
+      "map progress"
+      "map entry"
+      "map feedback";
+    align-items: start;
+    gap: var(--space-2) var(--space-4);
+  }
+  .neighbor-status-line { grid-area: status; }
+  .neighbor-status-line h2 { font-size: 1rem; }
+  .neighbor-progress { grid-area: progress; }
+  .neighbor-map-host { grid-area: map; }
+  .neighbor-map-stage { height: calc(100dvh - 88px); min-height: 250px; }
+  .neighbor-entry,
+  .neighbor-resolution { grid-area: entry; position: relative; bottom: auto; }
+  .neighbor-feedback { grid-area: feedback; }
+  .neighbor-suggestions { max-height: min(34dvh, 180px); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .neighbor-map-country__shape { transition: none; }
+}
+
+@media (forced-colors: active) {
+  .neighbor-map-context-country { fill: Canvas; stroke: GrayText; stroke-width: 1; }
+  .neighbor-map-country__shape { fill: Canvas; stroke: CanvasText; }
+  .neighbor-map-country--target .neighbor-map-country__shape { fill: Highlight; stroke: Highlight; }
+  .neighbor-map-country--unresolved .neighbor-map-country__shape { stroke: GrayText; stroke-dasharray: 2 2; }
+  .neighbor-map-country--solved .neighbor-map-country__shape { stroke: CanvasText; stroke-width: 2; }
+  .neighbor-map-country--revealed .neighbor-map-country__shape { stroke: CanvasText; stroke-dasharray: 5 2; }
+  .neighbor-map-label text { fill: CanvasText; stroke: Canvas; }
+  .neighbor-map-label--target text { fill: HighlightText; stroke: Highlight; }
+  .neighbor-map-label__leader { stroke: CanvasText; }
 }

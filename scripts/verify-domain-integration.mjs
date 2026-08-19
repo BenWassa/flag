@@ -25,10 +25,12 @@ for (const id of AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS) {
 const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./outline.css'), 'Combined production shell retains the Outlines stylesheet.');
 assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell includes the Neighbors stylesheet.');
+assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbors map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v11'"), 'Combined release owns a fresh v11 PWA cache.');
-assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both new domains are in the offline shell.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v12'"), 'Neighbor-map release owns a fresh v12 PWA cache.');
+assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
+assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbor map presentation runtime is in the offline shell.');
 
 const app = await readFile('dist/app.js', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
@@ -42,4 +44,4 @@ assert.ok(home.includes('Outlines') && home.includes('Neighbors'), 'Home exposes
 const domain = await readFile('dist/ui/views/domain.js', 'utf8');
 assert.ok(domain.includes('Country silhouettes') && domain.includes('Land-border sets'), 'Shared domain IA exposes both new learning families.');
 
-console.log('Cross-domain integration verification passed: Outlines + Neighbors coexist, v11 shell is coherent, and incomplete cross-topology Neighbor targets are deferred.');
+console.log('Cross-domain integration verification passed: Outlines + Neighbors coexist, v12 shell is coherent, the map runtime is cached, and incomplete cross-topology Neighbor targets are deferred.');

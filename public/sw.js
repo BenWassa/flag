@@ -1,5 +1,6 @@
-// v11 supersedes flag-atlas-v10 after integrating the Outlines and Neighbors releases; earlier cartography/routing lineage includes flag-atlas-v9 and flag-atlas-v8.
-const VERSION = 'flag-atlas-v11';
+// v12 adds the Neighbors map presentation runtime while retaining the v11 four-domain shell.
+// Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
+const VERSION = 'flag-atlas-v12';
 const SHELL = [
   './',
   './index.html',
@@ -10,6 +11,7 @@ const SHELL = [
   './neighbors.css',
   './app.js',
   './map-viewport.js',
+  './neighbor-map-runtime.js',
   './manifest.webmanifest',
   './icons/app-icon.svg',
 ];

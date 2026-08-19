@@ -100,9 +100,6 @@ assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not ad
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');
 assert.equal(parseRoutePath('/neighbors/learn'), null, 'World activity is not addressable for neighbors.');
 
-// Browser-transport regression: a GitHub Pages-style cold deep link must parse
-// without changing the server-visible /flag/ pathname, and browser history must
-// drive route notifications rather than an application-owned view stack.
 const fakeWindow = new FakeBrowserWindow('https://example.test/flag/#/locations/africa/west-africa');
 const hashRouter = createHashRouter(fakeWindow);
 assert.equal(serializeRoutePath(hashRouter.current()), '/locations/africa/west-africa', 'Cold hash deep link parses directly.');
@@ -177,9 +174,10 @@ const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'))
 assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canonical hash Home route.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v11'"), 'Combined domain release must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v12'"), 'Neighbor-map shell change must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbor presentation CSS must be part of the offline shell.');
+assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: typed routes, cold links, Back/Forward, invalid-route handling, refresh fallback contract, four-domain IA, result navigation, and PWA shell.');
+console.log('Routing verification passed: typed routes, cold links, Back/Forward, invalid-route handling, refresh fallback contract, four-domain IA, result navigation, and v12 PWA shell.');
