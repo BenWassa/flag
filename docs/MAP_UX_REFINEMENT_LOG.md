@@ -186,25 +186,104 @@ Mode rules should be learned once and then disappear into the interaction. Repea
 **Documentation update**
 `docs/MAPS_PILOT.md` now supersedes the original horizontal-pan mobile decision and records the fit-width + safe-hit-assistance contract for future regions.
 
+### 01:01 — Feedback timing and scroll behavior refined
+
+**Finding**
+The UI told the learner to inspect a revealed country, but the app advanced after the same 620ms used for an ordinary resolved answer. That made the corrective-feedback state too brief relative to its learning purpose.
+
+**Change**
+Map auto-advance is now outcome-sensitive:
+- Test answer recorded: **180ms**;
+- first-try correct: **520ms**;
+- correct after one miss: **700ms**;
+- correct after two misses: **850ms**;
+- three-miss reveal: **1400ms**.
+
+These values are interaction pacing choices, not claims of a universal cognitive optimum. The design principle is the important part: more corrective information receives more dwell time.
+
+**Scroll refinement**
+The app previously called `window.scrollTo(0,0)` on every rerender. Map wrong-tap feedback rerenders the same target, so this could create a visible jump on short viewports. A route/question key now resets scroll only when the screen, session, or question/target changes. Same-question feedback stays spatially stable; the next flag question or map target still returns to its prompt.
+
+**Red-team check**
+The route key includes `currentIndex` for both flag and map quizzes. This preserves the established flag behavior instead of accidentally leaving a user scrolled down when the next flag question starts.
+
+### 01:02 — Short-landscape reflow added
+
+**Change**
+For landscape viewports at 600px height or less, the map round structurally reflows:
+- round header spans the top;
+- target / feedback becomes a compact left column;
+- map occupies the larger right column.
+
+**Reason**
+This follows the existing Flag Atlas rule that short landscape should reflow structurally rather than merely shrink a portrait stack. It also gives the West Africa aspect ratio substantially more useful map area without introducing pan/zoom controls.
+
+### 01:03 — Expanded UX verification passed in CI
+
+**Runs**
+- CI run `32217783208`: pass after safe-hit implementation, new behavioral copy, and expanded UX assertions.
+- CI run `32218010820`: pass after outcome-sensitive timing and scroll-stability changes.
+
+**Result**
+The full repository `npm test` path passes, including the pre-existing flag suite and the expanded map UX contract.
+
+### 01:04 — Exact CI-built artifact inspected
+
+**Artifact**
+- Workflow run `32218010820` produced `flag-atlas-dist` artifact `9352975586`.
+- Artifact digest: `sha256:abf7f8a7bff390c10a57d8184b8bfa7d60376a56260bcdbc07e71c3eae47398a`.
+
+**Checks against compiled output**
+- `Country locations` entry exists in compiled home/app code.
+- compiled map quiz contains explicit three-miss reveal feedback.
+- compiled map component contains the neighbour-excluding `map-target-hit-clip`.
+- compiled app contains the outcome-sensitive 1400/850/700/520ms Learn pacing.
+- compiled CSS contains short-landscape and forced-colors media queries.
+- no root-relative asset references were found that would break under the GitHub Pages `/flag/` project subpath.
+- no literal hex colors were found in compiled `map.css`.
+
+### 01:05 — Final diff / red-team review
+
+**Diff scope**
+- 10 changed files.
+- Map CSS is smaller overall despite adding responsive/accessibility behavior: generic prototype chrome was removed rather than layered over.
+- Existing flag domain/state/storage code is untouched.
+- `src/app.ts` changes are limited to render-scroll stability and map answer dwell timing.
+
+**Material red-team checks**
+- Flag question scroll reset preserved by including question index in the route key.
+- Test mode still does not expose correctness before results.
+- Wrong countries still do not receive persistent solved color.
+- Results remain non-interactive map evidence.
+- Hit-area enlargement is prevented from stealing taps from neighbouring country geometry.
+- Mobile no longer requires horizontal canvas search.
+- Short landscape has an explicit layout instead of accidental overflow.
+- PWA/build paths remain unchanged.
+
 ---
 
-## Current evaluation
+## Final evaluation before merge
 
-### What is materially better
+### Resolved P0/P1 issues
 
-- **Visual cohesion:** map mode now reads as Flag Atlas rather than an embedded prototype.
-- **Task hierarchy:** target → map → response is explicit and stable.
-- **Mobile cognition:** the learner sees the whole pilot region while searching instead of panning a wide canvas.
-- **Input confidence:** touch/focus/press states are visible and wrong taps produce an unmistakable local response.
-- **Learning integrity:** small-target assistance no longer gets permission to turn a neighbouring-country tap into a correct answer.
-- **Mode clarity:** Learn teaches; Test records without leaking correctness.
-- **Results utility:** the screen points directly at error severity and review rather than a decorative percentage.
-- **Maintainability:** map CSS now derives from the shared design tokens and the UX contract has regression coverage.
+- **Learning integrity:** assisted hit regions cannot intentionally overlap selectable neighbour geometry.
+- **Visual-system fragmentation:** map UI now extends Atlas Index rather than introducing a card/glass sub-design.
+- **Mobile search friction:** full West Africa scope is visible without mandatory horizontal panning.
+- **Prompt continuity:** target stays with the map and feedback rerenders no longer force scroll jumps.
+- **Corrective-feedback pacing:** reveals receive enough dwell to be meaningfully inspected.
 
-### Still to evaluate before merge
+### Resolved P2 issues
 
-- Run the expanded verification suite in GitHub CI.
-- Review CI-built artifact contents after the new safe-hit implementation.
-- Decide whether the fixed Learn auto-advance dwell (currently 620ms after a resolved target) gives a revealed answer enough study time or should become outcome-sensitive.
-- Perform final diff/red-team pass for regressions in existing flag UI.
-- Update this worklog with final CI result and merge/deploy state.
+- Test instructions are no longer repeated verbosely on every target.
+- Learn wrong feedback says what was selected, not only attempts remaining.
+- Results expose mistake severity and put review ahead of a generic percentage.
+- Hover, press, focus, reduced-motion, and forced-colors behaviors are explicit.
+- Shared design tokens replace map-only literal colors.
+
+### Known limitation / next QA layer
+
+This environment cannot run a reliable interactive browser against the fresh GitHub Pages origin, so this worklog does **not** claim pixel-perfect production-device observation. The exact CI-built artifact and interaction/render contracts were inspected and tested. After merge/deploy, a real-device pass should still check physical feel at representative iPhone/Pixel portrait and short-landscape sizes. Any observations from that pass should be appended here rather than handled as untracked visual tweaks.
+
+### Merge recommendation
+
+**Ready to merge** if the latest PR CI remains green. The pass materially improves coherence, task flow, accessibility, learning correctness, and responsive behavior without changing the flag-learning domain or the map mastery model.
