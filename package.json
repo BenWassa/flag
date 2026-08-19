@@ -1,16 +1,16 @@
 {
   "name": "flag-atlas",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "type": "module",
-  "description": "A mobile-first adaptive flag-learning PWA.",
+  "description": "A mobile-first adaptive flag and country-location learning PWA.",
   "engines": {
     "node": ">=22"
   },
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
-    "verify": "node scripts/verify.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {
