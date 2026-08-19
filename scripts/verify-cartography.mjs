@@ -19,7 +19,7 @@ import { renderMapSvg } from '../dist/ui/components/map.js';
 assert.equal(AFRICA_VIEWBOX, '0 0 835 723', 'Production asset retains one deterministic Africa canvas.');
 assert.equal(Object.keys(AFRICA_GEOMETRY).length, 54, 'Generated production geometry has all 54 app countries.');
 assert.deepEqual(new Set(Object.keys(AFRICA_GEOMETRY)), new Set(AFRICA_MAP_COUNTRY_IDS));
-assert.ok(AFRICA_EXTRA_CONTEXT_PATHS.length >= 1, 'Non-scoring Western Sahara context remains explicit.');
+assert.ok(AFRICA_EXTRA_CONTEXT_PATHS.length >= 2, 'Western Sahara and Bir Tawil remain explicit non-scoring context.');
 assert.equal(AFRICA_SHARED_BOUNDARY_PATHS.length, 1, 'Shared political borders are emitted as one topology-derived mesh.');
 assert.equal(AFRICA_COASTLINE_PATHS.length, 1, 'Coastline is emitted separately from country fills.');
 assert.ok(AFRICA_SHARED_BOUNDARY_PATHS[0].length > 1000, 'Shared-border mesh contains real production geometry.');
@@ -62,6 +62,8 @@ assert.ok(
 assert.equal(provenance.boundaryPolicy.scoredCountries, 54);
 assert.match(provenance.boundaryPolicy.somaliland, /canonical SOM/);
 assert.match(provenance.boundaryPolicy.westernSahara, /non-scoring context/);
+assert.match(provenance.boundaryPolicy.birTawil, /non-scoring context/);
+assert.match(provenance.boundaryPolicy.birTawil, /not merged into EGY or SDN/);
 
 for (const [countryId, adjacent] of Object.entries(AFRICA_LAND_ADJACENCY)) {
   assert.ok(AFRICA_GEOMETRY[countryId], `${countryId} adjacency belongs to an app country.`);
