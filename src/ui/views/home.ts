@@ -1,6 +1,6 @@
 import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
 import { COUNTRIES } from '../../data/countries.js';
-import { getLocationScopeStats } from '../../domain/map-game.js';
+import { createInitialLocationProgress, getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
@@ -9,7 +9,7 @@ import { progressStrip } from '../components/progress.js';
 
 export function renderHome(
   progress: ProgressState,
-  locationProgress: LocationProgressState,
+  locationProgress: LocationProgressState = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
 ): string {
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
   const flags = getScopeStats(COUNTRIES, progress, worldScope);
