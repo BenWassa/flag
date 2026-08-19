@@ -1,6 +1,7 @@
-import { COUNTRY_BY_ID } from './data/countries.js';
+import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
 import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
+import { AFRICA_LAND_ADJACENCY, getAfricaNeighborScopeConfig } from './data/neighbors/index.js';
 import { loadOutlineAsset } from './data/outlines.js';
 import type {
   LearningActivity,
@@ -10,8 +11,10 @@ import type {
   StudyScope,
 } from './domain/models.js';
 import type { MapMode } from './domain/map-models.js';
+import { resolveCountryGuess } from './domain/neighbor-game.js';
 import { getRecord, masteryGoal } from './domain/progress.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
+import { flushNeighborAttempts, resetNeighborProgressStorage } from './infrastructure/neighbor-storage.js';
 import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastructure/outline-storage.js';
 import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { createHashRouter } from './routing/router.js';
@@ -34,6 +37,9 @@ import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
 import { renderMapResults } from './ui/views/map-results.js';
+import { renderNeighborHome } from './ui/views/neighbor-home.js';
+import { renderNeighborQuiz, renderNeighborSuggestions } from './ui/views/neighbor-quiz.js';
+import { renderNeighborResults } from './ui/views/neighbor-results.js';
 import { renderOutlineHome } from './ui/views/outline-home.js';
 import { renderOutlineQuiz } from './ui/views/outline-quiz.js';
 import { renderOutlineResults } from './ui/views/outline-results.js';
@@ -49,6 +55,7 @@ const liveStatus = document.querySelector<HTMLElement>('#live-status');
 
 const store = new AppStore();
 const router = createHashRouter(window);
+const allowedNeighborCountryIds = new Set(Object.keys(AFRICA_LAND_ADJACENCY));
 let currentRoute: AppRoute = { name: 'home' };
 let activeRoundRoute: LearningRoute | null = null;
 let progressFilter: LearningStatus | 'all' = 'all';
@@ -59,6 +66,7 @@ let lastMissedIds: string[] = [];
 let lastOutlineResultScope: StudyScope | null = null;
 let lastOutlineResultMode: StudyMode = 'learn';
 let lastOutlineMissedIds: string[] = [];
+let neighborQuery = '';
 let pendingAdvance: number | null = null;
 let pendingMapAdvance: number | null = null;
 let pendingOutlineAdvance: number | null = null;
@@ -105,6 +113,7 @@ function routeHasActiveRound(route: LearningRoute): boolean {
   if (route.domain === 'flags') return store.session !== null;
   if (route.domain === 'locations') return store.mapSession !== null && store.mapAsset !== null;
   if (route.domain === 'outlines') return store.outlineSession !== null && store.outlineAsset !== null;
+  if (route.domain === 'neighbors') return store.neighborSession !== null;
   return false;
 }
 
@@ -121,6 +130,12 @@ function normalizeRoute(route: AppRoute): AppRoute {
     if (!route.scope) return route;
     if (route.scope.id && getAfricaMapScopeConfig(route.scope.id)) return route;
     return { name: 'learning', domain: route.domain };
+  }
+
+  if (route.domain === 'neighbors') {
+    if (!route.scope) return route;
+    if (route.scope.id && getAfricaNeighborScopeConfig(route.scope.id)) return route;
+    return { name: 'learning', domain: 'neighbors' };
   }
 
   if (route.scope || route.activity) return { name: 'learning', domain: route.domain };
@@ -156,6 +171,10 @@ function applyRoute(requestedRoute: AppRoute): void {
           store.navigate(store.outlineSessionResult
             ? { name: 'outline-results', result: store.outlineSessionResult }
             : { name: 'outline-quiz' });
+        } else if (route.domain === 'neighbors' && store.neighborSession) {
+          store.navigate(store.neighborSessionResult
+            ? { name: 'neighbor-results', result: store.neighborSessionResult }
+            : { name: 'neighbor-quiz' });
         }
       } else if (!route.scope) {
         store.navigate({ name: 'domain', domain: route.domain });
@@ -165,6 +184,8 @@ function applyRoute(requestedRoute: AppRoute): void {
         store.navigate({ name: 'map-home', scope: route.scope });
       } else if (route.domain === 'outlines') {
         store.navigate({ name: 'outline-home', scope: route.scope });
+      } else if (route.domain === 'neighbors') {
+        store.navigate({ name: 'neighbor-home', scope: route.scope });
       }
       break;
   }
@@ -182,7 +203,9 @@ function discardActiveRound(): void {
   if (activeRoundRoute.domain === 'flags') store.abandonSession();
   if (activeRoundRoute.domain === 'locations') store.abandonMapSession();
   if (activeRoundRoute.domain === 'outlines') store.abandonOutlineSession();
+  if (activeRoundRoute.domain === 'neighbors') store.abandonNeighborSession();
   activeRoundRoute = null;
+  neighborQuery = '';
 }
 
 function navigateStable(route: AppRoute): void {
@@ -200,6 +223,9 @@ function currentDocumentTitle(): string {
   if (store.view.name === 'outline-results') {
     return `Round complete · ${store.view.result.session.scope.label} outlines · Flag Atlas`;
   }
+  if (store.view.name === 'neighbor-results') {
+    return `Round complete · ${store.view.result.session.scope.label} neighbors · Flag Atlas`;
+  }
   return routeTitle(currentRoute);
 }
 
@@ -212,6 +238,8 @@ function currentRouteKey(): string {
   if (view.name === 'map-results') return `${route}:results:${view.result.session.id}`;
   if (view.name === 'outline-quiz') return `${route}:${store.outlineSession?.id ?? 'none'}:${store.outlineSession?.currentIndex ?? 0}`;
   if (view.name === 'outline-results') return `${route}:results:${view.result.session.id}`;
+  if (view.name === 'neighbor-quiz') return `${route}:${store.neighborSession?.id ?? 'none'}:${store.neighborSession?.currentIndex ?? 0}`;
+  if (view.name === 'neighbor-results') return `${route}:results:${view.result.session.id}`;
   return route;
 }
 
@@ -232,7 +260,7 @@ function render(previousSelector: string | null = null): void {
 
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(store.progress, store.locationProgress, store.outlineProgress);
+      root.innerHTML = renderHome(store.progress, store.locationProgress, store.outlineProgress, store.neighborProgress);
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(
@@ -240,9 +268,11 @@ function render(previousSelector: string | null = null): void {
         store.progress,
         store.locationProgress,
         store.outlineProgress,
+        store.neighborProgress,
         store.persisting,
         store.mapPersisting,
         store.outlinePersisting,
+        store.neighborPersisting,
       );
       break;
     case 'scope':
@@ -284,6 +314,16 @@ function render(previousSelector: string | null = null): void {
       lastOutlineResultScope = store.view.result.session.scope;
       lastOutlineResultMode = store.view.result.session.mode;
       lastOutlineMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
+      break;
+    case 'neighbor-home':
+      root.innerHTML = renderNeighborHome(store.neighborProgress, store.view.scope, store.neighborPersisting);
+      break;
+    case 'neighbor-quiz':
+      if (!store.neighborSession) return;
+      root.innerHTML = renderNeighborQuiz(store.neighborSession, store.neighborLastOutcome, neighborQuery);
+      break;
+    case 'neighbor-results':
+      root.innerHTML = renderNeighborResults(store.view.result);
       break;
   }
 
@@ -383,6 +423,33 @@ async function beginOutlineSession(
   activeRoundRoute = routeForScope('outlines', scope, activity);
   router.navigate(activeRoundRoute, { replace: replaceRoute });
   announce(`${asset.scope.label} outlines. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.outlineSession?.questions.length ?? 0} countries. Question 1.`);
+}
+
+function currentNeighborScope(): StudyScope {
+  if (currentRoute.name === 'learning' && currentRoute.domain === 'neighbors' && currentRoute.scope) return currentRoute.scope;
+  if (store.view.name === 'neighbor-results') return store.view.result.session.scope;
+  return store.neighborSession?.scope ?? AFRICA_MAP_SCOPE;
+}
+
+function beginNeighborSession(
+  mode: StudyMode,
+  targetCountryIds?: readonly string[],
+  scope: StudyScope = currentNeighborScope(),
+  activity: LearningActivity = mode,
+  replaceRoute = false,
+): void {
+  cancelAllPending();
+  const size = targetCountryIds?.length ?? 10;
+  if (!store.startNeighborSession(scope, mode, size, targetCountryIds)) {
+    announce(`${scope.label} has no land-neighbor targets to practise right now.`);
+    return;
+  }
+  neighborQuery = '';
+  activeRoundRoute = routeForScope('neighbors', scope, activity);
+  router.navigate(activeRoundRoute, { replace: replaceRoute });
+  const targetId = store.neighborSession?.countryIds[0];
+  const target = targetId ? COUNTRY_BY_ID.get(targetId) : undefined;
+  announce(`${scope.label} neighbors. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round. ${target ? `Name every land neighbor of ${target.name}.` : ''}`);
 }
 
 function exitActiveRound(): void {
@@ -509,6 +576,31 @@ function submitMapAnswer(countryId: string, selector: string): void {
   }, advanceDelay);
 }
 
+function neighborAnswerAnnouncement(): string {
+  const outcome = store.neighborLastOutcome;
+  if (!outcome) return '';
+  if (outcome.kind === 'duplicate') return 'Already guessed. No attempt used.';
+  const selected = COUNTRY_BY_ID.get(outcome.selectedCountryId)?.name ?? outcome.selectedCountryId;
+  if (outcome.resolved && outcome.resolution === 'exhausted') {
+    const remaining = outcome.revealedIds.map((id) => COUNTRY_BY_ID.get(id)?.name ?? id).join(', ');
+    return `Attempts exhausted. Remaining neighbors: ${remaining}.`;
+  }
+  if (outcome.resolved) return `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbors found.`;
+  return outcome.kind === 'correct'
+    ? `Correct. ${selected}. ${outcome.foundCount} of ${outcome.totalNeighbors} found. ${outcome.remainingAttempts} attempts left.`
+    : `Incorrect. ${selected} is not in this neighbor set. ${outcome.remainingAttempts} attempts left.`;
+}
+
+function submitNeighborGuess(countryId: string): void {
+  if (store.view.name !== 'neighbor-quiz' || !store.neighborSession) return;
+  const targetId = store.neighborSession.countryIds[store.neighborSession.currentIndex];
+  if (!targetId || store.neighborSession.targets[targetId]?.resolved) return;
+  const outcome = store.answerNeighbor(countryId);
+  neighborQuery = '';
+  announce(neighborAnswerAnnouncement());
+  finishInteraction(outcome.resolved ? null : '[data-neighbor-input]');
+}
+
 function finishInteraction(previousSelector: string | null): void {
   render(previousSelector);
 }
@@ -537,6 +629,10 @@ root.addEventListener('click', (event) => {
     submitMapAnswer(id, selector);
     return;
   }
+  if (action === 'neighbor-guess' && id) {
+    submitNeighborGuess(id);
+    return;
+  }
   if (action === 'open-domain') {
     openDomain(id);
     return;
@@ -556,6 +652,30 @@ root.addEventListener('click', (event) => {
   }
   if (action === 'start-outline-learn' || action === 'start-outline-test') {
     void beginOutlineSession(action === 'start-outline-learn' ? 'learn' : 'test');
+    return;
+  }
+  if (action === 'start-neighbor-learn' || action === 'start-neighbor-test') {
+    beginNeighborSession(action === 'start-neighbor-learn' ? 'learn' : 'test');
+    return;
+  }
+  if (action === 'next-neighbor') {
+    const result = store.advanceNeighbor();
+    neighborQuery = '';
+    if (result) announceNeighborResult();
+    else if (store.neighborSession) {
+      const nextId = store.neighborSession.countryIds[store.neighborSession.currentIndex];
+      const next = nextId ? COUNTRY_BY_ID.get(nextId) : undefined;
+      if (next) announce(`Next country. Name every land neighbor of ${next.name}.`);
+    }
+    finishInteraction(result ? null : '[data-neighbor-input]');
+    return;
+  }
+  if (action === 'review-neighbors' && store.view.name === 'neighbor-results') {
+    beginNeighborSession('learn', store.view.result.missedCountryIds, store.view.result.session.scope, 'review', true);
+    return;
+  }
+  if (action === 'repeat-neighbors' && store.view.name === 'neighbor-results') {
+    beginNeighborSession(store.view.result.session.mode, undefined, store.view.result.session.scope, store.view.result.session.mode, true);
     return;
   }
   if (action === 'review-map-mistakes' && store.view.name === 'map-results') {
@@ -613,13 +733,16 @@ root.addEventListener('click', (event) => {
       resetAllProgress();
       resetMapProgressStorage();
       resetOutlineProgressStorage();
+      resetNeighborProgressStorage();
       store.resetProgress();
       store.resetMapProgress();
       store.resetOutlineProgress();
+      store.resetNeighborProgress();
       activeRoundRoute = null;
+      neighborQuery = '';
       resetArmed = false;
       progressFilter = 'all';
-      announce('All flag, location, and outline progress erased.');
+      announce('All flag, location, outline, and neighbor progress erased.');
       break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
@@ -671,6 +794,30 @@ root.addEventListener('click', (event) => {
   finishInteraction(selector);
 });
 
+root.addEventListener('input', (event) => {
+  const input = event.target instanceof HTMLInputElement && event.target.matches('[data-neighbor-input]')
+    ? event.target
+    : null;
+  if (!input || store.view.name !== 'neighbor-quiz' || !store.neighborSession) return;
+  neighborQuery = input.value;
+  const suggestions = root.querySelector<HTMLElement>('#neighbor-suggestions');
+  if (suggestions) suggestions.innerHTML = renderNeighborSuggestions(store.neighborSession, neighborQuery);
+});
+
+root.addEventListener('submit', (event) => {
+  const form = event.target instanceof HTMLFormElement && event.target.matches('[data-neighbor-form]')
+    ? event.target
+    : null;
+  if (!form || store.view.name !== 'neighbor-quiz') return;
+  event.preventDefault();
+  const country = resolveCountryGuess(COUNTRIES, allowedNeighborCountryIds, neighborQuery);
+  if (!country) {
+    announce('Choose a country from the suggestions or enter a complete supported country name.');
+    return;
+  }
+  submitNeighborGuess(country.id);
+});
+
 function announceResult(): void {
   if (store.view.name !== 'results') return;
   const { correct, total, newlyMastered } = store.view.result;
@@ -691,8 +838,22 @@ function announceMapResult(): void {
   announce(`Map round complete. ${firstTryCorrect} of ${total} first try. ${missedCountryIds.length} to review.`);
 }
 
+function announceNeighborResult(): void {
+  if (store.view.name !== 'neighbor-results') return;
+  const { cleanCompletions, total, missedCountryIds } = store.view.result;
+  announce(`Neighbor round complete. ${cleanCompletions} of ${total} clean completions. ${missedCountryIds.length} to review.`);
+}
+
 window.addEventListener('keydown', (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
+
+  if (store.view.name === 'neighbor-quiz' && store.neighborSession) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      exitActiveRound();
+    }
+    return;
+  }
 
   if (store.view.name === 'map-quiz' && store.mapSession) {
     if (event.key === 'Escape') {
@@ -770,12 +931,14 @@ window.addEventListener('pagehide', () => {
   flushAttempts();
   flushMapAttempts();
   flushOutlineAttempts();
+  flushNeighborAttempts();
 });
 document.addEventListener('visibilitychange', () => {
   if (document.visibilityState === 'hidden') {
     flushAttempts();
     flushMapAttempts();
     flushOutlineAttempts();
+    flushNeighborAttempts();
   }
 });
 
