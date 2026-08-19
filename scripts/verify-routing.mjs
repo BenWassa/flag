@@ -91,14 +91,14 @@ assert.equal(serializeRoutePath(parentRoute(neighborsWest)), '/neighbors/africa'
 assert.equal(routeTitle(flagsWest), 'West Africa flags · Flag Atlas');
 assert.equal(routeTitle(locationsTest), 'Test West Africa locations · Flag Atlas');
 assert.equal(routeTitle(outlinesLearn), 'Learn West Africa outlines · Flag Atlas');
-assert.equal(routeTitle(neighborsTest), 'Test West Africa neighbors · Flag Atlas');
+assert.equal(routeTitle(neighborsTest), 'Test West Africa neighbours · Flag Atlas');
 
 assert.equal(parseRoutePath('/flags/asia/west-africa'), null, 'Region must belong to its route continent.');
 assert.equal(parseRoutePath('/locations/africa/not-a-region'), null, 'Unknown region must be rejected.');
 assert.equal(parseRoutePath('/flags/africa/west-africa/unknown'), null, 'Unknown activity must be rejected.');
 assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not addressable for locations.');
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');
-assert.equal(parseRoutePath('/neighbors/learn'), null, 'World activity is not addressable for neighbors.');
+assert.equal(parseRoutePath('/neighbors/learn'), null, 'World activity is not addressable for neighbours.');
 
 const fakeWindow = new FakeBrowserWindow('https://example.test/flag/#/locations/africa/west-africa');
 const hashRouter = createHashRouter(fakeWindow);
@@ -121,7 +121,7 @@ assert.equal(fakeWindow.location.hash, '#/flags/africa');
 assert.equal(observed.at(-1), '/flags/africa', 'Browser Forward reparses the next URL.');
 
 hashRouter.navigate(flagsWest, { replace: true });
-assert.equal(fakeWindow.location.hash, '#/flags/africa/west-africa', 'Replace navigation canonicalizes without growing history.');
+assert.equal(fakeWindow.location.hash, '#/flags/africa/west-africa', 'Replace navigation canonicalises without growing history.');
 fakeWindow.history.back();
 assert.equal(fakeWindow.location.hash, '#/flags', 'Back skips the replaced entry and reaches the prior conceptual URL.');
 
@@ -135,16 +135,19 @@ assert.ok(
     && app.includes('review-map-mistakes')
     && app.includes('review-outline-mistakes')
     && app.includes('review-neighbors'),
-  'Flags, locations, outlines, and neighbors share the typed review activity route layer.',
+  'Flags, locations, outlines, and neighbours share the typed review activity route layer.',
 );
 assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpreted through the shared learning route state.');
-assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbors must be interpreted through the shared learning route state.');
+assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
 assert.ok(home.includes('Learning domains'), 'Home must present the domain hierarchy.');
 assert.ok(
-  home.includes('Flags') && home.includes('Locations') && home.includes('Outlines') && home.includes('Neighbors'),
-  'All four available domains must be peers on Home.',
+  home.includes("domainDisplayName('flags')")
+    && home.includes("domainDisplayName('locations')")
+    && home.includes("domainDisplayName('outlines')")
+    && home.includes("domainDisplayName('neighbors')"),
+  'All four available domains must use the canonical display-name contract on Home.',
 );
 assert.ok(home.includes('4 available'), 'Home availability summary must reflect the four shipped learning domains.');
 
@@ -155,7 +158,7 @@ const neighborScope = await readFile('dist/ui/views/neighbor-home.js', 'utf8');
 assert.ok(flagScope.includes('data-action="route-parent"'), 'Flag scope Back must use conceptual parent routing.');
 assert.ok(mapScope.includes('data-action="route-parent"'), 'Location scope Back must use conceptual parent routing.');
 assert.ok(outlineScope.includes('data-action="route-parent"'), 'Outline scope Back must use conceptual parent routing.');
-assert.ok(neighborScope.includes('data-action="route-parent"'), 'Neighbor scope Back must use conceptual parent routing.');
+assert.ok(neighborScope.includes('data-action="route-parent"'), 'Neighbour scope Back must use conceptual parent routing.');
 
 const flagResults = await readFile('dist/ui/views/results.js', 'utf8');
 const mapResults = await readFile('dist/ui/views/map-results.js', 'utf8');
@@ -164,20 +167,21 @@ const neighborResults = await readFile('dist/ui/views/neighbor-results.js', 'utf
 assert.ok(flagResults.includes('data-action="exit-round"'), 'Flag results exit through the unified round route contract.');
 assert.ok(mapResults.includes('data-action="exit-round"'), 'Location results exit through the unified round route contract.');
 assert.ok(outlineResults.includes('data-action="exit-round"'), 'Outline results exit through the unified round route contract.');
-assert.ok(neighborResults.includes('data-action="exit-round"'), 'Neighbor results exit through the unified round route contract.');
+assert.ok(neighborResults.includes('data-action="exit-round"'), 'Neighbour results exit through the unified round route contract.');
 assert.ok(flagResults.includes('review-mistakes') && flagResults.includes('repeat-scope'), 'Flag results expose review and repeat paths.');
 assert.ok(mapResults.includes('review-map-mistakes') && mapResults.includes('repeat-map'), 'Location results expose review and repeat paths.');
 assert.ok(outlineResults.includes('review-outline-mistakes') && outlineResults.includes('repeat-outline'), 'Outline results expose review and repeat paths.');
-assert.ok(neighborResults.includes('review-neighbors') && neighborResults.includes('repeat-neighbors'), 'Neighbor results expose review and repeat paths.');
+assert.ok(neighborResults.includes('review-neighbors') && neighborResults.includes('repeat-neighbors'), 'Neighbour results expose review and repeat paths.');
 
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
 assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canonical hash Home route.');
+assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v12'"), 'Neighbor-map shell change must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v13'"), 'British-English shell change must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
-assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbor presentation CSS must be part of the offline shell.');
-assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime must be part of the offline shell.');
+assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
+assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: typed routes, cold links, Back/Forward, invalid-route handling, refresh fallback contract, four-domain IA, result navigation, and v12 PWA shell.');
+console.log('Routing verification passed: typed routes, cold links, Back/Forward, invalid-route handling, refresh fallback contract, four-domain IA, result navigation, and v13 PWA shell.');
