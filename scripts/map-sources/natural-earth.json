@@ -1,0 +1,43 @@
+{
+  "upstream": "nvkelso/natural-earth-vector",
+  "upstreamCommit": "ca96624a56bd078437bca8184e78163e5039ad19",
+  "rawBaseUrl": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector",
+  "sources": {
+    "countries": {
+      "path": "geojson/ne_10m_admin_0_countries.geojson",
+      "version": "5.1.1",
+      "role": "country-polygons",
+      "sha256": null
+    },
+    "boundaries": {
+      "path": "geojson/ne_10m_admin_0_boundary_lines_land.geojson",
+      "version": "5.1.0",
+      "role": "provenance-and-policy-cross-check",
+      "sha256": null
+    },
+    "ocean": {
+      "path": "geojson/ne_10m_ocean.geojson",
+      "version": "5.1.1",
+      "role": "runtime-ocean",
+      "sha256": null
+    },
+    "lakes": {
+      "path": "geojson/ne_10m_lakes.geojson",
+      "version": "5.0.0",
+      "role": "runtime-major-lakes-reservoirs",
+      "sha256": null
+    },
+    "rivers": {
+      "path": "geojson/ne_10m_rivers_lake_centerlines.geojson",
+      "version": "5.0.0",
+      "role": "runtime-major-rivers",
+      "sha256": null
+    },
+    "minorIslands": {
+      "path": "geojson/ne_10m_minor_islands.geojson",
+      "version": "4.1.0",
+      "role": "evaluated-only",
+      "sha256": null
+    }
+  }
+}
