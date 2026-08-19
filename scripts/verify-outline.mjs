@@ -15,6 +15,7 @@ import {
 import { applyAttempt, createInitialProgress, getRecord } from '../dist/domain/progress.js';
 import { createSeededRandom } from '../dist/domain/quiz.js';
 import { outlineSilhouette } from '../dist/ui/components/outline.js';
+import { escapeHtml } from '../dist/ui/format.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
 import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
 import { parentRoute, parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
@@ -158,7 +159,7 @@ assert.equal(svgMarkup.includes(sampleTarget.id), false, 'Unanswered SVG subtree
 assert.ok(unansweredHtml.includes('data-action="outline-answer"'), 'Outline quiz must render four answer controls.');
 
 const learnedHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, wrongId);
-assert.ok(learnedHtml.includes(`Correct: ${sampleTarget.name}`), 'Learn mode must reveal the correct answer immediately after a miss.');
+assert.ok(learnedHtml.includes(`Correct: ${escapeHtml(sampleTarget.name)}`), 'Learn mode must reveal the correct answer immediately after a miss.');
 const testedHtml = renderOutlineQuiz(westAsset, testSession, outlineProgress, wrongId);
 assert.equal(testedHtml.includes('Correct:'), false, 'Test mode must withhold correctness during the round.');
 assert.ok(testedHtml.includes('Answer recorded'), 'Test mode should acknowledge input without revealing correctness.');
