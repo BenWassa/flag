@@ -22,9 +22,6 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
   const assist = asset.countries.find((item) => item.countryId === targetId)?.hitAssist;
   if (!targetId || targetState?.resolved || !assist) return '';
 
-  // Aim for roughly a 44px effective diameter at the pilot's normal mobile
-  // scale. Expansion is clipped around all real geography, so assistance can
-  // use ocean/neutral gaps but can never make another country count as correct.
   const usableRadius = Math.max(assist.r, 22);
   const exclusionPaths = [
     ...(asset.contextPaths ?? []),
@@ -73,9 +70,8 @@ export function renderMapSvg(
   const wrongId = options.lastWrongCountryId ?? null;
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
-  const currentTargetState = currentTargetId ? session.targets[currentTargetId] : undefined;
-  const recordedCountryId = interactive && !showFeedback && currentTargetState?.resolved
-    ? currentTargetState.selectedCountryId ?? null
+  const recordedCountryId = interactive && !showFeedback
+    ? session.attempts.at(-1)?.selectedCountryId ?? null
     : null;
   const focus = asset.initialFocus;
   const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
