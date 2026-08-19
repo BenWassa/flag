@@ -1,8 +1,11 @@
 import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
+import { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS } from '../../data/neighbors/index.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
+import { getNeighborScopeStats } from '../../domain/neighbor-game.js';
+import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { LearningDomain, ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { icon } from '../components/icons.js';
@@ -13,11 +16,14 @@ export function renderDomainHome(
   domain: LearningDomain,
   progress: ProgressState,
   locationProgress: LocationProgressState,
+  neighborProgress: NeighborProgressState,
   persisting = true,
   mapPersisting = true,
+  neighborPersisting = true,
 ): string {
   if (domain === 'flags') return renderFlagsHome(progress, persisting);
   if (domain === 'locations') return renderLocationsHome(locationProgress, mapPersisting);
+  if (domain === 'neighbors') return renderNeighborsHome(neighborProgress, neighborPersisting);
   return renderPlannedDomain(domain);
 }
 
@@ -125,11 +131,40 @@ function renderLocationsHome(progress: LocationProgressState, persisting: boolea
   `;
 }
 
-function renderPlannedDomain(domain: 'outlines' | 'neighbors'): string {
-  const label = domain === 'outlines' ? 'Outlines' : 'Neighbors';
-  const description = domain === 'outlines'
-    ? 'Country-silhouette learning is planned in Issue #2.'
-    : 'Land-border neighbor learning is planned in Issue #3.';
+function renderNeighborsHome(progress: NeighborProgressState, persisting: boolean): string {
+  const stats = getNeighborScopeStats(progress, AFRICA_MAP_COUNTRY_IDS, AFRICA_LAND_ADJACENCY);
+  const progressStats = { ...stats, due: 0 };
+  return `
+    <main class="page">
+      <header class="topbar topbar--detail">
+        <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
+        <div class="screen-title">
+          <h1 tabindex="-1" data-autofocus>Neighbors</h1>
+          <span>Land-border sets · Africa available</span>
+        </div>
+      </header>
+      <section class="atlas-section" aria-labelledby="neighbor-continents-heading">
+        <div class="list-heading"><h2 id="neighbor-continents-heading">Continents</h2><span>1 available</span></div>
+        <div class="continent-list">
+          <button class="continent-row" data-action="open-scope" data-domain="neighbors" data-id="africa">
+            <span class="continent-row__identity">
+              <strong>Africa</strong>
+              <small>${stats.total} standard targets · ${AFRICA_ZERO_LAND_NEIGHBOR_IDS.length} zero-neighbor countries excluded</small>
+            </span>
+            <span class="continent-row__progress">${progressStrip(progressStats)}</span>
+            <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+            ${icon('chevron')}
+          </button>
+        </div>
+      </section>
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so neighbor progress will last only for this visit.</p>`}
+    </main>
+  `;
+}
+
+function renderPlannedDomain(domain: 'outlines'): string {
+  const label = 'Outlines';
+  const description = 'Country-silhouette learning is planned in Issue #2.';
 
   return `
     <main class="page">
