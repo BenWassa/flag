@@ -1,4 +1,5 @@
 // v12 adds the Neighbors map presentation runtime while retaining the v11 four-domain shell.
+// Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
 const VERSION = 'flag-atlas-v12';
 const SHELL = [
   './',
