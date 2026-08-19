@@ -1,4 +1,5 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
+import { domainDisplayName } from '../../domain/display.js';
 import type { NeighborSessionResult } from '../../domain/neighbor-models.js';
 import { icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
@@ -11,10 +12,10 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
   return `
     <main class="page">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="exit-round" aria-label="Exit neighbor results">${icon('close')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="Exit neighbour results">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>Round complete</h1>
-          <span>Neighbors · ${escapeHtml(result.session.scope.label)}</span>
+          <span>${domainDisplayName('neighbors')} · ${escapeHtml(result.session.scope.label)}</span>
         </div>
       </header>
 
@@ -25,7 +26,7 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
             <p>${result.completed} completed · ${result.exhausted} exhausted</p>
           </div>
         </div>
-        <p>A clean completion means every neighbor was found with no wrong guesses. That is the mastery-credit event for this domain.</p>
+        <p>A clean completion means every neighbour was found with no wrong guesses. That is the mastery-credit event for this domain.</p>
       </section>
 
       ${missedNames.length ? `
