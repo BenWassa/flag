@@ -3,7 +3,7 @@
 **Issue:** #15 — Standardise all user-facing copy on British English  
 **Branch:** `issue-15-british-english`  
 **Started:** 2026-08-19 17:24 America/Toronto  
-**Last updated:** 2026-08-19 17:40 America/Toronto
+**Last updated:** 2026-08-19 17:48 America/Toronto
 
 This log records the implementation using **observation → assessment → change → verification → evaluation**. Historical worklogs are intentionally not rewritten for spelling alone.
 
@@ -19,7 +19,7 @@ This is a compatibility-sensitive copy standardisation, not a route/storage migr
 Created dedicated branch `issue-15-british-english` from current `main`. Read Issue #15, `DESIGN.md`, `docs/COUNTRY_NAMING.md`, `docs/ROUTING.md`, the Issue #3 Neighbours worklog, the Issue #16 map worklog, routing/domain code, and all current learning-domain UI surfaces.
 
 **Verification**  
-Confirmed all four domains are shipped on current `main`; the stable Neighbours route remains `/neighbors`; Issue #16 map code and verification are present. The local container cannot resolve `github.com`, so repository mutation and authoritative verification must use the connected GitHub surface and GitHub Actions rather than a local clone.
+Confirmed all four domains are shipped on current `main`; the stable Neighbours route remains `/neighbors`; Issue #16 map code and verification are present. The local container cannot resolve `github.com`, so repository mutation and authoritative verification use the connected GitHub surface and GitHub Actions rather than a local clone.
 
 **Evaluation**  
 Issue #16 is fully in scope for copy/a11y review, but its geometry, label placement, viewport, adjacency and mastery mechanics remain untouched.
@@ -38,7 +38,7 @@ Occurrences were classified as:
 4. historical documentation → normally retain;
 5. current normative/product documentation or product-copy assertions → update.
 
-`practice` is a noun in **Adaptive practice** and manifest **focused practice**, so it remains `practice`. Home's **where to practise it** is a verb and was already correct. CSS/manifest/API terms such as `color`, `background_color`, `theme_color`, and `window.scrollTo({ behavior: ... })` remain technically spelled as their standards require.
+`practice` is a noun in **Adaptive practice** and manifest **focused practice**, so it remains `practice`. Home's **where to practise it** is a verb and was already correct. CSS/manifest/API terms such as `color`, `background_color`, `theme_color`, `currentColor`, and `window.scrollTo({ behavior: ... })` remain technically spelled as their standards require.
 
 **Change**  
 Adopted modern British `-ise` style for product prose (`prioritised`, `summarised`, `recognisable`, `normalisation`) and the learner-facing domain name **Neighbours**. Added a small canonical `domainDisplayName()` helper so stable `neighbors` maps to `Neighbours` without a localisation framework.
@@ -70,7 +70,7 @@ Updated:
 Internal names such as `neighborSession`, `neighborProgress`, `data-neighbor-*`, `neighbors.css`, `/neighbors`, adjacency fields/constants and storage keys were intentionally retained.
 
 **Verification**  
-Source-level inspection confirms the touched learner-facing strings use British forms while technical selectors and identifiers are unchanged. Full compiled verification is pending GitHub Actions.
+Source-level inspection confirms the touched learner-facing strings use British forms while technical selectors and identifiers are unchanged.
 
 **Evaluation**  
 The implementation changes language only; it does not alter learning mechanics, answer leakage protections, map interaction, geometry or state transitions.
@@ -116,20 +116,108 @@ Added `scripts/verify-british-english.mjs` to the normal `npm run verify` chain.
 Updated existing routing, Neighbours, Neighbours-map and cross-domain verification assertions that intentionally inspect product copy/cache version.
 
 **Verification**  
-Static review of the verifier confirms it targets rendered/built product phrases rather than blindly scanning all source tokens. GitHub Actions execution is pending.
+The verifier targets rendered/built product phrases rather than blindly scanning all source tokens. The broader source audit also checked `neighbor`, `neighbors`, `color`, `colored`, `center`, `centered`, `behavior`, `organize`, `organization`, `recognize`, `customize`, `prioritize`, `visualize`, `initialize`, `favorite`, `gray`, `license`, `practice`, and `program`; remaining hits outside changed product copy classify as technical standards/identifiers or historical documentation.
 
 **Evaluation**  
 This creates a regression contract for the actual localisation boundary: product strings fail on American English while implementation/API identifiers remain legal.
 
-## Final verification
+## 2026-08-19 17:41 — CI #144: dependency transcription error
 
-Pending before merge recommendation:
+**Observation**  
+PR-head CI run `32305129390` (#144) failed during `npm install` before build or tests with `ETARGET: No matching version found for topojson-server@3.0.3`.
 
-- current `main` rechecked and integrated if it has moved;
-- full `npm test` on PR head;
-- 195-country base verification;
-- Flags, Locations/map, routing, cartography, Outlines, Neighbours, Issue #16 map and British-English checks;
-- PR-head CI green;
-- exact `flag-atlas-dist` CI artifact inspected for product copy and metadata;
-- open review threads checked and resolved;
-- final Issue #15 language contract posted.
+**Assessment**  
+Comparison with current `main` and `package-lock.json` showed this was introduced by the Issue #15 branch while editing `package.json`: two unrelated existing pins had been transcribed incorrectly (`topojson-client 3.1.0 → 3.0.1` and `topojson-server 3.0.1 → 3.0.3`). Main itself was not broken.
+
+**Change**  
+Restored the exact existing dependency pins from `main`: `topojson-client@3.1.0` and `topojson-server@3.0.1`. No dependency upgrade or lockfile change was made.
+
+**Verification**  
+CI #145 installed all dependencies successfully with zero reported vulnerabilities and proceeded through build and the verification chain.
+
+**Evaluation**  
+The failure was an accidental branch-only manifest edit and is fully reverted; dependency ownership remains outside Issue #15.
+
+## 2026-08-19 17:43 — CI #145: brittle integration assertion
+
+**Observation**  
+PR-head CI run `32305332976` (#145) built successfully and passed the 195-country base verification, Locations/map checks, routing, production cartography, Outlines, Neighbours, and Issue #16 neighbour-map verification. It then failed `verify-domain-integration.mjs` because the updated assertion searched compiled Home for literal `Outlines` even though Home now obtains that label from `domainDisplayName('outlines')`.
+
+**Assessment**  
+Production behaviour was correct; the test was coupled to the old hard-coded-label implementation and contradicted the new canonical display-name design.
+
+**Change**  
+Changed the integration assertion to require `domainDisplayName('outlines')` and `domainDisplayName('neighbors')`, keeping the test focused on the shared display-name contract rather than literal implementation output.
+
+**Verification**  
+CI #146 passed the complete repository `npm test` chain, including the new British-English verifier.
+
+**Evaluation**  
+The corrected test now protects the intended abstraction rather than penalising it.
+
+## 2026-08-19 17:45 — CI #146 and exact production artifact
+
+**Observation**  
+PR-head CI run `32305454667` (#146), head `8f2771ee51beab58aa5c0fa891260038c6b65690`, completed successfully. The exact `flag-atlas-dist` artifact has ID `9384522163`, size 342,299 bytes, and GitHub digest `sha256:bb0344d5f507a5ba455b7fe100d7fcf75363d34ea9bd8664c1a03ce26538a45c`.
+
+**Assessment**  
+Source tests are necessary but insufficient for this issue: the built shell, compiled live-region strings, metadata and Issue #16 accessible map strings must be inspected because those are what the learner actually receives.
+
+**Change**  
+Downloaded the exact CI ZIP, independently SHA-256 hashed it, unpacked all 61 production files (~1.4 MB), and searched the product-bearing artifact for the target American-English vocabulary and required British forms.
+
+**Verification**  
+The downloaded ZIP independently hashed to `bb0344d5f507a5ba455b7fe100d7fcf75363d34ea9bd8664c1a03ce26538a45c`, exactly matching GitHub's digest. Artifact inspection confirmed:
+
+- `index.html` and the manifest declare `en-GB`;
+- HTML metadata uses `land-border neighbours`;
+- Home uses the verb `practise`;
+- Flags/Outlines use `prioritised` while retaining noun `Adaptive practice`;
+- Neighbours quiz/results/policies use `neighbour/neighbours` and `summarised`;
+- compiled live announcements include `land-neighbour targets`, `Remaining neighbours`, and `Neighbour round complete`;
+- Issue #16 map output uses `neighbours found`, `neighbouring countries`, and `Fit target and all neighbours`;
+- `domain/display.js` maps stable `neighbors` to `Neighbours`;
+- legacy `flag-atlas:neighbor-progress:v1` remains intact;
+- PWA cache is `flag-atlas-v13`;
+- no built product-bearing hit remains for `neighbors found`, `neighboring country`, `land-border neighbor`, `land neighbor`, `zero-neighbor`, `prioritized`, `summarized`, `organize`, `organization`, `recognize`, `recognized`, `customize`, `prioritize`, `visualize`, `initialize`, `favorite`, `colored`, `center map`, or `centered`.
+
+Remaining American-spelled artifact tokens were intentionally technical: internal `neighbor*` symbols/routes/files, `window.scrollTo({ behavior: 'instant' })`, manifest `background_color`/`theme_color`, HTML `theme-color`, SVG `currentColor`, and noun `practice`.
+
+**Evaluation**  
+The exact production artifact satisfies the language contract while preserving browser standards and backwards-compatible internal APIs.
+
+## 2026-08-19 17:47 — Concurrent-main and review gate
+
+**Observation**  
+Current `main` remains `12b8e497b162f49c7f6f6d8561fb8ca531297407`, exactly the branch base containing Issue #16. PR #18 has no inline review threads, submitted reviews, or conversation comments.
+
+**Assessment**  
+There are no concurrent-main changes to integrate and no review feedback to resolve. The branch already contains the Issue #16 map work that this issue was required to audit.
+
+**Change**  
+No merge/rebase conflict action is required. A final documentation-only commit records verification evidence and intentionally triggers one final PR-head CI/artifact refresh.
+
+**Verification**  
+Compared latest `main` history with the branch base and queried PR #18 review threads/reviews/comments: all are unchanged/empty.
+
+**Evaluation**  
+The remaining release gate is final CI/artifact equivalence on the documentation head. Final run identifiers are posted to the PR/Issue after that run so recording them does not mutate the tested commit in a loop.
+
+## Verification history
+
+- CI #144 / run `32305129390`: **failed before tests** — branch-only TopoJSON dependency transcription error; exact main pins restored.
+- CI #145 / run `32305332976`: **failed after all pre-existing domain checks** — new integration assertion expected an obsolete hard-coded Home label; corrected to the canonical display-name contract.
+- CI #146 / run `32305454667`: **passed** — complete `npm test`; exact artifact ID `9384522163` downloaded, digest-matched and inspected.
+
+## Final release gate
+
+Status at this documentation commit:
+
+1. current `main` integrated: **yes — unchanged from branch base `12b8e497…`**;
+2. all user-facing surfaces audited: **yes, including Issue #16 map accessibility/live output**;
+3. stable internal routes/storage retained: **yes**;
+4. complete `npm test`: **green on code head CI #146**;
+5. exact CI artifact: **CI #146 digest-matched and inspected**;
+6. review threads/reviews: **none**;
+7. gameplay/cartography changes: **none**;
+8. final documentation head: **must receive one fresh green CI run and artifact-equivalence check before PR readiness**.
