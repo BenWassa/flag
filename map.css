@@ -142,7 +142,7 @@
 .map-stage__scroll::-webkit-scrollbar { display: none; }
 .map-svg {
   display: block;
-  width: max(100%, 760px);
+  width: max(100%, var(--map-canvas-width, 760px));
   height: auto;
   max-width: none;
   user-select: none;
@@ -151,15 +151,16 @@
 }
 .map-ocean { fill: var(--surface-subtle); }
 .map-context { pointer-events: none; }
-.map-context-country {
-  fill: color-mix(in srgb, var(--track) 72%, var(--surface-subtle));
+.map-context-country,
+.map-context-locator {
+  fill: color-mix(in srgb, var(--track) 68%, var(--surface-subtle));
   stroke: var(--line-strong);
-  stroke-width: .58;
+  stroke-width: .75;
   stroke-linejoin: round;
   stroke-linecap: round;
   stroke-miterlimit: 2;
   paint-order: stroke fill;
-  opacity: .28;
+  opacity: 1;
   vector-effect: non-scaling-stroke;
 }
 .map-country { -webkit-tap-highlight-color: transparent; }
@@ -178,12 +179,6 @@
   vector-effect: non-scaling-stroke;
   transition: fill 90ms ease-out, stroke 90ms ease-out, opacity 90ms ease-out;
 }
-.map-country__locator-halo {
-  fill: var(--surface);
-  stroke: var(--line-strong);
-  stroke-width: .7;
-  vector-effect: non-scaling-stroke;
-}
 .map-country__callout-line {
   fill: none;
   stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong));
@@ -193,12 +188,15 @@
   pointer-events: none;
   transition: stroke 90ms ease-out, opacity 90ms ease-out;
 }
+.map-country__locator-hit,
 .map-country__callout-hit,
 .map-current-target-hit {
   fill: transparent;
   stroke: transparent;
 }
+.map-country__locator-hit,
 .map-country__callout-hit { pointer-events: none; }
+.map-country[data-action="map-answer"] .map-country__locator-hit,
 .map-country[data-action="map-answer"] .map-country__callout-hit { pointer-events: all; }
 .map-current-target-hit { pointer-events: all; }
 
@@ -426,10 +424,12 @@
 
 @media (forced-colors: active) {
   .map-context-country,
+  .map-context-locator,
   .map-country__shape,
   .map-country__locator,
   .map-country__callout-target { fill: Canvas; stroke: CanvasText; }
-  .map-context-country { opacity: .35; }
+  .map-context-country,
+  .map-context-locator { opacity: .65; }
   .map-country__callout-line { stroke: CanvasText; }
   .map-country--wrong-pulse .map-country__shape,
   .map-country--wrong-pulse .map-country__locator,
