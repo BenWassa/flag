@@ -28,6 +28,20 @@ export interface MapViewportFocus {
   height: number;
 }
 
+export interface MapNamedPath {
+  name: string;
+  path: string;
+}
+
+export interface MapWaterLayers {
+  /** Source-derived ocean geometry, projected into the same continent canvas. */
+  oceanPath?: string;
+  /** Restrained recognition context. Never interactive. */
+  lakes?: MapNamedPath[];
+  /** Major orientation rivers only. Never interactive. */
+  rivers?: MapNamedPath[];
+}
+
 export interface MapCountryGeometry {
   countryId: string;
   path?: string;
@@ -43,8 +57,14 @@ export interface MapRegionAsset {
   countries: MapCountryGeometry[];
   /** Non-interactive catalog countries used to preserve parent-continent context. */
   contextCountries?: MapCountryGeometry[];
-  /** Additional non-catalog geography such as Western Sahara. */
+  /** Additional non-catalog geography such as Western Sahara / source POV context. */
   contextPaths?: string[];
+  /** Political borders rendered once from the canonical topology, not once per country fill. */
+  sharedBoundaryPaths?: string[];
+  /** Exterior coastlines rendered separately from political boundaries. */
+  coastlinePaths?: string[];
+  /** Source-derived physical context on the same projection/canvas. */
+  water?: MapWaterLayers;
   /** Preferred first viewport within the full continent canvas. */
   initialFocus?: MapViewportFocus;
 }
