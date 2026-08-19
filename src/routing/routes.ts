@@ -1,4 +1,5 @@
 import { CONTINENTS, REGIONS } from '../data/continents.js';
+import { domainDisplayName } from '../domain/display.js';
 import {
   LEARNING_DOMAIN_IDS,
   type LearningActivity,
@@ -19,13 +20,6 @@ export interface LearningRoute {
 }
 
 const ACTIVITIES: readonly LearningActivity[] = ['learn', 'test', 'review'];
-
-const DOMAIN_LABELS: Record<LearningDomain, string> = {
-  flags: 'Flags',
-  locations: 'Locations',
-  outlines: 'Outlines',
-  neighbors: 'Neighbors',
-};
 
 export function isLearningDomain(value: string | undefined): value is LearningDomain {
   return value !== undefined && (LEARNING_DOMAIN_IDS as readonly string[]).includes(value);
@@ -146,7 +140,7 @@ export function routeTitle(route: AppRoute): string {
   if (route.name === 'home') return 'Flag Atlas';
   if (route.name === 'progress') return 'Progress · Flag Atlas';
 
-  const domain = DOMAIN_LABELS[route.domain];
+  const domain = domainDisplayName(route.domain);
   const scope = route.scope?.label ?? (route.domain === 'flags' ? 'World' : undefined);
   if (route.activity) {
     const activity = route.activity === 'review'
