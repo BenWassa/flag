@@ -1,59 +1,66 @@
-import type { MapCountryCallout, MapRegionAsset } from '../../domain/map-models.js';
+import {
+  AFRICA_MAP_COUNTRY_IDS,
+  getAfricaMapScopeConfig,
+} from '../map-scopes.js';
+import type {
+  MapCountryCallout,
+  MapCountryGeometry,
+  MapRegionAsset,
+} from '../../domain/map-models.js';
+import {
+  AFRICA_EXTRA_CONTEXT_PATHS,
+  AFRICA_GEOMETRY,
+  AFRICA_SCOPE_FOCUS,
+  AFRICA_VIEWBOX,
+} from './africa.js';
 
 /**
- * Phone-scale callouts for West Africa countries whose true polygon/locator is
- * too small or compact for reliable touch selection at the default continent
- * scale. Targets are placed in nearby ocean/neutral space and spaced so their
- * ~44px effective hit circles do not overlap one another.
+ * Visible mainland callouts are intentionally exceptional. The country itself
+ * remains the taught geography; the nearby target only solves a phone-scale
+ * motor problem. Island nations use a single locator dot instead.
  */
-const WEST_AFRICA_CALLOUTS: Readonly<Record<string, MapCountryCallout>> = {
-  // Cabo Verde: retain the real island locator; callout sits north-west at sea.
-  CPV: {
-    anchor: { cx: 37.5, cy: 221.5 },
-    target: { cx: 32, cy: 185, r: 12 },
-  },
-  // The Gambia: Atlantic target avoids a precision tap inside the Senegal strip.
+const AFRICA_MAINLAND_CALLOUTS: Readonly<Record<string, MapCountryCallout>> = {
   GMB: {
     anchor: { cx: 98.2, cy: 244.0 },
     target: { cx: 65, cy: 235, r: 12 },
   },
-  // Guinea-Bissau: move the touch surface south-west into the Atlantic.
-  GNB: {
-    anchor: { cx: 104, cy: 260 },
-    target: { cx: 70, cy: 285, r: 12 },
-  },
-  // Sierra Leone: compact phone-scale polygon; callout sits off the coast.
-  SLE: {
-    anchor: { cx: 140, cy: 300 },
-    target: { cx: 116, cy: 330, r: 12 },
-  },
-  // Togo: narrow north-south state; callout sits in the Gulf of Guinea.
   TGO: {
     anchor: { cx: 270.0, cy: 314.5 },
     target: { cx: 250, cy: 350, r: 12 },
   },
 };
 
-function applyWestAfricaGameplayMetadata(asset: MapRegionAsset): MapRegionAsset {
+function cloneGeometry(countryId: string): MapCountryGeometry {
+  const geometry = AFRICA_GEOMETRY[countryId];
+  if (!geometry) throw new Error(`Africa geometry missing for ${countryId}.`);
   return {
-    ...asset,
-    countries: asset.countries.map((country) => {
-      const callout = WEST_AFRICA_CALLOUTS[country.countryId];
-      if (!callout) return country;
-      return {
-        ...country,
-        callout,
-        // Visible cartographic callouts replace invisible enlarged targets for
-        // the most phone-constrained pilot countries. Benin remains on the
-        // clipped neutral-space assist because its full shape is still legible.
-        hitAssist: undefined,
-      };
-    }),
+    ...geometry,
+    locator: geometry.locator ? { ...geometry.locator } : undefined,
   };
 }
 
+function activeGeometry(countryId: string): MapCountryGeometry {
+  const geometry = cloneGeometry(countryId);
+  const callout = AFRICA_MAINLAND_CALLOUTS[countryId];
+  return callout ? { ...geometry, callout } : geometry;
+}
+
 export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | null> {
-  if (scopeId !== 'west-africa') return null;
-  const module = await import('./west-africa.js');
-  return applyWestAfricaGameplayMetadata(module.WEST_AFRICA_MAP);
+  const config = getAfricaMapScopeConfig(scopeId);
+  if (!config) return null;
+
+  const activeIds = new Set(config.countryIds);
+  const countries = config.countryIds.map(activeGeometry);
+  const contextCountries = AFRICA_MAP_COUNTRY_IDS
+    .filter((countryId) => !activeIds.has(countryId))
+    .map(cloneGeometry);
+
+  return {
+    scope: config.scope,
+    viewBox: AFRICA_VIEWBOX,
+    countries,
+    contextCountries,
+    contextPaths: [...AFRICA_EXTRA_CONTEXT_PATHS],
+    initialFocus: AFRICA_SCOPE_FOCUS[scopeId],
+  };
 }
