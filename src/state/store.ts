@@ -1,6 +1,10 @@
 import { AFRICA_MAP_COUNTRY_IDS } from '../data/map-scopes.js';
 import { COUNTRIES } from '../data/countries.js';
 import {
+  AFRICA_LAND_ADJACENCY,
+  getAfricaNeighborScopeConfig,
+} from '../data/neighbors/index.js';
+import {
   advanceMapSession,
   applyMapGuess,
   buildMapSession,
@@ -16,6 +20,20 @@ import type {
   MapSession,
   MapSessionResult,
 } from '../domain/map-models.js';
+import {
+  advanceNeighborSession,
+  applyNeighborGuess,
+  buildNeighborSession,
+  createInitialNeighborProgress,
+  finishNeighborSession,
+  neighborSessionIsComplete,
+} from '../domain/neighbor-game.js';
+import type {
+  NeighborGuessOutcome,
+  NeighborProgressState,
+  NeighborSession,
+  NeighborSessionResult,
+} from '../domain/neighbor-models.js';
 import { applyAttempt, createInitialProgress, getRecord } from '../domain/progress.js';
 import type {
   LearningDomain,
@@ -33,6 +51,12 @@ import {
   mapStorageIsWritable,
   saveLocationProgress,
 } from '../infrastructure/map-storage.js';
+import {
+  appendNeighborAttempt,
+  loadNeighborProgress,
+  neighborStorageIsWritable,
+  saveNeighborProgress,
+} from '../infrastructure/neighbor-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
 
 export type ViewState =
@@ -44,7 +68,10 @@ export type ViewState =
   | { name: 'results'; result: SessionResult }
   | { name: 'map-home'; scope: StudyScope }
   | { name: 'map-quiz' }
-  | { name: 'map-results'; result: MapSessionResult };
+  | { name: 'map-results'; result: MapSessionResult }
+  | { name: 'neighbor-home'; scope: StudyScope }
+  | { name: 'neighbor-quiz' }
+  | { name: 'neighbor-results'; result: NeighborSessionResult };
 
 function sessionId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -56,20 +83,25 @@ function sessionId(): string {
 export class AppStore {
   progress: ProgressState;
   locationProgress: LocationProgressState;
+  neighborProgress: NeighborProgressState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
   sessionResult: SessionResult | null = null;
   mapSession: MapSession | null = null;
   mapSessionResult: MapSessionResult | null = null;
   mapAsset: MapRegionAsset | null = null;
+  neighborSession: NeighborSession | null = null;
+  neighborSessionResult: NeighborSessionResult | null = null;
   questionStartedAt = performance.now();
   answeredCountryId: string | null = null;
   currentAttempt: QuizAttempt | null = null;
   mapLastWrongCountryId: string | null = null;
   mapLastOutcome: MapGuessOutcome | null = null;
+  neighborLastOutcome: NeighborGuessOutcome | null = null;
 
   persisting = true;
   mapPersisting = true;
+  neighborPersisting = true;
 
   constructor() {
     const persisted = loadProgress();
@@ -96,8 +128,19 @@ export class AppStore {
       this.locationProgress = { ...locationInitial, records };
     }
 
+    const neighborIds = Object.keys(AFRICA_LAND_ADJACENCY);
+    const neighborInitial = createInitialNeighborProgress(neighborIds);
+    const neighborPersisted = loadNeighborProgress();
+    this.neighborProgress = neighborInitial;
+    if (neighborPersisted) {
+      const records = { ...neighborPersisted.records };
+      for (const countryId of neighborIds) records[countryId] ??= neighborInitial.records[countryId];
+      this.neighborProgress = { ...neighborInitial, records };
+    }
+
     this.persisting = storageIsWritable();
     this.mapPersisting = mapStorageIsWritable();
+    this.neighborPersisting = neighborStorageIsWritable();
   }
 
   navigate(view: ViewState): void {
@@ -115,6 +158,11 @@ export class AppStore {
     this.mapAsset = null;
   }
 
+  resetNeighborProgress(): void {
+    this.neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
+    this.abandonNeighborSession();
+  }
+
   abandonSession(): void {
     this.session = null;
     this.sessionResult = null;
@@ -127,6 +175,12 @@ export class AppStore {
     this.mapSessionResult = null;
     this.mapLastWrongCountryId = null;
     this.mapLastOutcome = null;
+  }
+
+  abandonNeighborSession(): void {
+    this.neighborSession = null;
+    this.neighborSessionResult = null;
+    this.neighborLastOutcome = null;
   }
 
   startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): boolean {
@@ -270,6 +324,67 @@ export class AppStore {
     this.mapSession = advanceMapSession(this.mapSession);
     this.mapLastWrongCountryId = null;
     this.mapLastOutcome = null;
+    this.questionStartedAt = performance.now();
+    return null;
+  }
+
+  startNeighborSession(
+    scope: StudyScope,
+    mode: StudyMode,
+    size = 10,
+    targetCountryIds?: readonly string[],
+  ): boolean {
+    const config = getAfricaNeighborScopeConfig(scope.id ?? 'africa');
+    if (!config) return false;
+    const session = buildNeighborSession(
+      AFRICA_LAND_ADJACENCY,
+      this.neighborProgress,
+      config.scope,
+      config.countryIds,
+      mode,
+      sessionId(),
+      size,
+      targetCountryIds,
+    );
+    if (session.countryIds.length === 0) return false;
+
+    this.neighborSession = session;
+    this.neighborSessionResult = null;
+    this.neighborLastOutcome = null;
+    this.questionStartedAt = performance.now();
+    this.view = { name: 'neighbor-quiz' };
+    return true;
+  }
+
+  answerNeighbor(selectedCountryId: string): NeighborGuessOutcome {
+    if (!this.neighborSession) throw new Error('No active neighbor session.');
+    const responseTimeMs = Math.max(0, Math.round(performance.now() - this.questionStartedAt));
+    const result = applyNeighborGuess(
+      this.neighborSession,
+      this.neighborProgress,
+      selectedCountryId,
+      responseTimeMs,
+    );
+    this.neighborSession = result.session;
+    this.neighborProgress = result.progress;
+    this.neighborLastOutcome = result.outcome;
+    this.questionStartedAt = performance.now();
+    if (!saveNeighborProgress(this.neighborProgress)) this.neighborPersisting = false;
+    appendNeighborAttempt(result.attempt);
+    return result.outcome;
+  }
+
+  advanceNeighbor(): NeighborSessionResult | null {
+    if (!this.neighborSession) return null;
+    if (neighborSessionIsComplete(this.neighborSession)) {
+      const result = finishNeighborSession(this.neighborSession);
+      this.neighborSessionResult = result;
+      this.view = { name: 'neighbor-results', result };
+      return result;
+    }
+
+    this.neighborSession = advanceNeighborSession(this.neighborSession);
+    this.neighborLastOutcome = null;
     this.questionStartedAt = performance.now();
     return null;
   }
