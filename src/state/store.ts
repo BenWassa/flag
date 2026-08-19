@@ -1,4 +1,4 @@
-import { WEST_AFRICA_MAP_COUNTRY_IDS } from '../data/map-scopes.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../data/map-scopes.js';
 import { COUNTRIES } from '../data/countries.js';
 import {
   advanceMapSession,
@@ -40,7 +40,7 @@ export type ViewState =
   | { name: 'progress' }
   | { name: 'quiz' }
   | { name: 'results'; result: SessionResult }
-  | { name: 'map-home' }
+  | { name: 'map-home'; scope: StudyScope }
   | { name: 'map-quiz' }
   | { name: 'map-results'; result: MapSessionResult };
 
@@ -81,14 +81,14 @@ export class AppStore {
       this.progress = { ...initial, records };
     }
 
-    const locationInitial = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+    const locationInitial = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
     const locationPersisted = loadLocationProgress();
     this.locationProgress = locationInitial;
     if (locationPersisted) {
-      // Preserve records for future map assets while ensuring every currently
-      // supported pilot country has a well-formed default.
+      // Preserve every existing location record while ensuring all currently
+      // enabled African countries have a well-formed default.
       const records = { ...locationPersisted.records };
-      for (const countryId of WEST_AFRICA_MAP_COUNTRY_IDS) {
+      for (const countryId of AFRICA_MAP_COUNTRY_IDS) {
         records[countryId] ??= locationInitial.records[countryId];
       }
       this.locationProgress = { ...locationInitial, records };
@@ -110,7 +110,7 @@ export class AppStore {
   }
 
   resetMapProgress(): void {
-    this.locationProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+    this.locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
     this.mapSession = null;
     this.mapAsset = null;
     this.mapLastWrongCountryId = null;

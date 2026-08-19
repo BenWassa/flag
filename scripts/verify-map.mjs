@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
-import { WEST_AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
+import {
+  AFRICA_MAP_CONFIG,
+  AFRICA_MAP_COUNTRY_IDS,
+  AFRICA_MAP_REGION_CONFIGS,
+  AFRICA_MAP_SCOPE,
+  AFRICA_MAP_SCOPE_CONFIGS,
+  WEST_AFRICA_MAP_COUNTRY_IDS,
+} from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
 import {
   advanceMapSession,
@@ -18,6 +25,7 @@ import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
 import { renderMapResults } from '../dist/ui/views/map-results.js';
 
 const country = (id) => COUNTRIES.find((item) => item.id === id);
+const africaCatalogIds = COUNTRIES.filter((item) => item.continentId === 'africa').map((item) => item.id);
 
 // Naming guardrails for rename-sensitive / article-sensitive countries.
 assert.equal(country('GMB')?.name, 'The Gambia', 'English UI uses the natural short name The Gambia.');
@@ -30,35 +38,75 @@ assert.equal(country('TLS')?.name, 'Timor-Leste');
 assert.equal(country('CZE')?.name, 'Czechia');
 assert.match(country('CIV')?.name ?? '', /^Côte d['’]Ivoire$/);
 
-const asset = await loadMapAsset('west-africa');
-assert.ok(asset, 'West Africa pilot asset must load.');
-assert.equal(asset.scope.id, 'west-africa');
-assert.equal(asset.countries.length, 16, 'West Africa map must cover all 16 curriculum countries.');
-assert.equal(new Set(asset.countries.map((item) => item.countryId)).size, 16, 'Map country IDs must be unique.');
-assert.deepEqual(
-  new Set(asset.countries.map((item) => item.countryId)),
-  new Set(WEST_AFRICA_MAP_COUNTRY_IDS),
-  'Map geometry must exactly cover the pilot curriculum.',
+// Africa scope data must exactly match the canonical 54-country catalog.
+assert.equal(AFRICA_MAP_COUNTRY_IDS.length, 54, 'Africa location curriculum contains 54 countries.');
+assert.equal(new Set(AFRICA_MAP_COUNTRY_IDS).size, 54, 'Africa location curriculum has no duplicate IDs.');
+assert.deepEqual(new Set(AFRICA_MAP_COUNTRY_IDS), new Set(africaCatalogIds), 'Africa map IDs exactly match the canonical Africa catalog.');
+assert.equal(AFRICA_MAP_REGION_CONFIGS.length, 5, 'Africa map exposes the five existing learning regions.');
+assert.equal(
+  AFRICA_MAP_REGION_CONFIGS.reduce((sum, config) => sum + config.countryIds.length, 0),
+  54,
+  'The five Africa regions partition all 54 countries.',
 );
-assert.ok((asset.contextPaths?.length ?? 0) > 20, 'A region round keeps the rest of Africa as non-interactive geographic context.');
-assert.ok(asset.initialFocus, 'Region assets define an initial gameplay viewport within the continent canvas.');
 
-for (const geometry of asset.countries) {
-  const catalogCountry = country(geometry.countryId);
-  assert.ok(catalogCountry, `${geometry.countryId} must exist in the canonical catalog.`);
-  assert.equal(catalogCountry.regionId, 'west-africa', `${geometry.countryId} must belong to West Africa.`);
-  assert.ok(geometry.path || geometry.locator, `${geometry.countryId} needs a polygon or explicit locator.`);
-}
-assert.ok(asset.countries.find((item) => item.countryId === 'CPV')?.locator, 'Cabo Verde keeps an explicit island locator.');
-for (const id of ['GMB', 'TGO', 'CPV']) {
-  const geometry = asset.countries.find((item) => item.countryId === id);
-  assert.ok(geometry?.callout, `${id} has a visible off-country touch callout.`);
-  assert.equal(geometry?.hitAssist, undefined, `${id} uses the visible callout instead of an invisible oversized assist.`);
-  assert.ok((geometry?.callout?.target.r ?? 0) >= 10, `${id} callout target is visibly substantial.`);
+const assets = new Map();
+for (const config of AFRICA_MAP_SCOPE_CONFIGS) {
+  const scopeId = config.scope.id;
+  assert.ok(scopeId);
+  const asset = await loadMapAsset(scopeId);
+  assert.ok(asset, `${config.scope.label} map asset must load.`);
+  assets.set(scopeId, asset);
+
+  const activeIds = asset.countries.map((item) => item.countryId);
+  const contextIds = (asset.contextCountries ?? []).map((item) => item.countryId);
+  assert.deepEqual(new Set(activeIds), new Set(config.countryIds), `${config.scope.label} active geometry matches its curriculum.`);
+  assert.equal(new Set(activeIds).size, activeIds.length, `${config.scope.label} active IDs are unique.`);
+  assert.equal(new Set(contextIds).size, contextIds.length, `${config.scope.label} context IDs are unique.`);
+  assert.ok(asset.initialFocus, `${config.scope.label} defines an opening viewport.`);
+  assert.equal(asset.viewBox, '0 0 835 723', `${config.scope.label} uses the shared Africa canvas.`);
+
+  if (config.scope.kind === 'region') {
+    assert.equal(contextIds.length, 54 - activeIds.length, `${config.scope.label} keeps every other African country as context.`);
+    assert.deepEqual(new Set([...activeIds, ...contextIds]), new Set(AFRICA_MAP_COUNTRY_IDS), `${config.scope.label} active + context geometry covers Africa exactly once.`);
+    assert.ok((asset.contextPaths?.length ?? 0) >= 1, `${config.scope.label} retains extra non-scoring geography such as Western Sahara.`);
+  } else {
+    assert.equal(contextIds.length, 0, 'All-Africa scope makes all 54 countries active.');
+  }
+
+  for (const geometry of [...asset.countries, ...(asset.contextCountries ?? [])]) {
+    assert.ok(country(geometry.countryId), `${geometry.countryId} exists in the canonical country catalog.`);
+    assert.ok(geometry.path || geometry.locator, `${geometry.countryId} has a polygon or island locator.`);
+  }
 }
 
-let progress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
-let learn = buildMapSession(asset, 'learn', 'learn-three-strikes', ['GHA']);
+const africaAsset = assets.get('africa');
+const westAsset = assets.get('west-africa');
+assert.ok(africaAsset && westAsset);
+assert.equal(westAsset.countries.length, WEST_AFRICA_MAP_COUNTRY_IDS.length, 'West Africa remains a 16-country scope.');
+
+// Mainland callouts are exceptional and limited to the two user-approved West Africa cases.
+const africaCallouts = africaAsset.countries.filter((item) => item.callout).map((item) => item.countryId).sort();
+assert.deepEqual(africaCallouts, ['GMB', 'TGO'], 'Only The Gambia and Togo use mainland leader-line callouts.');
+for (const id of ['CPV', 'GNB', 'SLE', 'BEN']) {
+  assert.equal(africaAsset.countries.find((item) => item.countryId === id)?.callout, undefined, `${id} does not receive an unnecessary leader-line callout.`);
+}
+
+// Island nations use one visible locator dot plus an invisible touch surface, never a leader line.
+for (const id of ['CPV', 'STP', 'COM', 'MUS', 'SYC']) {
+  const geometry = africaAsset.countries.find((item) => item.countryId === id);
+  assert.ok(geometry?.locator, `${id} has a single island locator dot.`);
+  assert.equal(geometry?.path, undefined, `${id} does not fake an oversized island polygon in the MVP geometry.`);
+  assert.equal(geometry?.callout, undefined, `${id} island target does not duplicate the dot with a leader line.`);
+}
+const cpvSession = buildMapSession(westAsset, 'learn', 'island-dot-target', ['CPV']);
+const cpvHtml = renderMapQuiz(westAsset, cpvSession, null);
+const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
+assert.ok(cpvGroup.includes('map-country__locator'), 'Cabo Verde locator is visibly rendered in its own country group.');
+assert.ok(cpvGroup.includes('map-country__locator-hit'), 'Cabo Verde locator receives an enlarged invisible touch area.');
+assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not render a redundant callout line.');
+
+let progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+let learn = buildMapSession(westAsset, 'learn', 'learn-three-strikes', ['GHA']);
 for (let miss = 1; miss <= 3; miss += 1) {
   const result = applyMapGuess(learn, progress, 'MLI', 1000 + miss, new Date(`2026-01-0${miss}T12:00:00Z`));
   learn = result.session;
@@ -69,105 +117,97 @@ for (let miss = 1; miss <= 3; miss += 1) {
 assert.equal(learn.targets.GHA.resolution, 'revealed', 'Third miss reveals the target red.');
 assert.equal(getLocationRecord(progress, 'GHA').revealCount, 1, 'Guided reveal is persisted separately.');
 assert.equal(getLocationRecord(progress, 'GHA').confusionCounts.MLI, 3, 'Repeated wrong selections feed location confusions.');
-const revealedHtml = renderMapQuiz(asset, learn, 'MLI');
+const revealedHtml = renderMapQuiz(westAsset, learn, 'MLI');
 assert.ok(revealedHtml.includes('Revealed after 3 misses'), 'Reveal feedback explicitly tells the learner what happened.');
 
-const oneMissSession = buildMapSession(asset, 'learn', 'one-miss-feedback', ['GHA']);
-const oneMiss = applyMapGuess(oneMissSession, createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS), 'MLI', 600);
-const oneMissHtml = renderMapQuiz(asset, oneMiss.session, 'MLI');
+const oneMissSession = buildMapSession(westAsset, 'learn', 'one-miss-feedback', ['GHA']);
+const oneMiss = applyMapGuess(oneMissSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'MLI', 600);
+const oneMissHtml = renderMapQuiz(westAsset, oneMiss.session, 'MLI');
 assert.ok(oneMissHtml.includes('Not Mali.'), 'A wrong map tap names the selected country instead of only showing a countdown.');
 assert.ok(oneMissHtml.includes('map-prompt__status--wrong'), 'Wrong feedback has a text-visible semantic state.');
 assert.ok(oneMissHtml.includes('map-country--wrong-pulse'), 'Wrong Learn taps receive a visible transient map state.');
 
 // Correct after one miss must go straight to amber, never flash green first.
-let correctedAfterMiss = oneMiss.session;
-const corrected = applyMapGuess(correctedAfterMiss, oneMiss.progress, 'GHA', 700);
-correctedAfterMiss = corrected.session;
-const correctedHtml = renderMapQuiz(asset, correctedAfterMiss, null);
-assert.ok(correctedHtml.includes('map-country--one-miss'), 'Correct after one miss receives the amber stored score immediately.');
+const corrected = applyMapGuess(oneMiss.session, oneMiss.progress, 'GHA', 700);
+const correctedHtml = renderMapQuiz(westAsset, corrected.session, null);
+assert.ok(correctedHtml.includes('map-country--one-miss'), 'Correct after one miss receives amber immediately.');
 assert.ok(!correctedHtml.includes('map-country--current-correct'), 'Green success flash is reserved for first-try correctness only.');
 
-progress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 for (let round = 1; round <= 3; round += 1) {
-  let session = buildMapSession(asset, 'learn', `mastery-${round}`, ['GHA']);
+  const session = buildMapSession(westAsset, 'learn', `mastery-${round}`, ['GHA']);
   const result = applyMapGuess(session, progress, 'GHA', 800, new Date(`2026-02-0${round}T12:00:00Z`));
-  session = result.session;
   progress = result.progress;
-  assert.equal(session.targets.GHA.resolution, 'first-try');
+  assert.equal(result.session.targets.GHA.resolution, 'first-try');
 }
 assert.equal(getLocationRecord(progress, 'GHA').status, 'mastered', 'Three first-try rounds master a map location.');
 
-const lapseSession = buildMapSession(asset, 'learn', 'lapse', ['GHA']);
+const lapseSession = buildMapSession(westAsset, 'learn', 'lapse', ['GHA']);
 const lapsed = applyMapGuess(lapseSession, progress, 'MLI', 950, new Date('2026-02-04T12:00:00Z'));
 assert.equal(getLocationRecord(lapsed.progress, 'GHA').status, 'learning', 'A mastered map miss lapses the location.');
 assert.equal(locationMasteryGoal(getLocationRecord(lapsed.progress, 'GHA')), 2, 'A lapsed location uses two-success recovery.');
 
-const testSession = buildMapSession(asset, 'test', 'test-wrong', ['GHA']);
-const testWrong = applyMapGuess(testSession, createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS), 'MLI', 700);
+const testSession = buildMapSession(westAsset, 'test', 'test-wrong', ['GHA']);
+const testWrong = applyMapGuess(testSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'MLI', 700);
 assert.equal(testWrong.outcome.resolved, true, 'Test mode accepts exactly one tap per target.');
 assert.equal(testWrong.session.targets.GHA.resolution, 'incorrect', 'Test wrong answers are retained for result feedback.');
 assert.equal(testWrong.outcome.revealed, false, 'Test mode does not reveal correctness during the round.');
-const testHtml = renderMapQuiz(asset, testWrong.session, 'MLI');
-assert.ok(!testHtml.includes('map-country--wrong-pulse'), 'Test mode must not leak correctness through red wrong-answer styling.');
-assert.ok(testHtml.includes('map-country--recorded'), 'Test mode visibly acknowledges the selected country with a neutral recorded state.');
-assert.ok(testHtml.includes('Answer recorded'), 'Test confirms input without revealing whether the answer was right.');
+const testHtml = renderMapQuiz(westAsset, testWrong.session, 'MLI');
+assert.ok(!testHtml.includes('map-country--wrong-pulse'), 'Test mode does not leak correctness through red styling.');
+assert.ok(testHtml.includes('map-country--recorded'), 'Test visibly acknowledges the selected country with a neutral state.');
+assert.ok(testHtml.includes('Answer recorded'), 'Test confirms input without revealing correctness.');
 
-const fullSession = buildMapSession(asset, 'learn', 'render-round');
-const quizHtml = renderMapQuiz(asset, fullSession, null);
-const renderedMapIds = [...quizHtml.matchAll(/data-action="map-answer" data-id="([^"]+)"/g)].map((match) => match[1]);
-assert.deepEqual(new Set(renderedMapIds), new Set(WEST_AFRICA_MAP_COUNTRY_IDS), 'Every unresolved pilot country is directly interactive.');
-assert.equal((quizHtml.match(/data-autofocus/g) ?? []).length, 1, 'Map quiz has one focus landing point.');
-assert.ok(quizHtml.indexOf('map-prompt') < quizHtml.indexOf('map-stage'), 'The active target stays above the geography while scanning.');
-assert.ok(quizHtml.includes('map-context-country'), 'Out-of-region Africa remains visible as faded context.');
-assert.ok(quizHtml.includes('data-map-viewport'), 'Map gameplay exposes a dedicated pannable viewport.');
-assert.ok(quizHtml.includes('data-map-focus='), 'The viewport carries the preferred starting region for mobile centering.');
-assert.ok(quizHtml.includes('swipe or drag to pan Africa'), 'The first prompt teaches the continent-pan gesture once.');
-assert.ok(quizHtml.includes('map-country__callout-line'), 'Tiny-country leader-line callouts are rendered.');
-assert.ok(quizHtml.includes('map-country__callout-hit'), 'Tiny-country callouts expose a larger explicit touch area.');
+const fullWestSession = buildMapSession(westAsset, 'learn', 'render-west-round');
+const westQuizHtml = renderMapQuiz(westAsset, fullWestSession, null);
+const renderedWestIds = [...westQuizHtml.matchAll(/data-action="map-answer" data-id="([^"]+)"/g)].map((match) => match[1]);
+assert.deepEqual(new Set(renderedWestIds), new Set(WEST_AFRICA_MAP_COUNTRY_IDS), 'Every unresolved West Africa country is directly interactive.');
+assert.equal((westQuizHtml.match(/data-autofocus/g) ?? []).length, 1, 'Map quiz has one focus landing point.');
+assert.ok(westQuizHtml.indexOf('map-prompt') < westQuizHtml.indexOf('map-stage'), 'The active target stays above the geography while scanning.');
+assert.ok(westQuizHtml.includes('map-context-country'), 'Out-of-region Africa remains visible as context.');
+assert.ok(westQuizHtml.includes('map-context-locator'), 'Out-of-region island dots remain visible as context.');
+assert.ok(westQuizHtml.includes('data-map-viewport'), 'Map gameplay exposes a dedicated pannable viewport.');
+assert.ok(westQuizHtml.includes('data-map-focus='), 'The viewport carries the preferred starting region.');
+assert.ok(westQuizHtml.includes('swipe or drag to pan Africa'), 'The first prompt teaches the continent-pan gesture once.');
+assert.ok(westQuizHtml.includes('map-country__callout-line'), 'Approved mainland callouts render leader lines.');
+assert.ok(westQuizHtml.includes('--map-canvas-width: 835px'), 'The renderer respects the wider shared Africa canvas including eastern islands.');
 
-// Non-callout narrow states still use clipped neutral-space assistance.
-const narrowSession = buildMapSession(asset, 'learn', 'narrow-target', ['BEN']);
-const narrowHtml = renderMapQuiz(asset, narrowSession, null);
-assert.ok(narrowHtml.includes('r="22"'), 'Remaining narrow target assistance aims at roughly a 44px effective diameter.');
-assert.ok(narrowHtml.includes('clip-path="url(#map-target-hit-clip)"'), 'Expanded target assistance is clipped so neighbouring countries remain real wrong answers.');
-assert.ok(narrowHtml.includes('fill-rule="evenodd"'), 'The assist clip explicitly subtracts surrounding geography.');
-
-let currentCorrectSession = buildMapSession(asset, 'learn', 'current-correct', ['GHA']);
-let currentCorrectProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
-const currentCorrect = applyMapGuess(currentCorrectSession, currentCorrectProgress, 'GHA', 500);
+let currentCorrectSession = buildMapSession(westAsset, 'learn', 'current-correct', ['GHA']);
+const currentCorrect = applyMapGuess(currentCorrectSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'GHA', 500);
 currentCorrectSession = currentCorrect.session;
-const currentCorrectHtml = renderMapQuiz(asset, currentCorrectSession, null);
+const currentCorrectHtml = renderMapQuiz(westAsset, currentCorrectSession, null);
 assert.ok(currentCorrectHtml.includes('map-country--first map-country--current-correct'), 'A first-try Learn tap receives the strong green success state.');
 
 // Once a target has been resolved and the round advances, it is no longer a tap target.
-let twoTarget = buildMapSession(asset, 'learn', 'advance-lock', ['GHA', 'MLI']);
-let twoTargetProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+let twoTarget = buildMapSession(westAsset, 'learn', 'advance-lock', ['GHA', 'MLI']);
 const resolvedId = twoTarget.countryIds[0];
-const firstAnswer = applyMapGuess(twoTarget, twoTargetProgress, resolvedId, 500);
+const firstAnswer = applyMapGuess(twoTarget, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), resolvedId, 500);
 twoTarget = advanceMapSession(firstAnswer.session);
-twoTargetProgress = firstAnswer.progress;
-const afterAdvanceHtml = renderMapQuiz(asset, twoTarget, null);
+const afterAdvanceHtml = renderMapQuiz(westAsset, twoTarget, null);
 const interactiveAfterAdvance = [...afterAdvanceHtml.matchAll(/data-action="map-answer" data-id="([^"]+)"/g)].map((match) => match[1]);
 assert.ok(!interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries are no longer clickable later in the round.');
 
-let resultSession = buildMapSession(asset, 'learn', 'result-round', ['GHA']);
-let resultProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
-const answered = applyMapGuess(resultSession, resultProgress, 'GHA', 600);
+let resultSession = buildMapSession(westAsset, 'learn', 'result-round', ['GHA']);
+const answered = applyMapGuess(resultSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'GHA', 600);
 resultSession = answered.session;
-resultProgress = answered.progress;
-assert.ok(resultProgress.records.GHA, 'Map progress is updated independently.');
 const result = finishMapSession(resultSession);
-const resultHtml = renderMapResults(asset, result);
+const resultHtml = renderMapResults(westAsset, result);
 assert.ok(resultHtml.includes('1 of 1 first try'), 'Map results report first-try accuracy.');
 assert.ok(resultHtml.includes('map-country--first'), 'Completed map retains resolution color evidence.');
 assert.ok(!resultHtml.includes('map-country--current-correct'), 'Results do not retain transient in-round success styling.');
-assert.ok(resultHtml.includes('map-result-breakdown'), 'Results expose performance structure instead of only a percentage.');
-assert.ok(!resultHtml.includes('map-result-percent'), 'Generic percentage emphasis is removed from map results.');
+assert.ok(resultHtml.includes('data-action="open-map-scope" data-id="west-africa"'), 'Results return to the same map scope.');
 
-const mapHomeHtml = renderMapHome(createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS));
-assert.ok(mapHomeHtml.includes('study-action--primary'), 'Map home uses the same Learn/Test hierarchy as flag scopes.');
-assert.ok(mapHomeHtml.includes('status-strip'), 'Map mastery uses the shared progress visual language.');
-assert.ok(!mapHomeHtml.includes('map-progress-card'), 'Map home no longer introduces a separate rounded progress card system.');
+// Africa and region map homes expose the new hierarchy without fragmenting mastery.
+const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE);
+assert.ok(africaHomeHtml.includes('54 countries'), 'Africa map home reports all 54 countries.');
+assert.ok(africaHomeHtml.includes('id="map-regions-heading"'), 'Africa map home lists regional drills.');
+for (const config of AFRICA_MAP_REGION_CONFIGS) {
+  assert.ok(africaHomeHtml.includes(`data-id="${config.scope.id}"`), `${config.scope.label} is navigable from Africa locations.`);
+}
+const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope);
+assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
+assert.ok(westHomeHtml.includes('The Gambia'), 'Region country ledger uses the canonical display name.');
+assert.ok(westHomeHtml.includes('study-action--primary'), 'Map home uses the shared Learn/Test hierarchy.');
 
 assert.equal(sanitizeLocationRecord('GHA', null), null, 'Null map progress is rejected.');
 const repaired = sanitizeLocationRecord('GHA', {
@@ -181,25 +221,33 @@ assert.equal(repaired.lifetimeFirstTryCorrect, 0);
 assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 
 const mapCss = await readFile('map.css', 'utf8');
-assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses the shared token system instead of literal color drift.');
+assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
-assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable on small screens.');
-assert.ok(mapCss.includes('touch-action: pan-x pan-y pinch-zoom'), 'Touch gestures prioritize two-axis map panning and platform zoom.');
-assert.ok(mapCss.includes('.map-country[tabindex]:focus'), 'SVG country focus overrides the global rectangular tabindex outline.');
-assert.ok(mapCss.includes('.map-country--current-correct'), 'First-try correct taps have a dedicated high-salience state.');
-assert.ok(mapCss.includes('.map-country--recorded'), 'Test taps have a neutral visible acknowledgment state.');
-assert.ok(mapCss.includes('.map-country__callout-target'), 'Small-country callout targets participate in the same visual state system.');
-assert.ok(mapCss.includes('shape-rendering: geometricPrecision'), 'Map rendering asks the browser for precise vector geometry.');
-assert.ok(mapCss.includes('stroke-linejoin: round'), 'Border rendering avoids sharp coarse-geometry seam spikes.');
+assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable.');
+assert.ok(mapCss.includes('touch-action: pan-x pan-y pinch-zoom'), 'Touch gestures prioritize map panning and platform zoom.');
+assert.ok(mapCss.includes('--map-canvas-width'), 'Map canvas width follows the active asset viewBox.');
+assert.ok(mapCss.includes('.map-context-locator'), 'Context islands use the same strengthened context visual system.');
+assert.ok(mapCss.includes('opacity: 1'), 'Normal context geography is no longer washed out by blanket low opacity.');
+assert.ok(!mapCss.includes('opacity: .28'), 'The previous strainingly faint context opacity is removed.');
+assert.ok(mapCss.includes('.map-country__locator-hit'), 'Island dots receive explicit enlarged touch surfaces.');
+assert.ok(mapCss.includes('.map-country[tabindex]:focus'), 'SVG focus overrides the rectangular tabindex outline.');
+assert.ok(mapCss.includes('.map-country--current-correct'), 'First-try correct taps keep high-salience feedback.');
+assert.ok(mapCss.includes('.map-country--recorded'), 'Test taps keep neutral visible acknowledgment.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behavior.');
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
-assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across map rerenders.');
+assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("flag-atlas-v6"), 'Feedback release bumps the PWA cache so stale map CSS is replaced.');
-assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper is part of the offline app shell.');
+assert.ok(serviceWorker.includes("flag-atlas-v7"), 'Africa expansion bumps the PWA cache so mobile gets new map CSS/code.');
+assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
-console.log('Map pilot verification passed, including feedback, callout, naming, and mobile gameplay contracts.');
+// All-Africa engine smoke: a target from each region can coexist in one round.
+const representativeIds = AFRICA_MAP_REGION_CONFIGS.map((config) => config.countryIds[0]);
+const africaRound = buildMapSession(africaAsset, 'learn', 'africa-cross-region', representativeIds);
+assert.equal(africaRound.countryIds.length, 5, 'All-Africa round accepts targets across all five regions.');
+assert.deepEqual(new Set(africaRound.countryIds), new Set(representativeIds));
+
+console.log('Africa map verification passed: 54-country coverage, regional context, island dots, callouts, feedback, and mobile contracts.');

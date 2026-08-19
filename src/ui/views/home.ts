@@ -52,12 +52,12 @@ export function renderHome(progress: ProgressState, persisting = true): string {
       <section class="map-entry-section" aria-labelledby="locations-heading">
         <div class="list-heading">
           <h2 id="locations-heading">Country locations</h2>
-          <span>Pilot</span>
+          <span>Africa</span>
         </div>
-        <button class="map-entry-row" data-action="open-map-pilot">
+        <button class="map-entry-row" data-action="open-map-scope" data-id="africa">
           <span class="map-entry-row__identity">
-            <strong>West Africa</strong>
-            <small>16 countries · Learn or test on the map</small>
+            <strong>Africa</strong>
+            <small>54 countries · 5 regions · Learn or test locations</small>
           </span>
           <span class="map-entry-row__meta">Locations</span>
           ${icon('chevron')}
