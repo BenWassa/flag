@@ -1,7 +1,7 @@
 # Map Learning Pilot — West Africa
 
 **Tracking:** issue #1  
-**Status:** implemented on pilot branch  
+**Status:** merged to `main` via PR #4  
 **Pilot scope:** West Africa (16 countries)  
 **Architecture target:** reusable for later continent and region assets
 
