@@ -49,11 +49,19 @@ export function renderHome(progress: ProgressState, persisting = true): string {
         </p>
       `}
 
-      <section class="map-pilot-card" aria-labelledby="map-pilot-heading">
-        <p class="map-pilot-card__eyebrow">Country locations · pilot</p>
-        <h2 id="map-pilot-heading">Learn the map of West Africa</h2>
-        <p>Tap countries directly on the map, with guided three-strike feedback or a strict test round.</p>
-        <button class="button button--secondary map-pilot-card__action" data-action="open-map-pilot">Open map learning</button>
+      <section class="map-entry-section" aria-labelledby="locations-heading">
+        <div class="list-heading">
+          <h2 id="locations-heading">Country locations</h2>
+          <span>Pilot</span>
+        </div>
+        <button class="map-entry-row" data-action="open-map-pilot">
+          <span class="map-entry-row__identity">
+            <strong>West Africa</strong>
+            <small>16 countries · Learn or test on the map</small>
+          </span>
+          <span class="map-entry-row__meta">Locations</span>
+          ${icon('chevron')}
+        </button>
       </section>
 
       <section class="atlas-section" aria-labelledby="continents-heading">
