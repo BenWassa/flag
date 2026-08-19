@@ -3,7 +3,7 @@
   "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "A mobile-first adaptive geography learning PWA for flags, country locations, and country outlines.",
+  "description": "A mobile-first adaptive geography learning PWA for flags, country locations, country outlines, and land-border neighbors.",
   "engines": {
     "node": ">=22"
   },
@@ -11,7 +11,7 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
     "maps:generate": "node scripts/generate-map-assets.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-domain-integration.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {

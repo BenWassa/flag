@@ -1,5 +1,5 @@
-// v10 supersedes flag-atlas-v9 and the earlier routing-era flag-atlas-v8 cache while adding the country-outline learning domain.
-const VERSION = 'flag-atlas-v10';
+// v11 supersedes flag-atlas-v10 after integrating the Outlines and Neighbors releases; earlier cartography/routing lineage includes flag-atlas-v9 and flag-atlas-v8.
+const VERSION = 'flag-atlas-v11';
 const SHELL = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const SHELL = [
   './map.css',
   './map-cartography.css',
   './outline.css',
+  './neighbors.css',
   './app.js',
   './map-viewport.js',
   './manifest.webmanifest',
