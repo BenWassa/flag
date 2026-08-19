@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   generate:
-    if: ${{ !contains(github.event.head_commit.message, '[generated-map]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[generated-map]') && !contains(github.event.head_commit.message, '[generator-failure]') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,8 +23,21 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: npm run maps:generate -- --update-hashes
+      - name: Generate pinned cartography
+        id: generate
+        shell: bash
+        run: |
+          set +e
+          npm run maps:generate -- --update-hashes > /tmp/issue9-generator.log 2>&1
+          status=$?
+          cat /tmp/issue9-generator.log
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/issue9-generator.log docs/ISSUE_9_GENERATOR_FAILURE.txt
+          fi
+          exit 0
       - name: Commit generated cartography
+        if: steps.generate.outputs.status == '0'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -35,3 +48,12 @@ jobs:
           fi
           git commit -m "chore: generate pinned Africa cartography [generated-map]"
           git push
+      - name: Publish generator failure
+        if: steps.generate.outputs.status != '0'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/ISSUE_9_GENERATOR_FAILURE.txt
+          git commit -m "docs: capture map generator failure [generator-failure]"
+          git push
+          exit 1
