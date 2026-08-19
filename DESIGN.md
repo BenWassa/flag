@@ -46,24 +46,30 @@ components:
 
 ## Overview
 
-Flag Atlas is an Operate surface. Its visual thesis is **the flag is the color system**: national flags are the richest visual objects on screen, while the application behaves like a precise atlas index / international identification desk around them. The interface is quick, neutral, legible, and confident without adding game chrome.
+Flag Atlas is an Operate surface. Its visual thesis is **the flag is the colour system**: national flags are the richest visual objects on screen, while the application behaves like a precise atlas index / international identification desk around them. The interface is quick, neutral, legible, and confident without adding game chrome.
 
 The system rejects the former warm-paper/editorial-card direction. It also avoids generic bento/card grids, decorative map textures, display serifs in operational UI, ornamental labels above headings, glass effects, and reward-style celebration.
 
-## Colors
+## Product language
+
+All learner-facing copy uses modern British English (`en-GB`), including visible text, document titles, metadata, accessible names and live-region announcements. The learner-facing domain name is **Neighbours**. Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, CSS/API property names such as `color`, and existing persistence keys retain their required implementation spelling.
+
+Use **practice** as a noun and **practise** as a verb. Country display names are governed separately by `docs/COUNTRY_NAMING.md`.
+
+## Colours
 
 The application uses cool near-white neutrals and graphite text so flags remain visually dominant. `action` blue is reserved for primary actions, current selection, focus, and round progress. It is not a decorative accent.
 
 Learning semantics remain stable everywhere:
 
-- **Unseen:** neutral gray and an outlined state mark.
+- **Unseen:** neutral grey and an outlined state mark.
 - **Learning:** amber.
 - **Mastered:** green.
 - **Wrong/error:** red.
 
-Every state is also expressed in text; color is reinforcement only. Soft state backgrounds are allowed only where immediate answer feedback benefits from them.
+Every state is also expressed in text; colour is reinforcement only. Soft state backgrounds are allowed only where immediate answer feedback benefits from them.
 
-No color is written as a literal outside the token block at the top of `styles.css`. Neutrals are tinted rather than pure: `surface` is a near-white carrying a trace of the action hue, and `on-action` is an off-white rather than `#FFF`. Every text color meets WCAG AA against the surface it sits on; `unseen` in particular is set at `#626B78` rather than a lighter gray because it must clear 4.5:1 on `canvas`.
+No colour is written as a literal outside the token block at the top of `styles.css`. Neutrals are tinted rather than pure: `surface` is a near-white carrying a trace of the action hue, and `on-action` is an off-white rather than `#FFF`. Every text colour meets WCAG AA against the surface it sits on; `unseen` in particular is set at `#626B78` rather than a lighter grey because it must clear 4.5:1 on `canvas`.
 
 ## Typography
 
@@ -83,12 +89,12 @@ The core page width is 860px with a 4px spacing base. Related controls group tig
 Home is an **atlas index**, not a grid of cards:
 
 1. compact product top bar;
-2. World learning state and direct Learn/Test actions;
-3. one scan-friendly continent list with progress encoded inside each row.
+2. learning-domain index and direct entry points;
+3. scan-friendly domain/scope lists with progress encoded inside each row.
 
 Scope pages preserve the same hierarchy: title → status → Learn/Test → regions or country ledger. Lists use rules and proximity rather than individual containers.
 
-Quiz is an immersive task surface. The flag owns the flexible central region; answers remain reachable at the bottom on portrait mobile. At wider widths answers become 2×2. On short landscape screens, the flag and answer column sit side-by-side.
+Quiz is an immersive task surface. The geography task owns the flexible central region; answers or entry controls remain reachable at the bottom on portrait mobile. At wider widths multiple-choice answers become 2×2. On short landscape screens, the learning visual and answer controls can sit side-by-side where the domain calls for it.
 
 ## Elevation & Depth
 
@@ -113,7 +119,7 @@ A 6px stacked horizontal bar: green Mastered, amber Learning, neutral remainder 
 
 ### Primary / secondary buttons
 
-Primary uses action blue with white text. Secondary is white with a stronger neutral border. Tertiary actions are text-forward and visually quiet. All controls provide focus, hover where hover exists, active, and disabled behavior.
+Primary uses action blue with white text. Secondary is white with a stronger neutral border. Tertiary actions are text-forward and visually quiet. All controls provide focus, hover where hover exists, active, and disabled behaviour.
 
 ### Atlas rows
 
@@ -121,7 +127,7 @@ Continent and region navigation use full-width rows separated by horizontal rule
 
 ### Answer choices
 
-Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on desktop keyboards. Learn feedback marks both correct and selected-wrong states with text plus semantic color. Test mode withholds correctness.
+Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on desktop keyboards. Learn feedback marks both correct and selected-wrong states with text plus semantic colour. Test mode withholds correctness.
 
 ### Learning ledger
 
@@ -139,28 +145,28 @@ A scope with nothing to ask never opens a round. The learner stays on the screen
 
 ### Storage notice
 
-Persistence is an enhancement, never a precondition for studying. When the browser refuses to store, the app keeps working from memory and says so once: a quiet rule and a sentence under the World overview, plus honest wording in the ledger footer, which otherwise claims a ledger is saved on the device that is refusing to save it. It is not an alert box and not a modal, because nothing is broken; the session simply will not outlive the tab.
+Persistence is an enhancement, never a precondition for studying. When the browser refuses to store, the app keeps working from memory and says so once: a quiet rule and a sentence under the relevant overview, plus honest wording in the ledger footer, which otherwise claims a ledger is saved on the device that is refusing to save it. It is not an alert box and not a modal, because nothing is broken; the session simply will not outlive the tab.
 
 ### Data boundaries
 
-Two boundaries do the defensive work so no view has to. A persisted ledger is rebuilt field by field on load, so a truncated write or a hand-edited record cannot reach a view as a thrown exception or a rendered `NaN`. All catalog text is escaped on the way into markup, because the curriculum already carries `Australia & New Zealand` and `Côte d'Ivoire`. Inside those boundaries the views stay written against well-formed data.
+Two boundaries do the defensive work so no view has to. A persisted ledger is rebuilt field by field on load, so a truncated write or a hand-edited record cannot reach a view as a thrown exception or a rendered `NaN`. All catalogue text is escaped on the way into markup, because the curriculum already carries `Australia & New Zealand` and `Côte d'Ivoire`. Inside those boundaries the views stay written against well-formed data.
 
 ## Do’s & Don’ts
 
 ### Do
 
-- Let actual flags provide visual richness.
+- Let actual geography provide visual richness.
 - Prefer rules and proximity over boxes around every group.
 - Keep Learn and Test visible and direct.
 - Preserve 44px minimum hit areas and mobile safe areas.
-- Use state color consistently and pair it with text.
+- Use state colour consistently and pair it with text.
 - Keep routine motion within roughly 100–220ms and tied to state.
 - Animate transform and opacity only. The round-progress bar scales on the X axis rather than animating its width.
 - Test small-height landscape as well as ordinary portrait widths.
 - Move focus deliberately after every re-render, and announce state changes through the persistent live region in `index.html` rather than through nodes that are themselves replaced.
 - Give every view a history entry so the platform Back gesture moves within the app instead of leaving it.
-- Size the quiz flag in `dvh`, so a visible mobile URL bar cannot push the answers below the fold.
-- Read learning records through `getRecord` and resolve catalog ids before the template, never with `!` inside it.
+- Size task visuals in `dvh` where a visible mobile URL bar could otherwise push controls below the fold.
+- Read learning records through their domain helpers and resolve catalogue IDs before the template, never with `!` inside it.
 
 ### Don’t
 
@@ -170,7 +176,7 @@ Two boundaries do the defensive work so no view has to. A persisted ledger is re
 - Turn continents, statistics, or result summaries into repetitive rounded cards.
 - Tint the interface from the active flag.
 - Use emoji, Unicode glyphs, or CSS-drawn shapes as interface icons. All marks, including the product mark, come from the shared SVG primitives in `src/ui/components/icons.ts`.
-- Write a color literal anywhere but the token block, or duplicate a domain rule such as the mastery goal in a view.
-- Make mastered flags dominate ordinary Learn sessions simply to show progress.
+- Write a colour literal anywhere but the token block, or duplicate a domain rule such as the mastery goal in a view.
+- Make mastered items dominate ordinary Learn sessions simply to show progress.
 - Let a storage write escape into an interaction handler. Studying continues when persistence fails.
 - Serve the app shell cache-first. The network decides which build runs; the cache is what makes it work offline.

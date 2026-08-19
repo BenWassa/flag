@@ -7,6 +7,7 @@ import {
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
   getAfricaNeighborScopeConfig,
 } from '../../data/neighbors/index.js';
+import { domainDisplayName } from '../../domain/display.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
 import { getNeighborScopeStats } from '../../domain/neighbor-game.js';
@@ -43,7 +44,7 @@ function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>Flags</h1>
+          <h1 tabindex="-1" data-autofocus>${domainDisplayName('flags')}</h1>
           <span>World · ${world.total} countries</span>
         </div>
       </header>
@@ -110,7 +111,7 @@ function renderLocationsHome(progress: LocationProgressState, persisting: boolea
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>Locations</h1>
+          <h1 tabindex="-1" data-autofocus>${domainDisplayName('locations')}</h1>
           <span>Country locations · Africa available</span>
         </div>
       </header>
@@ -147,7 +148,7 @@ function renderOutlinesHome(progress: ProgressState, persisting: boolean): strin
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>Outlines</h1>
+          <h1 tabindex="-1" data-autofocus>${domainDisplayName('outlines')}</h1>
           <span>Country silhouettes · Africa available</span>
         </div>
       </header>
@@ -184,7 +185,7 @@ function renderNeighborsHome(progress: NeighborProgressState, persisting: boolea
       <header class="topbar topbar--detail">
         <button class="icon-button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>Neighbors</h1>
+          <h1 tabindex="-1" data-autofocus>${domainDisplayName('neighbors')}</h1>
           <span>Land-border sets · Africa available</span>
         </div>
       </header>
@@ -194,7 +195,7 @@ function renderNeighborsHome(progress: NeighborProgressState, persisting: boolea
           <button class="continent-row" data-action="open-scope" data-domain="neighbors" data-id="africa">
             <span class="continent-row__identity">
               <strong>Africa</strong>
-              <small>${stats.total} standard targets · ${AFRICA_ZERO_LAND_NEIGHBOR_IDS.length} zero-neighbor excluded · ${AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS.length} coverage-deferred</small>
+              <small>${stats.total} standard targets · ${AFRICA_ZERO_LAND_NEIGHBOR_IDS.length} zero-neighbour excluded · ${AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS.length} coverage-deferred</small>
             </span>
             <span class="continent-row__progress">${progressStrip(progressStats)}</span>
             <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
@@ -202,7 +203,7 @@ function renderNeighborsHome(progress: NeighborProgressState, persisting: boolea
           </button>
         </div>
       </section>
-      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so neighbor progress will last only for this visit.</p>`}
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so neighbour progress will last only for this visit.</p>`}
     </main>
   `;
 }

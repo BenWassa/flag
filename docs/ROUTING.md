@@ -1,6 +1,6 @@
 # Routing and product information architecture
 
-**Status:** Issue #10 architecture  
+**Status:** Issue #10 architecture, updated through Issues #2, #3, #15, and #16  
 **Transport:** hash URLs on GitHub Pages  
 **Route source of truth:** `src/routing/routes.ts`  
 **Browser adapter:** `src/routing/router.ts`
@@ -9,7 +9,7 @@
 
 Navigation is the composition of three independent dimensions:
 
-1. **Learning domain** — Flags, Locations, Outlines, Neighbors.
+1. **Learning domain** — Flags, Locations, Outlines, Neighbours.
 2. **Geographic scope** — World where applicable, continent, region, and later country/detail where a mechanic requires it.
 3. **Activity** — Learn, Test, Review.
 
@@ -21,14 +21,20 @@ Current product availability:
 |---|---|---|
 | Flags | World, all continents, all curriculum regions | Available |
 | Locations | Africa and its five curriculum regions | Available |
-| Outlines | Route home reserved | Planned in Issue #2 |
-| Neighbors | Route home reserved | Planned in Issue #3 |
+| Outlines | Africa and its five curriculum regions | Available |
+| Neighbours | Africa standard targets and its five curriculum regions | Available |
 
-The route model already accepts canonical continent/region hierarchy for planned domains so those features do not require another router. Their current UI intentionally canonicalizes unimplemented scoped routes back to the domain landing screen.
+The route model accepts the canonical continent/region hierarchy for all four domains. Availability remains a domain-data concern rather than a reason to create separate routers.
+
+## Product language versus route identifiers
+
+Product copy uses modern British English, so the learner-facing domain name is **Neighbours**. The route segment remains the stable internal/API identifier `neighbors`.
+
+Do not create a spelling-only route migration. Existing deep links such as `/#/neighbors/africa/west-africa` and persisted neighbour-progress namespaces must remain compatible even though document titles, headings and assistive-technology output say **Neighbours**.
 
 ## Route schema
 
-The router serializes a typed route to a path first. The hash transport is the only layer that adds `#`.
+The router serialises a typed route to a path first. The hash transport is the only layer that adds `#`.
 
 | State | URL |
 |---|---|
@@ -43,8 +49,9 @@ The router serializes a typed route to a path first. The hash transport is the o
 | Locations → Africa | `/#/locations/africa` |
 | Locations → West Africa | `/#/locations/africa/west-africa` |
 | Locations → West Africa → Review | `/#/locations/africa/west-africa/review` |
-| Outlines future scope | `/#/outlines/africa/west-africa` |
-| Neighbors future scope | `/#/neighbors/africa` |
+| Outlines → West Africa | `/#/outlines/africa/west-africa` |
+| Neighbours → Africa | `/#/neighbors/africa` |
+| Neighbours → West Africa → Learn | `/#/neighbors/africa/west-africa/learn` |
 
 Region routes always include their parent continent. The parser rejects a valid region under the wrong continent, e.g. `/flags/asia/west-africa`.
 
@@ -56,7 +63,7 @@ Region routes always include their parent continent. The parser rejects a valid 
 - Progress;
 - Learning route: `{ domain, scope?, activity? }`.
 
-`StudyScope` continues to use the canonical IDs in `src/data/continents.ts`. There is no flag router and map router; both are interpretations of the same learning route.
+`StudyScope` continues to use the canonical IDs in `src/data/continents.ts`. There is no flag router, map router, outline router, or Neighbours router; all are interpretations of the same learning route.
 
 Key pure functions:
 
@@ -65,7 +72,7 @@ Key pure functions:
 - `routeForScope` / `routeForScopeId` — construct canonical learning routes;
 - `stableRoute` — remove transient activity while retaining domain/scope;
 - `parentRoute` — one conceptual level upward;
-- `routeTitle` — deterministic document title.
+- `routeTitle` — deterministic document title using canonical learner-facing domain display names.
 
 `src/routing/router.ts` is a browser transport adapter. Product navigation only consumes typed routes. A future clean-path deployment can replace the hash adapter with a History-path adapter while preserving the route model and product navigation calls.
 
@@ -89,7 +96,7 @@ Benefits in the current deployment:
 
 ### Rejected for now: clean History API paths + `404.html`
 
-A path such as `/flag/locations/africa/west-africa` would reach GitHub Pages before application JavaScript and would be unknown unless the repository added a `404.html` redirect/fallback strategy. That adds hosting-specific behavior, duplicate boot logic, and more failure modes for a cosmetic URL improvement.
+A path such as `/flag/locations/africa/west-africa` would reach GitHub Pages before application JavaScript and would be unknown unless the repository added a `404.html` redirect/fallback strategy. That adds hosting-specific behaviour, duplicate boot logic, and more failure modes for a cosmetic URL improvement.
 
 Clean paths may become preferable on Firebase Hosting or another host with explicit SPA rewrites. The typed route/path layer is intentionally reusable for that migration.
 
@@ -129,7 +136,7 @@ becomes:
 
 This applies to Learn, Test, and Review. Progress already earned before refresh remains in its domain-specific persisted ledger; incomplete round ordering/feedback is intentionally discarded.
 
-This is preferable to serializing a partial session until there is a versioned, explicitly tested restoration contract.
+This is preferable to serialising a partial session until there is a versioned, explicitly tested restoration contract.
 
 ## Back and Forward semantics
 
@@ -144,36 +151,37 @@ This means a learner opening a direct region link still gets the correct concept
 
 Browser Back/Forward remains native. Because each transition has a real URL, browser history can reconstruct stable navigation without an application-owned stack. Within the same JavaScript process, Back from an active round to its stable scope and Forward back to that activity can restore the still-live round/result object. A hard refresh deliberately invokes the refresh policy above.
 
-Explicit quiz/result Exit abandons the live round and traverses back to the stable entry. Forward into the abandoned activity is then normalized safely rather than reviving stale state.
+Explicit quiz/result Exit abandons the live round and traverses back to the stable entry. Forward into the abandoned activity is then normalised safely rather than reviving stale state.
 
 ## Invalid and unavailable routes
 
 The parser rejects malformed routes, unknown IDs, mismatched continent/region ancestry, unknown activities, and invalid world-activity combinations. An invalid initial hash is replaced with Home.
 
-A syntactically valid route can also point to curriculum that is not yet enabled. Current examples are Locations outside Africa and scoped Outlines/Neighbors routes. The route interpreter canonicalizes those to the relevant domain landing screen instead of throwing or rendering a broken game.
+A syntactically valid route can also point to curriculum that is not enabled. Current examples are Locations, Outlines, or Neighbours outside Africa. The route interpreter canonicalises those to the relevant domain landing screen instead of throwing or rendering a broken game.
 
 ## Document titles
 
-Stable titles derive from typed route state, for example:
+Stable titles derive from typed route state and canonical learner-facing display names, for example:
 
 - `Flags · Flag Atlas`;
 - `West Africa flags · Flag Atlas`;
-- `Test West Africa locations · Flag Atlas`.
+- `Test West Africa locations · Flag Atlas`;
+- `Test West Africa neighbours · Flag Atlas`.
 
-Completed rounds add the result state explicitly, e.g. `Round complete · West Africa locations · Flag Atlas`.
+Completed rounds add the result state explicitly, e.g. `Round complete · West Africa neighbours · Flag Atlas`.
 
 ## Home and branding decision
 
 **Keep `Flag Atlas` for now.**
 
-Renaming is not necessary to solve the architecture problem and would create brand churn before the broader learning domains ship. The Home IA no longer treats flags as the implicit application root: it is a compact Atlas index of learning domains, with Flags and Locations as peers and Outlines/Neighbors visibly reserved.
+Renaming is not necessary to solve the architecture problem and would create brand churn. The Home IA is a compact Atlas index of learning domains, with Flags, Locations, Outlines, and Neighbours as peers.
 
-The route/domain model therefore supports a future broader product name without another navigation rewrite. Branding is presentation; `flags` is now one learning domain rather than the routing root.
+The route/domain model therefore supports a future broader product name without another navigation rewrite. Branding is presentation; `flags` is one learning domain rather than the routing root.
 
 ## Known limitations
 
-- Locations currently supports Africa only.
-- Outlines and Neighbors have domain homes/routes but no gameplay yet.
-- Active rounds are not serialized across hard refresh by design.
+- Locations, Outlines, and Neighbours currently support Africa only.
+- Neighbours excludes zero-land-neighbour targets from standard rounds and temporarily defers targets whose complete app-country land-border sets cross the current Africa-only topology boundary.
+- Active rounds are not serialised across hard refresh by design.
 - Country/detail route segments are not implemented yet; add them only when a concrete domain requires them.
 - There is no browser E2E suite in the repository yet. Routing invariants are covered by the compiled verification suite; device/browser play remains a release QA task.

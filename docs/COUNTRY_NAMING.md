@@ -20,14 +20,16 @@ Official references:
 
 ## Display-name rule
 
-The product teaches recognizable country names, so the UI uses a natural, compact English display name rather than mechanically copying every formal UN construction.
+The product teaches recognisable country names, so the UI uses a natural, compact English display name rather than mechanically copying every formal UN construction.
 
 Examples:
 
 - UNGEGN records `Gambia (the)` / `the Republic of the Gambia`; Flag Atlas renders **The Gambia**.
 - The app may retain familiar compact teaching labels such as **North Korea**, **South Korea**, **Tanzania**, **Russia**, and **United States**, while official/alternate forms can live in aliases where useful.
 
-Article normalization is intentional: parenthetical UN indexing such as `Gambia (the)` is converted into normal display English rather than shown literally.
+Article normalisation is intentional: parenthetical UN indexing such as `Gambia (the)` is converted into normal display English rather than shown literally.
+
+British-English product copy does not override this naming policy. Canonical country names and aliases continue to follow the authoritative naming sources above rather than localisation spelling rules.
 
 ## Rename-sensitive regression set
 
