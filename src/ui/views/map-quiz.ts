@@ -62,7 +62,9 @@ function visibleFeedback(
   if (session.mode === 'test') {
     if (resolution) return { text: 'Answer recorded', className: '' };
     return {
-      text: session.currentIndex === 0 ? 'One tap each · swipe or drag to pan Africa · results at the end.' : 'Tap one country.',
+      text: session.currentIndex === 0
+        ? 'One tap each · pinch or wheel to zoom · swipe or drag to pan Africa · results at the end.'
+        : 'Tap one country.',
       className: '',
     };
   }
@@ -90,7 +92,9 @@ function visibleFeedback(
   }
 
   return {
-    text: session.currentIndex === 0 ? 'Tap the country · swipe or drag to pan Africa.' : 'Tap the country on the map.',
+    text: session.currentIndex === 0
+      ? 'Tap the country · pinch to zoom · swipe or drag to pan Africa.'
+      : 'Tap the country on the map.',
     className: '',
   };
 }
