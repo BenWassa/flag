@@ -16,6 +16,7 @@ import type {
   MapSession,
   MapSessionResult,
 } from '../domain/map-models.js';
+import { buildOutlineQuiz, type OutlineAsset } from '../domain/outline.js';
 import { applyAttempt, createInitialProgress, getRecord } from '../domain/progress.js';
 import type {
   LearningDomain,
@@ -33,6 +34,12 @@ import {
   mapStorageIsWritable,
   saveLocationProgress,
 } from '../infrastructure/map-storage.js';
+import {
+  appendOutlineAttempt,
+  loadOutlineProgress,
+  outlineStorageIsWritable,
+  saveOutlineProgress,
+} from '../infrastructure/outline-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
 
 export type ViewState =
@@ -44,7 +51,10 @@ export type ViewState =
   | { name: 'results'; result: SessionResult }
   | { name: 'map-home'; scope: StudyScope }
   | { name: 'map-quiz' }
-  | { name: 'map-results'; result: MapSessionResult };
+  | { name: 'map-results'; result: MapSessionResult }
+  | { name: 'outline-home'; scope: StudyScope }
+  | { name: 'outline-quiz' }
+  | { name: 'outline-results'; result: SessionResult };
 
 function sessionId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
@@ -53,23 +63,33 @@ function sessionId(): string {
   return `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
+const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
+
 export class AppStore {
   progress: ProgressState;
   locationProgress: LocationProgressState;
+  outlineProgress: ProgressState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
   sessionResult: SessionResult | null = null;
   mapSession: MapSession | null = null;
   mapSessionResult: MapSessionResult | null = null;
   mapAsset: MapRegionAsset | null = null;
+  outlineSession: QuizSession | null = null;
+  outlineSessionResult: SessionResult | null = null;
+  outlineAsset: OutlineAsset | null = null;
   questionStartedAt = performance.now();
   answeredCountryId: string | null = null;
   currentAttempt: QuizAttempt | null = null;
+  outlineAnsweredCountryId: string | null = null;
+  outlineCurrentAttempt: QuizAttempt | null = null;
   mapLastWrongCountryId: string | null = null;
   mapLastOutcome: MapGuessOutcome | null = null;
 
   persisting = true;
   mapPersisting = true;
+  outlinePersisting = true;
 
   constructor() {
     const persisted = loadProgress();
@@ -96,8 +116,21 @@ export class AppStore {
       this.locationProgress = { ...locationInitial, records };
     }
 
+    const outlineInitial = createInitialProgress(AFRICA_COUNTRIES);
+    const outlinePersisted = loadOutlineProgress();
+    this.outlineProgress = outlineInitial;
+    if (outlinePersisted) {
+      const records = { ...outlineInitial.records };
+      for (const country of AFRICA_COUNTRIES) {
+        const record = outlinePersisted.records[country.id];
+        if (record) records[country.id] = record;
+      }
+      this.outlineProgress = { ...outlineInitial, records };
+    }
+
     this.persisting = storageIsWritable();
     this.mapPersisting = mapStorageIsWritable();
+    this.outlinePersisting = outlineStorageIsWritable();
   }
 
   navigate(view: ViewState): void {
@@ -115,6 +148,12 @@ export class AppStore {
     this.mapAsset = null;
   }
 
+  resetOutlineProgress(): void {
+    this.outlineProgress = createInitialProgress(AFRICA_COUNTRIES);
+    this.abandonOutlineSession();
+    this.outlineAsset = null;
+  }
+
   abandonSession(): void {
     this.session = null;
     this.sessionResult = null;
@@ -127,6 +166,13 @@ export class AppStore {
     this.mapSessionResult = null;
     this.mapLastWrongCountryId = null;
     this.mapLastOutcome = null;
+  }
+
+  abandonOutlineSession(): void {
+    this.outlineSession = null;
+    this.outlineSessionResult = null;
+    this.outlineAnsweredCountryId = null;
+    this.outlineCurrentAttempt = null;
   }
 
   startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): boolean {
@@ -204,18 +250,7 @@ export class AppStore {
 
   finishSession(): SessionResult {
     if (!this.session) throw new Error('No active quiz session.');
-    const attempts = this.session.attempts;
-    const newlyMastered = attempts
-      .filter((attempt) => attempt.statusBefore !== 'mastered' && attempt.statusAfter === 'mastered')
-      .map((attempt) => attempt.countryId);
-
-    return {
-      session: this.session,
-      correct: attempts.filter((attempt) => attempt.correct).length,
-      total: this.session.questions.length,
-      newlyMastered,
-      missed: attempts.filter((attempt) => !attempt.correct),
-    };
+    return finishQuizSession(this.session);
   }
 
   startMapSession(
@@ -273,4 +308,95 @@ export class AppStore {
     this.questionStartedAt = performance.now();
     return null;
   }
+
+  startOutlineSession(
+    asset: OutlineAsset,
+    mode: StudyMode,
+    size = 10,
+    targetCountryIds?: readonly string[],
+  ): boolean {
+    const id = sessionId();
+    const questions = buildOutlineQuiz({
+      countries: COUNTRIES,
+      progress: this.outlineProgress,
+      scope: asset.scope,
+      mode,
+      size,
+      sessionId: id,
+      asset,
+      targetCountryIds: targetCountryIds ? [...targetCountryIds] : undefined,
+    });
+    if (questions.length === 0) return false;
+
+    this.outlineAsset = asset;
+    this.outlineSession = {
+      id,
+      mode,
+      scope: asset.scope,
+      startedAt: new Date().toISOString(),
+      questions,
+      currentIndex: 0,
+      attempts: [],
+    };
+    this.outlineSessionResult = null;
+    this.outlineAnsweredCountryId = null;
+    this.outlineCurrentAttempt = null;
+    this.questionStartedAt = performance.now();
+    this.view = { name: 'outline-quiz' };
+    return true;
+  }
+
+  answerOutline(selectedCountryId: string): QuizAttempt {
+    if (!this.outlineSession) throw new Error('No active outline session.');
+    const question = this.outlineSession.questions[this.outlineSession.currentIndex];
+    if (!question) throw new Error('No active outline question.');
+
+    const responseTimeMs = Math.max(0, Math.round(performance.now() - this.questionStartedAt));
+    const result = applyAttempt(this.outlineProgress, question.countryId, {
+      sessionId: this.outlineSession.id,
+      countryId: question.countryId,
+      selectedCountryId,
+      responseTimeMs,
+    });
+
+    this.outlineProgress = result.state;
+    if (!saveOutlineProgress(this.outlineProgress)) this.outlinePersisting = false;
+    appendOutlineAttempt(result.attempt);
+    this.outlineSession.attempts.push(result.attempt);
+    this.outlineAnsweredCountryId = selectedCountryId;
+    this.outlineCurrentAttempt = result.attempt;
+    return result.attempt;
+  }
+
+  advanceOutline(): SessionResult | null {
+    if (!this.outlineSession) return null;
+
+    if (this.outlineSession.currentIndex < this.outlineSession.questions.length - 1) {
+      this.outlineSession.currentIndex += 1;
+      this.outlineAnsweredCountryId = null;
+      this.outlineCurrentAttempt = null;
+      this.questionStartedAt = performance.now();
+      return null;
+    }
+
+    const result = finishQuizSession(this.outlineSession);
+    this.outlineSessionResult = result;
+    this.view = { name: 'outline-results', result };
+    return result;
+  }
+}
+
+function finishQuizSession(session: QuizSession): SessionResult {
+  const attempts = session.attempts;
+  const newlyMastered = attempts
+    .filter((attempt) => attempt.statusBefore !== 'mastered' && attempt.statusAfter === 'mastered')
+    .map((attempt) => attempt.countryId);
+
+  return {
+    session,
+    correct: attempts.filter((attempt) => attempt.correct).length,
+    total: session.questions.length,
+    newlyMastered,
+    missed: attempts.filter((attempt) => !attempt.correct),
+  };
 }
