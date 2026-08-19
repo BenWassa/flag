@@ -1,0 +1,14 @@
+
+> flag-atlas@0.3.0 maps:generate
+> node scripts/generate-maps.mjs --update-hashes
+
+file:///home/runner/work/flag/flag/scripts/generate-maps.mjs:207
+    throw new Error(`Unresolved Natural Earth Africa features require policy review: ${unexpectedAfrica.join(', ')}`);
+          ^
+
+Error: Unresolved Natural Earth Africa features require policy review: Bir Tawil
+    at normalizeCountries (file:///home/runner/work/flag/flag/scripts/generate-maps.mjs:207:11)
+    at main (file:///home/runner/work/flag/flag/scripts/generate-maps.mjs:339:22)
+    at async file:///home/runner/work/flag/flag/scripts/generate-maps.mjs:502:1
+
+Node.js v22.23.2
