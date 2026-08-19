@@ -10,7 +10,7 @@
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {
