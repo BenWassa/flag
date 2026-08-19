@@ -1,9 +1,11 @@
-const VERSION = 'flag-atlas-v7';
+// v8 supersedes flag-atlas-v7 after the production cartography/viewport upgrade.
+const VERSION = 'flag-atlas-v8';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './map.css',
+  './map-cartography.css',
   './app.js',
   './map-viewport.js',
   './manifest.webmanifest',
@@ -63,6 +65,8 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // Dynamically imported continent assets are cached here after first map use,
+  // preserving a light initial shell while making revisits offline-capable.
   if (url.origin === self.location.origin) {
     event.respondWith(shellFromNetwork(request));
   }
