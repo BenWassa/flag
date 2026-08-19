@@ -1,4 +1,21 @@
+import { WEST_AFRICA_MAP_COUNTRY_IDS } from '../data/map-scopes.js';
 import { COUNTRIES } from '../data/countries.js';
+import {
+  advanceMapSession,
+  applyMapGuess,
+  buildMapSession,
+  createInitialLocationProgress,
+  finishMapSession,
+  mapSessionIsComplete,
+} from '../domain/map-game.js';
+import type {
+  LocationProgressState,
+  MapGuessOutcome,
+  MapMode,
+  MapRegionAsset,
+  MapSession,
+  MapSessionResult,
+} from '../domain/map-models.js';
 import { applyAttempt, createInitialProgress, getRecord } from '../domain/progress.js';
 import type {
   ProgressState,
@@ -9,6 +26,12 @@ import type {
   StudyScope,
 } from '../domain/models.js';
 import { buildQuiz } from '../domain/quiz.js';
+import {
+  appendMapAttempt,
+  loadLocationProgress,
+  mapStorageIsWritable,
+  saveLocationProgress,
+} from '../infrastructure/map-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
 
 export type ViewState =
@@ -16,14 +39,11 @@ export type ViewState =
   | { name: 'scope'; scope: StudyScope }
   | { name: 'progress' }
   | { name: 'quiz' }
-  | { name: 'results'; result: SessionResult };
+  | { name: 'results'; result: SessionResult }
+  | { name: 'map-home' }
+  | { name: 'map-quiz' }
+  | { name: 'map-results'; result: MapSessionResult };
 
-/**
- * `crypto.randomUUID` needs a secure context, so it is simply absent when the
- * app is opened over plain http, which is exactly how a mobile-first PWA gets
- * tested from a phone against a laptop on the same network. Calling it there
- * threw out of `startSession` and left the Learn button doing nothing at all.
- */
 function sessionId(): string {
   if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
     return crypto.randomUUID();
@@ -33,14 +53,19 @@ function sessionId(): string {
 
 export class AppStore {
   progress: ProgressState;
+  locationProgress: LocationProgressState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
+  mapSession: MapSession | null = null;
+  mapAsset: MapRegionAsset | null = null;
   questionStartedAt = performance.now();
   answeredCountryId: string | null = null;
   currentAttempt: QuizAttempt | null = null;
+  mapLastWrongCountryId: string | null = null;
+  mapLastOutcome: MapGuessOutcome | null = null;
 
-  /** False once a write has failed, so the app can say progress is not being kept. */
   persisting = true;
+  mapPersisting = true;
 
   constructor() {
     const persisted = loadProgress();
@@ -48,8 +73,6 @@ export class AppStore {
     this.progress = initial;
 
     if (persisted) {
-      // Only records for countries still in the catalog are carried forward, so
-      // a ledger written by an older curriculum cannot accumulate dead keys.
       const records = { ...initial.records };
       for (const country of COUNTRIES) {
         const record = persisted.records[country.id];
@@ -58,14 +81,27 @@ export class AppStore {
       this.progress = { ...initial, records };
     }
 
+    const locationInitial = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+    const locationPersisted = loadLocationProgress();
+    this.locationProgress = locationInitial;
+    if (locationPersisted) {
+      // Preserve records for future map assets while ensuring every currently
+      // supported pilot country has a well-formed default.
+      const records = { ...locationPersisted.records };
+      for (const countryId of WEST_AFRICA_MAP_COUNTRY_IDS) {
+        records[countryId] ??= locationInitial.records[countryId];
+      }
+      this.locationProgress = { ...locationInitial, records };
+    }
+
     this.persisting = storageIsWritable();
+    this.mapPersisting = mapStorageIsWritable();
   }
 
   navigate(view: ViewState): void {
     this.view = view;
   }
 
-  /** Return every flag to Unseen. Storage is cleared separately by the caller. */
   resetProgress(): void {
     this.progress = createInitialProgress(COUNTRIES);
     this.session = null;
@@ -73,11 +109,14 @@ export class AppStore {
     this.currentAttempt = null;
   }
 
-  /**
-   * Returns false when the scope yields no questions. A round of zero is a dead
-   * screen with nothing to answer, so the caller keeps the user where they are
-   * rather than navigating into it.
-   */
+  resetMapProgress(): void {
+    this.locationProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+    this.mapSession = null;
+    this.mapAsset = null;
+    this.mapLastWrongCountryId = null;
+    this.mapLastOutcome = null;
+  }
+
   startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): boolean {
     const id = sessionId();
     const questions = buildQuiz({
@@ -163,5 +202,59 @@ export class AppStore {
       newlyMastered,
       missed: attempts.filter((attempt) => !attempt.correct),
     };
+  }
+
+  startMapSession(
+    asset: MapRegionAsset,
+    mode: MapMode,
+    targetCountryIds?: readonly string[],
+  ): boolean {
+    const mapSession = buildMapSession(asset, mode, sessionId(), targetCountryIds);
+    if (mapSession.countryIds.length === 0) return false;
+
+    this.mapAsset = asset;
+    this.mapSession = mapSession;
+    this.mapLastWrongCountryId = null;
+    this.mapLastOutcome = null;
+    this.questionStartedAt = performance.now();
+    this.view = { name: 'map-quiz' };
+    return true;
+  }
+
+  answerMap(selectedCountryId: string): MapGuessOutcome {
+    if (!this.mapSession) throw new Error('No active map session.');
+    const responseTimeMs = Math.max(0, Math.round(performance.now() - this.questionStartedAt));
+    const result = applyMapGuess(
+      this.mapSession,
+      this.locationProgress,
+      selectedCountryId,
+      responseTimeMs,
+    );
+
+    this.mapSession = result.session;
+    this.locationProgress = result.progress;
+    this.mapLastWrongCountryId = result.outcome.correct ? null : selectedCountryId;
+    this.mapLastOutcome = result.outcome;
+    this.questionStartedAt = performance.now();
+
+    if (!saveLocationProgress(this.locationProgress)) this.mapPersisting = false;
+    appendMapAttempt(result.attempt);
+    return result.outcome;
+  }
+
+  advanceMap(): MapSessionResult | null {
+    if (!this.mapSession) return null;
+    const completed = mapSessionIsComplete(this.mapSession);
+    if (completed) {
+      const result = finishMapSession(this.mapSession);
+      this.view = { name: 'map-results', result };
+      return result;
+    }
+
+    this.mapSession = advanceMapSession(this.mapSession);
+    this.mapLastWrongCountryId = null;
+    this.mapLastOutcome = null;
+    this.questionStartedAt = performance.now();
+    return null;
   }
 }
