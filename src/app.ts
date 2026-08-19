@@ -117,9 +117,9 @@ function documentTitle(): string {
 function currentRouteKey(): string {
   const view = store.view;
   if (view.name === 'scope') return `scope:${view.scope.kind}:${view.scope.id ?? 'world'}`;
-  if (view.name === 'quiz') return `quiz:${store.session?.id ?? 'none'}`;
+  if (view.name === 'quiz') return `quiz:${store.session?.id ?? 'none'}:${store.session?.currentIndex ?? 0}`;
   if (view.name === 'results') return `results:${view.result.session.id}`;
-  if (view.name === 'map-quiz') return `map-quiz:${store.mapSession?.id ?? 'none'}`;
+  if (view.name === 'map-quiz') return `map-quiz:${store.mapSession?.id ?? 'none'}:${store.mapSession?.currentIndex ?? 0}`;
   if (view.name === 'map-results') return `map-results:${view.result.session.id}`;
   return view.name;
 }
