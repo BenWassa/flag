@@ -1,7 +1,10 @@
 import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
 import { COUNTRIES } from '../../data/countries.js';
+import { AFRICA_LAND_ADJACENCY, AFRICA_STANDARD_NEIGHBOR_TARGET_IDS } from '../../data/neighbors/index.js';
 import { createInitialLocationProgress, getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
+import { createInitialNeighborProgress, getNeighborScopeStats } from '../../domain/neighbor-game.js';
+import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { brandMark, icon } from '../components/icons.js';
@@ -10,6 +13,7 @@ import { progressStrip } from '../components/progress.js';
 export function renderHome(
   progress: ProgressState,
   locationProgressOrPersisting: LocationProgressState | boolean = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
+  neighborProgress: NeighborProgressState = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
 ): string {
   const legacyPersisting = typeof locationProgressOrPersisting === 'boolean' ? locationProgressOrPersisting : true;
   const locationProgress = typeof locationProgressOrPersisting === 'boolean'
@@ -19,6 +23,8 @@ export function renderHome(
   const flags = getScopeStats(COUNTRIES, progress, worldScope);
   const locations = getLocationScopeStats(locationProgress, AFRICA_MAP_COUNTRY_IDS);
   const locationStats = { ...locations, due: 0 };
+  const neighbors = getNeighborScopeStats(neighborProgress, AFRICA_MAP_COUNTRY_IDS, AFRICA_LAND_ADJACENCY);
+  const neighborStats = { ...neighbors, due: 0 };
 
   return `
     <main class="page page--home">
@@ -51,7 +57,7 @@ export function renderHome(
       <section class="atlas-section" aria-labelledby="domains-heading">
         <div class="list-heading">
           <h2 id="domains-heading">Learning domains</h2>
-          <span>2 available · 2 planned</span>
+          <span>3 available · 1 planned</span>
         </div>
         <div class="continent-list">
           <button class="continent-row" data-action="open-domain" data-id="flags">
@@ -87,10 +93,10 @@ export function renderHome(
           <button class="continent-row" data-action="open-domain" data-id="neighbors">
             <span class="continent-row__identity">
               <strong>Neighbors</strong>
-              <small>Land-border knowledge · Issue #3</small>
+              <small>Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} standard targets · 5 regions</small>
             </span>
-            <span class="continent-row__progress"><span class="region-row__status">Planned</span></span>
-            <span class="continent-row__score"></span>
+            <span class="continent-row__progress">${progressStrip(neighborStats)}</span>
+            <span class="continent-row__score"><strong>${neighbors.mastered}</strong><small>/${neighbors.total}</small></span>
             ${icon('chevron')}
           </button>
         </div>
