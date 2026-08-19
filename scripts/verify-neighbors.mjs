@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
@@ -152,7 +153,11 @@ assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css), 'Neighbor CSS uses shared design token
 const generationSource = await readFile('scripts/generate-neighbor-fixture.mjs', 'utf8');
 assert.ok(generationSource.includes("src/data/maps/africa.ts"), 'Lightweight fixture is mechanically extracted from Issue #9 generated topology output.');
 assert.ok(generationSource.includes('Asymmetric generated adjacency'), 'Fixture generation fails on asymmetric topology output.');
-const fixtureSource = await readFile('src/data/neighbors/africa.ts', 'utf8');
-assert.ok(fixtureSource.startsWith('// GENERATED FIXTURE. Do not hand-edit adjacency.'));
+const fixtureBefore = await readFile('src/data/neighbors/africa.ts', 'utf8');
+assert.ok(fixtureBefore.startsWith('// GENERATED FIXTURE. Do not hand-edit adjacency.'));
+const regeneration = spawnSync(process.execPath, ['scripts/generate-neighbor-fixture.mjs'], { encoding: 'utf8' });
+assert.equal(regeneration.status, 0, regeneration.stderr || 'Neighbor fixture regeneration failed.');
+const fixtureAfter = await readFile('src/data/neighbors/africa.ts', 'utf8');
+assert.equal(fixtureAfter, fixtureBefore, 'Regenerating from unchanged Issue #9 topology is byte-stable.');
 
-console.log('Neighbor verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, and routes.');
+console.log('Neighbor verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, routes, and byte-stable regeneration.');
