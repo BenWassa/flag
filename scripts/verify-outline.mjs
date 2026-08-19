@@ -30,7 +30,7 @@ for (const id of africaIds) {
   assert.equal(country.id, country.iso3, `${id} must use ISO3 as the identity key.`);
 
   const geometry = AFRICA_GEOMETRY[id];
-  assert.ok(geometry?.path, `Canonical production path missing for ${id}.`);
+  assert.ok(geometry?.path ?? geometry?.outlinePath, `Canonical production polygon missing for ${id}.`);
   const normalized = normalizeOutlineGeometry(geometry);
   assert.equal(normalized.countryId, id);
 
@@ -42,9 +42,14 @@ for (const id of africaIds) {
 
 const islandIds = ['CPV', 'STP', 'COM', 'MUS', 'SYC'];
 for (const id of islandIds) {
-  const normalized = normalizeOutlineGeometry(AFRICA_GEOMETRY[id]);
+  const geometry = AFRICA_GEOMETRY[id];
+  assert.ok(geometry.locator, `${id} must retain the production map locator.`);
+  assert.equal(geometry.path, undefined, `${id} must not become a directly rendered map polygon.`);
+  assert.ok(geometry.outlinePath, `${id} must retain the canonical generated polygon for silhouette learning.`);
+
+  const normalized = normalizeOutlineGeometry(geometry);
   assert.ok(normalized.subpathCount >= 2, `${id} must preserve multipart/island geometry rather than collapse to one locator.`);
-  const withoutLocator = { ...AFRICA_GEOMETRY[id], locator: undefined, hitAssist: undefined, callout: undefined };
+  const withoutLocator = { ...geometry, locator: undefined, hitAssist: undefined, callout: undefined };
   assert.equal(
     normalizeOutlineGeometry(withoutLocator).path,
     normalized.path,
@@ -168,8 +173,13 @@ assert.equal(serializeRoutePath(outlineRoute), '/outlines/africa/west-africa/lea
 assert.equal(serializeRoutePath(parentRoute(outlineRoute)), '/outlines/africa/west-africa', 'Outline activity Back must return to its stable shared scope.');
 
 const outlineDataSource = await readFile('src/data/outlines.ts', 'utf8');
-assert.ok(outlineDataSource.includes("loadMapAsset"), 'Outlines must consume canonical production map geometry.');
+assert.ok(outlineDataSource.includes('loadMapAsset'), 'Outlines must consume canonical production map geometry.');
 assert.equal(outlineDataSource.includes('AFRICA_GEOMETRY'), false, 'Outline data layer must not create a second direct geometry dataset.');
+const generatorSource = await readFile('scripts/generate-maps.mjs', 'utf8');
+assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'), 'Locator-island silhouettes must be emitted by the canonical production map generator.');
+const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
+assert.equal(mapRendererSource.includes('outlinePath'), false, 'Location rendering must continue to use its existing locator behavior for tiny islands.');
+
 const outlineStorage = await readFile('dist/infrastructure/outline-storage.js', 'utf8');
 assert.ok(outlineStorage.includes('flag-atlas:outline-progress:v1'), 'Outline mastery must use its own persisted ledger key.');
 assert.equal(outlineStorage.includes('flag-atlas:progress:v1'), false, 'Outline storage must not write into flag progress.');
