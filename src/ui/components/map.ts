@@ -71,9 +71,14 @@ export function renderMapSvg(
   const wrongId = options.lastWrongCountryId ?? null;
   const labelledBy = options.labelledBy ?? 'map-prompt-heading';
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
-  const recordedCountryId = interactive && !showFeedback
-    ? session.attempts.at(-1)?.selectedCountryId ?? null
-    : null;
+  const currentTargetResolved = currentTargetId ? Boolean(session.targets[currentTargetId]?.resolved) : false;
+  const lastAttempt = session.attempts.at(-1);
+  const recordedCountryId = interactive
+    && !showFeedback
+    && lastAttempt
+    && (currentTargetResolved || lastAttempt.selectedCountryId !== currentTargetId)
+      ? lastAttempt.selectedCountryId
+      : null;
   const focus = asset.initialFocus;
   const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
 
