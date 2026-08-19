@@ -17,7 +17,7 @@ export function renderNeighborQuiz(
   query = '',
 ): string {
   const target = currentNeighborTarget(session);
-  if (!target) return '<main class="page"><p>No neighbor target is active.</p></main>';
+  if (!target) return '<main class="page"><p>No neighbour target is active.</p></main>';
   const country = COUNTRY_BY_ID.get(target.countryId);
   const questionNumber = session.currentIndex + 1;
   const remainingAttempts = Math.max(0, target.attemptBudget - target.guessedIds.length);
@@ -27,7 +27,7 @@ export function renderNeighborQuiz(
   return `
     <main class="page neighbor-quiz-page">
       <header class="topbar topbar--detail neighbor-quiz-header">
-        <button class="icon-button" data-action="exit-round" aria-label="Exit neighbor round">${icon('close')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="Exit neighbour round">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1">${escapeHtml(country?.name ?? target.countryId)}</h1>
           <span>${session.mode === 'learn' ? 'Learn' : 'Test'} · ${escapeHtml(session.scope.label)} · ${questionNumber}/${session.countryIds.length}</span>
@@ -37,8 +37,8 @@ export function renderNeighborQuiz(
       <section class="neighbor-task" aria-labelledby="neighbor-prompt">
         <div class="neighbor-status-line">
           <div>
-            <h2 id="neighbor-prompt">Name every land-border neighbor</h2>
-            <p><strong>${target.foundIds.length} of ${target.neighborIds.length}</strong> neighbors found</p>
+            <h2 id="neighbor-prompt">Name every land-border neighbour</h2>
+            <p><strong>${target.foundIds.length} of ${target.neighborIds.length}</strong> neighbours found</p>
           </div>
           <div class="neighbor-attempts" aria-label="${remainingAttempts} attempts remaining">
             <strong>${remainingAttempts}</strong><span>attempts left</span>
@@ -104,7 +104,7 @@ function renderFeedback(outcome: NeighborGuessOutcome | null): string {
   if (outcome.kind === 'correct') {
     return `<p class="neighbor-feedback neighbor-feedback--correct">Correct: ${escapeHtml(countryName(outcome.selectedCountryId))}.</p>`;
   }
-  return `<p class="neighbor-feedback neighbor-feedback--wrong">${escapeHtml(countryName(outcome.selectedCountryId))} is not in this neighbor set.</p>`;
+  return `<p class="neighbor-feedback neighbor-feedback--wrong">${escapeHtml(countryName(outcome.selectedCountryId))} is not in this neighbour set.</p>`;
 }
 
 function renderResolution(target: NonNullable<ReturnType<typeof currentNeighborTarget>>): string {
@@ -113,7 +113,7 @@ function renderResolution(target: NonNullable<ReturnType<typeof currentNeighborT
   return `
     <div class="neighbor-resolution" data-autofocus tabindex="-1">
       <strong>${target.resolution === 'complete' ? (clean ? 'Complete — clean set' : 'Complete') : 'Attempts exhausted'}</strong>
-      ${remaining.length ? `<p>Remaining: ${remaining.map((countryId) => escapeHtml(countryName(countryId))).join(', ')}</p>` : '<p>Every land neighbor found.</p>'}
+      ${remaining.length ? `<p>Remaining: ${remaining.map((countryId) => escapeHtml(countryName(countryId))).join(', ')}</p>` : '<p>Every land neighbour found.</p>'}
       <button class="button button--primary" data-action="next-neighbor">Next</button>
     </div>
   `;
