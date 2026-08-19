@@ -391,15 +391,18 @@ async function main() {
     const countryFeature = simplifiedById.get(row.id);
     if (!countryFeature) throw new Error(`Simplified topology missing ${row.id}.`);
     const centroid = planarPath.centroid(countryFeature);
+    const countryPath = planarPath(countryFeature);
+    if (!countryPath) throw new Error(`Simplified topology projected ${row.id} to an empty path.`);
     const countryGeometry = { countryId: row.id };
     if (ISLAND_LOCATORS.has(row.id)) {
+      countryGeometry.outlinePath = countryPath;
       countryGeometry.locator = {
         cx: Number(centroid[0].toFixed(2)),
         cy: Number(centroid[1].toFixed(2)),
         r: 7,
       };
     } else {
-      countryGeometry.path = planarPath(countryFeature);
+      countryGeometry.path = countryPath;
     }
     const callout = calloutFor(row.id, centroid);
     if (callout) countryGeometry.callout = callout;

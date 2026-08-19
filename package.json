@@ -1,9 +1,9 @@
 {
   "name": "flag-atlas",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "private": true,
   "type": "module",
-  "description": "A mobile-first adaptive geography-learning PWA for flags, locations, and land-border neighbors.",
+  "description": "A mobile-first adaptive geography learning PWA for flags, country locations, and country outlines.",
   "engines": {
     "node": ">=22"
   },
@@ -11,7 +11,7 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
     "maps:generate": "node scripts/generate-map-assets.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-neighbors.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {

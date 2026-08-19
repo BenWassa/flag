@@ -14,7 +14,7 @@ if (result.error) {
 }
 if (result.status !== 0) process.exit(result.status ?? 1);
 
-for (const file of ['index.html', 'styles.css', 'map.css', 'map-cartography.css', 'neighbors.css']) {
+for (const file of ['index.html', 'styles.css', 'map.css', 'map-cartography.css', 'outline.css']) {
   await cp(file, `dist/${file}`);
 }
 

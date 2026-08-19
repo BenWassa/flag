@@ -1,30 +1,30 @@
 import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
 import { COUNTRIES } from '../../data/countries.js';
-import { AFRICA_LAND_ADJACENCY, AFRICA_STANDARD_NEIGHBOR_TARGET_IDS } from '../../data/neighbors/index.js';
 import { createInitialLocationProgress, getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
-import { createInitialNeighborProgress, getNeighborScopeStats } from '../../domain/neighbor-game.js';
-import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
-import { getScopeStats } from '../../domain/progress.js';
+import { createInitialProgress, getScopeStats } from '../../domain/progress.js';
 import { brandMark, icon } from '../components/icons.js';
 import { progressStrip } from '../components/progress.js';
+
+const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
+const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
 
 export function renderHome(
   progress: ProgressState,
   locationProgressOrPersisting: LocationProgressState | boolean = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
-  neighborProgress: NeighborProgressState = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
+  outlineProgress: ProgressState = createInitialProgress(AFRICA_COUNTRIES),
 ): string {
   const legacyPersisting = typeof locationProgressOrPersisting === 'boolean' ? locationProgressOrPersisting : true;
   const locationProgress = typeof locationProgressOrPersisting === 'boolean'
     ? createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS)
     : locationProgressOrPersisting;
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
+  const africaScope: StudyScope = { kind: 'continent', id: 'africa', label: 'Africa' };
   const flags = getScopeStats(COUNTRIES, progress, worldScope);
   const locations = getLocationScopeStats(locationProgress, AFRICA_MAP_COUNTRY_IDS);
   const locationStats = { ...locations, due: 0 };
-  const neighbors = getNeighborScopeStats(neighborProgress, AFRICA_MAP_COUNTRY_IDS, AFRICA_LAND_ADJACENCY);
-  const neighborStats = { ...neighbors, due: 0 };
+  const outlines = getScopeStats(COUNTRIES, outlineProgress, africaScope);
 
   return `
     <main class="page page--home">
@@ -83,20 +83,20 @@ export function renderHome(
           <button class="continent-row" data-action="open-domain" data-id="outlines">
             <span class="continent-row__identity">
               <strong>Outlines</strong>
-              <small>Country silhouettes · Issue #2</small>
+              <small>Africa · 54 countries · 5 regions</small>
             </span>
-            <span class="continent-row__progress"><span class="region-row__status">Planned</span></span>
-            <span class="continent-row__score"></span>
+            <span class="continent-row__progress">${progressStrip(outlines)}</span>
+            <span class="continent-row__score"><strong>${outlines.mastered}</strong><small>/${outlines.total}</small></span>
             ${icon('chevron')}
           </button>
 
           <button class="continent-row" data-action="open-domain" data-id="neighbors">
             <span class="continent-row__identity">
               <strong>Neighbors</strong>
-              <small>Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} standard targets · 5 regions</small>
+              <small>Land-border knowledge · Issue #3</small>
             </span>
-            <span class="continent-row__progress">${progressStrip(neighborStats)}</span>
-            <span class="continent-row__score"><strong>${neighbors.mastered}</strong><small>/${neighbors.total}</small></span>
+            <span class="continent-row__progress"><span class="region-row__status">Planned</span></span>
+            <span class="continent-row__score"></span>
             ${icon('chevron')}
           </button>
         </div>
