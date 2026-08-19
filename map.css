@@ -215,6 +215,7 @@
 .map-stage--results .map-country { cursor: default; }
 .map-results-actions {
   display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: 10px;
   margin-top: var(--space-6);
   padding-bottom: env(safe-area-inset-bottom);
@@ -224,10 +225,6 @@
   .map-entry-row:hover { background: var(--surface-subtle); }
   .map-country:hover .map-country__shape,
   .map-country:hover .map-country__locator { stroke: var(--action); stroke-width: 2.25; }
-}
-
-@media (min-width: 640px) {
-  .map-results-actions { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (max-width: 639px) {
