@@ -5,6 +5,7 @@ import {
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   getAfricaNeighborScopeConfig,
 } from '../../data/neighbors/index.js';
+import { domainDisplayName } from '../../domain/display.js';
 import { createInitialLocationProgress, getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
 import { createInitialNeighborProgress, getNeighborScopeStats } from '../../domain/neighbor-game.js';
@@ -73,7 +74,7 @@ export function renderHome(
         <div class="continent-list">
           <button class="continent-row" data-action="open-domain" data-id="flags">
             <span class="continent-row__identity">
-              <strong>Flags</strong>
+              <strong>${domainDisplayName('flags')}</strong>
               <small>World · 195 countries · Learn or test</small>
             </span>
             <span class="continent-row__progress">${progressStrip(flags)}</span>
@@ -83,7 +84,7 @@ export function renderHome(
 
           <button class="continent-row" data-action="open-domain" data-id="locations">
             <span class="continent-row__identity">
-              <strong>Locations</strong>
+              <strong>${domainDisplayName('locations')}</strong>
               <small>Africa · 54 countries · 5 regions</small>
             </span>
             <span class="continent-row__progress">${progressStrip(locationStats)}</span>
@@ -93,7 +94,7 @@ export function renderHome(
 
           <button class="continent-row" data-action="open-domain" data-id="outlines">
             <span class="continent-row__identity">
-              <strong>Outlines</strong>
+              <strong>${domainDisplayName('outlines')}</strong>
               <small>Africa · 54 countries · 5 regions</small>
             </span>
             <span class="continent-row__progress">${progressStrip(outlines)}</span>
@@ -103,7 +104,7 @@ export function renderHome(
 
           <button class="continent-row" data-action="open-domain" data-id="neighbors">
             <span class="continent-row__identity">
-              <strong>Neighbors</strong>
+              <strong>${domainDisplayName('neighbors')}</strong>
               <small>Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} standard targets · 5 regions</small>
             </span>
             <span class="continent-row__progress">${progressStrip(neighborStats)}</span>
