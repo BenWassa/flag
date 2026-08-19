@@ -17,7 +17,7 @@ export function renderMapHome(
 ): string {
   const config = getAfricaMapScopeConfig(scope.id ?? 'africa');
   if (!config) {
-    return `<main class="page"><h1 tabindex="-1" data-autofocus>Map scope unavailable</h1><button class="button" data-action="home">Back</button></main>`;
+    return `<main class="page"><h1 tabindex="-1" data-autofocus>Location scope unavailable</h1><button class="button" data-action="route-parent">Back</button></main>`;
   }
 
   const stats = getLocationScopeStats(progress, config.countryIds);
@@ -27,10 +27,10 @@ export function renderMapHome(
   return `
     <main class="page">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="${isAfrica ? 'home' : 'open-map-scope'}"${isAfrica ? '' : ' data-id="africa"'} aria-label="${isAfrica ? 'Back to flags' : 'Back to Africa locations'}">${icon('back')}</button>
+        <button class="icon-button" data-action="route-parent" aria-label="Back one level">${icon('back')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${escapeHtml(config.scope.label)}</h1>
-          <span>Country locations · ${stats.total} countries</span>
+          <span>Locations · ${isAfrica ? 'Continent' : 'Region'} · ${stats.total} countries</span>
         </div>
       </header>
 
@@ -70,7 +70,7 @@ export function renderMapHome(
         <p>The completed map records where you needed help. Three misses reveal the target; wrongly tapped countries do not stay filled.</p>
       </section>
 
-      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so map progress will last only for this visit.</p>`}
+      ${persisting ? '' : `<p class="storage-notice">This browser is blocking storage, so location progress will last only for this visit.</p>`}
     </main>
   `;
 }
@@ -88,7 +88,7 @@ function renderRegions(progress: LocationProgressState): string {
               ? `${stats.learning} learning`
               : 'Mastered';
           return `
-            <button class="region-row" data-action="open-map-scope" data-id="${config.scope.id}">
+            <button class="region-row" data-action="open-scope" data-domain="locations" data-id="${config.scope.id}">
               <span class="region-row__identity">
                 <strong>${escapeHtml(config.scope.label)}</strong>
                 <small>${stats.total} countries · ${stats.mastered}/${stats.total} mastered</small>

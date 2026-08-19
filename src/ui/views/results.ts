@@ -10,8 +10,6 @@ export function renderResults(result: SessionResult): string {
     .map((id) => COUNTRY_BY_ID.get(id))
     .filter((country) => country !== undefined);
 
-  // Both sides of a mistake are resolved up front. An attempt can outlive a
-  // catalog change, and an unresolved id used to throw from inside the template.
   const missed = result.missed.flatMap((attempt) => {
     const correct = COUNTRY_BY_ID.get(attempt.countryId);
     if (!correct) return [];
@@ -21,10 +19,10 @@ export function renderResults(result: SessionResult): string {
   return `
     <main class="page results-page">
       <header class="topbar topbar--detail results-header">
-        <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('close')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} flags">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${escapeHtml(result.session.scope.label)}</h1>
-          <span>Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Test'}</span>
+          <span>Flags · Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Test'}</span>
         </div>
       </header>
 
@@ -73,7 +71,7 @@ export function renderResults(result: SessionResult): string {
       <div class="result-actions">
         ${missed.length ? '<button class="button button--primary" data-action="review-mistakes">Review mistakes</button>' : ''}
         <button class="button button--secondary" data-action="repeat-scope">Another round</button>
-        <button class="button button--tertiary" data-action="home">Back to atlas</button>
+        <button class="button button--tertiary" data-action="exit-round">Back to ${escapeHtml(result.session.scope.label)}</button>
       </div>
     </main>
   `;

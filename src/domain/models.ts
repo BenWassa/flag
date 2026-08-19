@@ -7,7 +7,11 @@ export const CONTINENT_IDS = [
   'oceania',
 ] as const;
 
+export const LEARNING_DOMAIN_IDS = ['flags', 'locations', 'outlines', 'neighbors'] as const;
+
 export type ContinentId = (typeof CONTINENT_IDS)[number];
+export type LearningDomain = (typeof LEARNING_DOMAIN_IDS)[number];
+export type LearningActivity = 'learn' | 'test' | 'review';
 export type LearningStatus = 'unseen' | 'learning' | 'mastered';
 export type StudyMode = 'learn' | 'test';
 export type ScopeKind = 'world' | 'continent' | 'region';

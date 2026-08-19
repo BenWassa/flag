@@ -1,8 +1,8 @@
 {
   "name": "Flag Atlas",
   "short_name": "Flag Atlas",
-  "description": "Learn the flags of the world with adaptive mastery.",
-  "start_url": "./",
+  "description": "Learn flags and country geography with durable progress and focused practice.",
+  "start_url": "./#/",
   "scope": "./",
   "display": "standalone",
   "background_color": "#f5f7fa",

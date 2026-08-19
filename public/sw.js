@@ -1,5 +1,5 @@
-// v8 supersedes flag-atlas-v7 after the production cartography/viewport upgrade.
-const VERSION = 'flag-atlas-v8';
+// v9 integrates the routing/IA and production cartography releases.
+const VERSION = 'flag-atlas-v9';
 const SHELL = [
   './',
   './index.html',
