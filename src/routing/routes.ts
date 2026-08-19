@@ -125,7 +125,7 @@ export function serializeRoutePath(route: AppRoute): string {
   if (route.name === 'home') return '/';
   if (route.name === 'progress') return '/progress';
 
-  const segments = [route.domain];
+  const segments: string[] = [route.domain];
   if (route.scope?.kind === 'continent' && route.scope.id) {
     segments.push(route.scope.id);
   } else if (route.scope?.kind === 'region' && route.scope.id) {
