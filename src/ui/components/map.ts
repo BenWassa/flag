@@ -1,4 +1,9 @@
-import type { MapRegionAsset, MapSession, MapTargetState } from '../../domain/map-models.js';
+import type {
+  MapCountryGeometry,
+  MapRegionAsset,
+  MapSession,
+  MapTargetState,
+} from '../../domain/map-models.js';
 
 function resolutionClass(state: MapTargetState | undefined, showFeedback: boolean): string {
   if (!showFeedback || !state?.resolved || !state.resolution) return '';
@@ -15,6 +20,14 @@ function circlePath(cx: number, cy: number, radius: number): string {
   return `M${cx - radius},${cy}a${radius},${radius} 0 1,0 ${radius * 2},0a${radius},${radius} 0 1,0 -${radius * 2},0Z`;
 }
 
+function geometryExclusionParts(geometry: MapCountryGeometry): string[] {
+  return [
+    geometry.path ?? '',
+    geometry.locator ? circlePath(geometry.locator.cx, geometry.locator.cy, geometry.locator.r + 5) : '',
+    geometry.callout ? circlePath(geometry.callout.target.cx, geometry.callout.target.cy, geometry.callout.target.r + 5) : '',
+  ];
+}
+
 function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interactive: boolean): string {
   if (!interactive) return '';
   const targetId = session.countryIds[session.currentIndex];
@@ -25,13 +38,10 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
   const usableRadius = Math.max(assist.r, 22);
   const exclusionPaths = [
     ...(asset.contextPaths ?? []),
+    ...(asset.contextCountries ?? []).flatMap(geometryExclusionParts),
     ...asset.countries
       .filter((item) => item.countryId !== targetId)
-      .flatMap((item) => [
-        item.path ?? '',
-        item.locator ? circlePath(item.locator.cx, item.locator.cy, item.locator.r + 5) : '',
-        item.callout ? circlePath(item.callout.target.cx, item.callout.target.cy, item.callout.target.r + 5) : '',
-      ]),
+      .flatMap(geometryExclusionParts),
   ].filter(Boolean).join(' ');
   const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
 
@@ -51,6 +61,13 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
       data-id="${targetId}"
       aria-hidden="true"
     />
+  `;
+}
+
+function renderContextCountry(geometry: MapCountryGeometry): string {
+  return `
+    ${geometry.path ? `<path class="map-context-country" d="${geometry.path}" />` : ''}
+    ${geometry.locator ? `<circle class="map-context-locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />` : ''}
   `;
 }
 
@@ -81,14 +98,17 @@ export function renderMapSvg(
       : null;
   const focus = asset.initialFocus;
   const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
+  const canvasWidth = Number(asset.viewBox.trim().split(/\s+/)[2]) || 760;
+  const hasContext = (asset.contextPaths?.length ?? 0) > 0 || (asset.contextCountries?.length ?? 0) > 0;
 
   return `
     <div class="map-stage__scroll" data-map-viewport data-map-session="${session.id}" data-map-viewbox="${asset.viewBox}"${focus ? ` data-map-focus="${focusData}"` : ''}>
-      <svg class="map-svg" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
+      <svg class="map-svg" style="--map-canvas-width: ${canvasWidth}px" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}">
         <rect class="map-ocean" x="0" y="0" width="100%" height="100%" />
-        ${(asset.contextPaths ?? []).length ? `
+        ${hasContext ? `
           <g class="map-context" aria-hidden="true">
             ${(asset.contextPaths ?? []).map((path) => `<path class="map-context-country" d="${path}" />`).join('')}
+            ${(asset.contextCountries ?? []).map(renderContextCountry).join('')}
           </g>
         ` : ''}
         ${asset.countries.map((geometry) => {
@@ -106,8 +126,8 @@ export function renderMapSvg(
             <g class="${classes}"${action}>
               ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
               ${geometry.locator ? `
-                <circle class="map-country__locator-halo" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r + 5}" />
                 <circle class="map-country__locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />
+                ${selectable ? `<circle class="map-country__locator-hit" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${Math.max(geometry.locator.r, 22)}" />` : ''}
               ` : ''}
               ${geometry.callout ? `
                 <line class="map-country__callout-line" x1="${geometry.callout.anchor.cx}" y1="${geometry.callout.anchor.cy}" x2="${geometry.callout.target.cx}" y2="${geometry.callout.target.cy}" />
