@@ -1,11 +1,12 @@
-// v9 supersedes flag-atlas-v8 after integrating the routing/IA and production cartography releases.
-const VERSION = 'flag-atlas-v9';
+// v10 adds the neighboring-countries learning domain and its mobile entry surface.
+const VERSION = 'flag-atlas-v10';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './map.css',
   './map-cartography.css',
+  './neighbors.css',
   './app.js',
   './map-viewport.js',
   './manifest.webmanifest',
