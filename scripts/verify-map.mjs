@@ -27,6 +27,8 @@ assert.deepEqual(
   new Set(WEST_AFRICA_MAP_COUNTRY_IDS),
   'Map geometry must exactly cover the pilot curriculum.',
 );
+assert.ok((asset.contextPaths?.length ?? 0) > 20, 'A region round keeps the rest of Africa as non-interactive geographic context.');
+assert.ok(asset.initialFocus, 'Region assets define an initial gameplay viewport within the continent canvas.');
 
 for (const geometry of asset.countries) {
   const country = COUNTRIES.find((item) => item.id === geometry.countryId);
@@ -87,12 +89,23 @@ const renderedMapIds = [...quizHtml.matchAll(/data-action="map-answer" data-id="
 assert.deepEqual(new Set(renderedMapIds), new Set(WEST_AFRICA_MAP_COUNTRY_IDS), 'Every pilot country is directly interactive.');
 assert.equal((quizHtml.match(/data-autofocus/g) ?? []).length, 1, 'Map quiz has one focus landing point.');
 assert.ok(quizHtml.indexOf('map-prompt') < quizHtml.indexOf('map-stage'), 'The active target stays above the geography while scanning.');
+assert.ok(quizHtml.includes('map-context-country'), 'Out-of-region Africa remains visible as faded context.');
+assert.ok(quizHtml.includes('data-map-viewport'), 'Map gameplay exposes a dedicated pannable viewport.');
+assert.ok(quizHtml.includes('data-map-focus='), 'The viewport carries the preferred starting region for mobile centering.');
+assert.ok(quizHtml.includes('swipe or drag to pan Africa'), 'The first prompt teaches the continent-pan gesture once.');
 
 const narrowSession = buildMapSession(asset, 'learn', 'narrow-target', ['TGO']);
 const narrowHtml = renderMapQuiz(asset, narrowSession, null);
-assert.ok(narrowHtml.includes('r="46"'), 'Narrow targets receive a roughly 44px effective hit region on a phone-width fitted map.');
+assert.ok(narrowHtml.includes('r="22"'), 'Narrow target assistance aims at roughly a 44px effective diameter, not a 90px circle.');
 assert.ok(narrowHtml.includes('clip-path="url(#map-target-hit-clip)"'), 'Expanded target assistance is clipped so neighbouring countries remain real wrong answers.');
-assert.ok(narrowHtml.includes('fill-rule="evenodd"'), 'The assist clip explicitly subtracts other country geometry.');
+assert.ok(narrowHtml.includes('fill-rule="evenodd"'), 'The assist clip explicitly subtracts surrounding geography.');
+
+let currentCorrectSession = buildMapSession(asset, 'learn', 'current-correct', ['GHA']);
+let currentCorrectProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
+const currentCorrect = applyMapGuess(currentCorrectSession, currentCorrectProgress, 'GHA', 500);
+currentCorrectSession = currentCorrect.session;
+const currentCorrectHtml = renderMapQuiz(asset, currentCorrectSession, null);
+assert.ok(currentCorrectHtml.includes('map-country--first map-country--current-correct'), 'A correct tap gets a strong transient success fill before settling to the stored score color.');
 
 let resultSession = buildMapSession(asset, 'learn', 'result-round', ['GHA']);
 let resultProgress = createInitialLocationProgress(WEST_AFRICA_MAP_COUNTRY_IDS);
@@ -131,8 +144,18 @@ assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 const mapCss = await readFile('map.css', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses the shared token system instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
-assert.ok(!mapCss.includes('min-width: 700px'), 'Mobile map does not require the old 700px horizontal-search canvas.');
+assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable on small screens.');
+assert.ok(mapCss.includes('touch-action: pan-x pan-y pinch-zoom'), 'Touch gestures prioritize two-axis map panning and platform zoom.');
+assert.ok(mapCss.includes('.map-country[tabindex]:focus'), 'SVG country focus overrides the global rectangular tabindex outline.');
+assert.ok(mapCss.includes('.map-country--current-correct'), 'Correct taps have a dedicated high-salience transient state.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
 
-console.log('Map pilot verification passed, including refined UX contract.');
+const indexHtml = await readFile('dist/index.html', 'utf8');
+assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behavior.');
+const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
+assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across map rerenders.');
+const serviceWorker = await readFile('dist/sw.js', 'utf8');
+assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper is part of the offline app shell.');
+
+console.log('Map pilot verification passed, including mobile continent-context gameplay contract.');
