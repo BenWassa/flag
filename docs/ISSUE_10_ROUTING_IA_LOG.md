@@ -156,12 +156,12 @@ Issue #10 explicitly names cold deep links and browser-native Back/Forward as re
 
 **Change**
 
-Extended `verify-routing.mjs` with a fake GitHub Pages-style browser window. It now cold-loads `https://example.test/flag/#/locations/africa/west-africa`, verifies the server-visible `/flag/` pathname remains unchanged, pushes typed routes, exercises Back and Forward, verifies replace navigation, and checks result Review/Repeat/Exit contracts for both Flags and Locations.
+Extended `verify-routing.mjs` with a fake GitHub Pages-style browser window. It cold-loads `https://example.test/flag/#/locations/africa/west-africa`, verifies the server-visible `/flag/` pathname remains unchanged, pushes typed routes, exercises Back and Forward, verifies replace navigation, and checks result Review/Repeat/Exit contracts for both Flags and Locations.
 
 **Verification**
 
-CI run #61 is the final validation run for this strengthened contract and is pending at the time of this log entry.
+CI run #61 completed successfully with the strengthened routing verifier. The complete build + flag + Africa map + map-edge + routing suite remained green.
 
 **Evaluation**
 
-Automated coverage now tests browser-history semantics in addition to pure route functions while keeping the documented limitation clear: there is still no real-browser E2E/device test harness in this repository.
+Automated coverage now tests browser-history semantics in addition to pure route functions while keeping the documented limitation clear: there is still no real-browser E2E/device test harness in this repository. The final production artifact is inspected only after this worklog closeout commit so the artifact corresponds to the exact final branch head.
