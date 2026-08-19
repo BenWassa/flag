@@ -10,7 +10,7 @@
   "scripts": {
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
-    "maps:generate": "node scripts/generate-maps.mjs && node scripts/optimize-map-runtime.mjs",
+    "maps:generate": "node scripts/generate-map-assets.mjs",
     "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-cartography.mjs",
     "test": "npm run build && npm run verify"
   },
