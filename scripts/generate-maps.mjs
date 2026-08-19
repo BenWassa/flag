@@ -78,13 +78,10 @@ async function fetchSource(manifest, key, updateHashes) {
 }
 
 function parseAfricaCatalog(source) {
-  const match = source.match(/const ROWS = `([\s\S]*?)`;/);
-  if (!match) throw new Error('Could not parse canonical country rows.');
-  const rows = match[1]
-    .trim()
-    .split('\n')
+  const rows = source
+    .split(/\r?\n/)
     .map((line) => line.trim())
-    .filter(Boolean)
+    .filter((line) => /^[A-Z]{3}\|[A-Z]{2}\|.+\|[a-z-]+$/.test(line))
     .map((line) => {
       const [id, iso2, name, region] = line.split('|');
       return { id, iso2, name, region };
