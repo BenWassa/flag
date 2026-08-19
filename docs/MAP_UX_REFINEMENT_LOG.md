@@ -287,3 +287,28 @@ This environment cannot run a reliable interactive browser against the fresh Git
 ### Merge recommendation
 
 **Ready to merge** if the latest PR CI remains green. The pass materially improves coherence, task flow, accessibility, learning correctness, and responsive behavior without changing the flag-learning domain or the map mastery model.
+
+### 01:07 — PR #5 merged
+
+**Result**
+- Final PR-head CI run `32218173648` completed successfully.
+- PR #5 was marked ready and squash-merged to `main`.
+- Merge commit: `bed2cee9ad3a5be23a835b3d32b7aa9b66896514`.
+- Issue #1 remains open as the umbrella tracker; its body was updated so future region work inherits the refined visual, mobile, feedback, and hit-target rules from this pass.
+
+**Release assessment**
+The code and automated UX contract are ready for production deployment. The remaining QA layer is physical production-device feel, not an identified code blocker.
+
+### 01:10 — Public-origin verification attempted
+
+**Action**
+- Retried access to the configured GitHub Pages origin after merge.
+- The public web tool still rejects the fresh `github.io` URL as unavailable to its current safe/indexed URL set, and search indexing returns no result yet.
+
+**Result**
+- No claim is made that the post-merge production origin was visually clicked through from this environment.
+- The exact CI-built artifact, compiled interaction states, project-subpath asset paths, and final PR-head test suite were verified before merge.
+- The repository's CI→Pages automation remains the deployment path for successful `main` pushes.
+
+**Closeout**
+This worklog is now the source of truth for the West Africa map UX refinement. Future visual or behavioral changes should append a timestamped observation → hypothesis → change → verification → evaluation entry rather than making untracked polish edits.
