@@ -1,9 +1,9 @@
 # Flag Atlas — Product Requirements Document
 
-**Status:** MVP implementation baseline  
+**Status:** MVP implementation baseline, updated through Issue #21<br>
 **Product:** Mobile-first world flag learning application  
 **Core catalog:** 195 sovereign-state flags  
-**Primary experience:** Learn and Test, organized by world → continent → region  
+**Primary experience:** Learn and Play, organised by world → continent → region<br>
 **Design benchmark:** Seterra's speed and geographic organization, with a stronger visual system and a persistent adaptive learning model.
 
 ## 1. Product thesis
@@ -12,7 +12,7 @@ Flag Atlas should make learning every national flag feel intrinsically satisfyin
 
 The application maintains a durable model of what the learner knows. At any point it must be able to answer:
 
-1. Which flags has this learner never been tested on?
+1. Which flags has this learner never answered a question about?
 2. Which flags are still being learned?
 3. Which flags have been demonstrated as mastered?
 4. Which flags should appear next?
@@ -35,9 +35,11 @@ Those answers must survive app restarts and must never depend on transient quiz 
 Users choose between two primary intents:
 
 - **Learn:** adaptive practice with immediate answer feedback.
-- **Test:** a balanced sample from the chosen scope with answer correctness withheld until the round ends.
+- **Play:** a balanced sample from the chosen scope with answer correctness withheld until the round ends.
 
 The default learner path is adaptive, while geographic scope remains fully user-controlled.
+
+**Play** is the learner-facing label only. The implementation continues to use the activity value `test`, the `/test` route segment, `start-test` data actions, existing storage namespaces, and verification identifiers. Those technical contracts must not be renamed as part of product-copy changes.
 
 ### Scope
 
@@ -47,7 +49,7 @@ MVP is flags only. Country-location maps, capitals, geography picking, outlines,
 
 The first release optimizes for an excellent core loop:
 
-**Choose scope → Learn/Test → Answer → Update knowledge model → Review results → Continue**
+**Choose scope → Learn/Play → Answer → Update knowledge model → Review results → Continue**
 
 ## 3. Goals
 
@@ -235,7 +237,7 @@ Before locking a long-term algorithm, research should compare:
 
 1. Should mastery require a fixed count or a predicted recall probability threshold?
 2. Should an extremely slow correct answer count equally toward mastery?
-3. Should Test-mode answers carry more evidentiary weight than Learn-mode answers because feedback is withheld?
+3. Should Play-mode answers carry more evidentiary weight than Learn-mode answers because feedback is withheld?
 4. How much inter-session spacing is required before two successes should count as independent evidence?
 5. Should mastery be scope-independent? Current requirement: yes. Senegal is either known or not known regardless of whether it was learned in West Africa or World mode.
 6. What target recall probability best balances progress speed and retention?
@@ -277,7 +279,7 @@ Selection weight increases for:
 
 Immediate feedback is shown after each answer.
 
-## 11. Test mode
+## 11. Play mode
 
 Purpose: measure a scope cleanly.
 
@@ -287,9 +289,9 @@ Requirements:
 - Questions sample across that scope rather than concentrating only on weak items.
 - Correctness is not revealed during the round.
 - Final results show score, missed flags, selected wrong answers, and learning-state changes.
-- Test answers update the knowledge model because they are valid evidence of recognition.
+- Play answers update the knowledge model because they are valid evidence of recognition.
 
-Future research may assign different evidence weights to Learn and Test answers while retaining one unified progress ledger.
+Future research may assign different evidence weights to Learn and Play answers while retaining one unified progress ledger.
 
 ## 12. Quiz construction
 
@@ -358,38 +360,49 @@ Requirements:
 
 ## 15. Navigation model
 
-Primary hierarchy:
-
-`World → Continent → Region`
+The interface reveals only the next real decision. A routed page is justified only when it asks a question; a domain with one available continent canonicalises past that redundant level.
 
 ### Home
 
 Shows:
 
-- World Mastered / Learning / Unseen totals.
-- Learn World.
-- Test World.
-- Six continent index rows rather than a decorative card grid.
-- Per-continent progress.
+- Four domain rows: Flags, Locations, Outlines, and Neighbours.
+- A row body that opens the next real scope decision.
+- A trailing Play control on every row: World for Flags and Africa for the three Africa-only domains.
+- Progress inside each row without a separate learning-state legend.
 - Direct access to the full Progress ledger.
 
-### Continent
+### Flags continent index
 
 Shows:
 
-- Continent progress.
-- Learn.
-- Test.
-- Region list with status.
+- World status with named Learn world and Play world actions.
+- Six continent rows rather than a decorative card grid.
+- A row body that opens the continent launcher.
+- A trailing Play control that starts the existing Play activity for that continent.
+- Per-continent progress.
 
-### Region
+### Launcher
 
-Shows:
+One routed launcher is parameterised by domain, continent scope, and an optional selected region. Locations, Outlines, and Neighbours canonicalise directly to their Africa launcher; Flags reaches a launcher after its genuine six-way continent choice.
 
-- Region progress.
-- Learn.
-- Test.
-- Country-level ledger for that region.
+The launcher shows:
+
+- a Back control to the launcher's true parent;
+- one visually dominant Play action that always names its current scope;
+- decision-relevant progress and textual status;
+- an optional, progressively loaded map for Africa Locations, Outlines, and Neighbours;
+- an always-present region list;
+- a row body that selects a region without starting a round;
+- a trailing Play control that starts that region directly;
+- one subordinate Learn action that names the same scope as Play;
+- an All Africa control when a region is selected.
+
+A route such as `/#/locations/africa/west-africa` renders the Africa launcher with West Africa selected, not a separate region screen. Selection updates both primary actions and the URL. It does not reveal a country ledger, learning-state legend, feedback key, or round-rules explanation.
+
+Region selection replaces the current launcher history entry. Starting Learn or Play pushes a new activity entry, so Back from a round returns to the exact launcher selection that started it. All Africa clears a region selection and is distinct from Back; Back always returns to the launcher parent.
+
+The launcher must remain fully usable before optional geometry loads. Play, Learn, the region list, and text state cannot depend on the map asset.
 
 ### Learning Ledger
 
@@ -417,7 +430,7 @@ Screen contains:
 - Exit control.
 - Scope label.
 - Round progress.
-- Learn/Test state.
+- Learn/Play state.
 - Flag image.
 - Four large country options.
 
@@ -444,7 +457,7 @@ Incorrect answer:
 - Show correct country and current state.
 - User taps Next or presses Enter.
 
-### Test answer behavior
+### Play answer behaviour
 
 - Record choice.
 - Do not reveal correctness.
@@ -656,11 +669,15 @@ Useful product metrics:
 
 ### UX integrity
 
-- Home provides Learn and Test without opening settings.
-- A continent can be reached in one tap from Home.
-- A region can be reached in one additional tap.
+- Home exposes direct Play for all four domains without opening settings.
+- World Flags and Africa Play are reachable in one tap from Home; continent and region Play are reachable in no more than two.
+- Learn remains deliberate and costs at most one additional tap from the relevant launcher.
+- Locations, Outlines, and Neighbours routes without a scope canonicalise to their Africa launcher rather than rendering a one-choice screen.
+- Region selection updates the named Learn and Play scopes without starting a round or growing browser history.
+- Back from a launcher returns to its true parent; All Africa clears the region selection separately.
+- No pre-round surface contains a learning-state legend, feedback key, country ledger, or round-rules paragraph.
 - Flag description is never shown before an answer.
-- Test mode does not reveal correctness during the round.
+- Play mode does not reveal correctness during the round.
 - Every quiz answer is reachable by touch, keyboard tab navigation, and optional `1`–`4` shortcut.
 - Exiting World returns Home; exiting continent/region practice returns to that selected scope.
 
@@ -673,7 +690,7 @@ Useful product metrics:
 - [x] Two-success recovery after mastered lapse.
 - [x] Retention interval hooks.
 - [x] Learn mode.
-- [x] Test mode.
+- [x] Play mode (internal activity identifier: `test`).
 - [x] First-pass prioritization.
 - [x] Adaptive learning priority heuristic.
 - [x] Confusion graph capture.

@@ -91,7 +91,7 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // --- View rendering -------------------------------------------------------
 // The views are pure string builders, so their output can be asserted here
 // without a browser. These guard the states that are easy to break silently:
-// empty ledgers, focus landing points, and the single mastery-goal source.
+// launcher actions, focus landing points, and the single mastery-goal source.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
@@ -116,6 +116,16 @@ for (const [name, html] of Object.entries(screens)) {
   );
   assert.ok(!html.includes('undefined'), `${name} must not render undefined values.`);
   assert.ok(!html.includes('NaN'), `${name} must not render NaN values.`);
+}
+
+assert.equal((screens.home.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
+assert.equal((screens.home.match(/data-action="quick-play"/g) ?? []).length, 4, 'Every learning domain has a direct Play control.');
+assert.ok(screens.scope.includes('Play Africa') && screens.scope.includes('Learn Africa'), 'The continent launcher exposes its two round choices.');
+assert.ok(!screens.scope.includes('All Africa'), 'The continent launcher does not offer a redundant all-continent selector.');
+assert.ok(screens.region.includes('Play West Africa') && screens.region.includes('Learn West Africa'), 'Selecting a region retargets both round choices.');
+assert.ok(screens.region.includes('All Africa') && screens.region.includes('Selected'), 'The selected region is explicit and can be cleared in place.');
+for (const [name, html] of Object.entries({ scope: screens.scope, region: screens.region })) {
+  assert.ok(!html.includes('mini-ledger') && !html.includes('stat-legend'), `${name} launcher stays free of the deleted pre-round ledger and legend.`);
 }
 
 for (const filter of ['unseen', 'learning', 'mastered']) {
@@ -143,8 +153,8 @@ assert.ok(
 
 const lapsedProgress = { ...lapsed };
 assert.ok(
-  renderScope(lapsedProgress, { kind: 'region', id: 'west-africa', label: 'West Africa' }).includes('Learning 0/2'),
-  'The region ledger must read its mastery goal from masteryGoal, including the post-lapse goal of 2.',
+  renderProgress(lapsedProgress, 'all').includes('0/2 toward mastery'),
+  'The progress ledger must read its mastery goal from masteryGoal, including the post-lapse goal of 2.',
 );
 
 const quizSession = {
@@ -237,7 +247,7 @@ assert.ok(!repairedHtml.includes('NaN'), 'A repaired ledger cannot render NaN in
 assert.ok(!repairedHtml.includes('undefined'), 'A repaired ledger cannot render undefined into the progress screen.');
 assert.ok(
   !renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' }).includes('NaN'),
-  'A repaired ledger cannot render NaN into a region ledger.',
+  'A repaired progress state cannot render NaN into a region launcher.',
 );
 
 // A record the ledger never had at all: `getRecord` must supply the default

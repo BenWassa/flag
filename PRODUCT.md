@@ -12,7 +12,7 @@ Delegated: mobile-first TypeScript PWA with no runtime framework dependencies fo
 
 ## Users
 
-People who want to learn or test world geography efficiently, from casual geography learners through users deliberately working towards broad country knowledge. They may study the whole world, a continent, or a conventional geographic region where the selected learning domain supports that scope.
+People who want to learn or assess their world geography efficiently, from casual geography learners through users deliberately working towards broad country knowledge. They may study the whole world, a continent, or a conventional geographic region where the selected learning domain supports that scope.
 
 ## Product Purpose
 
@@ -20,11 +20,11 @@ Flag Atlas teaches country geography through four learning domains: **Flags, Loc
 
 ## Positioning
 
-Seterra-like immediacy combined with persistent adaptive mastery: scope remains user-controlled while Learn mode decides which items inside that scope deserve attention next. Test mode provides a clean assessment path without immediate correctness feedback.
+Seterra-like immediacy combined with persistent adaptive mastery: scope remains user-controlled while Learn mode decides which items inside that scope deserve attention next. Play mode provides a clean assessment path without immediate correctness feedback.
 
 ## Operating Context
 
-The primary loop is Choose domain → Choose scope → Learn/Test → answer the geography task → update knowledge state → review results → continue. Users may return after long gaps; progress must survive restarts and remain independent of transient quiz UI state.
+The primary loop is Choose domain → Choose scope → Learn/Play → answer the geography task → update knowledge state → review results → continue. Users may return after long gaps; progress must survive restarts and remain independent of transient quiz UI state.
 
 ## Capabilities and Constraints
 
@@ -36,7 +36,7 @@ The primary loop is Choose domain → Choose scope → Learn/Test → answer the
 - Neighbours currently supports standard Africa targets and five regions using topology-derived land-border adjacency. The stable internal route remains `/neighbors`.
 - Core learning states: Unseen → Learning → Mastered.
 - Mastery v1: three qualifying correct answers across separate rounds, with shorter recovery after a mastered lapse where the domain uses the shared mastery convention.
-- Learn and Test are separate intents.
+- Learn and Play are separate intents.
 - Local-first persistence and PWA behaviour are required.
 - Flag assets currently resolve through FlagCDN; vendored assets remain a production hardening item.
 - The scheduler must remain replaceable so later learning-science research can upgrade adaptive mastery without UI or storage rewrites.
@@ -46,6 +46,7 @@ The primary loop is Choose domain → Choose scope → Learn/Test → answer the
 - Product copy uses modern British English (`en-GB`).
 - The learner-facing domain label is **Neighbours**.
 - Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, and existing neighbour-progress storage namespaces are compatibility contracts and are not localised.
+- The learner-facing activity label is **Play**. The internal activity value `test`, `/test` route segment, `start-test` data actions, storage namespaces, and verification identifiers remain compatibility contracts.
 - Use **practice** as a noun and **practise** as a verb.
 - Country display names remain governed by [`docs/product/country-naming.md`](docs/product/country-naming.md), independently of the British-English copy standard.
 

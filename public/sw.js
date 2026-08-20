@@ -1,6 +1,7 @@
-// v13 refreshes learner-facing British-English copy while retaining the v12 Neighbours map presentation runtime.
+// v14 ships the simplified launcher IA and learner-facing Play terminology.
+// v13 refreshed British-English copy while retaining the v12 Neighbours map presentation runtime.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v13';
+const VERSION = 'flag-atlas-v14';
 const SHELL = [
   './',
   './index.html',

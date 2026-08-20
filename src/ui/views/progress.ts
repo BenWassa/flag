@@ -75,7 +75,7 @@ export function renderProgress(
               ? `${record.masteryStreak}/${masteryGoal(record)} toward mastery · ${record.lifetimeIncorrect} missed`
               : record.status === 'mastered'
                 ? `${record.lifetimeCorrect} correct · ${record.lapseCount} ${record.lapseCount === 1 ? 'lapse' : 'lapses'}`
-                : 'Never tested';
+                : 'Not practised yet';
             return `
               <div class="ledger-row">
                 ${flagImage(country, true, 'flag-frame--ledger')}

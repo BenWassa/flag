@@ -1,17 +1,16 @@
 import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
-import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from './data/map-scopes.js';
+import { AFRICA_MAP_SCOPE } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
-import { AFRICA_LAND_ADJACENCY, getAfricaNeighborScopeConfig } from './data/neighbors/index.js';
+import { AFRICA_LAND_ADJACENCY } from './data/neighbors/index.js';
 import { loadOutlineAsset } from './data/outlines.js';
 import { domainDisplayName } from './domain/display.js';
 import type {
   LearningActivity,
-  LearningDomain,
   LearningStatus,
   StudyMode,
   StudyScope,
 } from './domain/models.js';
-import type { MapMode } from './domain/map-models.js';
+import type { MapMode, MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
 import { getRecord, masteryGoal } from './domain/progress.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
@@ -21,11 +20,13 @@ import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
   isLearningDomain,
+  normalizeAvailableRoute,
   parentRoute,
   routeForScope,
   routeForScopeId,
   routeTitle,
   routesEqual,
+  scopeForQuickPlay,
   serializeRoutePath,
   stableRoute,
   type AppRoute,
@@ -33,6 +34,7 @@ import {
 } from './routing/routes.js';
 import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
+import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderDomainHome } from './ui/views/domain.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
@@ -72,6 +74,10 @@ let pendingAdvance: number | null = null;
 let pendingMapAdvance: number | null = null;
 let pendingOutlineAdvance: number | null = null;
 let lastRenderedRouteKey: string | null = null;
+let launcherMapAsset: MapRegionAsset | null = null;
+let launcherMapRequest = 0;
+let roundLaunchRequest = 0;
+let preserveScrollOnNextRoute = false;
 
 function cancelPendingAdvance(): void {
   if (pendingAdvance === null) return;
@@ -125,22 +131,44 @@ function normalizeRoute(route: AppRoute): AppRoute {
     return stableRoute(route);
   }
 
-  if (route.domain === 'flags') return route;
+  return normalizeAvailableRoute(route);
+}
 
-  if (route.domain === 'locations' || route.domain === 'outlines') {
-    if (!route.scope) return route;
-    if (route.scope.id && getAfricaMapScopeConfig(route.scope.id)) return route;
-    return { name: 'learning', domain: route.domain };
+function routeUsesLauncherMap(route: AppRoute): route is LearningRoute {
+  return route.name === 'learning'
+    && route.activity === undefined
+    && route.domain !== 'flags'
+    && route.scope !== undefined;
+}
+
+async function hydrateLauncherMap(route: AppRoute): Promise<void> {
+  const request = ++launcherMapRequest;
+  if (!routeUsesLauncherMap(route)) return;
+
+  const host = root.querySelector<HTMLElement>('[data-launcher-map-slot]');
+  if (!host || launcherMapAsset) return;
+
+  try {
+    const asset = await loadMapAsset('africa');
+    if (!asset) throw new Error('Africa geometry unavailable.');
+    launcherMapAsset = asset;
+
+    if (
+      request !== launcherMapRequest
+      || !host.isConnected
+      || !routesEqual(currentRoute, route)
+    ) return;
+
+    const selectedRegionId = route.scope?.kind === 'region' ? route.scope.id : undefined;
+    host.innerHTML = renderLauncherMap(asset, route.domain, selectedRegionId);
+  } catch {
+    if (
+      request !== launcherMapRequest
+      || !host.isConnected
+      || !routesEqual(currentRoute, route)
+    ) return;
+    host.innerHTML = '<p class="launcher-map-error">Map unavailable. Choose a region from the list.</p>';
   }
-
-  if (route.domain === 'neighbors') {
-    if (!route.scope) return route;
-    if (route.scope.id && getAfricaNeighborScopeConfig(route.scope.id)) return route;
-    return { name: 'learning', domain: 'neighbors' };
-  }
-
-  if (route.scope || route.activity) return { name: 'learning', domain: route.domain };
-  return route;
 }
 
 function applyRoute(requestedRoute: AppRoute): void {
@@ -191,9 +219,13 @@ function applyRoute(requestedRoute: AppRoute): void {
       break;
   }
   render();
+  void hydrateLauncherMap(route);
 }
 
 router.subscribe((route) => {
+  // Any intervening route change invalidates a lazy round start that is still
+  // waiting for geometry. The winning start increments this token itself.
+  roundLaunchRequest += 1;
   cancelAllPending();
   resetArmed = false;
   applyRoute(route ?? { name: 'home' });
@@ -261,23 +293,23 @@ function render(previousSelector: string | null = null): void {
 
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(store.progress, store.locationProgress, store.outlineProgress, store.neighborProgress);
+      root.innerHTML = renderHome(
+        store.progress,
+        store.locationProgress,
+        store.outlineProgress,
+        store.neighborProgress,
+        store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting,
+      );
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(
         store.view.domain,
         store.progress,
-        store.locationProgress,
-        store.outlineProgress,
-        store.neighborProgress,
         store.persisting,
-        store.mapPersisting,
-        store.outlinePersisting,
-        store.neighborPersisting,
       );
       break;
     case 'scope':
-      root.innerHTML = renderScope(store.progress, store.view.scope);
+      root.innerHTML = renderScope(store.progress, store.view.scope, store.persisting);
       break;
     case 'progress':
       root.innerHTML = renderProgress(store.progress, progressFilter, resetArmed, store.persisting);
@@ -293,7 +325,12 @@ function render(previousSelector: string | null = null): void {
       lastMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
       break;
     case 'map-home':
-      root.innerHTML = renderMapHome(store.locationProgress, store.view.scope, store.mapPersisting);
+      root.innerHTML = renderMapHome(
+        store.locationProgress,
+        store.view.scope,
+        store.mapPersisting,
+        launcherMapAsset,
+      );
       break;
     case 'map-quiz':
       if (!store.mapSession || !store.mapAsset) return;
@@ -304,7 +341,12 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderMapResults(store.mapAsset, store.view.result);
       break;
     case 'outline-home':
-      root.innerHTML = renderOutlineHome(store.outlineProgress, store.view.scope, store.outlinePersisting);
+      root.innerHTML = renderOutlineHome(
+        store.outlineProgress,
+        store.view.scope,
+        store.outlinePersisting,
+        launcherMapAsset,
+      );
       break;
     case 'outline-quiz':
       if (!store.outlineSession || !store.outlineAsset) return;
@@ -317,7 +359,12 @@ function render(previousSelector: string | null = null): void {
       lastOutlineMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
       break;
     case 'neighbor-home':
-      root.innerHTML = renderNeighborHome(store.neighborProgress, store.view.scope, store.neighborPersisting);
+      root.innerHTML = renderNeighborHome(
+        store.neighborProgress,
+        store.view.scope,
+        store.neighborPersisting,
+        launcherMapAsset,
+      );
       break;
     case 'neighbor-quiz':
       if (!store.neighborSession) return;
@@ -330,7 +377,10 @@ function render(previousSelector: string | null = null): void {
 
   markFailedFlags(root);
   document.title = currentDocumentTitle();
-  if (routeChanged) window.scrollTo({ top: 0, behavior: 'instant' });
+  if (routeChanged && !preserveScrollOnNextRoute) {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }
+  preserveScrollOnNextRoute = false;
   lastRenderedRouteKey = routeKey;
   restoreFocus(previousSelector);
 }
@@ -359,7 +409,7 @@ function beginSession(
   activeRoundRoute = routeForScope('flags', scope, activity);
   router.navigate(activeRoundRoute, { replace: replaceRoute });
   const count = store.session?.questions.length ?? 0;
-  announce(`${scope.label}. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${count} flags. Question 1.`);
+  announce(`${scope.label}. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${count} flags. Question 1.`);
 }
 
 function currentMapScope(): StudyScope {
@@ -378,8 +428,16 @@ async function beginMapSession(
   replaceRoute = false,
 ): Promise<void> {
   cancelAllPending();
+  const request = ++roundLaunchRequest;
   const scopeId = scope.id ?? 'africa';
-  const asset = await loadMapAsset(scopeId);
+  let asset: MapRegionAsset | null;
+  try {
+    asset = await loadMapAsset(scopeId);
+  } catch {
+    if (request === roundLaunchRequest) announce(`${scope.label} map could not be loaded.`);
+    return;
+  }
+  if (request !== roundLaunchRequest) return;
   if (!asset) {
     announce(`${scope.label} map could not be loaded.`);
     return;
@@ -391,7 +449,7 @@ async function beginMapSession(
 
   activeRoundRoute = routeForScope('locations', scope, activity);
   router.navigate(activeRoundRoute, { replace: replaceRoute });
-  announce(`${asset.scope.label} locations. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
+  announce(`${asset.scope.label} locations. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
 }
 
 function currentOutlineScope(): StudyScope {
@@ -410,7 +468,15 @@ async function beginOutlineSession(
   replaceRoute = false,
 ): Promise<void> {
   cancelAllPending();
-  const asset = await loadOutlineAsset(scope.id ?? 'africa');
+  const request = ++roundLaunchRequest;
+  let asset: Awaited<ReturnType<typeof loadOutlineAsset>>;
+  try {
+    asset = await loadOutlineAsset(scope.id ?? 'africa');
+  } catch {
+    if (request === roundLaunchRequest) announce(`${scope.label} silhouettes could not be loaded.`);
+    return;
+  }
+  if (request !== roundLaunchRequest) return;
   if (!asset) {
     announce(`${scope.label} silhouettes could not be loaded.`);
     return;
@@ -423,7 +489,7 @@ async function beginOutlineSession(
 
   activeRoundRoute = routeForScope('outlines', scope, activity);
   router.navigate(activeRoundRoute, { replace: replaceRoute });
-  announce(`${asset.scope.label} outlines. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round of ${store.outlineSession?.questions.length ?? 0} countries. Question 1.`);
+  announce(`${asset.scope.label} outlines. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${store.outlineSession?.questions.length ?? 0} countries. Question 1.`);
 }
 
 function currentNeighborScope(): StudyScope {
@@ -450,7 +516,7 @@ function beginNeighborSession(
   router.navigate(activeRoundRoute, { replace: replaceRoute });
   const targetId = store.neighborSession?.countryIds[0];
   const target = targetId ? COUNTRY_BY_ID.get(targetId) : undefined;
-  announce(`${scope.label} neighbours. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Test'} round. ${target ? `Name every land neighbour of ${target.name}.` : ''}`);
+  announce(`${scope.label} neighbours. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round. ${target ? `Name every land neighbour of ${target.name}.` : ''}`);
 }
 
 function exitActiveRound(): void {
@@ -617,6 +683,47 @@ function openScope(domainValue: string | undefined, id: string | undefined): voi
   if (route) navigateStable(route);
 }
 
+function quickPlay(domainValue: string | undefined, id: string | undefined): void {
+  if (!isLearningDomain(domainValue)) return;
+  const scope = scopeForQuickPlay(domainValue, id);
+  if (!scope) return;
+
+  if (domainValue === 'flags') {
+    beginSession(scope, 'test');
+  } else if (domainValue === 'locations') {
+    void beginMapSession('test', undefined, scope);
+  } else if (domainValue === 'outlines') {
+    void beginOutlineSession('test', undefined, scope);
+  } else {
+    beginNeighborSession('test', undefined, scope);
+  }
+}
+
+function replaceLauncherScope(
+  domainValue: string | undefined,
+  id: string | undefined,
+  expectedKind: 'continent' | 'region',
+  focusSurface: 'list' | 'map' = 'list',
+): void {
+  if (!isLearningDomain(domainValue) || !id) return;
+  const route = routeForScopeId(domainValue, id);
+  if (!route?.scope || route.scope.kind !== expectedKind) return;
+  if (activeRoundRoute && !routesEqual(route, stableRoute(activeRoundRoute))) discardActiveRound();
+
+  preserveScrollOnNextRoute = true;
+  router.navigate(route, { replace: true });
+  if (expectedKind === 'region') {
+    const selector = focusSurface === 'map'
+      ? `.launcher-map-region[data-action="select-region"][data-id="${id}"]`
+      : `.region-row__open[data-action="select-region"][data-id="${id}"]`;
+    root.querySelector<HTMLElement | SVGElement>(selector)?.focus({ preventScroll: true });
+    announce(`${route.scope.label} selected.`);
+  } else {
+    root.querySelector<HTMLElement>('.launcher__play')?.focus({ preventScroll: true });
+    announce(`All ${route.scope.label} selected.`);
+  }
+}
+
 root.addEventListener('click', (event) => {
   const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action]') : null;
   if (!element) return;
@@ -634,12 +741,34 @@ root.addEventListener('click', (event) => {
     submitNeighborGuess(id);
     return;
   }
+  if (action === 'quick-play') {
+    quickPlay(element.dataset.domain, id);
+    return;
+  }
   if (action === 'open-domain') {
     openDomain(id);
     return;
   }
   if (action === 'open-scope') {
     openScope(element.dataset.domain, id);
+    return;
+  }
+  if (action === 'select-region') {
+    replaceLauncherScope(
+      element.dataset.domain,
+      id,
+      'region',
+      element.classList.contains('launcher-map-region') ? 'map' : 'list',
+    );
+    return;
+  }
+  if (action === 'select-continent') {
+    replaceLauncherScope(element.dataset.domain, id, 'continent');
+    return;
+  }
+  if (action === 'launcher-parent') {
+    const parent = parentRoute(currentRoute);
+    if (parent) navigateStable(parent);
     return;
   }
   if (action === 'route-parent') {
@@ -793,6 +922,16 @@ root.addEventListener('click', (event) => {
   announceResult();
   announceOutlineResult();
   finishInteraction(selector);
+});
+
+root.addEventListener('keydown', (event) => {
+  if (event.key !== 'Enter' && event.key !== ' ') return;
+  const region = event.target instanceof Element
+    ? event.target.closest<SVGElement>('.launcher-map-region[data-action="select-region"]')
+    : null;
+  if (!region) return;
+  event.preventDefault();
+  replaceLauncherScope(region.dataset.domain, region.dataset.id, 'region', 'map');
 });
 
 root.addEventListener('input', (event) => {

@@ -30,7 +30,7 @@ export function renderNeighborQuiz(
         <button class="icon-button" data-action="exit-round" aria-label="Exit neighbour round">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1">${escapeHtml(country?.name ?? target.countryId)}</h1>
-          <span>${session.mode === 'learn' ? 'Learn' : 'Test'} · ${escapeHtml(session.scope.label)} · ${questionNumber}/${session.countryIds.length}</span>
+          <span>${session.mode === 'learn' ? 'Learn' : 'Play'} · ${escapeHtml(session.scope.label)} · ${questionNumber}/${session.countryIds.length}</span>
         </div>
       </header>
 

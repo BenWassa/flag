@@ -2,7 +2,6 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
 import {
-  AFRICA_MAP_CONFIG,
   AFRICA_MAP_COUNTRY_IDS,
   AFRICA_MAP_REGION_CONFIGS,
   AFRICA_MAP_SCOPE,
@@ -199,18 +198,47 @@ assert.ok(
   'Results return to the same map scope through the unified route exit.',
 );
 
-// Africa and region map homes expose the new hierarchy without fragmenting mastery.
+// The map launcher keeps one stable hierarchy while its geography loads lazily.
 const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE);
-assert.ok(africaHomeHtml.includes('54 countries'), 'Africa map home reports all 54 countries.');
-assert.ok(africaHomeHtml.includes('id="map-regions-heading"'), 'Africa map home lists regional drills.');
+assert.ok(africaHomeHtml.includes('Play Africa') && africaHomeHtml.includes('Learn Africa'), 'Africa map launcher exposes both round choices.');
+assert.ok(africaHomeHtml.includes('id="launcher-regions-heading"'), 'Africa map launcher lists regional drills.');
+assert.ok(africaHomeHtml.includes('data-launcher-map-slot'), 'The stable first render reserves the lazy map slot.');
+assert.equal(africaHomeHtml.includes('class="launcher-map"'), false, 'The first render does not pretend the lazy map asset is ready.');
 for (const config of AFRICA_MAP_REGION_CONFIGS) {
   assert.ok(africaHomeHtml.includes(`data-id="${config.scope.id}"`), `${config.scope.label} is navigable from Africa locations.`);
 }
-const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope);
+const africaHomeWithMap = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, true, africaAsset);
+assert.ok(africaHomeWithMap.includes('class="launcher-map"'), 'The resolved Africa asset fills the existing launcher map slot.');
+const launcherRegionTags = [...africaHomeWithMap.matchAll(/<g\b[^>]*class="[^"]*\blauncher-map-region\b[^"]*"[^>]*>/g)].map((match) => match[0]);
+const launcherLabelTags = [...africaHomeWithMap.matchAll(/<span\b[^>]*class="[^"]*\blauncher-map__label\b[^"]*"[^>]*>[\s\S]*?<\/span>/g)].map((match) => match[0]);
+assert.equal(launcherRegionTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one SVG control per Africa region.');
+assert.equal(launcherLabelTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one direct HTML overlay label per Africa region.');
+for (const config of AFRICA_MAP_REGION_CONFIGS) {
+  const regionTag = launcherRegionTags.find((tag) => tag.includes(`data-id="${config.scope.id}"`));
+  assert.ok(regionTag, `${config.scope.label} has an SVG launcher-map region control.`);
+  assert.ok(regionTag.includes('role="button"'), `${config.scope.label} exposes button semantics on the SVG map.`);
+  assert.ok(regionTag.includes('tabindex="0"'), `${config.scope.label} is reachable in the SVG map keyboard order.`);
+  assert.ok(regionTag.includes(`aria-label="Select ${config.scope.label}"`), `${config.scope.label} has a direct SVG accessible name.`);
+  assert.ok(regionTag.includes('aria-pressed="false"'), `${config.scope.label} starts unselected on the Africa launcher.`);
+
+  const labelTag = launcherLabelTags.find((tag) => tag.includes(`data-id="${config.scope.id}"`));
+  assert.ok(labelTag?.includes(`>${config.scope.label}</span>`), `${config.scope.label} is directly labelled by the HTML map overlay.`);
+}
+assert.equal(africaHomeWithMap.includes('launcher-map-region__label'), false, 'Launcher labels no longer shrink inside the SVG coordinate system.');
+const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, true, africaAsset);
 assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
-assert.ok(westHomeHtml.includes('The Gambia'), 'Region country ledger uses the canonical display name.');
-assert.ok(westHomeHtml.includes('study-action--primary'), 'Map home uses the shared Learn/Test hierarchy.');
+assert.ok(westHomeHtml.includes('Play West Africa') && westHomeHtml.includes('Learn West Africa'), 'Selecting West Africa retargets both launcher actions.');
+assert.ok(westHomeHtml.includes('All Africa') && westHomeHtml.includes('Selected'), 'West Africa can be cleared without leaving the launcher.');
+assert.ok(westHomeHtml.includes('launcher-map-region--selected'), 'The launcher map mirrors the selected region.');
+const selectedWestRegion = [...westHomeHtml.matchAll(/<g\b[^>]*class="[^"]*\blauncher-map-region--selected\b[^"]*"[^>]*>/g)]
+  .map((match) => match[0])
+  .find((tag) => tag.includes('data-id="west-africa"'));
+assert.ok(selectedWestRegion?.includes('aria-pressed="true"'), 'The selected West Africa SVG control exposes its pressed state.');
+assert.ok(westHomeHtml.includes('launcher-map__label launcher-map__label--selected'), 'The selected West Africa overlay label mirrors the SVG state.');
+for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
+  assert.equal(westHomeHtml.includes(deletedSurface), false, `The pre-round launcher does not restore deleted ${deletedSurface} UI.`);
+}
 
 assert.equal(sanitizeLocationRecord('GHA', null), null, 'Null map progress is rejected.');
 const repaired = sanitizeLocationRecord('GHA', {
@@ -224,6 +252,7 @@ assert.equal(repaired.lifetimeFirstTryCorrect, 0);
 assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 
 const mapCss = await readFile('map.css', 'utf8');
+const styles = await readFile('styles.css', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
 assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable.');
@@ -238,13 +267,16 @@ assert.ok(mapCss.includes('.map-country--current-correct'), 'First-try correct t
 assert.ok(mapCss.includes('.map-country--recorded'), 'Test taps keep neutral visible acknowledgment.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
+const launcherLabelRule = styles.match(/\.launcher-map__label\s*\{([^}]*)\}/)?.[1] ?? '';
+assert.match(launcherLabelRule, /font-size:\s*clamp\(11px,/, 'Launcher map overlay labels preserve the 11px typography floor.');
+assert.ok(styles.includes('.launcher-map-region:focus-visible'), 'Keyboard-reachable launcher map regions have a visible focus treatment.');
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behavior.');
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("flag-atlas-v8"), 'Routing release keeps the latest map code while invalidating the previous PWA shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
 assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
 // All-Africa engine smoke: a target from each region can coexist in one round.
@@ -253,4 +285,4 @@ const africaRound = buildMapSession(africaAsset, 'learn', 'africa-cross-region',
 assert.equal(africaRound.countryIds.length, 5, 'All-Africa round accepts targets across all five regions.');
 assert.deepEqual(new Set(africaRound.countryIds), new Set(representativeIds));
 
-console.log('Africa map verification passed: 54-country coverage, regional context, island dots, callouts, feedback, and mobile contracts.');
+console.log('Africa map verification passed: 54-country coverage, launcher hierarchy, regional context, island dots, callouts, feedback, and mobile contracts.');

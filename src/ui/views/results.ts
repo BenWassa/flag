@@ -22,7 +22,7 @@ export function renderResults(result: SessionResult): string {
         <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} flags">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${escapeHtml(result.session.scope.label)}</h1>
-          <span>Flags · Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Test'}</span>
+          <span>Flags · Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Play'}</span>
         </div>
       </header>
 

@@ -221,7 +221,7 @@ assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography st
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v13'"), 'British-English shell change bumps the PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime is cached in the app shell.');
 const css = await readFile('dist/neighbors.css', 'utf8');
 assert.ok(css.includes('neighbor-map-country--target') && css.includes('neighbor-map-country--unresolved') && css.includes('neighbor-map-country--solved') && css.includes('neighbor-map-country--revealed'));

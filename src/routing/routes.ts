@@ -1,4 +1,6 @@
 import { CONTINENTS, REGIONS } from '../data/continents.js';
+import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from '../data/map-scopes.js';
+import { getAfricaNeighborScopeConfig } from '../data/neighbors/index.js';
 import { domainDisplayName } from '../domain/display.js';
 import {
   LEARNING_DOMAIN_IDS,
@@ -52,9 +54,44 @@ export function routeForScopeId(domain: LearningDomain, id: string): LearningRou
   return scope ? routeForScope(domain, scope) : null;
 }
 
+export function scopeForQuickPlay(
+  domain: LearningDomain,
+  id: string | undefined,
+): StudyScope | null {
+  if (id === domain) {
+    return domain === 'flags'
+      ? { kind: 'world', label: 'World' }
+      : AFRICA_MAP_SCOPE;
+  }
+  if (!id) return null;
+  const scope = routeForScopeId(domain, id)?.scope;
+  if (!scope || domain === 'flags') return scope ?? null;
+  const supported = domain === 'neighbors'
+    ? getAfricaNeighborScopeConfig(id)
+    : getAfricaMapScopeConfig(id);
+  return supported ? scope : null;
+}
+
 export function stableRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning' || route.activity === undefined) return route;
   return { name: 'learning', domain: route.domain, scope: route.scope };
+}
+
+export function normalizeAvailableRoute(route: AppRoute): AppRoute {
+  if (route.name !== 'learning' || route.domain === 'flags') return route;
+
+  const supported = route.scope?.id && (
+    route.domain === 'neighbors'
+      ? getAfricaNeighborScopeConfig(route.scope.id)
+      : getAfricaMapScopeConfig(route.scope.id)
+  );
+  if (supported) return route;
+
+  return {
+    name: 'learning',
+    domain: route.domain,
+    scope: AFRICA_MAP_SCOPE,
+  };
 }
 
 export function parentRoute(route: AppRoute): AppRoute | null {
@@ -64,18 +101,16 @@ export function parentRoute(route: AppRoute): AppRoute | null {
   if (!route.scope) return { name: 'home' };
 
   if (route.scope.kind === 'region' && route.scope.id) {
-    const region = REGIONS.find((item) => item.id === route.scope?.id);
-    const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
-    if (continent) {
-      return {
-        name: 'learning',
-        domain: route.domain,
-        scope: { kind: 'continent', id: continent.id, label: continent.name },
-      };
-    }
+    // A region is selected inside its continent launcher; it is not a deeper
+    // screen. "All <continent>" clears that selection, while Back leaves the
+    // launcher altogether.
+    return route.domain === 'flags'
+      ? { name: 'learning', domain: 'flags' }
+      : { name: 'home' };
   }
 
-  return { name: 'learning', domain: route.domain };
+  if (route.domain !== 'flags') return { name: 'home' };
+  return { name: 'learning', domain: 'flags' };
 }
 
 function acceptsDomainScope(domain: LearningDomain, contintentId: string): boolean {
@@ -154,7 +189,7 @@ export function routeTitle(route: AppRoute): string {
       ? 'Review'
       : route.activity === 'learn'
         ? 'Learn'
-        : 'Test';
+        : 'Play';
     return `${activity}${scope ? ` ${scope}` : ''} ${domain.toLowerCase()} · Flag Atlas`;
   }
   if (scope && route.scope) return `${scope} ${domain.toLowerCase()} · Flag Atlas`;

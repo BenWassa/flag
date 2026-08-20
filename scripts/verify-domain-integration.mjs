@@ -1,10 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { COUNTRIES } from '../dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../dist/data/map-scopes.js';
 import {
+  AFRICA_LAND_ADJACENCY,
   AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   getAfricaNeighborScopeConfig,
 } from '../dist/data/neighbors/index.js';
+import { createInitialLocationProgress } from '../dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
+import { createInitialProgress } from '../dist/domain/progress.js';
+import { renderDomainHome } from '../dist/ui/views/domain.js';
+import { renderHome } from '../dist/ui/views/home.js';
+import { renderMapHome } from '../dist/ui/views/map-home.js';
+import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
+import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
 
 assert.deepEqual(
   [...AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS],
@@ -28,7 +39,7 @@ assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell incl
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v13'"), 'British-English shell change owns a fresh v13 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
 assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
@@ -37,14 +48,33 @@ for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts
   assert.ok(app.includes(marker), `Combined app orchestration retains ${marker}.`);
 }
 
-const home = await readFile('dist/ui/views/home.js', 'utf8');
-assert.ok(home.includes('4 available'), 'Home reports all four learning domains as available.');
-assert.ok(
-  home.includes("domainDisplayName('outlines')") && home.includes("domainDisplayName('neighbors')"),
-  'Home exposes Outlines and Neighbours through the canonical display-name contract.',
-);
+const flagProgress = createInitialProgress(COUNTRIES);
+const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+const outlineProgress = createInitialProgress(COUNTRIES);
+const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
+const homeHtml = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
+assert.equal((homeHtml.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
+assert.equal((homeHtml.match(/data-action="quick-play"/g) ?? []).length, 4, 'Home exposes one direct Play control per learning domain.');
+for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
+  assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home exposes ${label} through its canonical display name.`);
+}
 
-const domain = await readFile('dist/ui/views/domain.js', 'utf8');
-assert.ok(domain.includes('Country silhouettes') && domain.includes('Land-border sets'), 'Shared domain IA exposes both new learning families.');
+const flagsHomeHtml = renderDomainHome('flags', flagProgress);
+assert.ok(flagsHomeHtml.includes('Play world') && flagsHomeHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
+assert.equal((flagsHomeHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
 
-console.log('Cross-domain integration verification passed: Outlines + Neighbours coexist, v13 shell is coherent, the map runtime is cached, and incomplete cross-topology Neighbours targets are deferred.');
+const launchers = [
+  ['Locations', renderMapHome(locationProgress, AFRICA_MAP_SCOPE)],
+  ['Outlines', renderOutlineHome(outlineProgress, AFRICA_MAP_SCOPE)],
+  ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE)],
+];
+for (const [name, html] of launchers) {
+  assert.ok(html.includes('Play Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
+  assert.equal((html.match(/data-action="select-region"/g) ?? []).length, 5, `${name} exposes the five Africa regions.`);
+  assert.ok(html.includes('data-launcher-map-slot'), `${name} reserves the shared lazy map slot.`);
+  for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend', 'neighbor-policy']) {
+    assert.equal(html.includes(deletedSurface), false, `${name} does not restore deleted pre-round ${deletedSurface} UI.`);
+  }
+}
+
+console.log('Cross-domain integration verification passed: four-domain Home, direct Africa launchers, v14 shell, cached map runtime, and deferred incomplete Neighbours targets.');

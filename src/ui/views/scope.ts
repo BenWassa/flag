@@ -1,97 +1,45 @@
 import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
-import { getRecord, getScopeStats } from '../../domain/progress.js';
-import { icon } from '../components/icons.js';
-import { progressStrip, statLegend } from '../components/progress.js';
-import { escapeHtml, statusLabel } from '../format.js';
+import { getScopeStats } from '../../domain/progress.js';
+import { renderLauncher } from './launcher.js';
 
-export function renderScope(progress: ProgressState, scope: StudyScope): string {
-  const stats = getScopeStats(COUNTRIES, progress, scope);
-  const isContinent = scope.kind === 'continent';
-  const continent = isContinent ? CONTINENTS.find((item) => item.id === scope.id) : undefined;
-  const regions = continent ? REGIONS.filter((region) => region.continentId === continent.id) : [];
-
-  return `
-    <main class="page">
-      <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="route-parent" aria-label="Back one level">${icon('back')}</button>
-        <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus>${escapeHtml(scope.label)}</h1>
-          <span>Flags · ${scope.kind === 'region' ? 'Region' : 'Continent'} · ${stats.total} countries</span>
-        </div>
-      </header>
-
-      <section class="scope-overview" aria-label="${escapeHtml(scope.label)} flag learning status">
-        <div class="scope-status-line">
-          <strong>${stats.mastered} mastered</strong>
-          <span>${stats.learning} learning · ${stats.unseen} unseen</span>
-        </div>
-        ${progressStrip(stats)}
-        ${statLegend(stats)}
-
-        <div class="study-actions">
-          <button class="study-action study-action--primary" data-action="start-learn">
-            <strong>Learn</strong>
-            <span>${stats.unseen > 0 ? `${stats.unseen} unseen prioritised` : 'Adaptive practice'}</span>
-          </button>
-          <button class="study-action" data-action="start-test">
-            <strong>Test</strong>
-            <span>Random flags, no answers shown</span>
-          </button>
-        </div>
-      </section>
-
-      ${regions.length ? renderRegions(progress, regions) : renderCountryLedger(progress, scope)}
-    </main>
-  `;
+function continentFor(scope: StudyScope): StudyScope | null {
+  if (scope.kind === 'continent') return scope;
+  const region = REGIONS.find((item) => item.id === scope.id);
+  const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
+  return continent
+    ? { kind: 'continent', id: continent.id, label: continent.name }
+    : null;
 }
 
-function renderRegions(progress: ProgressState, regions: typeof REGIONS): string {
-  return `
-    <section class="atlas-section" aria-labelledby="regions-heading">
-      <div class="list-heading"><h2 id="regions-heading">Regions</h2><span>${regions.length}</span></div>
-      <div class="region-list">
-        ${regions.map((region) => {
-          const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
-          const regionStats = getScopeStats(COUNTRIES, progress, regionScope);
-          const status = regionStats.unseen > 0
-            ? `${regionStats.unseen} unseen`
-            : regionStats.learning > 0
-              ? `${regionStats.learning} learning`
-              : 'Mastered';
-          return `
-            <button class="region-row" data-action="open-scope" data-domain="flags" data-id="${region.id}">
-              <span class="region-row__identity">
-                <strong>${escapeHtml(region.name)}</strong>
-                <small>${regionStats.total} flags · ${regionStats.mastered}/${regionStats.total} mastered</small>
-              </span>
-              <span class="region-row__status">${status}</span>
-              ${icon('chevron')}
-            </button>
-          `;
-        }).join('')}
-      </div>
-    </section>
-  `;
-}
+export function renderScope(
+  progress: ProgressState,
+  scope: StudyScope,
+  persisting = true,
+): string {
+  const continentScope = continentFor(scope);
+  if (!continentScope?.id) {
+    return '<main class="page"><h1 tabindex="-1" data-autofocus>Flag scope unavailable</h1><button class="button" data-action="launcher-parent">Back</button></main>';
+  }
 
-function renderCountryLedger(progress: ProgressState, scope: StudyScope): string {
-  const countries = COUNTRIES.filter((country) => country.regionId === scope.id);
-  return `
-    <section class="atlas-section" aria-labelledby="countries-heading">
-      <div class="list-heading"><h2 id="countries-heading">Countries</h2><span>${countries.length}</span></div>
-      <div class="mini-ledger">
-        ${countries.map((country) => {
-          const record = getRecord(progress, country.id);
-          return `
-            <div class="mini-ledger__row">
-              <span>${escapeHtml(country.name)}</span>
-              <span class="status-text status-text--${record.status}">${statusLabel(record)}</span>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </section>
-  `;
+  const selectedRegion = scope.kind === 'region' ? scope : undefined;
+  const regions = REGIONS
+    .filter((region) => region.continentId === continentScope.id)
+    .map((region) => {
+      const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
+      return { scope: regionScope, stats: getScopeStats(COUNTRIES, progress, regionScope) };
+    });
+
+  return renderLauncher({
+    domain: 'flags',
+    continentScope,
+    selectedRegion,
+    stats: getScopeStats(COUNTRIES, progress, selectedRegion ?? continentScope),
+    regions,
+    unitLabel: 'flags',
+    persisting,
+    storageNotice: "This browser is blocking storage, so today's flag progress will be lost when you close the tab.",
+    showMap: false,
+  });
 }

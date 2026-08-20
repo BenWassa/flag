@@ -42,7 +42,7 @@ export function renderQuiz(
 
       <section class="question-stage">
         <div class="question-meta">
-          <strong>${session.mode === 'learn' ? 'Learn' : 'Test'}</strong>
+          <strong>${session.mode === 'learn' ? 'Learn' : 'Play'}</strong>
           <span>Choose the country</span>
         </div>
         <div class="flag-stage">

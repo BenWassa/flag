@@ -13,13 +13,13 @@ Flag Atlas combines Seterra-style speed and geographic organisation with a persi
 - **Outlines** for country-silhouette identification in Africa and its five learning regions.
 - **Neighbours** for naming every land-border neighbour, currently using Africa production topology.
 - **Learn** mode for adaptive practice and immediate feedback.
-- **Test** mode for clean scope-level assessment.
+- **Play** mode for clean scope-level assessment.
 - Persistent **Unseen → Learning → Mastered** state.
 - Confusion-aware distractors and mistake review where applicable.
 - Balanced answer-position randomisation for multiple-choice domains.
 - Local-first progress with PWA support.
 
-The product language is modern British English (`en-GB`). User-facing domain labels use **Neighbours** while stable implementation identifiers such as the `/neighbors` route remain unchanged.
+The product language is modern British English (`en-GB`). User-facing domain labels use **Neighbours**, and the learner-facing assessment activity is **Play**. Stable implementation contracts remain unchanged: the domain route is `/neighbors`, while Play continues to use internal `test` identifiers such as the `/test` route segment and `start-test` actions.
 
 Product truth lives in [`PRODUCT.md`](PRODUCT.md), the full requirements in [`docs/product/requirements.md`](docs/product/requirements.md), technical boundaries in [`docs/architecture/overview.md`](docs/architecture/overview.md), and the shipped visual system in [`DESIGN.md`](DESIGN.md). See the [`docs` index](docs/index.md) for current references, open plans, and completed worklogs.
 

@@ -31,8 +31,6 @@
   transform-origin: left center;
   background: var(--mastered);
 }
-.neighbor-policy { margin: 0; color: var(--text-muted); }
-
 /* Geography is the primary Neighbors learning surface. The host remains light
    until the canonical continent module is requested by neighbor-map-runtime. */
 .neighbor-map-host {

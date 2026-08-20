@@ -1,11 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
 import { createHashRouter } from '../dist/routing/router.js';
 import {
+  normalizeAvailableRoute,
   parentRoute,
   parseRoutePath,
   routeTitle,
   serializeRoutePath,
+  scopeForQuickPlay,
   stableRoute,
 } from '../dist/routing/routes.js';
 
@@ -61,10 +64,17 @@ class FakeBrowserWindow {
 const flags = route('/flags');
 const flagsAfrica = route('/flags/africa');
 const flagsWest = route('/flags/africa/west-africa');
+const locations = route('/locations');
+const locationsAfrica = route('/locations/africa');
 const locationsWest = route('/locations/africa/west-africa');
+const locationsEast = route('/locations/africa/east-africa');
 const locationsTest = route('/locations/africa/west-africa/test');
+const outlines = route('/outlines');
+const outlinesAfrica = route('/outlines/africa');
 const outlinesWest = route('/outlines/africa/west-africa');
 const outlinesLearn = route('/outlines/africa/west-africa/learn');
+const neighbors = route('/neighbors');
+const neighborsAfrica = route('/neighbors/africa');
 const neighborsWest = route('/neighbors/africa/west-africa');
 const neighborsTest = route('/neighbors/africa/west-africa/test');
 
@@ -78,20 +88,64 @@ assert.equal(serializeRoutePath(outlinesLearn), '/outlines/africa/west-africa/le
 assert.equal(serializeRoutePath(neighborsWest), '/neighbors/africa/west-africa');
 assert.equal(serializeRoutePath(neighborsTest), '/neighbors/africa/west-africa/test');
 
-assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/flags/africa');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(locations)), '/locations/africa', 'Bare Locations canonicalises to its Africa launcher.');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(outlines)), '/outlines/africa', 'Bare Outlines canonicalises to its Africa launcher.');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(neighbors)), '/neighbors/africa', 'Bare Neighbours canonicalises to its Africa launcher.');
+
+const africaScope = { kind: 'continent', id: 'africa', label: 'Africa' };
+for (const [domain, expectedScope] of [
+  ['flags', { kind: 'world', label: 'World' }],
+  ['locations', africaScope],
+  ['outlines', africaScope],
+  ['neighbors', africaScope],
+]) {
+  assert.deepEqual(
+    scopeForQuickPlay(domain, domain),
+    expectedScope,
+    `Home ${domain} Quick Play must resolve to its documented full scope.`,
+  );
+}
+
+for (const continent of CONTINENTS) {
+  assert.deepEqual(
+    scopeForQuickPlay('flags', continent.id),
+    { kind: 'continent', id: continent.id, label: continent.name },
+    `Flags Quick Play must resolve the ${continent.name} continent row.`,
+  );
+}
+
+for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
+  const expectedScope = { kind: 'region', id: region.id, label: region.name };
+  for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
+    assert.deepEqual(
+      scopeForQuickPlay(domain, region.id),
+      expectedScope,
+      `${domain} Quick Play must resolve the ${region.name} region row.`,
+    );
+  }
+}
+
+assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/flags', 'A selected Flags region is state inside the continent launcher, so Back returns to the Flags list.');
 assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/flags');
 assert.equal(serializeRoutePath(parentRoute(flags)), '/');
 assert.equal(serializeRoutePath(parentRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(stableRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(outlinesLearn)), '/outlines/africa/west-africa');
-assert.equal(serializeRoutePath(parentRoute(outlinesWest)), '/outlines/africa');
 assert.equal(serializeRoutePath(parentRoute(neighborsTest)), '/neighbors/africa/west-africa');
-assert.equal(serializeRoutePath(parentRoute(neighborsWest)), '/neighbors/africa');
+for (const launcherRoute of [locationsAfrica, locationsWest, outlinesAfrica, outlinesWest, neighborsAfrica, neighborsWest]) {
+  assert.equal(
+    serializeRoutePath(parentRoute(launcherRoute)),
+    '/',
+    `${serializeRoutePath(launcherRoute)} launcher Back must return Home, not an Africa-only domain screen.`,
+  );
+}
 
 assert.equal(routeTitle(flagsWest), 'West Africa flags · Flag Atlas');
-assert.equal(routeTitle(locationsTest), 'Test West Africa locations · Flag Atlas');
+assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Flag Atlas');
 assert.equal(routeTitle(outlinesLearn), 'Learn West Africa outlines · Flag Atlas');
-assert.equal(routeTitle(neighborsTest), 'Test West Africa neighbours · Flag Atlas');
+assert.equal(routeTitle(neighborsTest), 'Play West Africa neighbours · Flag Atlas');
+assert.equal(serializeRoutePath(locationsTest), '/locations/africa/west-africa/test', 'Learner-facing Play keeps the stable /test route segment.');
+assert.equal(serializeRoutePath(neighborsTest), '/neighbors/africa/west-africa/test', 'Neighbours Play also keeps the stable /test route segment.');
 
 assert.equal(parseRoutePath('/flags/asia/west-africa'), null, 'Region must belong to its route continent.');
 assert.equal(parseRoutePath('/locations/africa/not-a-region'), null, 'Unknown region must be rejected.');
@@ -104,11 +158,13 @@ assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not ad
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');
 assert.equal(parseRoutePath('/neighbors/learn'), null, 'World activity is not addressable for neighbours.');
 
-const fakeWindow = new FakeBrowserWindow('https://example.test/flag/#/locations/africa/west-africa');
-const hashRouter = createHashRouter(fakeWindow);
-assert.equal(serializeRoutePath(hashRouter.current()), '/locations/africa/west-africa', 'Cold hash deep link parses directly.');
-assert.equal(fakeWindow.location.pathname, '/flag/', 'Hash routing keeps the GitHub Pages project path server-visible and stable.');
+const coldWindow = new FakeBrowserWindow('https://example.test/flag/#/locations/africa/west-africa');
+const coldRouter = createHashRouter(coldWindow);
+assert.equal(serializeRoutePath(coldRouter.current()), '/locations/africa/west-africa', 'Cold hash deep link parses directly.');
+assert.equal(coldWindow.location.pathname, '/flag/', 'Hash routing keeps the GitHub Pages project path server-visible and stable.');
 
+const fakeWindow = new FakeBrowserWindow('https://example.test/flag/#/');
+const hashRouter = createHashRouter(fakeWindow);
 const observed = [];
 hashRouter.subscribe((nextRoute) => observed.push(nextRoute ? serializeRoutePath(nextRoute) : null));
 hashRouter.navigate(flags);
@@ -124,16 +180,34 @@ fakeWindow.history.forward();
 assert.equal(fakeWindow.location.hash, '#/flags/africa');
 assert.equal(observed.at(-1), '/flags/africa', 'Browser Forward reparses the next URL.');
 
-hashRouter.navigate(flagsWest, { replace: true });
-assert.equal(fakeWindow.location.hash, '#/flags/africa/west-africa', 'Replace navigation canonicalises without growing history.');
-fakeWindow.history.back();
-assert.equal(fakeWindow.location.hash, '#/flags', 'Back skips the replaced entry and reaches the prior conceptual URL.');
+const selectionWindow = new FakeBrowserWindow('https://example.test/flag/#/');
+const selectionRouter = createHashRouter(selectionWindow);
+selectionRouter.navigate(locationsAfrica);
+const launcherHistoryLength = selectionWindow.entries.length;
+selectionRouter.navigate(locationsWest, { replace: true });
+selectionRouter.navigate(locationsEast, { replace: true });
+assert.equal(selectionWindow.location.hash, '#/locations/africa/east-africa', 'The latest region selection owns the launcher URL.');
+assert.equal(selectionWindow.entries.length, launcherHistoryLength, 'Region selection replaces the launcher entry instead of growing history.');
+selectionWindow.history.back();
+assert.equal(selectionWindow.location.hash, '#/', 'One Back after multiple region selections returns to the launcher parent.');
+
+const roundWindow = new FakeBrowserWindow('https://example.test/flag/#/');
+const roundRouter = createHashRouter(roundWindow);
+roundRouter.navigate(locationsAfrica);
+roundRouter.navigate(locationsWest, { replace: true });
+roundRouter.navigate(locationsTest);
+assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa/test', 'Starting a round pushes its stable internal activity route.');
+roundWindow.history.back();
+assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa', 'Back from a round returns to the exact selected launcher scope.');
 
 const app = await readFile('dist/app.js', 'utf8');
 assert.equal(app.includes('viewStack'), false, 'Legacy in-memory viewStack must not remain authoritative.');
 assert.equal(app.includes('historyIndex'), false, 'Legacy numeric history index must be removed.');
 assert.ok(app.includes('createHashRouter'), 'Application must compose through the hash router adapter.');
 assert.ok(app.includes('stableRoute'), 'Active-round refresh fallback must use the stable route.');
+assert.ok(app.includes('normalizeAvailableRoute'), 'Application must canonicalise availability through the exported pure route helper.');
+assert.ok(app.includes('select-region') && app.includes('select-continent'), 'Launcher selection must use explicit replace-only actions.');
+assert.ok(app.includes('quick-play'), 'Application must dispatch direct Play without a parallel activity model.');
 assert.ok(
   app.includes('review-mistakes')
     && app.includes('review-map-mistakes')
@@ -145,24 +219,36 @@ assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpr
 assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
-assert.ok(home.includes('Learning domains'), 'Home must present the domain hierarchy.');
-assert.ok(
-  home.includes("domainDisplayName('flags')")
-    && home.includes("domainDisplayName('locations')")
-    && home.includes("domainDisplayName('outlines')")
-    && home.includes("domainDisplayName('neighbors')"),
-  'All four available domains must use the canonical display-name contract on Home.',
-);
-assert.ok(home.includes('4 available'), 'Home availability summary must reflect the four shipped learning domains.');
+for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
+  assert.ok(home.includes(`renderDomainRow('${domain}'`), `Home must render the ${domain} split row.`);
+}
+assert.ok(home.includes('data-action="quick-play"'), 'Every Home domain row shares the direct Play control contract.');
+assert.equal(home.includes('Learning domains'), false, 'Home no longer needs a heading that restates its four-row index.');
+assert.equal(home.includes('4 available'), false, 'Home no longer carries the deleted availability summary.');
+assert.equal(home.includes('Choose a skill'), false, 'Home no longer explains the choice that the rows already make clear.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
 const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');
 const outlineScope = await readFile('dist/ui/views/outline-home.js', 'utf8');
 const neighborScope = await readFile('dist/ui/views/neighbor-home.js', 'utf8');
-assert.ok(flagScope.includes('data-action="route-parent"'), 'Flag scope Back must use conceptual parent routing.');
-assert.ok(mapScope.includes('data-action="route-parent"'), 'Location scope Back must use conceptual parent routing.');
-assert.ok(outlineScope.includes('data-action="route-parent"'), 'Outline scope Back must use conceptual parent routing.');
-assert.ok(neighborScope.includes('data-action="route-parent"'), 'Neighbour scope Back must use conceptual parent routing.');
+for (const [name, scopeSource] of [
+  ['Flags', flagScope],
+  ['Locations', mapScope],
+  ['Outlines', outlineScope],
+  ['Neighbours', neighborScope],
+]) {
+  assert.ok(scopeSource.includes('renderLauncher'), `${name} pre-round scope must adapt into the shared launcher.`);
+  assert.equal(scopeSource.includes('mini-ledger'), false, `${name} launcher adapter must not retain a region country ledger.`);
+}
+
+const launcher = await readFile('dist/ui/views/launcher.js', 'utf8');
+for (const action of ['launcher-parent', 'select-region', 'select-continent', 'quick-play']) {
+  assert.ok(launcher.includes(`data-action="${action}"`), `Shared launcher must expose ${action}.`);
+}
+assert.ok(launcher.includes('aria-pressed'), 'Region selection must be programmatic as well as visual.');
+assert.ok(launcher.includes('Play ${scopeLabel}') && launcher.includes('Learn ${scopeLabel}'), 'Launcher Play and Learn actions must both name the active scope.');
+assert.equal(launcher.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
+assert.equal(launcher.includes('mini-ledger'), false, 'Shared launcher must not restore the deleted country ledger.');
 
 const flagResults = await readFile('dist/ui/views/results.js', 'utf8');
 const mapResults = await readFile('dist/ui/views/map-results.js', 'utf8');
@@ -182,10 +268,10 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v13'"), 'British-English shell change must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified IA shell changes must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: typed routes, cold links, Back/Forward, invalid-route handling, refresh fallback contract, four-domain IA, result navigation, and v13 PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v14 PWA shell.');

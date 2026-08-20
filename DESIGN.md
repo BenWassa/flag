@@ -52,7 +52,7 @@ The system rejects the former warm-paper/editorial-card direction. It also avoid
 
 ## Product language
 
-All learner-facing copy uses modern British English (`en-GB`), including visible text, document titles, metadata, accessible names and live-region announcements. The learner-facing domain name is **Neighbours**. Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, CSS/API property names such as `color`, and existing persistence keys retain their required implementation spelling.
+All learner-facing copy uses modern British English (`en-GB`), including visible text, document titles, metadata, accessible names and live-region announcements. The learner-facing domain name is **Neighbours**, and the learner-facing assessment activity is **Play**. Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, the activity value `test`, `/test` route segment, `start-test` data actions, CSS/API property names such as `color`, and existing persistence keys retain their required implementation spelling.
 
 Use **practice** as a noun and **practise** as a verb. Country display names are governed separately by `docs/product/country-naming.md`.
 
@@ -92,7 +92,7 @@ Home is an **atlas index**, not a grid of cards:
 2. learning-domain index and direct entry points;
 3. scan-friendly domain/scope lists with progress encoded inside each row.
 
-Scope pages preserve the same hierarchy: title → status → Learn/Test → regions or country ledger. Lists use rules and proximity rather than individual containers.
+Launchers preserve the same hierarchy: scope and domain → named Play action → optional map layer → regions → named Learn action. A region route preselects that region in the same launcher; it does not open a separate screen or country ledger. Lists use rules and proximity rather than individual containers.
 
 Quiz is an immersive task surface. The geography task owns the flexible central region; answers or entry controls remain reachable at the bottom on portrait mobile. At wider widths multiple-choice answers become 2×2. On short landscape screens, the learning visual and answer controls can sit side-by-side where the domain calls for it.
 
@@ -123,11 +123,15 @@ Primary uses action blue with white text. Secondary is white with a stronger neu
 
 ### Atlas rows
 
-Continent and region navigation use full-width rows separated by horizontal rules. Identity is left aligned, progress/status is secondary, and the chevron is the only directional icon.
+Domain, continent and region navigation use full-width split rows separated by horizontal rules. The row body navigates or selects, while a trailing 44px Play icon starts the named scope directly. Identity is left aligned, progress/status is secondary, and both controls have independent focus treatment and accessible names.
+
+### Launcher
+
+The launcher is a routed page, never a dialog. It always renders its region list and named Play and Learn actions without waiting for geometry. Locations, Outlines and Neighbours may progressively append the Africa map as a second control surface over the same selected-region state; Flags never requires a launcher map. Selecting a region updates both named actions without starting a round, and an explicit All Africa control clears the selection without impersonating Back.
 
 ### Answer choices
 
-Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on desktop keyboards. Learn feedback marks both correct and selected-wrong states with text plus semantic colour. Test mode withholds correctness.
+Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on desktop keyboards. Learn feedback marks both correct and selected-wrong states with text plus semantic colour. Play mode withholds correctness.
 
 ### Learning ledger
 
@@ -157,12 +161,12 @@ Two boundaries do the defensive work so no view has to. A persisted ledger is re
 
 - Let actual geography provide visual richness.
 - Prefer rules and proximity over boxes around every group.
-- Keep Learn and Test visible and direct.
+- Keep Learn and Play visible and direct.
 - Preserve 44px minimum hit areas and mobile safe areas.
 - Use state colour consistently and pair it with text.
 - Keep routine motion within roughly 100–220ms and tied to state.
 - Animate transform and opacity only. The round-progress bar scales on the X axis rather than animating its width.
-- Test small-height landscape as well as ordinary portrait widths.
+- Verify small-height landscape as well as ordinary portrait widths.
 - Move focus deliberately after every re-render, and announce state changes through the persistent live region in `index.html` rather than through nodes that are themselves replaced.
 - Give every view a history entry so the platform Back gesture moves within the app instead of leaving it.
 - Size task visuals in `dvh` where a visible mobile URL bar could otherwise push controls below the fold.

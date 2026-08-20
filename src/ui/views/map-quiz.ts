@@ -30,7 +30,7 @@ export function renderMapQuiz(
         <button class="icon-button" data-action="exit-map" aria-label="Exit map round">${icon('close')}</button>
         <div class="map-quiz-topbar__title">
           <strong>${escapeHtml(session.scope.label)}</strong>
-          <span class="map-quiz-topbar__meta">${session.mode === 'learn' ? 'Learn' : 'Test'} locations</span>
+          <span class="map-quiz-topbar__meta">${session.mode === 'learn' ? 'Learn' : 'Play'} locations</span>
         </div>
         <span class="map-round-count">${session.currentIndex + 1} / ${session.countryIds.length}</span>
       </header>

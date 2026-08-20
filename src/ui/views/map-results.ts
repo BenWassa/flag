@@ -17,7 +17,7 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
         <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} locations">${icon('back')}</button>
         <div class="screen-title">
           <h1 id="map-result-heading" tabindex="-1" data-autofocus>Round complete</h1>
-          <span>Locations · ${escapeHtml(result.session.scope.label)} · ${mode === 'learn' ? 'Learn' : 'Test'}</span>
+          <span>Locations · ${escapeHtml(result.session.scope.label)} · ${mode === 'learn' ? 'Learn' : 'Play'}</span>
         </div>
       </header>
 
@@ -31,7 +31,7 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
               <span><i class="map-swatch map-swatch--two" aria-hidden="true"></i><strong>${twoMiss}</strong> 2 misses</span>
               <span><i class="map-swatch map-swatch--reveal" aria-hidden="true"></i><strong>${revealed}</strong> revealed</span>
             </div>`
-          : `<div class="map-result-breakdown" aria-label="Test round breakdown">
+          : `<div class="map-result-breakdown" aria-label="Play round breakdown">
               <span><strong>${result.firstTryCorrect}</strong> correct</span>
               <span><strong>${incorrect}</strong> missed</span>
             </div>`}
@@ -43,7 +43,7 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
 
       <div class="map-results-actions">
         ${result.missedCountryIds.length ? `<button class="button button--primary" data-action="review-map-mistakes">Review mistakes</button>` : ''}
-        <button class="button button--secondary" data-action="repeat-map">Repeat ${mode}</button>
+        <button class="button button--secondary" data-action="repeat-map">Repeat ${mode === 'learn' ? 'Learn' : 'Play'}</button>
         <button class="button button--tertiary" data-action="exit-round">Back to ${escapeHtml(result.session.scope.label)}</button>
       </div>
     </main>

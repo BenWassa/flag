@@ -165,8 +165,16 @@ assert.equal(testedHtml.includes('Correct:'), false, 'Test mode must withhold co
 assert.ok(testedHtml.includes('Answer recorded'), 'Test mode should acknowledge input without revealing correctness.');
 
 const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, true);
-assert.ok(homeHtml.includes('Outlines · Continent · 54 countries'), 'Africa outline scope must render through the shared scope hierarchy.');
+assert.ok(homeHtml.includes('Play Africa') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
+assert.ok(homeHtml.includes('5 regions'), 'Africa outline launcher retains its region summary.');
+assert.ok(homeHtml.includes('id="launcher-regions-heading"'), 'Africa outline launcher lists all regional drills.');
 assert.ok(homeHtml.includes('data-domain="outlines"'), 'Outline regions must route through the shared domain router.');
+const westHomeHtml = renderOutlineHome(outlineProgress, westScope, true);
+assert.ok(westHomeHtml.includes('Play West Africa') && westHomeHtml.includes('Learn West Africa'), 'Selecting a region retargets both outline actions.');
+assert.ok(westHomeHtml.includes('All Africa') && westHomeHtml.includes('Selected'), 'The selected outline region can be cleared in place.');
+for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
+  assert.equal(westHomeHtml.includes(deletedSurface), false, `Outline launchers do not restore deleted ${deletedSurface} UI.`);
+}
 
 const outlineRoute = parseRoutePath('/outlines/africa/west-africa/learn');
 assert.ok(outlineRoute, 'Shared router must parse outline activity routes.');

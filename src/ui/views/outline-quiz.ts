@@ -42,7 +42,7 @@ export function renderOutlineQuiz(
 
       <section class="question-stage outline-question-stage">
         <div class="question-meta">
-          <strong>${session.mode === 'learn' ? 'Learn' : 'Test'}</strong>
+          <strong>${session.mode === 'learn' ? 'Learn' : 'Play'}</strong>
           <span>Which country is this?</span>
         </div>
         <div class="outline-stage">

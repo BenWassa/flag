@@ -10,13 +10,3 @@ export function progressStrip(stats: ScopeStats): string {
     </div>
   `;
 }
-
-export function statLegend(stats: ScopeStats): string {
-  return `
-    <div class="stat-legend">
-      <span><i class="state-mark state-mark--unseen" aria-hidden="true"></i><strong>${stats.unseen}</strong> Unseen</span>
-      <span><i class="state-mark state-mark--learning" aria-hidden="true"></i><strong>${stats.learning}</strong> Learning</span>
-      <span><i class="state-mark state-mark--mastered" aria-hidden="true"></i><strong>${stats.mastered}</strong> Mastered</span>
-    </div>
-  `;
-}

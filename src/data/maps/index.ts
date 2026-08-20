@@ -12,7 +12,12 @@ type AfricaDataModule = typeof import('./africa.js');
 let africaDataPromise: Promise<AfricaDataModule> | null = null;
 
 function loadAfricaData(): Promise<AfricaDataModule> {
-  africaDataPromise ??= import('./africa.js');
+  africaDataPromise ??= import('./africa.js').catch((error: unknown) => {
+    // A transient offline or chunk-load failure must not poison every later
+    // attempt for the lifetime of the page.
+    africaDataPromise = null;
+    throw error;
+  });
   return africaDataPromise;
 }
 
