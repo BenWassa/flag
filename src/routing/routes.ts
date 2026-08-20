@@ -78,6 +78,11 @@ export function parentRoute(route: AppRoute): AppRoute | null {
   return { name: 'learning', domain: route.domain };
 }
 
+function acceptsDomainScope(domain: LearningDomain, contintentId: string): boolean {
+  if (domain === 'flags') return true;
+  return contintentId === 'africa';
+}
+
 export function parseRoutePath(input: string): AppRoute | null {
   const segments = pathSegments(input);
   if (!segments) return null;
@@ -96,6 +101,7 @@ export function parseRoutePath(input: string): AppRoute | null {
 
   const continent = CONTINENTS.find((item) => item.id === scopeSegment);
   if (!continent) return null;
+  if (!acceptsDomainScope(domain, continent.id)) return null;
   const continentScope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
   if (segments.length === 2) return { name: 'learning', domain, scope: continentScope };
 
@@ -108,6 +114,7 @@ export function parseRoutePath(input: string): AppRoute | null {
     (item) => item.id === regionOrActivitySegment && item.continentId === continent.id,
   );
   if (!region) return null;
+  if (domain !== 'flags' && region.continentId !== 'africa') return null;
   const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
   if (segments.length === 3) return { name: 'learning', domain, scope: regionScope };
 

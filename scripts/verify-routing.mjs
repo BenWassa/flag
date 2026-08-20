@@ -95,6 +95,10 @@ assert.equal(routeTitle(neighborsTest), 'Test West Africa neighbours · Flag Atl
 
 assert.equal(parseRoutePath('/flags/asia/west-africa'), null, 'Region must belong to its route continent.');
 assert.equal(parseRoutePath('/locations/africa/not-a-region'), null, 'Unknown region must be rejected.');
+assert.equal(parseRoutePath('/locations/asia'), null, 'Location scopes are limited to the Africa curriculum.');
+assert.equal(parseRoutePath('/locations/africa/east-asia'), null, 'Location regions must belong to the Africa scope.');
+assert.equal(parseRoutePath('/neighbors/europe'), null, 'Neighbour scopes are limited to the Africa curriculum.');
+assert.equal(parseRoutePath('/outlines/asia'), null, 'Outline scopes are limited to the Africa curriculum.');
 assert.equal(parseRoutePath('/flags/africa/west-africa/unknown'), null, 'Unknown activity must be rejected.');
 assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not addressable for locations.');
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');
