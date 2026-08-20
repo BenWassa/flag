@@ -1,11 +1,11 @@
 # Map geometry sources, provenance, and boundary policy
 
-**Status:** Issue #9 production pipeline implemented; final merge gate pending  
+**Status:** Production pipeline shipped via PR #12
 **Reviewed:** 2026-08-19  
 **Tracking:** issue #9  
 **Generation entry point:** `npm run maps:generate`  
 **Source manifest:** `scripts/map-sources/natural-earth.json`  
-**Generated provenance:** `docs/CARTOGRAPHY_PROVENANCE.json`
+**Generated provenance:** `docs/architecture/cartography-provenance.json`
 
 ## Production decision
 
@@ -17,7 +17,7 @@ The production flow is:
 
 `pinned source geodata → canonical ISO3 normalization → topology-aware political processing → projection → topology-preserving simplification → derived fills/borders/coastline/adjacency → physical-water projection → scale-aware runtime optimization → continent-local asset`
 
-The historical 1:50m recommendation in early Issue #1 planning (`docs/MAPS.md`) is superseded by this Issue #9 production decision.
+The historical 1:50m recommendation in the archived [Issue #1 plan](../closed/issue-1-map-plan.md) is superseded by this Issue #9 production decision.
 
 ## Pinned Natural Earth inputs
 
@@ -40,7 +40,7 @@ Official Natural Earth download families:
 - https://www.naturalearthdata.com/downloads/10m-cultural-vectors/
 - https://www.naturalearthdata.com/downloads/10m-physical-vectors/
 
-`docs/CARTOGRAPHY_PROVENANCE.json` records the exact source byte sizes and SHA-256 values. A normal regeneration refuses a source whose populated manifest hash changes.
+`docs/architecture/cartography-provenance.json` records the exact source byte sizes and SHA-256 values. A normal regeneration refuses a source whose populated manifest hash changes.
 
 ## Why Natural Earth remains the runtime source
 

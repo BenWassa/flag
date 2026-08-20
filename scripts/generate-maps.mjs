@@ -8,7 +8,7 @@ import { presimplify, quantile, simplify } from 'topojson-simplify';
 
 const MANIFEST_PATH = new URL('./map-sources/natural-earth.json', import.meta.url);
 const OUTPUT_PATH = new URL('../src/data/maps/africa.ts', import.meta.url);
-const PROVENANCE_PATH = new URL('../docs/CARTOGRAPHY_PROVENANCE.json', import.meta.url);
+const PROVENANCE_PATH = new URL('../docs/architecture/cartography-provenance.json', import.meta.url);
 const COUNTRY_SOURCE_PATH = new URL('../src/data/countries.ts', import.meta.url);
 
 const WIDTH = 835;

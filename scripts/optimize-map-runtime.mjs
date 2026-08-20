@@ -2,7 +2,7 @@
 import { readFile, writeFile } from 'node:fs/promises';
 
 const AFRICA_PATH = new URL('../src/data/maps/africa.ts', import.meta.url);
-const PROVENANCE_PATH = new URL('../docs/CARTOGRAPHY_PROVENANCE.json', import.meta.url);
+const PROVENANCE_PATH = new URL('../docs/architecture/cartography-provenance.json', import.meta.url);
 
 const PATH_DIGITS = 1;
 const PHYSICAL_TOLERANCE = Object.freeze({

@@ -10,7 +10,7 @@ All timestamps are America/Toronto (EDT), 2026-08-19.
 
 **Change:** Created `issue-2-country-outlines` from current `main` and treated production map geometry + shared typed routes as fixed dependencies.
 
-**Verification:** Read Issue #2, `DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/ROUTING.md`, `docs/MAP_GEOMETRY_SOURCES.md`, `docs/COUNTRY_NAMING.md`, learning/progress code, routing code, map loaders, storage adapters, UI views, and verification scripts.
+**Verification:** Read Issue #2, `DESIGN.md`, `docs/architecture/overview.md`, `docs/architecture/routing.md`, `docs/architecture/cartography.md`, `docs/product/country-naming.md`, learning/progress code, routing code, map loaders, storage adapters, UI views, and verification scripts.
 
 **Evaluation:** Architecture supports the feature without another navigation or geometry system.
 

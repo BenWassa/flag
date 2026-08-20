@@ -48,7 +48,7 @@ This is intentionally different from the location game's interaction locators: a
 
 ## Country names
 
-Answer text resolves through `src/data/countries.ts`; there is no outline-specific name list. The active policy remains `docs/COUNTRY_NAMING.md`.
+Answer text resolves through `src/data/countries.ts`; there is no outline-specific name list. The active policy remains [`country-naming.md`](country-naming.md).
 
 Aliases may support other product interactions, but quiz options use the canonical display name exactly once. ISO3 remains the question/ledger identity key.
 

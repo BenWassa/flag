@@ -36,7 +36,7 @@ The scored West Africa polygons and faded full-Africa context are projected from
 
 This geometry is explicitly **MVP-grade**, not the final fidelity standard. A quantitative audit of the compiled polygons found measurable positive-area intersections at some shared borders, especially around small/narrow states. Styling reduces the visual seam amplification but does not repair source topology.
 
-The production expansion pipeline should move to one consistent high-detail source/topology. The current near-term candidate is **Natural Earth 1:10m Admin-0 Countries with companion boundary data**; UN Maps authoritative boundary products should also be evaluated before final broad rollout. See [`MAP_GEOMETRY_SOURCES.md`](MAP_GEOMETRY_SOURCES.md).
+The production expansion pipeline uses one consistent high-detail source/topology based on **Natural Earth 1:10m Admin-0 Countries with companion boundary data**. See the current [cartography architecture](../architecture/cartography.md).
 
 `MapRegionAsset` now supports:
 
@@ -95,7 +95,7 @@ Benin currently retains clipped neutral-space hit assistance rather than another
 
 ## Country naming decision
 
-Country names are not maintained ad hoc. See [`COUNTRY_NAMING.md`](COUNTRY_NAMING.md).
+Country names are not maintained ad hoc. See [`country-naming.md`](country-naming.md).
 
 - **UNGEGN / UNTERM** is the primary reference for current English short/formal country names and article treatment.
 - **UN Statistics Division M49** is the reference for ISO-alpha3 linkage, UN regional grouping, current-name tables, and recent country-name changes.
@@ -116,10 +116,10 @@ Map mode is an extension of the Flag Atlas **Atlas Index** system, not a separat
 
 Detailed audits:
 
-- [`MAP_UX_REFINEMENT_LOG.md`](MAP_UX_REFINEMENT_LOG.md) — visual-system and first interaction refinement.
-- [`MAP_GAMEPLAY_REFINEMENT_LOG.md`](MAP_GAMEPLAY_REFINEMENT_LOG.md) — continent-context/panning redesign and first mobile gameplay pass.
-- [`MAP_FEEDBACK_V4_LOG.md`](MAP_FEEDBACK_V4_LOG.md) — on-device feedback, naming, callouts, quantitative border audit, CI/artifact review, and final evaluation.
-- [`MAP_FEEDBACK_V4_RELEASE.md`](MAP_FEEDBACK_V4_RELEASE.md) — final PR-head gate and merge closeout.
+- [`map-ux-refinement.md`](../closed/map-ux-refinement.md) — visual-system and first interaction refinement.
+- [`map-gameplay-refinement.md`](../closed/map-gameplay-refinement.md) — continent-context/panning redesign and first mobile gameplay pass.
+- [`map-feedback-v4-log.md`](../closed/map-feedback-v4-log.md) — on-device feedback, naming, callouts, quantitative border audit, CI/artifact review, and final evaluation.
+- [`map-feedback-v4-release.md`](../closed/map-feedback-v4-release.md) — final PR-head gate and merge closeout.
 
 ## Accessibility boundary
 

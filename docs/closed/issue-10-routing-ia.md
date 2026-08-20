@@ -28,7 +28,7 @@ No code change yet. The implementation target is one typed route model with one 
 
 **Verification**
 
-Audit covered `src/app.ts`, `src/state/store.ts`, flag/location home and scope views, quiz/results views, canonical continent/region data, map-scope metadata, `DESIGN.md`, `docs/ARCHITECTURE.md`, `docs/PRD.md`, map planning/UX/gameplay logs, CI, Pages deployment, manifest, service worker, and existing verification scripts.
+Audit covered `src/app.ts`, `src/state/store.ts`, flag/location home and scope views, quiz/results views, canonical continent/region data, map-scope metadata, `DESIGN.md`, `docs/architecture/overview.md`, `docs/product/requirements.md`, map planning/UX/gameplay logs, CI, Pages deployment, manifest, service worker, and existing verification scripts.
 
 **Evaluation**
 
@@ -83,7 +83,7 @@ Added:
 - consistent domain/scope/activity labels on flag and location screens;
 - unified scope/result Back semantics;
 - PWA `./#/` start URL and shell-cache bump;
-- `docs/ROUTING.md` plus architecture updates.
+- `docs/architecture/routing.md` plus architecture updates.
 
 The former `viewStack` and numeric `historyIndex` were removed as route authority. Quiz question order, index, guesses, feedback, map session details, timers, and result objects remain in application/session state.
 

@@ -10,13 +10,13 @@ This log records the implementation using **observation → assessment → chang
 ## 2026-08-19 17:24 — Source-of-truth and concurrency audit
 
 **Observation**  
-Issue #15 defines British English as the learner-facing product language while explicitly preserving stable technical identifiers such as `neighbors`, `/#/neighbors/...`, `neighbors.css`, generated adjacency identifiers, and `flag-atlas:neighbor-*` persistence namespaces. Current `main` is at commit `12b8e497b162f49c7f6f6d8561fb8ca531297407` (`Add map-centred visual reveal to Neighbors (#17)`, closing Issue #16). `docs/ISSUE_16_NEIGHBOR_MAP_WORKLOG.md` confirms that Issue #16 deliberately left British-English product-language cleanup to Issue #15.
+Issue #15 defines British English as the learner-facing product language while explicitly preserving stable technical identifiers such as `neighbors`, `/#/neighbors/...`, `neighbors.css`, generated adjacency identifiers, and `flag-atlas:neighbor-*` persistence namespaces. Current `main` is at commit `12b8e497b162f49c7f6f6d8561fb8ca531297407` (`Add map-centred visual reveal to Neighbors (#17)`, closing Issue #16). `docs/closed/issue-16-neighbor-map.md` confirms that Issue #16 deliberately left British-English product-language cleanup to Issue #15.
 
 **Assessment**  
 This is a compatibility-sensitive copy standardisation, not a route/storage migration and not a Neighbours gameplay or cartography refactor. Issue #16's map labels, summary text and accessible names are now part of the audit surface.
 
 **Change**  
-Created dedicated branch `issue-15-british-english` from current `main`. Read Issue #15, `DESIGN.md`, `docs/COUNTRY_NAMING.md`, `docs/ROUTING.md`, the Issue #3 Neighbours worklog, the Issue #16 map worklog, routing/domain code, and all current learning-domain UI surfaces.
+Created dedicated branch `issue-15-british-english` from current `main`. Read Issue #15, `DESIGN.md`, `docs/product/country-naming.md`, `docs/architecture/routing.md`, the Issue #3 Neighbours worklog, the Issue #16 map worklog, routing/domain code, and all current learning-domain UI surfaces.
 
 **Verification**  
 Confirmed all four domains are shipped on current `main`; the stable Neighbours route remains `/neighbors`; Issue #16 map code and verification are present. The local container cannot resolve `github.com`, so repository mutation and authoritative verification use the connected GitHub surface and GitHub Actions rather than a local clone.
@@ -34,7 +34,7 @@ Occurrences were classified as:
 
 1. learner-facing product copy → British English required;
 2. technical identifier/API → retain for compatibility or standards compliance;
-3. country naming → governed by `docs/COUNTRY_NAMING.md`;
+3. country naming → governed by `docs/product/country-naming.md`;
 4. historical documentation → normally retain;
 5. current normative/product documentation or product-copy assertions → update.
 
@@ -78,7 +78,7 @@ The implementation changes language only; it does not alter learning mechanics, 
 ## 2026-08-19 17:36 — Metadata, PWA and normative documentation
 
 **Observation**  
-The document metadata still described `land-border neighbors`, the HTML language was generic `en`, and the PWA manifest had no language declaration. The copy-bearing shell changed, so the existing `flag-atlas-v12` cache would otherwise be able to preserve old strings. README, `PRODUCT.md`, `DESIGN.md`, `docs/ROUTING.md` and `docs/COUNTRY_NAMING.md` contained current product descriptions or language-policy prose that would contradict the shipped British interface.
+The document metadata still described `land-border neighbors`, the HTML language was generic `en`, and the PWA manifest had no language declaration. The copy-bearing shell changed, so the existing `flag-atlas-v12` cache would otherwise be able to preserve old strings. README, `PRODUCT.md`, `DESIGN.md`, `docs/architecture/routing.md` and `docs/product/country-naming.md` contained current product descriptions or language-policy prose that would contradict the shipped British interface.
 
 **Assessment**  
 British English should be declared semantically as well as spelled consistently. Normative/current docs should align; historical worklogs do not need retrospective spelling edits. Country-name policy must remain independent of localisation.

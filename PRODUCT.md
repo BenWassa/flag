@@ -47,7 +47,7 @@ The primary loop is Choose domain → Choose scope → Learn/Test → answer the
 - The learner-facing domain label is **Neighbours**.
 - Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, and existing neighbour-progress storage namespaces are compatibility contracts and are not localised.
 - Use **practice** as a noun and **practise** as a verb.
-- Country display names remain governed by [`docs/COUNTRY_NAMING.md`](docs/COUNTRY_NAMING.md), independently of the British-English copy standard.
+- Country display names remain governed by [`docs/product/country-naming.md`](docs/product/country-naming.md), independently of the British-English copy standard.
 
 ## Brand Commitments
 

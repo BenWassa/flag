@@ -99,7 +99,7 @@ UNGEGN records the English short name as `Gambia (the)` and the formal name as `
 - primary `GMB` display changed to **The Gambia**;
 - `Gambia` retained as an alias;
 - added regression checks for rename-sensitive names already present in the catalog: Cabo Verde, Côte d'Ivoire, Eswatini, Czechia, North Macedonia, Timor-Leste, and Türkiye;
-- documented the ongoing source policy in `docs/COUNTRY_NAMING.md`.
+- documented the ongoing source policy in `docs/product/country-naming.md`.
 
 ### 10:10 — Outcome-color logic corrected
 
@@ -154,7 +154,7 @@ The five callout hit areas were checked for overlap with active country polygons
 
 ### 10:13 — Geometry upgrade path documented
 
-Created `docs/MAP_GEOMETRY_SOURCES.md`.
+Created `docs/architecture/cartography.md`.
 
 Current decision:
 

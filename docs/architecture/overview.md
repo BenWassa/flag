@@ -49,7 +49,7 @@ These modules have no DOM dependencies and can be moved into a React Native/Expo
 
 The URL owns stable navigation state: learning domain, geographic scope, stable screens, and active activity identity. Quiz ordering, current index, guesses, feedback, timers, and result objects remain session state.
 
-Active-round hard refresh intentionally returns to the round's stable scope rather than attempting partial restoration. See `docs/ROUTING.md` for the full route contract and migration rationale.
+Active-round hard refresh intentionally returns to the round's stable scope rather than attempting partial restoration. See [`routing.md`](routing.md) for the full route contract and migration rationale.
 
 ### State
 

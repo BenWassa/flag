@@ -54,7 +54,7 @@ The system rejects the former warm-paper/editorial-card direction. It also avoid
 
 All learner-facing copy uses modern British English (`en-GB`), including visible text, document titles, metadata, accessible names and live-region announcements. The learner-facing domain name is **Neighbours**. Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, CSS/API property names such as `color`, and existing persistence keys retain their required implementation spelling.
 
-Use **practice** as a noun and **practise** as a verb. Country display names are governed separately by `docs/COUNTRY_NAMING.md`.
+Use **practice** as a noun and **practise** as a verb. Country display names are governed separately by `docs/product/country-naming.md`.
 
 ## Colours
 

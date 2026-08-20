@@ -6,7 +6,7 @@
 **PR:** #7 — `Fix map feedback, small-country callouts, and naming`  
 **Merge commit:** `6f347e69a4e5a097c61b765c82f653684688e606`
 
-This file is the release closeout supplement to [`MAP_FEEDBACK_V4_LOG.md`](MAP_FEEDBACK_V4_LOG.md). The main log contains the timestamped observation → assessment → change → verification → evaluation trail; this file records the final gate and merge after that log's merge recommendation.
+This file is the release closeout supplement to [`map-feedback-v4-log.md`](map-feedback-v4-log.md). The main log contains the timestamped observation → assessment → change → verification → evaluation trail; this file records the final gate and merge after that log's merge recommendation.
 
 ## Final release gate
 
@@ -49,11 +49,11 @@ The current Africa geometry remains intentionally classified as **MVP-grade**.
 
 The compiled polygon-intersection audit confirmed that some apparent border seams are actual low-resolution polygon overlap, not merely stroke rendering. This release reduces visual seam amplification and avoids precision-tap dependence for the most constrained countries, but does not manually redraw political boundaries.
 
-The required production-fidelity upgrade is tracked in [`MAP_GEOMETRY_SOURCES.md`](MAP_GEOMETRY_SOURCES.md) and issue #1. Broad geographic expansion should not proceed as if the current coarse topology were final.
+The required production-fidelity upgrade is tracked in [`../architecture/cartography.md`](../architecture/cartography.md) and issue #1. Broad geographic expansion should not proceed as if the current coarse topology were final.
 
 ## Naming disposition
 
-Country-name maintenance is now governed by [`COUNTRY_NAMING.md`](COUNTRY_NAMING.md):
+Country-name maintenance is now governed by [`../product/country-naming.md`](../product/country-naming.md):
 
 - UNGEGN / UNTERM primary naming reference;
 - UN Statistics Division M49 for ISO linkage, region structure, current-name table, and recent changes;

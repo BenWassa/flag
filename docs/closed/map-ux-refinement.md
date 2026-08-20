@@ -10,7 +10,7 @@ This log records material observations, decisions, changes, tests, and outcomes.
 
 Evaluation lenses:
 
-1. Existing Flag Atlas Impeccable design contract (`DESIGN.md`, `.impeccable/design.json`, `docs/IMPECCABLE_REVIEW.md`).
+1. Existing Flag Atlas Impeccable design contract (`DESIGN.md`, `.impeccable/design.json`, `docs/closed/impeccable-review.md`).
 2. Operate-surface heuristics: task speed, scanability, state clarity, hierarchy, recoverability, responsive behavior.
 3. Mobile interaction ergonomics: effective hit target, thumb reach, viewport use, accidental-tap risk.
 4. Learning behavior: retrieval attempt, corrective feedback, reveal timing, assessment integrity.
@@ -25,7 +25,7 @@ Evaluation lenses:
 
 **Action**
 - Created branch `agent/map-ux-refinement` from `main`.
-- Read `.impeccable/design.json`, `DESIGN.md`, and the previous `docs/IMPECCABLE_REVIEW.md`.
+- Read `.impeccable/design.json`, `DESIGN.md`, and the previous `docs/closed/impeccable-review.md`.
 
 **Existing design contract recovered**
 - Flag Atlas is an **Operate** surface.
@@ -184,7 +184,7 @@ Mode rules should be learned once and then disappear into the interaction. Repea
 - forced-colors support.
 
 **Documentation update**
-`docs/MAPS_PILOT.md` now supersedes the original horizontal-pan mobile decision and records the fit-width + safe-hit-assistance contract for future regions.
+`docs/product/map-learning.md` now supersedes the original horizontal-pan mobile decision and records the fit-width + safe-hit-assistance contract for future regions.
 
 ### 01:01 — Feedback timing and scroll behavior refined
 

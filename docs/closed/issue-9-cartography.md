@@ -51,7 +51,7 @@ Calling the whole input bundle “5.1.1” would be false provenance. Country ow
 Pinned official upstream `nvkelso/natural-earth-vector` commit `ca96624a56bd078437bca8184e78163e5039ad19`, theme versions, paths, roles, and ultimately SHA-256 values in `scripts/map-sources/natural-earth.json`.
 
 **Verification**
-The generator hash-checks every evaluated source. Exact hashes and byte sizes are also emitted into `docs/CARTOGRAPHY_PROVENANCE.json`.
+The generator hash-checks every evaluated source. Exact hashes and byte sizes are also emitted into `docs/architecture/cartography-provenance.json`.
 
 **Evaluation**
 Natural Earth is a practical production source for this PWA: 1:10m detail, public-domain redistribution, global consistency, physical companion layers, and reproducible source files.

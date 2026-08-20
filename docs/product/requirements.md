@@ -578,7 +578,7 @@ The application is divided into:
 
 UI code must not own mastery rules. Storage code must not decide what gets tested next. Country data must not be embedded in screen components. Shared interface icons, progress presentation, and flag rendering belong in reusable UI components rather than repeated view markup.
 
-See `docs/ARCHITECTURE.md` for implementation details.
+See [`../architecture/overview.md`](../architecture/overview.md) for implementation details.
 
 ## 23. Deployment path
 

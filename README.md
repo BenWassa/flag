@@ -21,7 +21,7 @@ Flag Atlas combines Seterra-style speed and geographic organisation with a persi
 
 The product language is modern British English (`en-GB`). User-facing domain labels use **Neighbours** while stable implementation identifiers such as the `/neighbors` route remain unchanged.
 
-Product truth lives in [`PRODUCT.md`](PRODUCT.md), the full requirements in [`docs/PRD.md`](docs/PRD.md), technical boundaries in [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), and the shipped visual system in [`DESIGN.md`](DESIGN.md). The Impeccable redesign review is recorded in [`docs/IMPECCABLE_REVIEW.md`](docs/IMPECCABLE_REVIEW.md).
+Product truth lives in [`PRODUCT.md`](PRODUCT.md), the full requirements in [`docs/product/requirements.md`](docs/product/requirements.md), technical boundaries in [`docs/architecture/overview.md`](docs/architecture/overview.md), and the shipped visual system in [`DESIGN.md`](DESIGN.md). See the [`docs` index](docs/index.md) for current references, open plans, and completed worklogs.
 
 ## Run locally
 
