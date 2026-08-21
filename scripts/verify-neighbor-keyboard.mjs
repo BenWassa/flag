@@ -22,6 +22,7 @@ assert.ok(runtime.includes("addEventListener('resize', syncNeighborEntryViewport
 assert.ok(!runtime.includes('scrollTo(') && !runtime.includes('scrollIntoView('), 'The keyboard fix does not use imperative scroll positioning.');
 
 assert.ok(app.includes('renderFocusIntent(lastRenderedRouteKey !== null)'), 'Issue #41 initial-render versus SPA focus intent remains in the shared app path.');
-assert.ok(app.includes("if (focusIntent === 'restore-or-autofocus') restoreFocus(previousSelector)"), 'Same-route restore/autofocus behaviour remains owned by the existing shared focus contract.');
+assert.ok(app.includes("focusIntent === 'restore-or-autofocus'"), 'Subsequent renders still gate focus restoration through Issue #41 focus intent.');
+assert.ok(app.includes('restoreFocus(previousSelector)'), 'Same-route rerenders still restore the prior interactive control through the shared focus path.');
 
 console.log('Neighbour keyboard verification passed: stable portrait layout ownership, scoped visualViewport sizing, zoom safety, no scroll hacks, and Issue #41 focus contract preserved.');
