@@ -12,7 +12,7 @@ import { getRecord, masteryGoal } from '../../domain/progress.js';
 import { loadLocationProgress, mapStorageIsWritable } from '../../infrastructure/map-storage.js';
 import { loadNeighborProgress, neighborStorageIsWritable } from '../../infrastructure/neighbor-storage.js';
 import { loadOutlineProgress, outlineStorageIsWritable } from '../../infrastructure/outline-storage.js';
-import { domainIcon } from '../components/icons.js';
+import { domainIcon, icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
 
 const AFRICA_SCOPE: StudyScope = { kind: 'continent', id: 'africa', label: 'Africa' };
@@ -77,13 +77,15 @@ function renderDomainSummary(summary: ProgressSummary, selected: boolean): strin
     `;
   }
 
+  const action = summary.action === 'play' ? 'quick-play' : 'open-scope';
+  const label = actionLabel(summary);
   return `
     <div class="ledger-row progress-domain-row ${selected ? 'progress-domain-row--selected' : ''}">
       <span class="progress-domain-row__icon">${domainIcon(summary.domain)}</span>
-      <button class="progress-domain-row__select" data-action="filter-progress" data-id="domain:${summary.domain}" aria-pressed="${selected}">
+      <button class="filter-tab progress-domain-row__select" data-action="filter-progress" data-id="domain:${summary.domain}" aria-pressed="${selected}">
         <span class="ledger-row__country"><strong>${escapeHtml(summary.label)}</strong><small>${summarySentence(summary)}</small></span>
       </button>
-      <button class="button button--tertiary progress-domain-row__action" data-action="quick-play" data-domain="${summary.domain}" data-id="africa" aria-label="${actionLabel(summary)} ${escapeHtml(summary.scope.label)} ${escapeHtml(summary.label.toLowerCase())}">${actionLabel(summary)}</button>
+      <button class="button button--tertiary progress-domain-row__action" data-action="${action}" data-domain="${summary.domain}" data-id="africa" aria-label="${summary.action === 'play' ? label : `Open ${label.toLowerCase()} options for`} ${escapeHtml(summary.scope.label)} ${escapeHtml(summary.label.toLowerCase())}">${label}</button>
     </div>
   `;
 }
@@ -107,7 +109,7 @@ export function renderProgress(
   const summaries = buildScopeProgressSummaries(ledgers, AFRICA_SCOPE);
   const domain = selectedDomain(filter);
   const statusFilter = legacyStatusFilter(filter);
-  const summary = summaries.find((item) => item.domain === domain) ?? summaries[0];
+  const summary = summaries.find((item) => item.domain === domain) ?? summaries[0]!;
 
   const evidenceRows = summary.countryIds
     .map((countryId) => {
@@ -139,7 +141,7 @@ export function renderProgress(
   return `
     <main class="page ledger-page progress-page">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="home" aria-label="Back to atlas">${domainIcon('locations')}</button>
+        <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('back')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" ${resetArmed ? '' : 'data-autofocus'}>Progress</h1>
           <span>Live learning evidence across four domains</span>
@@ -147,9 +149,16 @@ export function renderProgress(
       </header>
 
       ${!persistenceAvailable ? `
-        <div class="empty-state" role="status">
+        <div class="progress-storage-state" role="status">
           <strong>Progress is temporary</strong>
           <span>This browser is blocking storage. Your current session still works, but new evidence may not survive after the tab closes.</span>
+        </div>
+      ` : ''}
+
+      ${studiedCount === 0 ? `
+        <div class="progress-first-use" role="status">
+          <strong>No learning evidence yet</strong>
+          <span>Start with any supported Africa domain. This screen will show what to practise next as evidence builds.</span>
         </div>
       ` : ''}
 
@@ -182,7 +191,7 @@ export function renderProgress(
 
         ${evidenceRows.length ? `
           <div class="ledger-list">
-            ${[...grouped.entries()].map(([key, rows]) => {
+            ${[...grouped.entries()].map(([, rows]) => {
               const first = rows[0];
               if (!first) return '';
               const state = first.evidence.status;
