@@ -1,0 +1,29 @@
+name: Generate South America production geography
+
+on:
+  push:
+    branches: [issue-24-south-america-expansion]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message, 'Generate South America production geography') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run maps:generate
+      - run: npm run check
+      - run: git status --short
+      - run: rm .github/workflows/generate-south-america.yml
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/maps src/data/neighbors docs/architecture scripts/map-sources .github/workflows/generate-south-america.yml
+          git commit -m "Generate South America production geography"
+          git push
