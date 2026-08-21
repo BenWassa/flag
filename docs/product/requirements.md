@@ -1,733 +1,437 @@
-# Flag Atlas — Product Requirements Document
+# Atlas — Product Requirements
 
-**Status:** MVP implementation baseline, updated through Issue #21<br>
-**Product:** Mobile-first world flag learning application  
-**Core catalog:** 195 sovereign-state flags  
-**Primary experience:** Learn and Play, organised by world → continent → region<br>
-**Design benchmark:** Seterra's speed and geographic organization, with a stronger visual system and a persistent adaptive learning model.
+**Status:** current product baseline; visual style pending Issue #32  
+**Product:** mobile-first geography-learning PWA  
+**Core country catalogue:** 195 sovereign states  
+**Learning domains:** Flags, Locations, Outlines, Neighbours  
+**Primary hierarchy:** World → Continent → Region
 
 ## 1. Product thesis
 
-Flag Atlas should make learning every national flag feel intrinsically satisfying. Engagement comes from quick recognition, visible knowledge growth, clean visual feedback, and progressively harder distinctions. The product deliberately avoids streaks, coins, lives, points economies, mascots, forced daily goals, and other engagement layers that do not improve learning.
+Atlas should make learning world geography fast, legible and intrinsically satisfying.
 
-The application maintains a durable model of what the learner knows. At any point it must be able to answer:
+The product combines:
 
-1. Which flags has this learner never answered a question about?
-2. Which flags are still being learned?
-3. Which flags have been demonstrated as mastered?
-4. Which flags should appear next?
+- direct geographic practice;
+- domain-appropriate Learn experiences;
+- clean scored Play;
+- rich persistent country-level learning evidence;
+- scarce higher-order mastery/completion achievements.
 
-Those answers must survive app restarts and must never depend on transient quiz UI state.
+Engagement should come from learning, tactile interaction and meaningful completion rather than an activity economy.
 
-## 2. Vision decisions
+Atlas does not need XP, coins, arbitrary streak rewards, lives, reward stores, leaderboards or constant celebration to feel like a game.
 
-### Experience
+## 2. Product identity
 
-- Fast and direct like Seterra.
-- Cleaner, more contemporary interface.
-- Mobile-first touch targets and layout.
-- Flags dominate the screen; chrome stays quiet.
-- Progress is informative rather than gamified.
-- A learner can begin useful practice in one or two taps.
+Learner-facing product name: **Atlas**.
 
-### Learning control
+The four product domains are equal parts of the broader geography-learning system:
 
-Users choose between two primary intents:
+1. Flags;
+2. Locations;
+3. Outlines;
+4. Neighbours.
 
-- **Learn:** adaptive practice with immediate answer feedback.
-- **Play:** a balanced sample from the chosen scope with answer correctness withheld until the round ends.
+Stable technical identifiers may retain legacy `flag`, `flag-atlas`, `neighbors` and `test` naming for compatibility. The rebrand must not create breaking storage/routing migrations solely for cosmetic consistency.
 
-The default learner path is adaptive, while geographic scope remains fully user-controlled.
+## 3. Core learner journey
 
-**Play** is the learner-facing label only. The implementation continues to use the activity value `test`, the `/test` route segment, `start-test` data actions, existing storage namespaces, and verification identifiers. Those technical contracts must not be renamed as part of product-copy changes.
+The durable conceptual path is:
 
-### Scope
+**choose geography → choose learning intent/domain as appropriate → Learn or Play → interact with geography → update live evidence → review/continue**
 
-MVP is flags only. Country-location maps, capitals, geography picking, outlines, and broader country knowledge are possible future modules and must not complicate the initial information architecture.
+Navigation should progressively disclose only the next useful decision.
 
-### Release priority
+A dedicated region-detail view is required because region is the first meaningful cross-domain mastery unit.
 
-The first release optimizes for an excellent core loop:
+Browser Back/Forward and direct links remain first-class product behaviour.
 
-**Choose scope → Learn/Play → Answer → Update knowledge model → Review results → Continue**
+## 4. Geography and curriculum
 
-## 3. Goals
+### Core catalogue
 
-1. Teach recognition of all 195 core national flags.
-2. Support learning at world, continent, and region level.
-3. Persist every meaningful learning result.
-4. Prioritize unseen and weak flags automatically in Learn mode.
-5. Phase out established flags while retaining periodic checks.
-6. Deliberately surface confusingly similar flags.
-7. Keep answer positions genuinely balanced.
-8. Make progress legible without turning the product into a dashboard.
-9. Work well as an installable mobile web app today.
-10. Keep the domain layer portable to Firebase-backed web or a future native shell.
+The canonical curriculum contains 195 sovereign states:
 
-## 4. Non-goals for MVP
-
-- Streaks or daily goals.
-- XP, coins, lives, energy, currencies, leaderboards, or rewards stores.
-- Social network features.
-- Multiplayer.
-- Capitals, currencies, country outlines, maps, or population quizzes.
-- Flag history or symbolism lessons.
-- AI-generated explanations.
-- User accounts or cloud synchronization.
-- Territories and dependencies in the core denominator.
-
-## 5. Core catalog
-
-The default curriculum contains 195 sovereign states:
-
-- 193 UN member states.
-- Palestine.
+- 193 UN member states;
+- Palestine;
 - Vatican City / Holy See.
 
-Core continent totals:
+Territories/dependencies do not silently enter the core denominator.
 
-| Continent | Countries |
-|---|---:|
-| Africa | 54 |
-| Asia | 48 |
-| Europe | 44 |
-| North America | 23 |
-| South America | 12 |
-| Oceania | 14 |
-| **Total** | **195** |
+Country identity remains canonical ISO3 and follows `docs/product/country-naming.md`.
 
-Antarctica has no sovereign states and is excluded.
+### Hierarchy
 
-Territories, dependencies, and additional disputed/partially recognized states should be separate optional content packs later. The core denominator must not shift silently.
+The base hierarchy is:
 
-## 6. Geography taxonomy
+**World → Continent → Region**
 
-Every core country belongs to exactly one continent and exactly one learning region. Search may surface aliases or transcontinental expectations later, but the curriculum must remain deterministic.
+Canonical classification and learner-facing learning scopes may diverge where useful. Issue #28 establishes the direction for conventional overlapping scopes such as the Middle East without duplicating country records or corrupting canonical continent ownership.
 
-### Africa — 54
+### Current coverage
 
-- North Africa — 6
-- West Africa — 16
-- Central Africa — 9
-- East Africa — 18
-- Southern Africa — 5
+- Flags: full 195-country curriculum.
+- Locations: Africa and its production regions.
+- Outlines: Africa and its production regions.
+- Neighbours: eligible Africa targets/regions supported by complete canonical topology-derived adjacency.
 
-### Asia — 48
+Africa is therefore the first production proving ground for the complete four-domain system.
 
-- Central Asia — 5
-- East Asia — 5
-- Southeast Asia — 11
-- South Asia — 8
-- West Asia — 19
+Issues #22–#27 own global expansion. Other continents may appear as honest shell/navigation states before all gameplay data is available, but unavailable domains must never be treated as completed curriculum.
 
-### Europe — 44
+## 5. Learning domains
 
-- Northern Europe — 10
-- Western Europe — 9
-- Eastern Europe — 10
-- Southern Europe — 15
+### Flags
 
-### North America — 23
-
-- Northern America — 2
-- Central America — 8
-- Caribbean — 13
-
-### South America — 12
-
-- Andean — 5
-- Atlantic — 3
-- Southern Cone — 4
-
-### Oceania — 14
-
-- Australia & New Zealand — 2
-- Melanesia — 4
-- Micronesia — 5
-- Polynesia — 3
-
-The country-level source of truth lives in `src/data/countries.ts`. Automated verification must fail if totals, ISO identifiers, or region assignments become inconsistent.
-
-## 7. Core learning state
-
-The user-facing system has exactly three buckets.
-
-### Unseen
-
-The country has never appeared as the target of an answered question.
-
-Display: `Unseen`
-
-### Learning
-
-The country has been tested but has not yet demonstrated stable recognition.
-
-Display examples:
-
-- `Learning 0/3`
-- `Learning 1/3`
-- `Learning 2/3`
-
-### Mastered
-
-The learner has satisfied the active mastery requirement across separate quiz rounds.
-
-Display: `Mastered`
-
-The simple bucket model is intentionally separate from the internal scheduler. Future adaptive research may change review timing or evidence weighting without changing the user-facing vocabulary.
-
-## 8. Mastery v1
-
-### First exposure
-
-Correct:
-
-`Unseen → Learning 1/3`
-
-Incorrect:
-
-`Unseen → Learning 0/3`
-
-### Learning progression
-
-A correct answer grants at most one mastery credit per quiz session.
-
-`Learning 1/3 → Learning 2/3 → Mastered`
-
-Three qualifying correct answers must occur in separate rounds. Repeating the same target twice in one session can never manufacture mastery.
-
-### Learning error
-
-An incorrect answer resets the active mastery streak to zero and records the selected wrong country as a confusion edge.
-
-### Mastered retention
-
-After mastery, the app schedules periodic checks. Initial v1 intervals:
-
-- 2 days
-- 7 days
-- 21 days
-- 60 days
-- 180 days
-
-Correct retention answers advance the next review interval.
-
-### Mastered lapse
-
-A wrong answer while Mastered returns the country to Learning and increments its lapse count. Previously mastered flags use a shorter two-correct recovery target in v1.
-
-## 9. Adaptive mastery research track
-
-The v1 heuristic is intentionally modular and should be treated as the first scheduler, not the final learning science model.
-
-Before locking a long-term algorithm, research should compare:
-
-- retrieval-practice evidence;
-- spacing-effect evidence;
-- desirable difficulty and interference;
-- Leitner-style systems;
-- SM-2 lineage;
-- FSRS-style memory-state scheduling;
-- whether response latency adds predictive value after accuracy and recency;
-- whether explicit confidence improves or merely burdens the interaction;
-- how visually similar distractors affect durable recognition;
-- how quickly a mastered lapse should be relearned.
-
-### Research questions
-
-1. Should mastery require a fixed count or a predicted recall probability threshold?
-2. Should an extremely slow correct answer count equally toward mastery?
-3. Should Play-mode answers carry more evidentiary weight than Learn-mode answers because feedback is withheld?
-4. How much inter-session spacing is required before two successes should count as independent evidence?
-5. Should mastery be scope-independent? Current requirement: yes. Senegal is either known or not known regardless of whether it was learned in West Africa or World mode.
-6. What target recall probability best balances progress speed and retention?
-7. When a user repeatedly confuses two flags, should those flags be paired immediately or after a short delay?
-
-### Architectural requirement
-
-The scheduler must implement a narrow domain interface so a future algorithm can replace v1 without changing screens, storage semantics, or curriculum data.
-
-## 10. Learn mode
-
-Purpose: build recognition efficiently.
-
-### New scope behavior
-
-If the chosen scope contains Unseen countries, Learn mode prioritizes first exposure. The learner should see all flags in the scope before ordinary review dominates.
-
-### Post-exposure behavior
-
-Once Unseen reaches zero, a 10-question Learn session should target roughly:
-
-- 70% Learning.
-- 20% due Mastered retention.
-- 10% challenge/other retention.
-
-Unused category slots are redistributed.
-
-### Priority inside Learning
-
-Selection weight increases for:
-
-1. Most recently missed flags.
-2. Repeatedly missed flags.
-3. Low lifetime accuracy.
-4. Known confusion pairs.
-5. Due reviews.
-6. Slow correct recognition.
-7. Flags near the current mastery threshold.
-
-Immediate feedback is shown after each answer.
-
-## 11. Play mode
-
-Purpose: measure a scope cleanly.
+Target skill: identify a country from its national flag.
 
 Requirements:
 
-- User chooses the geographic scope.
-- Questions sample across that scope rather than concentrating only on weak items.
-- Correctness is not revealed during the round.
-- Final results show score, missed flags, selected wrong answers, and learning-state changes.
-- Play answers update the knowledge model because they are valid evidence of recognition.
+- preserve true flag aspect ratios;
+- no answer leakage before a scored response;
+- confusion-aware distractors where multiple choice is used;
+- full World/continent/region scope support;
+- Flags Learn should become a browse/reveal comparison surface under #30;
+- Play remains the scored retrieval path.
 
-Future research may assign different evidence weights to Learn and Play answers while retaining one unified progress ledger.
+### Locations
 
-## 12. Quiz construction
-
-Default round: 10 questions.
-
-Possible later lengths: 5, 20, Endless.
-
-### Target constraints
-
-- Target must belong to the selected scope.
-- Standard rounds should not repeat a target.
-- Review Mistakes may use a smaller target pool.
-
-### Distractor hierarchy
-
-Distractors should become educational rather than arbitrary.
-
-Priority order:
-
-1. User-specific confusion choices.
-2. Curated known-similar flag cluster.
-3. Same region.
-4. Same continent.
-5. Global fallback.
-
-Examples of useful clusters:
-
-- Mali / Guinea / Senegal / Cameroon.
-- Chad / Romania.
-- Indonesia / Monaco.
-- Ireland / Côte d’Ivoire.
-- Netherlands / Luxembourg.
-- Colombia / Ecuador / Venezuela.
-- Slovenia / Slovakia.
-- Qatar / Bahrain.
-- Australia / New Zealand.
-- Republic of the Congo / Democratic Republic of the Congo.
-
-## 13. Answer-position integrity
-
-Correct-option placement must not form learnable patterns.
-
-Requirements for each generated session:
-
-- Four answer positions are approximately equally represented.
-- Maximum count difference between positions is one.
-- No correct position may occur three times consecutively.
-- Session randomization is seeded for reproducible debugging.
-- Correct position is generated independently of country identity.
-
-This is a hard QA requirement, not a cosmetic feature.
-
-## 14. Flag assets
-
-Primary quiz presentation should use SVG flag assets rather than platform emoji.
-
-MVP currently resolves ISO-2 codes to FlagCDN SVG assets and caches requested assets through the service worker. Before a fully offline production release, the 195 SVGs should be vendored or served from a controlled asset bucket so external availability is not part of the core learning path.
+Target skill: identify countries by true geographic position.
 
 Requirements:
 
-- Preserve flag aspect ratio.
-- Never crop the flag.
-- Do not use a surrounding UI color derived from the flag.
-- Before answer submission, image alt text must not reveal the country name.
-- Only the active quiz flag is eager/high-priority; ledger and result thumbnails lazy-load.
+- use canonical production cartography;
+- preserve geographic truth and context;
+- keep active geography usable on mobile;
+- distinguish clean first-try success from corrective/revealed outcomes;
+- no parallel map dataset.
 
-## 15. Navigation model
+Detailed map-learning behaviour is documented in `map-learning.md`, subject to the newer evidence semantics in `learning-and-mastery.md`.
 
-The interface reveals only the next real decision. A routed page is justified only when it asks a question; a domain with one available continent canonicalises past that redundant level.
+### Outlines
 
-### Home
+Target skill: identify countries by silhouette.
 
-Shows:
+Requirements:
 
-- Four domain rows: Flags, Locations, Outlines, and Neighbours.
-- A row body that opens the next real scope decision.
-- A trailing Play control on every row: World for Flags and Africa for the three Africa-only domains.
-- Progress inside each row without a separate learning-state legend.
-- Direct access to the full Progress ledger.
+- derive silhouettes from canonical production geometry;
+- preserve shape/aspect ratio while normalising presentation enough to avoid trivial scale cues;
+- avoid answer leakage in accessible labels;
+- remain usable on mobile portrait and short landscape.
 
-### Flags continent index
+Detailed domain requirements remain in `outlines.md`, subject to the newer evidence semantics in `learning-and-mastery.md`.
 
-Shows:
+### Neighbours
 
-- World status with named Learn world and Play world actions.
-- Six continent rows rather than a decorative card grid.
-- A row body that opens the continent launcher.
-- A trailing Play control that starts the existing Play activity for that continent.
-- Per-continent progress.
+Target skill: identify all direct land-border neighbours of a target country.
 
-### Launcher
+Requirements:
 
-One routed launcher is parameterised by domain, continent scope, and an optional selected region. Locations, Outlines, and Neighbours canonicalise directly to their Africa launcher; Flags reaches a launcher after its genuine six-way continent choice.
+- adjacency comes only from canonical topology-derived data;
+- do not teach incomplete neighbour sets;
+- preserve the established set-building/attempt semantics unless a focused issue changes them;
+- the map remains the main geographic learning surface;
+- autocomplete/input must remain mobile-usable and answer-safe.
 
-The launcher shows:
+Stable internal spelling remains `neighbors` where required.
 
-- a Back control to the launcher's true parent;
-- one visually dominant Play action that always names its current scope;
-- decision-relevant progress and textual status;
-- an optional, progressively loaded map for Africa Locations, Outlines, and Neighbours;
-- an always-present region list;
-- a row body that selects a region without starting a round;
-- a trailing Play control that starts that region directly;
-- one subordinate Learn action that names the same scope as Play;
-- an All Africa control when a region is selected.
+## 6. Learn and Play
 
-A route such as `/#/locations/africa/west-africa` renders the Africa launcher with West Africa selected, not a separate region screen. Selection updates both primary actions and the URL. It does not reveal a country ledger, learning-state legend, feedback key, or round-rules explanation.
+Atlas has two learner-facing intents.
 
-Region selection replaces the current launcher history entry. Starting Learn or Play pushes a new activity entry, so Back from a round returns to the exact launcher selection that started it. All Africa clears a region selection and is distinct from Back; Back always returns to the launcher parent.
+### Learn
 
-The launcher must remain fully usable before optional geometry loads. Play, Learn, the region list, and text state cannot depend on the map asset.
+Purpose: familiarisation and corrective learning.
 
-### Learning Ledger
+Learn may differ by domain. It does not need to be a slower copy of Play.
 
-Shows the complete country state independent of quiz history presentation.
+Requirements:
 
-Filters:
+- passive exposure/reveal does not create scored evidence;
+- corrective interactions should stay in the primary task surface where possible;
+- avoid repetitive detached Next interactions;
+- immediate feedback must remain perceivable and accessible;
+- domain mechanics may produce lower-strength evidence when genuine unassisted retrieval occurs.
 
-- All.
-- Unseen.
-- Learning.
-- Mastered.
+### Play
 
-Future filters:
+Purpose: clean scored retrieval / assessment.
 
-- Due.
-- Recently missed.
-- Weakest.
+Requirements:
 
-## 16. Quiz screen UX
+- no corrective cue before the scored response is committed, except where the domain's set-building mechanic necessarily shows solved members;
+- results update live country evidence;
+- Play can provide stronger diagnostic evidence than ordinary corrective Learn;
+- clean performance can calibrate already-known material faster than a rigid repeated-practice rule;
+- exact evidence weighting belongs in the learning model, not UI conditionals.
 
-The flag is the dominant visual element.
+Learner-facing label is **Play**. Stable internal value/route/action naming may remain `test`.
 
-Screen contains:
+## 7. Live country learning evidence
 
-- Exit control.
-- Scope label.
-- Round progress.
-- Learn/Play state.
-- Flag image.
-- Four large country options.
+Country records are the atomic scheduler/evidence layer.
 
-### Efficiency controls
+They must remain rich enough to represent or derive:
 
-- Number keys `1`–`4` select the matching answer.
-- `Enter` advances after Learn-mode feedback.
-- `Escape` exits the current quiz.
-- Numeric shortcuts supplement normal button operation; they are never required.
+- absence of scored evidence;
+- current uncertainty/learning state;
+- strong evidence;
+- first-try vs assisted/revealed outcomes;
+- assessment evidence;
+- response history;
+- confusion history;
+- review/due state;
+- lapse/contradictory evidence;
+- domain-specific outcome quality.
 
-### Learn answer behavior
+Existing internal `unseen`, `learning`, `mastered` fields may remain for compatibility while the model evolves.
 
-Correct answer:
+### Critical language rule
 
-- Highlight correct choice.
-- Show country name.
-- Show current mastery state.
-- User taps Next or presses Enter.
+Do **not** present an individual country as a prestigious learner-facing “Mastered” achievement.
 
-Incorrect answer:
+Country evidence answers operational questions such as what should be practised/reviewed. It is not the product's achievement unit.
 
-- Highlight selected wrong option.
-- Highlight correct option.
-- Show correct country and current state.
-- User taps Next or presses Enter.
+### Scheduler flexibility
 
-### Play answer behaviour
-
-- Record choice.
-- Do not reveal correctness.
-- Advance quickly.
-
-## 17. Results
-
-Every round result should answer:
-
-- How many were correct?
-- Which flags were missed?
-- Which answer was chosen for each miss?
-- Which flags became Mastered?
-- What can the learner do next?
-
-Newly mastered flags should be named and shown when present. Mastery is the product-specific success moment; it may receive stronger emphasis than routine answers without becoming a reward economy.
-
-Primary actions:
-
-- Review Mistakes.
-- Another Round.
-- Back to Atlas.
-
-No confetti, loot, streak extension, or unrelated reward surfaces.
-
-## 18. Learning ledger requirements
+Do not expose an internal algorithm such as `1/3` or `2/3` as the product contract.
 
-For every country persist at minimum:
-
-- current status;
-- mastery streak;
-- lifetime correct;
-- lifetime incorrect;
-- current correct streak;
-- lapse count;
-- retention level;
-- first seen time;
-- last seen time;
-- last correct time;
-- last incorrect time;
-- mastery time;
-- next scheduled review;
-- average response time;
-- wrong-country confusion counts;
-- last session that granted mastery credit.
+The evidence model should be replaceable/refinable without changing the visible mastery hierarchy or resetting learner progress.
 
-Every attempt should preserve:
+Issue #29 owns implementation refinement.
 
-- session;
-- target country;
-- selected country;
-- correctness;
-- response time;
-- timestamp;
-- status before and after;
-- mastery streak before and after.
+## 8. Earned Mastery and completion
 
-## 19. Visual design system
+Earned achievement state is separate from live country evidence.
 
-The shipped source of truth is `/DESIGN.md`. The core thesis is **the flag is the color system**: flags provide the visual richness while product chrome stays precise and quiet.
+### Region × domain — Mastery
 
-### Character
+The first learner-facing Mastery unit is a complete domain across a complete region.
 
-- Modern atlas index / international identification desk.
-- Operate-first: fast, scan-friendly, predictable, and touch-friendly.
-- Cool neutral canvas and white working surfaces.
-- Graphite text with registration blue reserved for primary actions, selection, focus, and round progress.
-- Flat ruled lists and proximity instead of repetitive rounded content cards.
-- Minimal elevation; a subtle border/shadow is allowed on flag images so white flags remain legible.
-- Flag colors remain visually dominant.
+Examples:
 
-### Explicit anti-patterns
+- Flags of West Africa mastered;
+- Locations of West Africa mastered;
+- Outlines of West Africa mastered;
+- Neighbours of West Africa mastered.
 
-- No warm-paper + display-serif editorial treatment in the operational product.
-- No decorative world-map/grid texture.
-- No continent/card bento as the default page scaffold.
-- No ornamental label/eyebrow above every heading.
-- No glass, gradient text, decorative glow, or reward-style chrome.
-- No emoji or text glyphs as interface icons when the shared SVG icon primitive can express the action.
+The UI uses a neutral domain competency mark before mastery and purple after mastery.
 
-### Interaction principles
+### Complete region
 
-- Touch targets at least 44px.
-- Primary actions large enough for one-handed mobile use.
-- Minimal modal behavior.
-- Routine motion approximately 100–220ms and tied to state.
-- Reduced-motion support without hiding state changes.
-- Hover styling only where hover and a fine pointer exist.
-- Mobile safe-area insets respected.
-- Short landscape receives structural adaptation rather than simple scale reduction.
-- No hidden swipe-only controls.
+A region is complete after all required supported domain masteries have been earned.
 
-### Typography
+Requirements:
 
-Use one fixed-role system sans-serif stack across headings, controls, metadata, and data. Product hierarchy comes from size, weight, spacing, and tone. Comparable progress numerals use tabular figures. Do not introduce a display serif or monospace-as-costume into the core product UI.
+- preserve useful scope count such as `17 countries`;
+- do not replace completion with `100%` / `17/17`;
+- use restrained gold prestige treatment;
+- no separate region emblem/crown.
 
-## 20. Accessibility
+### Complete continent
 
-- Keyboard-operable controls.
-- Visible focus states.
-- Sufficient text/control contrast.
-- Status communicated with text as well as color.
-- Reduced-motion media query.
-- Forced-colors fallback consideration.
-- Dynamic mobile viewport and safe-area support.
-- Generic `Flag to identify` alt text before answer reveal.
-- Country-specific alt text after reveal.
-- Responsive structure supports portrait and short-landscape quiz use.
+A continent is complete after all required region/domain mastery is earned.
 
-## 21. Persistence and offline strategy
+Requirements:
 
-MVP is local-first.
+- no completion quantity required;
+- award a continent-silhouette crest;
+- use restrained purple/gold treatment;
+- unavailable curriculum cannot satisfy requirements.
 
-- Progress stored locally.
-- Attempts stored locally with a bounded history.
-- No sign-in required.
-- Service worker caches app shell and fetched flag assets.
-- Core UI should remain usable after install even if connectivity is intermittent.
+### Complete World
 
-A future Firebase adapter may add authenticated synchronization while retaining local-first behavior.
+World completion is the ultimate achievement.
 
-## 22. Technical architecture requirements
+Requirements:
 
-The application is divided into:
+- reserve the Crown for this state alone;
+- no higher achievement tier;
+- no `195/195` or percentage needed after completion;
+- the Crown remains unobtainable until the global four-domain curriculum exists.
 
-- `data` — static countries, regions, confusion seeds.
-- `domain` — mastery and quiz algorithms.
-- `infrastructure` — persistence and asset providers.
-- `state` — application orchestration.
-- `ui` — render-only components/views.
+### Persistence rule
 
-UI code must not own mastery rules. Storage code must not decide what gets tested next. Country data must not be embedded in screen components. Shared interface icons, progress presentation, and flag rendering belong in reusable UI components rather than repeated view markup.
+Earned mastery/completion is acquired and not lost in the current product model.
 
-See [`../architecture/overview.md`](../architecture/overview.md) for implementation details.
+Live country evidence may later lapse or become due without automatically revoking the historical achievement.
 
-## 23. Deployment path
-
-### MVP
-
-GitHub Pages through GitHub Actions.
-
-### Later
-
-Firebase Hosting can replace the hosting target without changing app architecture.
-
-Potential later Firebase services:
-
-- Authentication.
-- Firestore progress synchronization.
-- Remote Config for scheduler experiments.
-- Analytics / experiment instrumentation.
-
-No Firebase dependency should be introduced until a concrete cloud feature requires it.
-
-## 24. Analytics plan
-
-Local MVP does not require telemetry.
-
-If analytics are added later, relevant product events include:
-
-- session started/completed;
-- question answered;
-- country first seen;
-- country mastered;
-- mastery lost;
-- region first pass completed;
-- continent first pass completed;
-- region mastered;
-- continent mastered.
-
-Useful product metrics:
-
-- first-pass completion rate;
-- sessions to mastery;
-- retention-check accuracy;
-- lapse rate after mastery;
-- percentage of errors concentrated in confusion pairs;
-- return-to-mastery time after a lapse.
-
-## 25. Acceptance criteria
-
-### Curriculum integrity
-
-- Exactly 195 core countries.
-- Unique ISO-3 identifier per country.
-- Every country assigned to one valid continent.
-- Every country assigned to one valid region in that continent.
-- Region totals sum to continent totals.
-- Continent totals sum to 195.
-
-### Quiz integrity
-
-- Exactly one correct answer.
-- Four unique answer options.
-- Target belongs to selected scope.
-- No repeated standard target within a round.
-- Correct answer positions balanced within ±1.
-- No three-position correct-answer run.
-
-### Learning integrity
-
-- First answered exposure removes Unseen status.
-- Correct and incorrect answers persist immediately.
-- A country can earn at most one mastery credit per session.
-- Mastery requires successes across separate sessions.
-- Mastered errors return the country to Learning.
-- Confusion choice is persisted on every wrong answer.
-- Restarting the app preserves state.
-
-### UX integrity
-
-- Home exposes direct Play for all four domains without opening settings.
-- World Flags and Africa Play are reachable in one tap from Home; continent and region Play are reachable in no more than two.
-- Learn remains deliberate and costs at most one additional tap from the relevant launcher.
-- Locations, Outlines, and Neighbours routes without a scope canonicalise to their Africa launcher rather than rendering a one-choice screen.
-- Region selection updates the named Learn and Play scopes without starting a round or growing browser history.
-- Back from a launcher returns to its true parent; All Africa clears the region selection separately.
-- No pre-round surface contains a learning-state legend, feedback key, country ledger, or round-rules paragraph.
-- Flag description is never shown before an answer.
-- Play mode does not reveal correctness during the round.
-- Every quiz answer is reachable by touch, keyboard tab navigation, and optional `1`–`4` shortcut.
-- Exiting World returns Home; exiting continent/region practice returns to that selected scope.
-
-## 26. MVP implementation checklist
-
-- [x] 195-country data catalog.
-- [x] Continent and region taxonomy.
-- [x] Unseen / Learning / Mastered ledger.
-- [x] Three-session initial mastery rule.
-- [x] Two-success recovery after mastered lapse.
-- [x] Retention interval hooks.
-- [x] Learn mode.
-- [x] Play mode (internal activity identifier: `test`).
-- [x] First-pass prioritization.
-- [x] Adaptive learning priority heuristic.
-- [x] Confusion graph capture.
-- [x] Similarity-aware distractors.
-- [x] Balanced correct-answer positions.
-- [x] Results and mistake review.
-- [x] Local persistence.
-- [x] Mobile-first PWA shell.
-- [x] GitHub Pages workflow.
-- [x] Impeccable visual-system review and Atlas Index redesign.
-- [x] Shared SVG UI icon primitive and keyboard quiz accelerators.
-- [x] Lazy-load noncritical flag thumbnails.
-- [ ] Vendor all 195 SVG assets for guaranteed offline use.
-- [ ] Deep adaptive-mastery literature review and v2 scheduler proposal.
-- [ ] Production accessibility audit.
-- [ ] Cross-browser/device QA.
-
-## 27. Future product directions
-
-Only after the flag loop is strong:
-
-1. Country picker / map-location mode.
-2. Country outlines.
-3. Capitals.
-4. Custom study sets.
-5. Hard similarity-only mode.
-6. Reverse mode: country name → choose flag.
-7. Typed answer Expert mode.
-8. Cloud synchronization.
-9. Territories/dependencies pack.
-10. Historical flag packs.
-
-## 28. Product benchmark note
-
-Seterra demonstrates the value of fast, scope-specific geography quizzes and already separates content by geography and quiz type. Flag Atlas keeps that immediacy while making durable knowledge state, adaptive scheduling, confusion-aware practice, and a cleaner mobile interface central to the product rather than treating each quiz as an isolated score event.
-
-Reference benchmark pages:
-
-- https://www.geoguessr.com/quiz/seterra
-- https://www.geoguessr.com/fl/2022
+Future revalidation/decay is a separate product decision.
+
+Issue #34 owns implementation.
+
+## 9. Region detail
+
+Atlas requires a dedicated stable routed region-detail screen.
+
+It should expose:
+
+- region identity;
+- useful country count;
+- four domain competencies;
+- supported/unsupported domain availability;
+- neutral vs purple mastered competency state;
+- clear Learn/Play entry points;
+- restrained gold treatment when the region is fully complete.
+
+It should not become a dense analytics dashboard.
+
+Issue #35 owns implementation.
+
+## 10. Gamification requirements
+
+The achievement hierarchy is:
+
+**live country evidence → region/domain Mastery → complete region → continent crest → world Crown**
+
+The visual prestige hierarchy is:
+
+**purple competence → scarce gold completion → continent crest → singular Crown**
+
+Do not introduce by default:
+
+- XP;
+- coins/currency;
+- reward stores;
+- arbitrary streak achievements;
+- achievement spam;
+- fantasy rank ladders;
+- crowns on ordinary objects;
+- confetti for routine correct answers.
+
+See `gamification.md`.
+
+## 11. Colour semantics
+
+Locked palette:
+
+| Role | Colour |
+| --- | --- |
+| Atlas Blue / primary action | `#2563EB` |
+| Pressed/depth blue | `#1749B8` |
+| Action tint | `#EAF0FF` |
+| Correct | `#137A55` |
+| Wrong | `#B42318` |
+| Mastery | `#6D3FC0` |
+| Prestige / completeness | `#E0AF2F` |
+| Canvas | `#F6F8FB` |
+| Primary text | `#101318` |
+
+Use one global semantic palette. Do not theme continents/regions/hemispheres from their flag-colour distributions.
+
+See `colour-system.md`.
+
+## 12. Visual-system status
+
+The palette, semantic hierarchy and gamification rules are locked.
+
+The final visual style is not.
+
+Issue #32 must resolve and document:
+
+- overall personality;
+- shape/radius language;
+- depth/elevation/press physics;
+- typography personality;
+- navigation composition;
+- region-detail composition;
+- icon/shield treatment;
+- continent crest and world Crown art direction;
+- motion system.
+
+Do not infer React, Tailwind or another frontend framework/tooling migration from mock-up technology. The desired visual outcome and the implementation stack are separate decisions.
+
+## 13. Cartography requirements
+
+Production cartography remains one canonical reproducible system.
+
+Requirements:
+
+- no handwritten country geometry;
+- no second topology source;
+- no handwritten neighbour tables;
+- reuse canonical geometry for Locations, Outlines and Neighbours where appropriate;
+- preserve documented geopolitical/boundary policy;
+- keep water/context/learning-state contrast coherent;
+- do not theme cartography by continent flag colours.
+
+Issue #20 owns map colour/water contrast refinement.
+
+## 14. Persistence and migration
+
+- learner progress survives app restarts;
+- domain learning ledgers remain independent;
+- achievement persistence must be layered above live evidence cleanly;
+- persisted schema changes require deterministic migration;
+- existing progress must not be reset by visual/brand work;
+- stable storage namespaces should not be renamed without product value;
+- active quiz internals remain ephemeral session state unless a deliberate recovery design is introduced.
+
+## 15. Routing
+
+- typed routes remain source of truth;
+- hash routing remains appropriate for GitHub Pages unless separately migrated;
+- URLs own durable navigation state;
+- session state owns transient round internals;
+- Back/Forward must work naturally;
+- stable screens, including the future region detail, must be directly addressable;
+- unavailable domain data is an availability concern rather than justification for parallel routing systems.
+
+## 16. Accessibility
+
+Atlas must support:
+
+- keyboard operation;
+- visible focus;
+- non-colour-only state communication;
+- reduced motion;
+- mobile safe areas;
+- readable zoomed text;
+- answer-safe accessible descriptions;
+- stable focus after rerenders;
+- deliberate portrait and short-landscape layouts;
+- honest degraded/asset-failure states.
+
+All assistive-technology copy follows the same British-English standard as visible copy.
+
+## 17. Product language
+
+Use modern British English (`en-GB`).
+
+- Neighbours;
+- colour;
+- centre;
+- behaviour;
+- practise as a verb / practice as a noun.
+
+Country display names follow `country-naming.md`.
+
+Stable implementation contracts may retain American spelling.
+
+## 18. Architecture constraints
+
+- keep pure learning rules outside UI rendering;
+- keep country identity canonical and shared;
+- investigate before refactoring;
+- prefer coherent extensions over duplicate systems;
+- preserve backwards compatibility unless migration has clear value;
+- keep the scheduler replaceable;
+- keep earned achievement state separable from live evidence;
+- preserve canonical cartography and topology provenance.
+
+## 19. Current implementation roadmap
+
+Primary active work is indexed in `../open/index.md`.
+
+Near-term sequence:
+
+1. lock these product foundations;
+2. select the final visual style and complete `DESIGN.md` under #32;
+3. implement/refine country evidence (#29);
+4. implement earned regional/continent/world achievements (#34);
+5. add region detail (#35);
+6. implement Flags Learn browse/reveal (#30) and production Atlas brand rollout (#36) in coordinated focused changes;
+7. continue cartography/usability fixes and continent expansion through their existing issues.
+
+Focused bugs may ship sooner where independent.

@@ -1,15 +1,19 @@
 {
   "schemaVersion": 1,
-  "surface": "Flag Atlas web app",
+  "surface": "Atlas web app",
   "visitorMode": "operate",
+  "status": "visual-style-pending",
   "tokens": {
-    "shadows": {
-      "flag": "0 8px 22px rgba(16, 19, 24, 0.08)"
-    },
-    "motion": {
-      "routineMs": 160,
-      "fastMs": 120,
-      "progressMs": 180
+    "colors": {
+      "canvas": "#F6F8FB",
+      "text": "#101318",
+      "action": "#2563EB",
+      "actionPressed": "#1749B8",
+      "actionSoft": "#EAF0FF",
+      "correct": "#137A55",
+      "wrong": "#B42318",
+      "mastery": "#6D3FC0",
+      "prestige": "#E0AF2F"
     },
     "breakpoints": {
       "compact": "639px",
@@ -18,10 +22,12 @@
     }
   },
   "principles": [
-    "The flag is the color system",
-    "Operate-mode scanability over decorative expression",
-    "Use rules and proximity before containers",
-    "Action blue is semantic, not decorative",
-    "Mastery feedback earns personality; routine navigation stays quiet"
+    "Geography is the content; interface is the instrument",
+    "Atlas Blue drives ordinary action while green and red stay transient feedback",
+    "Region-by-domain mastery is purple; gold is deliberately scarce",
+    "Complete continents earn silhouette crests; world completion alone earns the Crown",
+    "Country records are live learning evidence, not prestige objects",
+    "Mobile-first interaction and no horizontal scrolling for primary selection",
+    "Final radius, depth, typography, navigation composition and motion language remain open until Issue 32 design exploration"
   ]
 }
