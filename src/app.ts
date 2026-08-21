@@ -1,6 +1,7 @@
 import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
+import { getMapContinentConfigForScope } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
-import { AFRICA_LAND_ADJACENCY } from './data/neighbors/index.js';
+import { NEIGHBOR_GUESS_COUNTRY_IDS } from './data/neighbors/index.js';
 import { domainDisplayName } from './domain/display.js';
 import type {
   LearningStatus,
@@ -65,12 +66,13 @@ const liveStatus = document.querySelector<HTMLElement>('#live-status');
 
 const store = new AppStore();
 const router = createHashRouter(window);
-const allowedNeighborCountryIds = new Set(Object.keys(AFRICA_LAND_ADJACENCY));
+const allowedNeighborCountryIds = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 let currentRoute: AppRoute = { name: 'home' };
 let progressFilter: LearningStatus | 'all' = 'all';
 let resetArmed = false;
 let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
+let launcherMapScopeId: string | null = null;
 let launcherMapRequest = 0;
 let preserveScrollOnNextRoute = false;
 // Flags Learn reveal state is study, not evidence, so it stays ephemeral and
@@ -176,7 +178,7 @@ function normalizeRoute(route: AppRoute): AppRoute {
   return normalizeAvailableRoute(route);
 }
 
-function routeUsesLauncherMap(route: AppRoute): route is LearningRoute {
+function routeUsesLauncherMap(route: AppRoute): route is LearningRoute & { scope: StudyScope } {
   return route.name === 'learning'
     && route.activity === undefined
     && route.domain !== 'flags'
@@ -187,28 +189,23 @@ async function hydrateLauncherMap(route: AppRoute): Promise<void> {
   const request = ++launcherMapRequest;
   if (!routeUsesLauncherMap(route)) return;
 
+  const continent = route.scope.id ? getMapContinentConfigForScope(route.scope.id) : undefined;
+  const continentScopeId = continent?.scope.id;
   const host = root.querySelector<HTMLElement>('[data-launcher-map-slot]');
-  if (!host || launcherMapAsset) return;
+  if (!host || !continentScopeId) return;
+  if (launcherMapAsset && launcherMapScopeId === continentScopeId) return;
 
   try {
-    const asset = await loadMapAsset('africa');
-    if (!asset) throw new Error('Africa geometry unavailable.');
+    const asset = await loadMapAsset(continentScopeId);
+    if (!asset) throw new Error(`${route.scope.label} geometry unavailable.`);
     launcherMapAsset = asset;
+    launcherMapScopeId = continentScopeId;
 
-    if (
-      request !== launcherMapRequest
-      || !host.isConnected
-      || !routesEqual(currentRoute, route)
-    ) return;
-
-    const selectedRegionId = route.scope?.kind === 'region' ? route.scope.id : undefined;
+    if (request !== launcherMapRequest || !host.isConnected || !routesEqual(currentRoute, route)) return;
+    const selectedRegionId = route.scope.kind === 'region' ? route.scope.id : undefined;
     host.innerHTML = renderLauncherMap(asset, route.domain, selectedRegionId);
   } catch {
-    if (
-      request !== launcherMapRequest
-      || !host.isConnected
-      || !routesEqual(currentRoute, route)
-    ) return;
+    if (request !== launcherMapRequest || !host.isConnected || !routesEqual(currentRoute, route)) return;
     host.innerHTML = '<p class="launcher-map-error">Map unavailable. Choose a region from the list.</p>';
   }
 }
@@ -221,6 +218,12 @@ function applyRoute(requestedRoute: AppRoute): void {
   }
 
   currentRoute = route;
+  if (routeUsesLauncherMap(route)) {
+    const parentScopeId = route.scope.id
+      ? getMapContinentConfigForScope(route.scope.id)?.scope.id ?? null
+      : null;
+    if (parentScopeId !== launcherMapScopeId) launcherMapAsset = null;
+  }
   switch (route.name) {
     case 'home':
       store.navigate({ name: 'home' });

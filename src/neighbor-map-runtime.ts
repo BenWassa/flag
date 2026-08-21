@@ -1,13 +1,13 @@
 import { COUNTRY_BY_ID } from './data/countries.js';
 import { loadMapAsset } from './data/maps/index.js';
-import { AFRICA_LAND_ADJACENCY } from './data/neighbors/index.js';
+import { landAdjacencyForScope } from './data/neighbors/index.js';
 import type { MapRegionAsset } from './domain/map-models.js';
 import { deriveNeighborMapModel } from './domain/neighbor-map.js';
 import { patchNeighborMapShell, renderNeighborMap } from './ui/components/neighbor-map.js';
 
 const root = document.querySelector<HTMLElement>('#app');
-let africaAsset: MapRegionAsset | null = null;
-let africaAssetPromise: Promise<MapRegionAsset | null> | null = null;
+const assetByScopeId = new Map<string, MapRegionAsset>();
+const assetPromiseByScopeId = new Map<string, Promise<MapRegionAsset | null>>();
 let detachedShell: { key: string; node: HTMLElement } | null = null;
 
 function nameForId(countryId: string): string {
@@ -23,13 +23,25 @@ function stateFingerprint(foundIds: readonly string[], revealedIds: readonly str
   return `${foundIds.join(',')}|${revealedIds.join(',')}`;
 }
 
-function loadAfricaAsset(): Promise<MapRegionAsset | null> {
-  if (africaAsset) return Promise.resolve(africaAsset);
-  africaAssetPromise ??= loadMapAsset('africa').then((asset) => {
-    africaAsset = asset;
-    return asset;
-  });
-  return africaAssetPromise;
+function loadScopeAsset(scopeId: string): Promise<MapRegionAsset | null> {
+  const cached = assetByScopeId.get(scopeId);
+  if (cached) return Promise.resolve(cached);
+
+  const existing = assetPromiseByScopeId.get(scopeId);
+  if (existing) return existing;
+
+  const promise = loadMapAsset(scopeId)
+    .then((asset) => {
+      assetPromiseByScopeId.delete(scopeId);
+      if (asset) assetByScopeId.set(scopeId, asset);
+      return asset;
+    })
+    .catch((error: unknown) => {
+      assetPromiseByScopeId.delete(scopeId);
+      throw error;
+    });
+  assetPromiseByScopeId.set(scopeId, promise);
+  return promise;
 }
 
 function captureShell(node: Node): void {
@@ -45,8 +57,12 @@ function captureShell(node: Node): void {
 
 function roundFromHost(host: HTMLElement) {
   const targetId = host.dataset.targetId;
+  const scopeId = host.dataset.scopeId;
   if (!targetId) throw new Error('Neighbor map host is missing its target id.');
-  const neighborIds = AFRICA_LAND_ADJACENCY[targetId] ?? [];
+  if (!scopeId) throw new Error('Neighbor map host is missing its scope id.');
+  const adjacency = landAdjacencyForScope(scopeId);
+  if (!adjacency) throw new Error(`No canonical adjacency is available for scope ${scopeId}.`);
+  const neighborIds = adjacency[targetId] ?? [];
   if (!neighborIds.length) throw new Error(`No canonical adjacency is available for ${targetId}.`);
   return {
     targetId,
@@ -90,11 +106,13 @@ function applyAsset(host: HTMLElement, asset: MapRegionAsset): void {
 function hydrateHost(host: HTMLElement): void {
   if (host.dataset.neighborMapStatus === 'loading' || host.dataset.neighborMapStatus === 'ready') return;
   const key = host.dataset.neighborMapKey;
-  if (!key) return;
+  const scopeId = host.dataset.scopeId;
+  if (!key || !scopeId) return;
 
-  if (africaAsset) {
+  const cached = assetByScopeId.get(scopeId);
+  if (cached) {
     try {
-      applyAsset(host, africaAsset);
+      applyAsset(host, cached);
     } catch {
       renderFailure(host);
     }
@@ -102,7 +120,7 @@ function hydrateHost(host: HTMLElement): void {
   }
 
   host.dataset.neighborMapStatus = 'loading';
-  void loadAfricaAsset()
+  void loadScopeAsset(scopeId)
     .then((asset) => {
       if (!host.isConnected) return;
       if (!asset) {

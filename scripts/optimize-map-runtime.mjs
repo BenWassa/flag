@@ -1,8 +1,6 @@
 #!/usr/bin/env node
 import { readFile, writeFile } from 'node:fs/promises';
-
-const AFRICA_PATH = new URL('../src/data/maps/africa.ts', import.meta.url);
-const PROVENANCE_PATH = new URL('../docs/architecture/cartography-provenance.json', import.meta.url);
+import { MAP_GENERATION_CONFIGS } from './map-continent-configs.mjs';
 
 const PATH_DIGITS = 1;
 const PHYSICAL_TOLERANCE = Object.freeze({
@@ -21,7 +19,6 @@ function extractLiteral(source, name) {
   const hasConstAssertion = /\s+as const$/.test(raw);
   const json = raw.replace(/\s+as const$/, '');
   return {
-    declarationIndex,
     equalsIndex,
     endIndex,
     hasConstAssertion,
@@ -138,43 +135,57 @@ function simplifySvgPath(path, tolerance) {
   return output.join('');
 }
 
-let source = await readFile(AFRICA_PATH, 'utf8');
-const beforeBytes = Buffer.byteLength(source);
+async function optimizeContinent(config) {
+  const mapPath = new URL(`../src/data/maps/${config.outputFilename}`, import.meta.url);
+  const provenancePath = new URL(`../docs/architecture/${config.provenanceFilename}`, import.meta.url);
+  const prefix = config.exportPrefix;
+  let source = await readFile(mapPath, 'utf8');
+  const beforeBytes = Buffer.byteLength(source);
 
-const provenance = extractLiteral(source, 'AFRICA_CARTOGRAPHY_PROVENANCE').value;
-const geometry = extractLiteral(source, 'AFRICA_GEOMETRY').value;
-const contextPaths = extractLiteral(source, 'AFRICA_EXTRA_CONTEXT_PATHS').value;
-const sharedBoundaryPaths = extractLiteral(source, 'AFRICA_SHARED_BOUNDARY_PATHS').value;
-const coastlinePaths = extractLiteral(source, 'AFRICA_COASTLINE_PATHS').value;
-const water = extractLiteral(source, 'AFRICA_WATER').value;
+  const provenance = extractLiteral(source, `${prefix}_CARTOGRAPHY_PROVENANCE`).value;
+  const geometry = extractLiteral(source, `${prefix}_GEOMETRY`).value;
+  const contextPaths = extractLiteral(source, `${prefix}_EXTRA_CONTEXT_PATHS`).value;
+  const sharedBoundaryPaths = extractLiteral(source, `${prefix}_SHARED_BOUNDARY_PATHS`).value;
+  const coastlinePaths = extractLiteral(source, `${prefix}_COASTLINE_PATHS`).value;
+  const water = extractLiteral(source, `${prefix}_WATER`).value;
 
-for (const item of Object.values(geometry)) {
-  if (item.path) item.path = roundSvgPath(item.path);
+  for (const item of Object.values(geometry)) {
+    if (item.path) item.path = roundSvgPath(item.path);
+    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath);
+  }
+  for (let index = 0; index < contextPaths.length; index += 1) contextPaths[index] = roundSvgPath(contextPaths[index]);
+  for (let index = 0; index < sharedBoundaryPaths.length; index += 1) sharedBoundaryPaths[index] = roundSvgPath(sharedBoundaryPaths[index]);
+  for (let index = 0; index < coastlinePaths.length; index += 1) coastlinePaths[index] = roundSvgPath(coastlinePaths[index]);
+
+  if (water.oceanPath) water.oceanPath = simplifySvgPath(water.oceanPath, PHYSICAL_TOLERANCE.ocean);
+  for (const lake of water.lakes ?? []) lake.path = simplifySvgPath(lake.path, PHYSICAL_TOLERANCE.lakes);
+
+  provenance.runtimeOptimization = {
+    pathDigits: PATH_DIGITS,
+    method: 'projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context',
+    canvasUnits: `${config.displayName} ${835}x${723} projected canvas units`,
+    physicalTolerance: { ...PHYSICAL_TOLERANCE },
+  };
+
+  source = replaceLiteral(source, `${prefix}_CARTOGRAPHY_PROVENANCE`, provenance);
+  source = replaceLiteral(source, `${prefix}_GEOMETRY`, geometry);
+  source = replaceLiteral(source, `${prefix}_EXTRA_CONTEXT_PATHS`, contextPaths);
+  source = replaceLiteral(source, `${prefix}_SHARED_BOUNDARY_PATHS`, sharedBoundaryPaths);
+  source = replaceLiteral(source, `${prefix}_COASTLINE_PATHS`, coastlinePaths);
+  source = replaceLiteral(source, `${prefix}_WATER`, water);
+
+  await writeFile(mapPath, source);
+  await writeFile(provenancePath, `${JSON.stringify(provenance, null, 2)}\n`);
+
+  const afterBytes = Buffer.byteLength(source);
+  console.log(
+    `Optimized ${config.displayName} runtime asset from ${beforeBytes} to ${afterBytes} bytes `
+    + `(${Math.round((afterBytes / beforeBytes) * 100)}%).`,
+  );
 }
-for (let index = 0; index < contextPaths.length; index += 1) contextPaths[index] = roundSvgPath(contextPaths[index]);
-for (let index = 0; index < sharedBoundaryPaths.length; index += 1) sharedBoundaryPaths[index] = roundSvgPath(sharedBoundaryPaths[index]);
-for (let index = 0; index < coastlinePaths.length; index += 1) coastlinePaths[index] = roundSvgPath(coastlinePaths[index]);
 
-if (water.oceanPath) water.oceanPath = simplifySvgPath(water.oceanPath, PHYSICAL_TOLERANCE.ocean);
-for (const lake of water.lakes ?? []) lake.path = simplifySvgPath(lake.path, PHYSICAL_TOLERANCE.lakes);
-
-provenance.runtimeOptimization = {
-  pathDigits: PATH_DIGITS,
-  method: 'projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context',
-  canvasUnits: '835x723 projected canvas units',
-  physicalTolerance: { ...PHYSICAL_TOLERANCE },
-};
-
-source = replaceLiteral(source, 'AFRICA_CARTOGRAPHY_PROVENANCE', provenance);
-source = replaceLiteral(source, 'AFRICA_GEOMETRY', geometry);
-source = replaceLiteral(source, 'AFRICA_EXTRA_CONTEXT_PATHS', contextPaths);
-source = replaceLiteral(source, 'AFRICA_SHARED_BOUNDARY_PATHS', sharedBoundaryPaths);
-source = replaceLiteral(source, 'AFRICA_COASTLINE_PATHS', coastlinePaths);
-source = replaceLiteral(source, 'AFRICA_WATER', water);
-
-await writeFile(AFRICA_PATH, source);
-await writeFile(PROVENANCE_PATH, `${JSON.stringify(provenance, null, 2)}\n`);
-
-const afterBytes = Buffer.byteLength(source);
-console.log(`Optimized Africa runtime asset from ${beforeBytes} to ${afterBytes} bytes (${Math.round((afterBytes / beforeBytes) * 100)}%).`);
-console.log(`Physical path tolerances: ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}; final path precision ${PATH_DIGITS} decimal.`);
+for (const config of MAP_GENERATION_CONFIGS) await optimizeContinent(config);
+console.log(
+  `Physical path tolerances: ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}; `
+  + `final path precision ${PATH_DIGITS} decimal.`,
+);

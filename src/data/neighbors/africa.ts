@@ -1,5 +1,5 @@
 // GENERATED FIXTURE. Do not hand-edit adjacency.
-// Canonical source: AFRICA_LAND_ADJACENCY emitted by scripts/generate-maps.mjs from the Issue #9 topology.
+// Canonical source: AFRICA_LAND_ADJACENCY emitted by the production topology generator.
 // Regenerate with: npm run maps:generate
 
 export const AFRICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {

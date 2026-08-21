@@ -1,16 +1,9 @@
-import { COUNTRY_BY_ID } from '../../data/countries.js';
-import { AFRICA_MAP_REGION_CONFIGS } from '../../data/map-scopes.js';
+import {
+  getMapContinentConfigForScope,
+} from '../../data/map-scopes.js';
 import type { MapCountryGeometry, MapRegionAsset } from '../../domain/map-models.js';
 import type { LearningDomain } from '../../domain/models.js';
 import { escapeHtml } from '../format.js';
-
-const REGION_LABELS: Readonly<Record<string, { left: number; top: number; text: string }>> = {
-  'north-africa': { left: 49, top: 18, text: 'North Africa' },
-  'west-africa': { left: 23, top: 35, text: 'West Africa' },
-  'central-africa': { left: 45, top: 58, text: 'Central Africa' },
-  'east-africa': { left: 77, top: 46, text: 'East Africa' },
-  'southern-africa': { left: 55, top: 82, text: 'Southern Africa' },
-};
 
 function renderGeometry(geometry: MapCountryGeometry): string {
   return `
@@ -50,6 +43,12 @@ export function renderLauncherMap(
   domain: LearningDomain,
   selectedRegionId?: string,
 ): string {
+  const continent = asset.scope.id ? getMapContinentConfigForScope(asset.scope.id) : undefined;
+  const regionConfigs = continent?.regions ?? [];
+  const geometryById = new Map(
+    [...asset.countries, ...(asset.contextCountries ?? [])].map((geometry) => [geometry.countryId, geometry]),
+  );
+
   return `
     <div class="launcher-map">
       <svg
@@ -57,18 +56,16 @@ export function renderLauncherMap(
         viewBox="${escapeHtml(asset.viewBox)}"
         preserveAspectRatio="xMidYMid meet"
         role="group"
-        aria-label="Africa region selector"
+        aria-label="${escapeHtml(continent?.scope.label ?? asset.scope.label)} region selector"
       >
         <rect class="launcher-map__ocean" x="0" y="0" width="100%" height="100%" />
         ${renderWater(asset)}
         ${(asset.contextPaths ?? []).map((path) => `<path class="launcher-map-context" d="${path}" />`).join('')}
-        ${AFRICA_MAP_REGION_CONFIGS.map((config) => {
+        ${regionConfigs.map((config) => {
           const regionId = config.scope.id ?? '';
-          const countryIds = new Set(config.countryIds);
-          const geometries = asset.countries.filter((geometry) => {
-            const country = COUNTRY_BY_ID.get(geometry.countryId);
-            return country?.regionId === regionId || countryIds.has(geometry.countryId);
-          });
+          const geometries = config.countryIds
+            .map((countryId) => geometryById.get(countryId))
+            .filter((geometry): geometry is MapCountryGeometry => Boolean(geometry));
           const selected = regionId === selectedRegionId;
           return `
             <g
@@ -88,16 +85,16 @@ export function renderLauncherMap(
         ${renderBoundaries(asset)}
       </svg>
       <div class="launcher-map__labels" aria-hidden="true">
-        ${AFRICA_MAP_REGION_CONFIGS.map((config) => {
+        ${regionConfigs.map((config) => {
           const regionId = config.scope.id ?? '';
-          const label = REGION_LABELS[regionId];
+          const label = config.launcherLabel;
           if (!label) return '';
           const selected = regionId === selectedRegionId;
           return `<span
             class="launcher-map__label${selected ? ' launcher-map__label--selected' : ''}"
             data-id="${escapeHtml(regionId)}"
             style="left:${label.left}%;top:${label.top}%"
-          >${escapeHtml(label.text)}</span>`;
+          >${escapeHtml(config.scope.label)}</span>`;
         }).join('')}
       </div>
     </div>

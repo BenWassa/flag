@@ -184,8 +184,8 @@ assert.equal(serializeRoutePath(parentRoute(outlineRoute)), '/outlines/africa/we
 const outlineDataSource = await readFile('src/data/outlines.ts', 'utf8');
 assert.ok(outlineDataSource.includes('loadMapAsset'), 'Outlines must consume canonical production map geometry.');
 assert.equal(outlineDataSource.includes('AFRICA_GEOMETRY'), false, 'Outline data layer must not create a second direct geometry dataset.');
-const generatorSource = await readFile('scripts/generate-maps.mjs', 'utf8');
-assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'), 'Locator-island silhouettes must be emitted by the canonical production map generator.');
+const generatorSource = await readFile('scripts/map-generation-core.mjs', 'utf8');
+assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'), 'Locator-island silhouettes must be emitted by the canonical shared production map generator.');
 const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
 assert.equal(mapRendererSource.includes('outlinePath'), false, 'Location rendering must continue to use its existing locator behavior for tiny islands.');
 
