@@ -18,6 +18,13 @@ import { progressStrip } from '../components/progress.js';
 const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
 const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
 
+function domainIcon(domain: LearningDomain): string {
+  if (domain === 'flags') return icon('flag');
+  if (domain === 'locations') return icon('location');
+  if (domain === 'outlines') return icon('outline');
+  return icon('adjacency');
+}
+
 function renderDomainRow(
   domain: LearningDomain,
   playScope: StudyScope,
@@ -26,8 +33,9 @@ function renderDomainRow(
 ): string {
   const name = domainDisplayName(domain);
   return `
-    <div class="continent-row">
-      <button class="continent-row__open" type="button" data-action="open-domain" data-id="${domain}">
+    <div class="continent-row domain-tile">
+      <button class="continent-row__open domain-tile__open" type="button" data-action="open-domain" data-id="${domain}">
+        <span class="domain-tile__icon">${domainIcon(domain)}</span>
         <span class="continent-row__identity">
           <strong>${name}</strong>
           <small>${subtitle}</small>
@@ -98,13 +106,13 @@ export function renderHome(
 
       <section class="atlas-section">
         <div class="continent-list">
-          ${renderDomainRow('flags', worldScope, 'World · 195 flags', flags)}
-          ${renderDomainRow('locations', africaScope, 'Africa · 54 countries · 5 regions', locationStats)}
-          ${renderDomainRow('outlines', africaScope, 'Africa · 54 countries · 5 regions', outlines)}
+          ${renderDomainRow('flags', worldScope, 'World · 195 countries', flags)}
+          ${renderDomainRow('locations', africaScope, 'Africa · 54 countries', locationStats)}
+          ${renderDomainRow('outlines', africaScope, 'Africa · 54 countries', outlines)}
           ${renderDomainRow(
             'neighbors',
             africaScope,
-            `Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} standard targets · 5 regions`,
+            `Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} countries`,
             neighborStats,
           )}
         </div>
