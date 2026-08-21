@@ -40,9 +40,7 @@
 html,
 body { background: var(--canvas); }
 
-body {
-  letter-spacing: -.006em;
-}
+body { letter-spacing: -.006em; }
 
 .page {
   width: min(100%, 900px);
@@ -50,9 +48,7 @@ body {
   padding-right: clamp(16px, 4vw, 28px);
 }
 
-.topbar {
-  margin-bottom: 28px;
-}
+.topbar { margin-bottom: 28px; }
 
 .brand-name {
   font-size: 18px;
@@ -89,17 +85,9 @@ body {
   border-bottom: 0;
 }
 
-.page--home .world-overview {
-  padding-top: 6px;
-}
-
-.page--home .overview-heading {
-  margin-bottom: 0;
-}
-
-.page--home .atlas-section {
-  margin-top: 22px;
-}
+.page--home .world-overview { padding-top: 6px; }
+.page--home .overview-heading { margin-bottom: 0; }
+.page--home .atlas-section { margin-top: 22px; }
 
 .button {
   min-height: 52px;
@@ -142,9 +130,7 @@ body {
 .mini-ledger,
 .ledger-list,
 .mastery-list,
-.mistake-list {
-  border-top: 0;
-}
+.mistake-list { border-top: 0; }
 
 .page--home .continent-list {
   display: grid;
@@ -168,9 +154,7 @@ body {
   box-shadow: var(--depth-tile-hover);
 }
 
-.page--home .continent-row:active {
-  transform: translateY(1px);
-}
+.page--home .continent-row:active { transform: translateY(1px); }
 
 .page--home .continent-row__open {
   min-height: 132px;
@@ -213,9 +197,7 @@ body {
   opacity: 0;
 }
 
-.page--home .continent-row__open > .ui-icon {
-  display: none;
-}
+.page--home .continent-row__open > .ui-icon { display: none; }
 
 .page--home .continent-row__play {
   width: 48px;
@@ -277,13 +259,8 @@ body {
   transform: translateY(1px);
 }
 
-.page--launcher .topbar {
-  margin-bottom: 18px;
-}
-
-.launcher {
-  gap: 0;
-}
+.page--launcher .topbar { margin-bottom: 18px; }
+.launcher { gap: 0; }
 
 .launcher__status {
   padding: 16px;
@@ -305,9 +282,7 @@ body {
   font-size: 17px;
 }
 
-.launcher-map-slot:not(:empty) {
-  margin-top: 18px;
-}
+.launcher-map-slot:not(:empty) { margin-top: 18px; }
 
 .launcher-map {
   height: clamp(170px, 29dvh, 260px);
@@ -317,9 +292,7 @@ body {
   box-shadow: var(--depth-tile);
 }
 
-.launcher__regions {
-  margin-top: 24px;
-}
+.launcher__regions { margin-top: 24px; }
 
 .launcher__learn {
   min-height: 50px;
@@ -328,36 +301,29 @@ body {
   color: var(--action);
 }
 
-.list-heading {
-  margin-bottom: 10px;
-}
+.list-heading { margin-bottom: 10px; }
 
 .list-heading h2 {
   font-size: 17px;
   font-weight: 760;
 }
 
-.status-strip__mastered { background: var(--mastery); }
+/* These selectors still describe country-level scheduler evidence in the
+   current implementation. Keep them ordinary Atlas Blue until #29/#34
+   separates earned region/domain Mastery from live evidence. */
+.status-strip__mastered { background: var(--action); }
 .status-strip__learning { background: var(--learning); }
+.status-text--mastered { color: var(--action); }
 
-.status-text--mastered { color: var(--mastery); }
-
-.quiz-shell {
-  width: min(100%, 860px);
-}
-
-.quiz-header {
-  min-height: 54px;
-}
+.quiz-shell { width: min(100%, 860px); }
+.quiz-header { min-height: 54px; }
 
 .quiz-progress {
   height: 5px;
   border-radius: 999px;
 }
 
-.question-stage {
-  padding-top: 12px;
-}
+.question-stage { padding-top: 12px; }
 
 .flag-stage {
   padding-left: 0;
@@ -369,9 +335,7 @@ body {
   box-shadow: var(--flag-shadow);
 }
 
-.answer-panel {
-  gap: 10px;
-}
+.answer-panel { gap: 10px; }
 
 .answer-button {
   min-height: 60px;
@@ -416,16 +380,11 @@ body {
   font-weight: 800;
 }
 
-.answer-feedback {
-  border-top-width: 1px;
-}
-
+.answer-feedback { border-top-width: 1px; }
 .answer-feedback--correct { border-top-color: var(--correct); }
 .answer-feedback--wrong { border-top-color: var(--wrong); }
 
-.results-header {
-  margin-bottom: 18px;
-}
+.results-header { margin-bottom: 18px; }
 
 .result-score {
   padding: 18px;
@@ -448,9 +407,7 @@ body {
   overflow: hidden;
 }
 
-.result-statline span {
-  padding: 13px 14px;
-}
+.result-statline span { padding: 13px 14px; }
 
 .mastery-list,
 .mistake-list,
@@ -468,9 +425,9 @@ body {
   box-shadow: 0 1px 2px rgba(16, 19, 24, .025);
 }
 
-.mastery-row > span:not(.flag-frame) {
-  color: var(--mastery);
-}
+/* Results still use legacy country-level “Mastered” copy. Do not give that
+   row the reserved purple earned-Mastery signal before #29/#34 lands. */
+.mastery-row > span:not(.flag-frame) { color: var(--action); }
 
 .storage-notice {
   border-radius: var(--radius-md);
@@ -478,19 +435,12 @@ body {
 }
 
 @media (max-width: 430px) {
-  .page--home .continent-list {
-    grid-template-columns: 1fr;
-  }
-
-  .page--home .continent-row__open {
-    min-height: 94px;
-  }
+  .page--home .continent-list { grid-template-columns: 1fr; }
+  .page--home .continent-row__open { min-height: 94px; }
 }
 
 @media (min-width: 700px) {
-  .answer-panel {
-    gap: 12px;
-  }
+  .answer-panel { gap: 12px; }
 }
 
 @media (hover: hover) and (pointer: fine) {
