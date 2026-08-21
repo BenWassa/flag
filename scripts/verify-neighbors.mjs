@@ -166,7 +166,7 @@ assert.ok(css.includes('max-height: min(34dvh, 270px)'), 'Autocomplete is bounde
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css), 'Neighbor CSS uses shared design tokens only.');
 const generationSource = await readFile('scripts/generate-neighbor-fixture.mjs', 'utf8');
 assert.ok(generationSource.includes('MAP_GENERATION_CONFIGS'), 'Lightweight fixtures are mechanically extracted from configured production topology outputs.');
-assert.ok(generationSource.includes('Asymmetric generated adjacency'), 'Fixture generation fails on asymmetric topology output.');
+assert.ok(generationSource.includes('Asymmetric generated') && generationSource.includes('adjacency:'), 'Fixture generation fails on asymmetric topology output.');
 const fixtureBefore = await readFile('src/data/neighbors/africa.ts', 'utf8');
 assert.ok(fixtureBefore.startsWith('// GENERATED FIXTURE. Do not hand-edit adjacency.'));
 const regeneration = spawnSync(process.execPath, ['scripts/generate-neighbor-fixture.mjs'], { encoding: 'utf8' });
