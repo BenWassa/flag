@@ -207,7 +207,12 @@ assert.equal(
 // Coverage safeguards remain owned by Issue #3 and are not papered over in presentation.
 assert.deepEqual([...AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS], ['EGY', 'MAR']);
 assert.ok(!AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.includes('EGY') && !AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.includes('MAR'));
-for (const id of AFRICA_ZERO_LAND_NEIGHBOR_IDS) assert.ok(!AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.includes(id));
+for (const id of AFRICA_ZERO_LAND_NEIGHBOR_IDS) {
+  assert.ok(
+    AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.includes(id),
+    `${id} is a genuine target: an empty neighbour set is an answer, not missing curriculum.`,
+  );
+}
 
 // Production structure: lazy geometry, existing viewport, shell/PWA and responsive/a11y contracts.
 const runtime = await readFile('dist/neighbor-map-runtime.js', 'utf8');

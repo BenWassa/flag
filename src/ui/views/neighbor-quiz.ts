@@ -1,6 +1,11 @@
 import { COUNTRIES, COUNTRY_BY_ID } from '../../data/countries.js';
 import { AFRICA_LAND_ADJACENCY } from '../../data/neighbors/index.js';
-import { currentNeighborTarget, getCountrySuggestions } from '../../domain/neighbor-game.js';
+import {
+  currentNeighborTarget,
+  getCountrySuggestions,
+  NO_LAND_NEIGHBORS_ID,
+  NO_LAND_NEIGHBORS_LABEL,
+} from '../../domain/neighbor-game.js';
 import type { NeighborGuessOutcome, NeighborSession } from '../../domain/neighbor-models.js';
 import { icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
@@ -8,6 +13,7 @@ import { escapeHtml } from '../format.js';
 const ALLOWED_COUNTRY_IDS = new Set(Object.keys(AFRICA_LAND_ADJACENCY));
 
 function countryName(countryId: string): string {
+  if (countryId === NO_LAND_NEIGHBORS_ID) return NO_LAND_NEIGHBORS_LABEL;
   return COUNTRY_BY_ID.get(countryId)?.name ?? countryId;
 }
 
@@ -38,7 +44,7 @@ export function renderNeighborQuiz(
         <div class="neighbor-status-line">
           <div>
             <h2 id="neighbor-prompt">Name every land-border neighbour</h2>
-            <p><strong>${target.foundIds.length} of ${target.neighborIds.length}</strong> neighbours found</p>
+            <p>${setProgress(target)}</p>
           </div>
           <div class="neighbor-attempts" aria-label="${remainingAttempts} attempts remaining">
             <strong>${remainingAttempts}</strong><span>attempts left</span>
@@ -64,6 +70,17 @@ export function renderNeighborQuiz(
   `;
 }
 
+/**
+ * The neighbour total is withheld until the target resolves. Printing it would
+ * hand the learner the answer for every island nation before they have made
+ * any retrieval decision at all.
+ */
+function setProgress(target: NonNullable<ReturnType<typeof currentNeighborTarget>>): string {
+  if (!target.resolved) return `<strong>${target.foundIds.length}</strong> neighbours found`;
+  if (target.neighborIds.length === 0) return `<strong>${NO_LAND_NEIGHBORS_LABEL}</strong>`;
+  return `<strong>${target.foundIds.length} of ${target.neighborIds.length}</strong> neighbours found`;
+}
+
 function renderEntry(session: NeighborSession, query: string): string {
   const target = currentNeighborTarget(session);
   if (!target) return '';
@@ -77,6 +94,9 @@ function renderEntry(session: NeighborSession, query: string): string {
       <div id="neighbor-suggestions" class="neighbor-suggestions" role="listbox" aria-label="Country suggestions">
         ${renderNeighborSuggestions(session, query)}
       </div>
+      <button class="button button--secondary neighbor-none" type="button" data-action="neighbor-guess" data-id="${NO_LAND_NEIGHBORS_ID}">
+        ${NO_LAND_NEIGHBORS_LABEL}
+      </button>
     </form>
   `;
 }
@@ -104,16 +124,28 @@ function renderFeedback(outcome: NeighborGuessOutcome | null): string {
   if (outcome.kind === 'correct') {
     return `<p class="neighbor-feedback neighbor-feedback--correct">Correct: ${escapeHtml(countryName(outcome.selectedCountryId))}.</p>`;
   }
+  if (outcome.selectedCountryId === NO_LAND_NEIGHBORS_ID) {
+    return '<p class="neighbor-feedback neighbor-feedback--wrong">This country does have land neighbours.</p>';
+  }
   return `<p class="neighbor-feedback neighbor-feedback--wrong">${escapeHtml(countryName(outcome.selectedCountryId))} is not in this neighbour set.</p>`;
 }
 
 function renderResolution(target: NonNullable<ReturnType<typeof currentNeighborTarget>>): string {
   const clean = target.resolution === 'complete' && target.wrongGuesses === 0;
   const remaining = target.neighborIds.filter((countryId) => !target.foundIds.includes(countryId));
+  let summary: string;
+  if (target.neighborIds.length === 0) {
+    summary = `<p>${NO_LAND_NEIGHBORS_LABEL}. This country borders no other country by land.</p>`;
+  } else if (remaining.length) {
+    summary = `<p>Remaining: ${remaining.map((countryId) => escapeHtml(countryName(countryId))).join(', ')}</p>`;
+  } else {
+    summary = '<p>Every land neighbour found.</p>';
+  }
+
   return `
     <div class="neighbor-resolution" data-autofocus tabindex="-1">
       <strong>${target.resolution === 'complete' ? (clean ? 'Complete — clean set' : 'Complete') : 'Attempts exhausted'}</strong>
-      ${remaining.length ? `<p>Remaining: ${remaining.map((countryId) => escapeHtml(countryName(countryId))).join(', ')}</p>` : '<p>Every land neighbour found.</p>'}
+      ${summary}
       <button class="button button--primary" data-action="next-neighbor">Next</button>
     </div>
   `;

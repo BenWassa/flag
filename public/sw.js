@@ -1,11 +1,12 @@
+// v19 makes zero-land-neighbour countries learnable in Neighbours.
 // v18 removes river linework from shared runtime cartography to keep political borders unambiguous.
-// v17 ships the Neighbours mobile keyboard-stability layout/runtime update.
+// v17 shipped the Neighbours mobile keyboard-stability layout/runtime update.
 // Issue #16 baseline retained for release-lineage verification: const VERSION = 'flag-atlas-v16'
 // v16 shipped the Atlas learner-facing brand and install metadata.
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v18';
+const VERSION = 'flag-atlas-v19';
 const SHELL = [
   './',
   './index.html',

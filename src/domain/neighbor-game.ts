@@ -18,6 +18,16 @@ import type {
 
 export type LandAdjacency = Readonly<Record<string, readonly string[]>>;
 
+/**
+ * Reserved answer id for the learner's explicit `No land neighbours` claim.
+ * It is deliberately not an ISO3 shape, so it can never collide with a country,
+ * never appears in autocomplete, and never lands in confusion counts.
+ */
+export const NO_LAND_NEIGHBORS_ID = '#no-land-neighbours';
+
+/** Learner-facing wording for that claim, shared by the view and the announcements. */
+export const NO_LAND_NEIGHBORS_LABEL = 'No land neighbours';
+
 export function createNeighborRecord(countryId: string): NeighborProgressRecord {
   return {
     countryId,
@@ -54,11 +64,17 @@ export function neighborAttemptBudget(neighborCount: number): number {
   return Math.max(0, Math.floor(neighborCount)) + 2;
 }
 
+/**
+ * A country is learnable once the topology genuinely knows its land borders,
+ * including when that answer is the empty set. Absent adjacency means the
+ * curriculum does not cover the country yet and must never be treated as an
+ * answerable — or completable — target.
+ */
 export function eligibleNeighborTargets(
   countryIds: readonly string[],
   adjacency: LandAdjacency,
 ): string[] {
-  return countryIds.filter((countryId) => (adjacency[countryId]?.length ?? 0) > 0);
+  return countryIds.filter((countryId) => adjacency[countryId] !== undefined);
 }
 
 export function getNeighborScopeStats(
@@ -205,7 +221,9 @@ function recordWrongGuess(
   markSeen(record, timestamp);
   record.lifetimeWrongGuesses += 1;
   record.lastMissedAt = timestamp;
-  record.confusionCounts[selectedCountryId] = (record.confusionCounts[selectedCountryId] ?? 0) + 1;
+  if (selectedCountryId !== NO_LAND_NEIGHBORS_ID) {
+    record.confusionCounts[selectedCountryId] = (record.confusionCounts[selectedCountryId] ?? 0) + 1;
+  }
   const applied = applyCountryEvidence(record, {
     activity,
     outcome: 'contradictory',
@@ -296,11 +314,14 @@ export function applyNeighborGuess(
   if (!duplicate) {
     target.guessedIds.push(selectedCountryId);
     const record = cloneRecord(getNeighborRecord(progress, target.countryId));
-    const correct = target.neighborIds.includes(selectedCountryId);
+    const claimsEmptySet = selectedCountryId === NO_LAND_NEIGHBORS_ID;
+    const correct = claimsEmptySet
+      ? target.neighborIds.length === 0
+      : target.neighborIds.includes(selectedCountryId);
 
     if (correct) {
       kind = 'correct';
-      target.foundIds.push(selectedCountryId);
+      if (!claimsEmptySet) target.foundIds.push(selectedCountryId);
       markSeen(record, timestamp);
     } else {
       kind = 'wrong';
@@ -309,7 +330,14 @@ export function applyNeighborGuess(
       evidenceOutcome = 'contradictory';
     }
 
-    if (target.foundIds.length === target.neighborIds.length) {
+    // Naming a country can never satisfy an empty neighbour set, so a
+    // zero-neighbour target is only completed by claiming the empty set
+    // outright. Otherwise `0 === 0` would resolve it on the first wrong guess.
+    const setComplete = target.neighborIds.length === 0
+      ? claimsEmptySet && correct
+      : target.foundIds.length === target.neighborIds.length;
+
+    if (setComplete) {
       target.resolved = true;
       target.resolution = 'complete';
     } else if (target.guessedIds.length >= target.attemptBudget) {

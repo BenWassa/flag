@@ -35,9 +35,9 @@ const output = `// GENERATED FIXTURE. Do not hand-edit adjacency.\n`
   + `export const AFRICA_ZERO_LAND_NEIGHBOR_IDS = Object.freeze(\n`
   + `  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => AFRICA_LAND_ADJACENCY[countryId].length === 0),\n`
   + `);\n\n`
-  + `export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(\n`
-  + `  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => AFRICA_LAND_ADJACENCY[countryId].length > 0),\n`
-  + `);\n`;
+  + `// Known adjacency makes a country learnable, including when the truthful\n`
+  + `// answer is the empty set. Absent adjacency means unimplemented curriculum.\n`
+  + `export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(Object.keys(AFRICA_LAND_ADJACENCY));\n`;
 
 await mkdir(new URL('../src/data/neighbors/', import.meta.url), { recursive: true });
 await writeFile(NEIGHBOR_OUTPUT_PATH, output);

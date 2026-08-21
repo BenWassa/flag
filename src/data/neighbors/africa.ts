@@ -63,6 +63,6 @@ export const AFRICA_ZERO_LAND_NEIGHBOR_IDS = Object.freeze(
   Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => AFRICA_LAND_ADJACENCY[countryId].length === 0),
 );
 
-export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(
-  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => AFRICA_LAND_ADJACENCY[countryId].length > 0),
-);
+// Known adjacency makes a country learnable, including when the truthful
+// answer is the empty set. Absent adjacency means unimplemented curriculum.
+export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(Object.keys(AFRICA_LAND_ADJACENCY));

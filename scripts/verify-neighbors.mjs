@@ -37,7 +37,13 @@ for (const [countryId, neighbors] of Object.entries(AFRICA_LAND_ADJACENCY)) {
 }
 
 assert.deepEqual(AFRICA_ZERO_LAND_NEIGHBOR_IDS, ['CPV', 'STP', 'COM', 'MDG', 'MUS', 'SYC']);
-assert.equal(AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length, 48, 'Zero-neighbor countries are retained in data and excluded from standard rounds.');
+assert.equal(AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length, 54, 'Every country with known adjacency is a standard target.');
+for (const zeroNeighborId of AFRICA_ZERO_LAND_NEIGHBOR_IDS) {
+  assert.ok(
+    AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.includes(zeroNeighborId),
+    `${zeroNeighborId} is learnable even though its truthful answer is the empty set.`,
+  );
+}
 assert.deepEqual(AFRICA_LAND_ADJACENCY.LSO, ['ZAF'], 'Lesotho enclave resolves to South Africa only.');
 assert.deepEqual(AFRICA_LAND_ADJACENCY.GMB, ['SEN'], 'The Gambia is enclosed by Senegal on land.');
 assert.ok(AFRICA_LAND_ADJACENCY.AGO.includes('COG'), 'Angola adjacency captures Cabinda/exclave topology.');
@@ -128,7 +134,11 @@ assert.ok(html.includes('data-autofocus'));
 assert.ok(html.includes('enterkeyhint="go"'));
 assert.ok(html.includes('autocomplete="off"'));
 assert.ok(html.includes('aria-autocomplete="list"'));
-assert.ok(html.includes('<strong>0 of 3</strong> neighbours found'), 'Initial UI shows zero completed neighbours and the correct total.');
+assert.ok(html.includes('<strong>0</strong> neighbours found'), 'Initial UI shows zero completed neighbours.');
+assert.ok(
+  !html.includes('of 3'),
+  'The neighbour total stays hidden during play so an empty set is not given away.',
+);
 const uiStep = applyNeighborGuess(uiSession, createInitialNeighborProgress(['GHA']), 'BFA', 200);
 const suggestionHtml = renderNeighborSuggestions(uiStep.session, 'burk');
 assert.ok(!suggestionHtml.includes('data-id="BFA"'), 'Completed neighbors disappear from autocomplete suggestions.');
