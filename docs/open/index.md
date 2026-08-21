@@ -23,13 +23,7 @@ These issues are related but should remain separable: country evidence, earned a
 
 #32, #35 and #40 are complete through PR #38. Their closeout records are [`issue-32-atlas-visual-system.md`](../closed/issue-32-atlas-visual-system.md), [`issue-35-region-detail.md`](../closed/issue-35-region-detail.md) and [`issue-40-phosphor-icon-system.md`](../closed/issue-40-phosphor-icon-system.md). Region mastery/gold visuals remain owned by #34.
 
-### 3. Brand rollout
-
-- [#36 — Rename learner-facing product from Flag Atlas to Atlas](https://github.com/BenWassa/flag/issues/36)
-
-The focused implementation now uses Atlas in production UI, browser titles, and install metadata while preserving stable technical identifiers. Issue closeout remains pending the branch verification and delivery workflow.
-
-### 4. Existing presentation bugs / cartography
+### 3. Existing presentation bugs / cartography
 
 - [#41 — Prevent intermittent focus outline on Atlas heading after refresh](issue-41-heading-focus.md)
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
@@ -39,7 +33,7 @@ Focused usability bugs may ship independently where they remain reproducible. #2
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
-### 5. Geography expansion
+### 4. Geography expansion
 
 - [#22 — North America](https://github.com/BenWassa/flag/issues/22)
 - [#23 — Central America](https://github.com/BenWassa/flag/issues/23)
