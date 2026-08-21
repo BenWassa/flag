@@ -131,6 +131,9 @@
   scroll-margin-block: var(--space-2);
 }
 .neighbor-entry > label { font-size: 13px; font-weight: 700; }
+/* Deliberately quiet: this answer must be available for every target without
+   drawing attention to the island nations it happens to be correct for. */
+.neighbor-none { min-height: 44px; justify-self: start; font-size: 14px; }
 .neighbor-input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
 .neighbor-input-row input {
   width: 100%;

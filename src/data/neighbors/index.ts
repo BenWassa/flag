@@ -1,9 +1,5 @@
 import { getAfricaMapScopeConfig, type MapScopeConfig } from '../map-scopes.js';
-import {
-  AFRICA_LAND_ADJACENCY,
-  AFRICA_STANDARD_NEIGHBOR_TARGET_IDS as AFRICA_TOPOLOGY_NEIGHBOR_TARGET_IDS,
-  AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from './africa.js';
+import { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS } from './africa.js';
 
 export { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS };
 
@@ -14,8 +10,13 @@ export { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS };
 export const AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS = Object.freeze(['EGY', 'MAR'] as const);
 const COVERAGE_EXCLUDED = new Set<string>(AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS);
 
+/**
+ * Every country whose land borders the topology genuinely knows, including the
+ * island nations whose truthful answer is that they have none. Only countries
+ * with incomplete cross-continent topology are held back.
+ */
 export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(
-  AFRICA_TOPOLOGY_NEIGHBOR_TARGET_IDS.filter((countryId) => !COVERAGE_EXCLUDED.has(countryId)),
+  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => !COVERAGE_EXCLUDED.has(countryId)),
 );
 
 export function getAfricaNeighborScopeConfig(scopeId: string): MapScopeConfig | undefined {

@@ -1,5 +1,6 @@
 import { COUNTRY_BY_ID } from '../data/countries.js';
 import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
+import { NO_LAND_NEIGHBORS_ID, NO_LAND_NEIGHBORS_LABEL } from '../domain/neighbor-game.js';
 import type { LearningActivity, StudyMode, StudyScope } from '../domain/models.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
@@ -76,14 +77,26 @@ export function createNeighborsRound(context: RoundContext): NeighborsRound {
     const outcome = store.neighborLastOutcome;
     if (!outcome) return '';
     if (outcome.kind === 'duplicate') return 'Already guessed. No attempt used.';
-    const selected = COUNTRY_BY_ID.get(outcome.selectedCountryId)?.name ?? outcome.selectedCountryId;
+    const claimedEmptySet = outcome.selectedCountryId === NO_LAND_NEIGHBORS_ID;
+    const selected = claimedEmptySet
+      ? NO_LAND_NEIGHBORS_LABEL
+      : COUNTRY_BY_ID.get(outcome.selectedCountryId)?.name ?? outcome.selectedCountryId;
+
     if (outcome.resolved && outcome.resolution === 'exhausted') {
+      if (outcome.totalNeighbors === 0) return `Attempts exhausted. ${NO_LAND_NEIGHBORS_LABEL}.`;
       const remaining = outcome.revealedIds.map((id) => COUNTRY_BY_ID.get(id)?.name ?? id).join(', ');
       return `Attempts exhausted. Remaining neighbours: ${remaining}.`;
     }
-    if (outcome.resolved) return `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbours found.`;
-    return outcome.kind === 'correct'
-      ? `Correct. ${selected}. ${outcome.foundCount} of ${outcome.totalNeighbors} found. ${outcome.remainingAttempts} attempts left.`
+    if (outcome.resolved) {
+      return outcome.totalNeighbors === 0
+        ? `Complete. ${NO_LAND_NEIGHBORS_LABEL}.`
+        : `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbours found.`;
+    }
+    if (outcome.kind === 'correct') {
+      return `Correct. ${selected}. ${outcome.foundCount} found. ${outcome.remainingAttempts} attempts left.`;
+    }
+    return claimedEmptySet
+      ? `Incorrect. This country does have land neighbours. ${outcome.remainingAttempts} attempts left.`
       : `Incorrect. ${selected} is not in this neighbour set. ${outcome.remainingAttempts} attempts left.`;
   }
 
