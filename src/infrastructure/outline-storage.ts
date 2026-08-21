@@ -1,6 +1,7 @@
 import type { ProgressRecord, ProgressState, QuizAttempt } from '../domain/models.js';
 import { sanitizeRecord } from './storage.js';
 
+// Stable namespace; payloads migrate from schema v1 to v2 on load/save.
 const PROGRESS_KEY = 'flag-atlas:outline-progress:v1';
 const ATTEMPTS_KEY = 'flag-atlas:outline-attempts:v1';
 const ATTEMPT_LIMIT = 2000;
@@ -46,14 +47,14 @@ export function loadOutlineProgress(): ProgressState | null {
 
   if (!parsed || typeof parsed !== 'object') return null;
   const state = parsed as { version?: unknown; records?: unknown };
-  if (state.version !== 1 || !state.records || typeof state.records !== 'object') return null;
+  if ((state.version !== 1 && state.version !== 2) || !state.records || typeof state.records !== 'object') return null;
 
   const records: Record<string, ProgressRecord> = {};
   for (const [countryId, value] of Object.entries(state.records as Record<string, unknown>)) {
     const record = sanitizeRecord(countryId, value);
     if (record) records[countryId] = record;
   }
-  return { version: 1, records };
+  return { version: 2, records };
 }
 
 export function saveOutlineProgress(state: ProgressState): boolean {
