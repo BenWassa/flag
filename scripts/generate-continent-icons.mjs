@@ -10,14 +10,18 @@ const MANIFEST_PATH = new URL('./map-sources/natural-earth.json', import.meta.ur
 const OUTPUT_PATH = new URL('../src/ui/components/continent-icons.ts', import.meta.url);
 const SIZE = 48;
 const PADDING = 3;
-// At 36 CSS px, sub-pixel 1:10m coastline detail is noise. Retain only the
-// highest-weight 0.05% of topology points, then round projected paths to 0.1px.
-const SIMPLIFICATION_QUANTILE = 0.9995;
+// At navigation-icon scale, fine 1:10m coastline detail is noise. Retain the
+// highest-weight 0.5% of topology points: this keeps recognisable mainland
+// shapes (especially Europe) without turning archipelagos into visual static.
+const SIMPLIFICATION_QUANTILE = 0.995;
+const MINIMUM_PROJECTED_RING_AREA = 0.35;
 
 const CONTINENTS = [
   ['africa', 'Africa', [[-20, 55]]],
   ['asia', 'Asia', [[25, 180]]],
-  ['europe', 'Europe', [[-25, 45]]],
+  // Natural Earth assigns transcontinental Russia to Europe. Excluding it
+  // prevents the longitude crop from discarding the joined European mainland.
+  ['europe', 'Europe', [[-25, 45]], ['Russia']],
   ['north-america', 'North America', [[-170, -20]]],
   ['south-america', 'South America', [[-85, -30]]],
   ['oceania', 'Oceania', [[110, 180]]],
@@ -56,7 +60,7 @@ function cleanProjectedPath(path) {
       const next = points[(index + 1) % points.length];
       return sum + point[0] * next[1] - next[0] * point[1];
     }, 0) / 2);
-    if (area < 0.12) continue;
+    if (area < MINIMUM_PROJECTED_RING_AREA) continue;
 
     kept.push(`${points.map((point, index) => `${index === 0 ? 'M' : 'L'}${point[0]},${point[1]}`).join('')}Z`);
   }
@@ -113,8 +117,11 @@ const simplifiedTopology = simplify(
 const geometries = simplifiedTopology.objects.countries.geometries;
 const paths = {};
 
-for (const [id, sourceName, longitudeRanges] of CONTINENTS) {
-  const members = geometries.filter((geometry) => geometry.properties?.CONTINENT === sourceName);
+for (const [id, sourceName, longitudeRanges, excludedCountries = []] of CONTINENTS) {
+  const members = geometries.filter((geometry) => (
+    geometry.properties?.CONTINENT === sourceName
+    && !excludedCountries.includes(geometry.properties?.ADMIN)
+  ));
   if (!members.length) throw new Error(`Natural Earth contains no features for ${sourceName}.`);
 
   const outline = {

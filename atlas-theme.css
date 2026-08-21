@@ -764,7 +764,7 @@ body { letter-spacing: -.006em; }
 
 .atlas-card__mark .ui-icon { width: 32px; height: 32px; }
 
-.atlas-card__mark .continent-icon { width: 36px; height: 36px; }
+.atlas-card__mark .continent-icon { width: 44px; height: 44px; }
 
 .atlas-card__identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
@@ -926,7 +926,7 @@ body { letter-spacing: -.006em; }
   .atlas-card { padding: 10px; border-radius: 24px; }
   .atlas-card__mark { width: 48px; height: 48px; border-radius: 16px; }
   .atlas-card__mark .ui-icon { width: 26px; height: 26px; }
-  .atlas-card__mark .continent-icon { width: 30px; height: 30px; }
+  .atlas-card__mark .continent-icon { width: 36px; height: 36px; }
   .domain-play-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .domain-play { aspect-ratio: auto; padding: 16px 10px; border-radius: 22px; }
   .domain-play__icon .ui-icon { width: 30px; height: 30px; }
