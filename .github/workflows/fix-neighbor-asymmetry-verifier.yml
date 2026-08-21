@@ -1,0 +1,26 @@
+name: Fix generic Neighbours asymmetry verifier
+
+on:
+  push:
+    branches: [issue-57-global-expansion-foundation]
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: ${{ !contains(github.event.head_commit.message, 'Update generic Neighbours asymmetry verifier') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node .github/fix-neighbor-asymmetry-verifier.mjs
+      - run: rm .github/fix-neighbor-asymmetry-verifier.mjs .github/workflows/fix-neighbor-asymmetry-verifier.yml
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/verify-neighbors.mjs .github
+          git commit -m "Update generic Neighbours asymmetry verifier"
+          git push
