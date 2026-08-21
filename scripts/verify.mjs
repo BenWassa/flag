@@ -91,7 +91,7 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // --- View rendering -------------------------------------------------------
 // The views are pure string builders, so their output can be asserted here
 // without a browser. These guard the states that are easy to break silently:
-// launcher actions, focus landing points, and the single mastery-goal source.
+// launcher actions, focus landing points, and evidence-language boundaries.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
 const { renderContinent } = await import('../dist/ui/views/atlas.js');
@@ -193,9 +193,14 @@ assert.ok(
 );
 
 const lapsedProgress = { ...lapsed };
+const lapsedProgressHtml = renderProgress(lapsedProgress, 'all');
 assert.ok(
-  renderProgress(lapsedProgress, 'all').includes('0/2 toward mastery'),
-  'The progress ledger must read its mastery goal from masteryGoal, including the post-lapse goal of 2.',
+  !lapsedProgressHtml.includes('0/2 toward mastery'),
+  'Routine progress UI must not expose the internal post-lapse scheduler threshold.',
+);
+assert.ok(
+  lapsedProgressHtml.includes('Learning'),
+  'A lapsed country is presented as Learning rather than as a mastery punch card.',
 );
 
 const quizSession = {
@@ -224,7 +229,7 @@ assert.ok(unanswered.includes('flag-fallback'), 'Every flag carries a fallback f
 const answered = renderQuiz(quizSession, fresh, quizSession.questions[0].countryId);
 assert.ok(
   answered.includes('data-action="next-question" data-autofocus'),
-  'After answering in Learn mode, focus must land on the advance control.',
+  'After a clean Learn answer, the correct answer becomes the focused advance control.',
 );
 assert.ok(!answered.includes('aria-live'), 'Announcements belong to the persistent live region, not re-rendered nodes.');
 
@@ -276,7 +281,7 @@ assert.deepEqual(repaired.confusionCounts, { MLI: 2 }, 'Only well-formed confusi
 // Corruption is repaired once, at the storage boundary, so the views can stay
 // written against well-formed records. This asserts that contract end to end.
 const repairedState = {
-  version: 1,
+  version: 2,
   records: {
     ...fresh.records,
     GHA: sanitizeRecord('GHA', { status: 'learning', masteryStreak: null, lifetimeIncorrect: undefined }),
@@ -293,7 +298,7 @@ assert.ok(
 
 // A record the ledger never had at all: `getRecord` must supply the default
 // rather than let the view index into undefined.
-const missingRecords = { version: 1, records: {} };
+const missingRecords = { version: 2, records: {} };
 assert.doesNotThrow(() => renderProgress(missingRecords, 'all'), 'A ledger missing every record still renders.');
 assert.ok(!renderProgress(missingRecords, 'all').includes('undefined'), 'Missing records fall back to Unseen.');
 
