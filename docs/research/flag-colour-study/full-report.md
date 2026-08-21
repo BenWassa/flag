@@ -335,9 +335,9 @@ This archive preserves:
 
 - the five original CSV outputs under `data/`;
 - the exact stronger/current research script from draft PR #33 at `research/flag_colour_study.py`;
-- the PR #33 GitHub Actions research workflow at `.github/workflows/flag-colour-study.yml`.
+- the PR #33 GitHub Actions research workflow, archived as `historical-workflow.yml` beside this report.
 
-The script/workflow remain research tooling only. They do not introduce runtime dependencies into Atlas.
+The script/workflow remain research tooling only. They do not introduce runtime dependencies into Atlas. The workflow is kept as a historical record rather than an active CI job, and the script is not currently runnable end to end — see [Reproducibility limitations](README.md#reproducibility-limitations).
 
 ## O. Final recommendation
 
