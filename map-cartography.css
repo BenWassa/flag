@@ -47,15 +47,19 @@
   pointer-events: none;
 }
 
-.map-water--ocean path,
+.map-water--ocean path {
+  fill: var(--map-ocean);
+  stroke: none;
+}
+
 .map-water--lakes path {
-  fill: var(--surface-subtle);
+  fill: var(--map-inland-water);
   stroke: none;
 }
 
 .map-water--rivers path {
   fill: none;
-  stroke: color-mix(in srgb, var(--line-strong) 52%, transparent);
+  stroke: var(--map-water-line);
   stroke-width: .62;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -78,7 +82,7 @@
 .map-coastline,
 .map-shared-boundary {
   fill: none;
-  stroke: var(--line-strong);
+  stroke: var(--map-context-border);
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -148,6 +152,9 @@
 .map-viewport-control--label { min-width: 56px; font-size: 11px; font-weight: 750; }
 
 @media (forced-colors: active) {
+  .map-water--ocean path,
+  .map-water--lakes path { fill: Canvas; }
+
   .map-coastline,
   .map-shared-boundary,
   .map-water--rivers path { stroke: CanvasText; }

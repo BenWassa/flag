@@ -87,7 +87,7 @@
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
-  background: var(--surface-subtle);
+  background: var(--map-ocean);
 }
 .map-stage__scroll {
   width: 100%;
@@ -108,12 +108,12 @@
   -webkit-user-select: none;
   shape-rendering: geometricPrecision;
 }
-.map-ocean { fill: var(--surface-subtle); }
+.map-ocean { fill: var(--map-ocean); }
 .map-context { pointer-events: none; }
 .map-context-country,
 .map-context-locator {
-  fill: color-mix(in srgb, var(--track) 68%, var(--surface-subtle));
-  stroke: var(--line-strong);
+  fill: var(--map-context-land);
+  stroke: var(--map-context-border);
   stroke-width: .75;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -128,8 +128,8 @@
 .map-country__shape,
 .map-country__locator,
 .map-country__callout-target {
-  fill: color-mix(in srgb, var(--unseen) 18%, var(--surface));
-  stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong));
+  fill: var(--map-active-land);
+  stroke: var(--map-active-border);
   stroke-width: .78;
   stroke-linejoin: round;
   stroke-linecap: round;
@@ -140,7 +140,7 @@
 }
 .map-country__callout-line {
   fill: none;
-  stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong));
+  stroke: var(--map-active-border);
   stroke-width: 1.1;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -264,16 +264,16 @@
 }
 @keyframes map-recorded {
   0%, 42% { fill: var(--action-soft); stroke: var(--action); stroke-width: 3; opacity: 1; }
-  100% { fill: color-mix(in srgb, var(--unseen) 18%, var(--surface)); stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: .78; opacity: 1; }
+  100% { fill: var(--map-active-land); stroke: var(--map-active-border); stroke-width: .78; opacity: 1; }
 }
 @keyframes map-recorded-line {
   0%, 42% { stroke: var(--action); stroke-width: 2.5; }
-  100% { stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: 1.1; }
+  100% { stroke: var(--map-active-border); stroke-width: 1.1; }
 }
 @keyframes map-wrong {
   0% { opacity: .55; stroke-width: 4; }
   45% { opacity: 1; stroke-width: 3; }
-  100% { fill: color-mix(in srgb, var(--unseen) 18%, var(--surface)); stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: .78; opacity: 1; }
+  100% { fill: var(--map-active-land); stroke: var(--map-active-border); stroke-width: .78; opacity: 1; }
 }
 @keyframes map-wrong-line {
   0%, 45% { stroke: var(--wrong); stroke-width: 2.5; }

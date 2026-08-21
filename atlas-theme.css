@@ -40,6 +40,15 @@
   --learning: #8b6214;
   --learning-soft: #fff4da;
   --unseen: #667085;
+  /* Functional cartography neutrals, shared by every map surface. */
+  --map-ocean: #dceaf5;
+  --map-inland-water: #c7deef;
+  --map-water-line: #6f91ad;
+  --map-context-land: #d2dae5;
+  --map-context-border: #7b899b;
+  --map-active-land: #f8fafc;
+  --map-active-border: #5f6f82;
+  --map-label-halo: #f8fafc;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-tile: 18px;

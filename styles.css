@@ -333,15 +333,15 @@ button:focus-visible,
 }
 .launcher-map__svg { display: block; width: 100%; height: 100%; }
 .launcher-map__ocean,
-.launcher-map-water--ocean path,
-.launcher-map-water--lakes path { fill: var(--surface-subtle); }
+.launcher-map-water--ocean path { fill: var(--map-ocean); }
+.launcher-map-water--lakes path { fill: var(--map-inland-water); }
 .launcher-map-water,
 .launcher-map-boundaries,
 .launcher-map-context { pointer-events: none; }
-.launcher-map-context { fill: var(--track); }
+.launcher-map-context { fill: var(--map-context-land); }
 .launcher-map-water--rivers path {
   fill: none;
-  stroke: color-mix(in srgb, var(--line-strong) 52%, transparent);
+  stroke: var(--map-water-line);
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
@@ -352,15 +352,15 @@ button:focus-visible,
 }
 .launcher-map-country__shape,
 .launcher-map-country__locator {
-  fill: color-mix(in srgb, var(--track) 78%, var(--surface));
-  stroke: var(--line-strong);
+  fill: var(--map-active-land);
+  stroke: var(--map-active-border);
   stroke-width: .7;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
   transition: fill 140ms ease-out, stroke 140ms ease-out;
 }
 .launcher-map-country__callout-line {
-  stroke: var(--line-strong);
+  stroke: var(--map-active-border);
   stroke-width: 1;
   vector-effect: non-scaling-stroke;
 }
@@ -395,7 +395,7 @@ button:focus-visible,
   max-width: 72px;
   transform: translate(-50%, -50%);
   padding: 1px 2px;
-  background: var(--surface);
+  background: var(--map-label-halo);
   color: var(--text-muted);
   font-size: clamp(11px, 1.5vw, 13px);
   line-height: 1.05;
@@ -409,7 +409,7 @@ button:focus-visible,
 .launcher-map-coastline,
 .launcher-map-boundary {
   fill: none;
-  stroke: var(--line-strong);
+  stroke: var(--map-context-border);
   stroke-linejoin: round;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
@@ -865,6 +865,15 @@ button:focus-visible,
   .button { forced-color-adjust: auto; }
   .status-strip__mastered,
   .status-strip__learning { background: CanvasText; }
+  .launcher-map__ocean,
+  .launcher-map-water--ocean path,
+  .launcher-map-water--lakes path { fill: Canvas; }
+  .launcher-map-context { fill: Canvas; stroke: GrayText; }
+  .launcher-map-water--rivers path,
+  .launcher-map-coastline,
+  .launcher-map-boundary { stroke: CanvasText; }
+  .launcher-map-country__shape,
+  .launcher-map-country__locator { fill: Canvas; stroke: CanvasText; }
   .launcher-map-region--selected .launcher-map-country__shape,
   .launcher-map-region--selected .launcher-map-country__locator,
   .launcher-map-region:focus-visible .launcher-map-country__shape,
