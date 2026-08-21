@@ -24,7 +24,7 @@ See `docs/product/gamification.md`, `docs/product/learning-and-mastery.md`, and 
 
 ## Implementation status
 
-Draft implementation is on `issue-34-earned-mastery` and remains intentionally merge-blocked on Issue #29.
+Implementation is prepared on `issue-34-earned-mastery` and now includes the Issue #29 evidence integration. It remains merge-blocked until #29 itself passes final CI/artifact closeout and merges to `main`.
 
 Implemented:
 
@@ -34,20 +34,21 @@ Implemented:
 - application-store backfill plus re-awarding after evidence-changing answers in all four domains;
 - explicit full-reset semantics for earned achievements;
 - region, continent and world read models for later presentation/#42 consumption;
-- deterministic verifier coverage for support guards, non-revocation, persistence, migration, reset, idempotency and four-ledger independence.
+- deterministic verifier coverage for support guards, non-revocation, persistence, migration, reset, idempotency and four-ledger independence;
+- direct delegation to Issue #29's canonical `qualifiesForRegionMastery()` selector.
 
 ## Issue #29 integration seam
 
-`src/state/achievement-evidence-adapter.ts` is temporary compatibility code for pre-#29 `main`. It is the only achievement path allowed to understand the current ledger status representation.
+`src/state/achievement-evidence-adapter.ts` only selects the appropriate domain record. It delegates qualification to `src/domain/evidence.ts` via `qualifiesForRegionMastery()` and does not encode scheduler status or threshold rules itself.
 
-Final integration order is mandatory:
+The prepared branch already contains the repaired Issue #29 head as an ancestor. Final closeout order remains mandatory:
 
-1. merge #29;
-2. rebase this branch onto then-current `main`;
-3. replace the temporary adapter with #29's canonical country-evidence qualification selector;
-4. resolve semantics deliberately rather than preserving legacy thresholds by accident;
-5. rerun `npm run check` and `npm test` under Node 22;
-6. inspect the exact production artifact and confirm CI green;
+1. run final #29 verification and merge #29;
+2. fetch/sync #34 with then-current `main` if anything changed after the prepared integration;
+3. confirm the achievement adapter still delegates to `qualifiesForRegionMastery()` and contains no raw `status === 'mastered'` rule;
+4. run `npm run check` and full `npm test` under Node 22;
+5. inspect the exact production artifact;
+6. confirm final CI is green;
 7. only then mark the PR ready and merge #34.
 
 ## Current curriculum limits
@@ -65,4 +66,4 @@ Therefore:
 
 The implementation exposes presentation-safe read models but does not invent new crest/Crown artwork. Final visible treatment must continue to follow `DESIGN.md`: purple Mastery, restrained gold complete-region treatment, generated continent silhouettes for crest presentation, and Crown only for genuine world completion.
 
-Exact verification evidence is recorded in the draft PR and will be refreshed after the required post-#29 rebase.
+Final verification evidence must be recorded after #29 has merged and the final #34 branch head has been tested.
