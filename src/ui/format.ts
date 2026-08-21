@@ -35,4 +35,4 @@ export function statusLabel(record: ProgressRecord, dueForReview = false): strin
 }
 
 export const EVIDENCE_RULE =
-  'Clean retrieval strengthens evidence. Play can calibrate known material faster; misses stay in the learning record.';
+  'Clean retrieval builds strong evidence. Play can calibrate known material faster; misses stay in the learning record.';
