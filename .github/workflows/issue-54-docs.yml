@@ -1,0 +1,34 @@
+name: Apply Issue 54 cartography metrics
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  docs:
+    if: github.head_ref == 'issue-54-remove-rivers'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-54-remove-rivers
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node scripts/issue-54-docs.mjs
+      - run: npm ci
+      - run: npm run check
+      - run: npm test
+      - name: Commit metrics
+        run: |
+          rm scripts/issue-54-docs.mjs .github/workflows/issue-54-docs.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- docs/architecture/cartography.md scripts/issue-54-docs.mjs .github/workflows/issue-54-docs.yml
+          git diff --cached --check
+          git commit -m "Document no-rivers cartography metrics"
+          git push origin HEAD:issue-54-remove-rivers
