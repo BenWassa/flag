@@ -272,7 +272,7 @@ export function renderProgress(
       ${studiedCount === 0 && !hasAchievements ? `
         <div class="progress-first-use" role="status">
           <strong>Your Atlas starts here</strong>
-          <span>Practise any Africa domain to begin building regional mastery.</span>
+          <span>Not practised yet. Practise any Africa domain to begin building regional mastery.</span>
         </div>
       ` : ''}
 
