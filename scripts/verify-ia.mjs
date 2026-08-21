@@ -500,6 +500,14 @@ assert.match(selectedMapRule, /fill:\s*var\(--surface\)/, 'Selected region fill 
 assert.match(selectedMapRule, /stroke:\s*var\(--text\)/, 'Selected region boundary carries emphasis.');
 assert.match(selectedMapRule, /stroke-width:\s*2\.4/, 'Selected region boundary is visibly stronger.');
 
+const launcherMapRegionRule = styles.match(/\.launcher-map-region\s*\{([^}]*)\}/)?.[1];
+assert.ok(launcherMapRegionRule, 'Launcher map regions define their interactive surface.');
+assert.match(
+  launcherMapRegionRule,
+  /-webkit-tap-highlight-color:\s*transparent/,
+  'Mobile WebKit does not paint a rectangular tap highlight over SVG regions.',
+);
+
 const launcherMapCssStart = styles.indexOf('.launcher-map {');
 const launcherMapCssEnd = styles.indexOf('.mini-ledger__row', launcherMapCssStart);
 assert.ok(launcherMapCssStart >= 0 && launcherMapCssEnd > launcherMapCssStart, 'Launcher map CSS is bounded for verification.');

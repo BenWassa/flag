@@ -345,7 +345,11 @@ button:focus-visible,
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
-.launcher-map-region { cursor: pointer; outline: none; }
+.launcher-map-region {
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .launcher-map-country__shape,
 .launcher-map-country__locator {
   fill: color-mix(in srgb, var(--track) 78%, var(--surface));
