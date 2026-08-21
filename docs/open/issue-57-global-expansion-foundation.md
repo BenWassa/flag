@@ -11,5 +11,6 @@ Implementation notes for the shared prerequisite to continent rollout.
 - Africa remains the regression fixture and retains its existing Neighbours coverage exclusions.
 - `docs/architecture/continent-expansion.md` defines the reusable onboarding and QA contract.
 - Legacy source-level Outlines and Neighbours verifiers now assert the shared generator/configuration contracts rather than Africa-only implementation details, including the generic per-continent adjacency symmetry guard.
+- Neighbours map geometry remains lazy and memoised by active scope, with failed scope loads retryable instead of relying on one Africa-only promise.
 
 The foundation intentionally adds no second playable continent. Issue #24 is the proving-ground consumer.
