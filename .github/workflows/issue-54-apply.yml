@@ -6,6 +6,7 @@ on:
       - issue-54-remove-rivers
     paths:
       - scripts/issue-54-apply.mjs
+      - scripts/issue-54-fix-index.mjs
       - .github/workflows/issue-54-apply.yml
   pull_request:
     branches:
@@ -30,7 +31,9 @@ jobs:
           cache: npm
       - run: npm ci
       - name: Apply source migration
-        run: node scripts/issue-54-apply.mjs
+        run: |
+          node scripts/issue-54-apply.mjs
+          node scripts/issue-54-fix-index.mjs
       - name: Regenerate canonical map assets
         run: npm run maps:generate
       - name: Typecheck
@@ -43,10 +46,10 @@ jobs:
           grep -q "flag-atlas-v18" dist/sw.js
       - name: Commit implementation
         run: |
-          rm scripts/issue-54-apply.mjs .github/workflows/issue-54-apply.yml
+          rm scripts/issue-54-apply.mjs scripts/issue-54-fix-index.mjs .github/workflows/issue-54-apply.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add -- src/domain/map-models.ts scripts/map-sources/natural-earth.json scripts/generate-maps.mjs scripts/optimize-map-runtime.mjs src/data/maps/africa.ts src/ui/components/map.ts src/ui/components/neighbor-map.ts src/ui/components/launcher-map.ts atlas-theme.css map-cartography.css styles.css scripts/verify-cartography.mjs scripts/verify-map-contrast.mjs docs/architecture/cartography.md docs/architecture/cartography-provenance.json public/sw.js scripts/issue-54-apply.mjs .github/workflows/issue-54-apply.yml
+          git add -- src/domain/map-models.ts src/data/maps/index.ts scripts/map-sources/natural-earth.json scripts/generate-maps.mjs scripts/optimize-map-runtime.mjs src/data/maps/africa.ts src/ui/components/map.ts src/ui/components/neighbor-map.ts src/ui/components/launcher-map.ts atlas-theme.css map-cartography.css styles.css scripts/verify-cartography.mjs scripts/verify-map-contrast.mjs docs/architecture/cartography.md docs/architecture/cartography-provenance.json public/sw.js scripts/issue-54-apply.mjs scripts/issue-54-fix-index.mjs .github/workflows/issue-54-apply.yml
           git diff --cached --check
           git commit -m "Remove rivers from Atlas runtime maps"
           git push origin HEAD:issue-54-remove-rivers
