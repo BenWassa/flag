@@ -125,13 +125,14 @@ export function applyCountryEvidence<T extends EvidenceBackedRecord>(
 
   record.status = 'learning';
   const mayCredit = !event.sessionId || record.lastMasteryCreditSessionId !== event.sessionId;
+  const goal = evidenceStrengthGoal(record);
   if (mayCredit) {
     credit = cleanCredit(record, event.activity);
-    record.masteryStreak += credit;
+    record.masteryStreak = Math.min(goal, record.masteryStreak + credit);
     if (event.sessionId) record.lastMasteryCreditSessionId = event.sessionId;
   }
 
-  const becameStrong = record.masteryStreak >= evidenceStrengthGoal(record);
+  const becameStrong = record.masteryStreak >= goal;
   if (becameStrong) {
     record.status = 'mastered';
     record.masteredAt = event.at;
