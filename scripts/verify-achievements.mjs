@@ -16,7 +16,7 @@ import {
 } from '../dist/domain/achievements.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
 import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
-import { createLegacyCountryEvidenceQualification } from '../dist/state/achievement-evidence-adapter.js';
+import { createCountryEvidenceQualification } from '../dist/state/achievement-evidence-adapter.js';
 
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 const westAsia = { kind: 'region', id: 'west-asia', label: 'West Asia' };
@@ -121,19 +121,22 @@ const fakeLedgers = {
   outlines: { records: { AAA: { status: 'unseen' } } },
   neighbors: { records: { AAA: { status: 'mastered' } } },
 };
-const legacyQualification = createLegacyCountryEvidenceQualification(fakeLedgers);
-assert.equal(legacyQualification('flags', 'AAA'), true);
-assert.equal(legacyQualification('locations', 'AAA'), false);
-assert.equal(legacyQualification('outlines', 'AAA'), false);
-assert.equal(legacyQualification('neighbors', 'AAA'), true);
+const evidenceQualification = createCountryEvidenceQualification(fakeLedgers);
+assert.equal(evidenceQualification('flags', 'AAA'), true);
+assert.equal(evidenceQualification('locations', 'AAA'), false);
+assert.equal(evidenceQualification('outlines', 'AAA'), false);
+assert.equal(evidenceQualification('neighbors', 'AAA'), true);
 fakeLedgers.locations.records.AAA.status = 'mastered';
-assert.equal(legacyQualification('locations', 'AAA'), true, 'Locations evidence can change independently.');
-assert.equal(legacyQualification('outlines', 'AAA'), false, 'Changing one ledger does not contaminate another domain.');
+assert.equal(evidenceQualification('locations', 'AAA'), true, 'Locations evidence can change independently.');
+assert.equal(evidenceQualification('outlines', 'AAA'), false, 'Changing one ledger does not contaminate another domain.');
 
 const achievementEngine = await readFile('dist/domain/achievements.js', 'utf8');
 for (const forbidden of ['masteryStreak', 'nextReviewAt', "status === 'mastered'", 'lifetimeCorrect']) {
   assert.equal(achievementEngine.includes(forbidden), false, `Achievement domain does not encode the legacy evidence rule ${forbidden}.`);
 }
+const evidenceAdapter = await readFile('dist/state/achievement-evidence-adapter.js', 'utf8');
+assert.ok(evidenceAdapter.includes('qualifiesForRegionMastery'), 'Achievement state delegates country qualification to Issue #29.');
+assert.equal(evidenceAdapter.includes("status === 'mastered'"), false, 'Achievement adapter does not hard-code the compatibility scheduler status.');
 
 const memory = new Map();
 Object.defineProperty(globalThis, 'localStorage', {
@@ -182,4 +185,4 @@ store.resetProgress();
 assert.deepEqual(store.achievements, empty, 'The existing Reset all progress store path explicitly resets earned achievements.');
 assert.equal(memory.has(ACHIEVEMENT_STORAGE_KEY), false, 'The reset path removes the durable achievement key.');
 
-console.log('Achievement verification passed: monotonic region/domain mastery, guarded region/continent/world completion, isolated evidence seam, versioned persistence and explicit reset semantics.');
+console.log('Achievement verification passed: monotonic region/domain mastery, guarded region/continent/world completion, canonical evidence seam, versioned persistence and explicit reset semantics.');
