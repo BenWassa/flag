@@ -1,6 +1,7 @@
 import { COUNTRY_BY_ID } from '../data/countries.js';
 import type { LearningActivity, SessionResult, StudyMode, StudyScope } from '../domain/models.js';
 import { getRecord, masteryGoal } from '../domain/progress.js';
+import { roundScore, scoreAnnouncement } from '../domain/round-feedback.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
 import type { RoundContext } from './round-context.js';
@@ -18,6 +19,8 @@ export interface FlagsRound {
   submitAnswer(countryId: string): void;
   announceResult(): void;
   cancelPending(): void;
+  /** Skips the remaining Play feedback dwell. Returns false when nothing is pending. */
+  advanceNow(): boolean;
   /** Captures the just-rendered result so review/repeat can act on it later. */
   recordResult(result: SessionResult): void;
   /** Returns false (and does nothing) if there is no captured result to review. */
@@ -25,6 +28,14 @@ export interface FlagsRound {
   /** Returns false (and does nothing) if there is no captured result to repeat. */
   repeat(): boolean;
 }
+
+/**
+ * Play dwell before the round moves on. A missed answer needs long enough to
+ * read the country that was actually being asked for; a correct one does not.
+ * Both are skippable with Enter so rapid play is never gated on the timer.
+ */
+const PLAY_DWELL_CORRECT_MS = 620;
+const PLAY_DWELL_WRONG_MS = 1500;
 
 export function createFlagsRound(context: RoundContext): FlagsRound {
   const { store, router, announce, finishInteraction, getCurrentRoute, cancelAllPending } = context;
@@ -74,7 +85,12 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
     const question = store.session.questions[store.session.currentIndex];
     const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
     if (!target) return '';
-    if (store.session.mode === 'test') return 'Answer recorded.';
+
+    if (store.session.mode === 'test') {
+      const score = roundScore(store.session.attempts, store.session.questions.length);
+      const outcome = countryId === target.id ? 'Correct.' : `Not quite. Answer: ${target.name}.`;
+      return `${outcome} ${scoreAnnouncement(score)}`;
+    }
 
     const record = getRecord(store.progress, target.id);
     const state = record.status === 'mastered'
@@ -94,19 +110,31 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
 
   function submitAnswer(countryId: string): void {
     if (!store.session || store.answeredCountryId !== null) return;
-    store.answer(countryId);
+    const attempt = store.answer(countryId);
     announce(answerAnnouncement(countryId));
 
     if (store.session.mode === 'test') {
       cancelPending();
-      pendingAdvance = window.setTimeout(() => {
-        pendingAdvance = null;
-        if (store.view.name !== 'quiz') return;
-        store.advance();
-        announceResult();
-        finishInteraction(null);
-      }, 180);
+      pendingAdvance = window.setTimeout(
+        advancePending,
+        attempt.correct ? PLAY_DWELL_CORRECT_MS : PLAY_DWELL_WRONG_MS,
+      );
     }
+  }
+
+  function advancePending(): void {
+    pendingAdvance = null;
+    if (store.view.name !== 'quiz') return;
+    store.advance();
+    announceResult();
+    finishInteraction(null);
+  }
+
+  function advanceNow(): boolean {
+    if (pendingAdvance === null) return false;
+    cancelPending();
+    advancePending();
+    return true;
   }
 
   function recordResult(result: SessionResult): void {
@@ -133,6 +161,7 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
     submitAnswer,
     announceResult,
     cancelPending,
+    advanceNow,
     recordResult,
     reviewMistakes,
     repeat,

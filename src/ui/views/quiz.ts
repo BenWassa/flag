@@ -1,8 +1,10 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { getRecord } from '../../domain/progress.js';
+import { answerFeedback, roundScore } from '../../domain/round-feedback.js';
 import type { ProgressState, QuizSession } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
+import { answerFeedbackPanel, liveScore } from '../components/round-feedback.js';
 import { escapeHtml, statusLabel } from '../format.js';
 
 export function renderQuiz(
@@ -23,10 +25,13 @@ export function renderQuiz(
   if (!options.some((country) => country.id === target.id)) return unavailable();
 
   const isAnswered = answeredCountryId !== null;
-  const isLearnFeedback = isAnswered && session.mode === 'learn';
+  const isPlay = session.mode === 'test';
+  const isLearnFeedback = isAnswered && !isPlay;
+  const showsOutcome = isAnswered;
   const currentRecord = getRecord(progress, target.id);
   const pct = ((session.currentIndex + (isAnswered ? 1 : 0)) / session.questions.length) * 100;
   const isLastQuestion = session.currentIndex === session.questions.length - 1;
+  const score = roundScore(session.attempts, session.questions.length);
 
   return `
     <main class="quiz-shell">
@@ -43,9 +48,10 @@ export function renderQuiz(
 
       <section class="question-stage">
         <div class="question-meta">
-          <strong>${session.mode === 'learn' ? 'Learn' : 'Play'}</strong>
+          <strong>${isPlay ? 'Play' : 'Learn'}</strong>
           <span>Choose the country</span>
         </div>
+        ${isPlay ? liveScore(score) : ''}
         <div class="flag-stage">
           ${flagImage(target, isLearnFeedback, 'flag-frame--stage', true)}
         </div>
@@ -57,11 +63,9 @@ export function renderQuiz(
           const correct = country.id === target.id;
           const continueFromCorrect = isLearnFeedback && selected && correct;
           let stateClass = '';
-          if (isLearnFeedback) {
+          if (showsOutcome) {
             if (correct) stateClass = 'answer-button--correct';
             else if (selected) stateClass = 'answer-button--wrong';
-          } else if (selected) {
-            stateClass = 'answer-button--selected';
           }
 
           // A clean Learn answer becomes the continue control in place. This
@@ -118,7 +122,7 @@ function feedback(
   correct: boolean,
 ): string {
   if (session.mode === 'test') {
-    return '<div class="test-advance">Answer recorded</div>';
+    return answerFeedbackPanel(answerFeedback(correct, countryName));
   }
 
   return `

@@ -531,9 +531,20 @@ body { letter-spacing: -.006em; }
   font-weight: 800;
 }
 
-.answer-feedback { border-top-width: 1px; }
+.answer-feedback {
+  border-top-width: 1px;
+  animation: answer-feedback-in 140ms ease-out;
+}
 .answer-feedback--correct { border-top-color: var(--correct); }
 .answer-feedback--wrong { border-top-color: var(--wrong); }
+.answer-feedback--neutral { border-top-color: var(--line-strong); }
+
+@keyframes answer-feedback-in {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.round-score__value { transition: color 120ms ease; }
 
 .results-header { margin-bottom: 18px; }
 
