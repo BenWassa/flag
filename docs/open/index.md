@@ -28,29 +28,47 @@ These issues are related but should remain separable: country evidence, earned a
 - [#41 — Prevent intermittent focus outline on Atlas heading after refresh](issue-41-heading-focus.md)
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
+- [#54 — Remove rivers from Atlas maps to clarify political borders](https://github.com/BenWassa/flag/issues/54)
 
-Focused usability bugs may ship independently where they remain reproducible. #20 should consume the new semantic palette without changing canonical geometry.
+Focused usability bugs may ship independently where they remain reproducible. #54 establishes the global expansion cartography contract: ocean + useful lakes remain; river linework is removed so political borders dominate.
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
-### 4. Geography expansion
+### 4. Geography expansion foundation
 
-- [#22 — North America](https://github.com/BenWassa/flag/issues/22)
-- [#23 — Central America](https://github.com/BenWassa/flag/issues/23)
-- [#24 — South America](https://github.com/BenWassa/flag/issues/24)
-- [#25 — Europe](https://github.com/BenWassa/flag/issues/25)
-- [#26 — Asia](https://github.com/BenWassa/flag/issues/26)
-- [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
-- [#28 — Middle East conventional cross-continental learning region](https://github.com/BenWassa/flag/issues/28)
+Read [`../architecture/continent-expansion.md`](../architecture/continent-expansion.md) before any new continent implementation.
 
-Africa remains the production baseline. Other continents can appear as shell/navigation states for visual and IA testing before their full Locations/Outlines/Neighbours data is implemented, but unsupported curriculum must never count towards mastery/completion.
+- [#57 — Generalise geography infrastructure for global continent expansion](https://github.com/BenWassa/flag/issues/57) — shared learning scopes, config-driven canonical generation, global-complete adjacency, lazy continent registry and parameterised verification.
+- [#28 — Middle East conventional cross-continental learning scope](https://github.com/BenWassa/flag/issues/28) — consumes #57's overlapping-scope model; exact 17-country membership is locked.
+- [#58 — Make zero-land-neighbour countries learnable in Neighbours](https://github.com/BenWassa/flag/issues/58) — required before Oceania can achieve honest four-domain parity in every region.
+
+Africa remains the golden regression fixture. #57 must generalise the onboarding machinery without changing Africa behaviour.
+
+### 5. Continent rollout
+
+Recommended order after #57:
+
+1. [#24 — South America](https://github.com/BenWassa/flag/issues/24) — second-continent proving ground for the generic pipeline.
+2. [#22 — North America](https://github.com/BenWassa/flag/issues/22) — one parent asset containing Northern America, Central America and Caribbean.
+3. [#27 — Oceania](https://github.com/BenWassa/flag/issues/27) — after #58; validates island-heavy/extreme-extent behaviour.
+4. [#25 — Europe](https://github.com/BenWassa/flag/issues/25) — dense microstate/transcontinental hardening.
+5. [#26 — Asia](https://github.com/BenWassa/flag/issues/26) — largest/policy-heavy expansion; consumes #28 and exposes Middle East + Caucasus.
+
+[#23 — Central America](https://github.com/BenWassa/flag/issues/23) is superseded by #22 as a standalone implementation ticket. Central America remains a first-class 8-country learner-facing region inside North America; it does not get a second topology/runtime subsystem.
+
+Once South America proves that a new continent is primarily configuration/policy/generated data rather than repeated core refactoring, later non-overlapping continent work may proceed in parallel where shared policy dependencies and branch conflicts are controlled.
+
+Unsupported curriculum may appear as honest shell/navigation states before implementation, but must never count towards mastery/completion.
 
 ## Working rules
 
 - Read the GitHub Issue fully before implementation.
 - Read `PRODUCT.md`, `DESIGN.md`, and the relevant durable product/architecture docs.
+- Read `docs/architecture/continent-expansion.md` for any continent expansion.
 - `DESIGN.md` is the locked production design system (Tactile Atlas); only achievement art direction (#34) remains genuinely open.
 - Preserve stable routing, country identity, storage and cartography contracts.
+- Use canonical Natural Earth topology only; no handwritten geometry or neighbour tables.
+- New runtime maps inherit #54's no-rivers policy.
 - Use dedicated branches and focused PRs.
-- Run `npm test`, inspect the exact production artifact and confirm CI before merge.
+- Run `npm test`, inspect the exact production artifact and confirm CI before implementation merges.
 - Do not claim physical-device/browser testing that was not performed.
