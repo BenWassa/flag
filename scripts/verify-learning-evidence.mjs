@@ -277,7 +277,11 @@ const strongUiState = {
     },
   },
 };
-const progressHtml = renderProgress(strongUiState, 'all');
+const progressHtml = renderProgress(
+  { flags: strongUiState, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
+  { version: 1, regionDomainMasteries: [], completeRegions: [], completeContinents: [], worldCrown: false },
+  'all',
+);
 assert.ok(!/\b\d+\/\d+ toward mastery\b/i.test(progressHtml));
 assert.ok(!/>Mastered</.test(progressHtml));
 assert.ok(progressHtml.includes('Strong evidence'));
