@@ -15,13 +15,12 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 ### 2. Learning / achievement architecture
 
-- [#29 — Refine country learning evidence and Learn/Play mechanics](https://github.com/BenWassa/flag/issues/29)
-- [#34 — Implement earned region mastery, continent crests, and world crown](https://github.com/BenWassa/flag/issues/34)
+- [#56 — Redesign Progress as Atlas mastery and achievement experience](issue-56-progress-mastery.md)
 - [#30 — Replace Flags Learn quiz with an interactive browse-and-reveal study surface](https://github.com/BenWassa/flag/issues/30)
 
-These issues are related but should remain separable: country evidence, earned achievements, region navigation and Flags study are distinct concerns.
+#29 (country learning evidence) and #34 (persistent earned achievements) are complete and now form the semantic foundation consumed by #56. Their separation remains important: live country evidence can change while earned region/domain Mastery remains persistent.
 
-#32, #35 and #40 are complete through PR #38. Their closeout records are [`issue-32-atlas-visual-system.md`](../closed/issue-32-atlas-visual-system.md), [`issue-35-region-detail.md`](../closed/issue-35-region-detail.md) and [`issue-40-phosphor-icon-system.md`](../closed/issue-40-phosphor-icon-system.md). Region mastery/gold visuals remain owned by #34.
+#32, #35 and #40 are complete through PR #38. Their closeout records are [`issue-32-atlas-visual-system.md`](../closed/issue-32-atlas-visual-system.md), [`issue-35-region-detail.md`](../closed/issue-35-region-detail.md) and [`issue-40-phosphor-icon-system.md`](../closed/issue-40-phosphor-icon-system.md). Issue #56 owns the final learner-facing Progress composition for the earned hierarchy without changing #34's persistence semantics.
 
 ### 3. Existing presentation bugs / cartography
 
@@ -31,7 +30,7 @@ These issues are related but should remain separable: country evidence, earned a
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
 - [#54 — Remove rivers from Atlas maps to clarify political borders](issue-54-remove-rivers.md)
 
-Focused usability bugs may ship independently where they remain reproducible. #54 narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency. #20's retained ocean/lake/land/border contrast remains relevant.
+Issue #19 is implemented through PR #51 and remains open for device QA. Focused usability bugs may ship independently where they remain reproducible. #54 narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency. #20's retained ocean/lake/land/border contrast remains relevant.
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
@@ -51,7 +50,7 @@ Africa remains the production baseline. Other continents can appear as shell/nav
 
 - Read the GitHub Issue fully before implementation.
 - Read `PRODUCT.md`, `DESIGN.md`, and the relevant durable product/architecture docs.
-- `DESIGN.md` is the locked production design system (Tactile Atlas); only achievement art direction (#34) remains genuinely open.
+- `DESIGN.md` and `.impeccable/design.json` define the locked Tactile Atlas production system; focused issues may resolve previously deferred achievement presentation without creating a second visual language.
 - Preserve stable routing, country identity, storage and cartography contracts.
 - Use dedicated branches and focused PRs.
 - Run `npm test`, inspect the exact production artifact and confirm CI before merge.
