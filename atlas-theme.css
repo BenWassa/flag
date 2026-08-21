@@ -230,20 +230,20 @@ body { letter-spacing: -.006em; }
    strongest neutral tactile treatment. Lower-level scope rows stay quieter. */
 .page--home .continent-list { gap: 14px; }
 
-.page--home .domain-tile {
+.page--home .continent-row {
   grid-template-columns: minmax(0, 1fr) 52px;
   border: 2px solid var(--text);
   border-radius: var(--radius-hero);
   box-shadow: var(--depth-arcade);
 }
 
-.page--home .domain-tile:hover {
+.page--home .continent-row:hover {
   border-color: var(--text);
   box-shadow: var(--depth-arcade);
 }
 
-.page--home .domain-tile:active,
-.page--home .domain-tile:has(button:active) {
+.page--home .continent-row:active,
+.page--home .continent-row:has(button:active) {
   transform: translate(2px, 2px);
   box-shadow: none;
 }
@@ -273,27 +273,27 @@ body { letter-spacing: -.006em; }
   height: 28px;
 }
 
-.page--home .domain-tile .continent-row__identity {
+.page--home .continent-row .continent-row__identity {
   align-self: start;
 }
 
-.page--home .domain-tile .continent-row__identity strong {
+.page--home .continent-row .continent-row__identity strong {
   font-size: 20px;
   font-weight: 820;
 }
 
-.page--home .domain-tile .continent-row__identity small {
+.page--home .continent-row .continent-row__identity small {
   font-size: 11px;
   font-weight: 650;
   text-transform: uppercase;
   letter-spacing: .055em;
 }
 
-.page--home .domain-tile .continent-row__progress {
+.page--home .continent-row .continent-row__progress {
   align-self: end;
 }
 
-.page--home .domain-tile .continent-row__play {
+.page--home .continent-row .continent-row__play {
   width: 52px;
   border-left: 2px solid var(--text);
 }
@@ -554,7 +554,7 @@ body { letter-spacing: -.006em; }
   .button--primary:active,
   .answer-button:not(:disabled):active,
   .page--tile-index .continent-row:active,
-  .page--home .domain-tile:has(button:active),
+  .page--home .continent-row:has(button:active),
   .icon-button:active,
   .text-icon-button:active,
   .region-row__play:active,
