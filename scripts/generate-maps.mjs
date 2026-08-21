@@ -38,14 +38,6 @@ const LAKES = [
   ['Lake Nasser', /\bnasser\b/i, false],
 ];
 
-const RIVERS = [
-  ['Nile', /\bnile\b/i, true],
-  ['Congo', /\bcongo\b/i, true],
-  ['Niger', /\bniger\b/i, true],
-  ['Zambezi', /\bzambezi\b/i, true],
-  ['Orange', /\borange\b/i, false],
-];
-
 function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -460,7 +452,6 @@ async function main() {
   const oceanPath = physicalPath(sourceResults.ocean.json);
   if (!oceanPath) throw new Error('Natural Earth ocean projected to an empty path.');
   const lakes = namedPhysicalPaths(sourceResults.lakes.json, sourceProjection, LAKES, 'lake');
-  const rivers = namedPhysicalPaths(sourceResults.rivers.json, sourceProjection, RIVERS, 'river');
 
   const provenance = {
     upstream: manifest.upstream,
@@ -511,7 +502,7 @@ async function main() {
     + `export const AFRICA_EXTRA_CONTEXT_PATHS: readonly string[] = ${serializeTs(contextPaths)};\n\n`
     + `export const AFRICA_SHARED_BOUNDARY_PATHS: readonly string[] = ${serializeTs(sharedBoundaryPath ? [sharedBoundaryPath] : [])};\n\n`
     + `export const AFRICA_COASTLINE_PATHS: readonly string[] = ${serializeTs(coastlinePath ? [coastlinePath] : [])};\n\n`
-    + `export const AFRICA_WATER: Readonly<MapWaterLayers> = ${serializeTs({ oceanPath, lakes, rivers })};\n\n`
+    + `export const AFRICA_WATER: Readonly<MapWaterLayers> = ${serializeTs({ oceanPath, lakes })};\n\n`
     + `export const AFRICA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = ${serializeTs(scopeFocus)};\n\n`
     + `export const AFRICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = ${serializeTs(adjacency)};\n`;
 
@@ -520,7 +511,7 @@ async function main() {
   await writeFile(PROVENANCE_PATH, stableJson(provenance));
 
   console.log(`Generated Africa production cartography: ${afterPoints}/${beforePoints} projected coordinates retained.`);
-  console.log(`Water: ${lakes.length} lakes/reservoirs, ${rivers.length} major rivers.`);
+  console.log(`Water: ${lakes.length} lakes/reservoirs; linear river context intentionally excluded.`);
   console.log(`Source commit: ${manifest.upstreamCommit}.`);
 }
 

@@ -33,9 +33,6 @@ function renderWater(asset: MapRegionAsset): string {
     <g class="launcher-map-water launcher-map-water--lakes">
       ${(asset.water?.lakes ?? []).map((item) => `<path d="${item.path}" />`).join('')}
     </g>
-    <g class="launcher-map-water launcher-map-water--rivers">
-      ${(asset.water?.rivers ?? []).map((item) => `<path d="${item.path}" />`).join('')}
-    </g>
   `;
 }
 

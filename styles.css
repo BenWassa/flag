@@ -338,14 +338,7 @@ button:focus-visible,
 .launcher-map-water,
 .launcher-map-boundaries,
 .launcher-map-context { pointer-events: none; }
-.launcher-map-context { fill: var(--map-context-land); }
-.launcher-map-water--rivers path {
-  fill: none;
-  stroke: var(--map-water-line);
-  stroke-width: .8;
-  vector-effect: non-scaling-stroke;
-}
-.launcher-map-region {
+.launcher-map-context { fill: var(--map-context-land); }.launcher-map-region {
   cursor: pointer;
   outline: none;
   -webkit-tap-highlight-color: transparent;
@@ -869,7 +862,6 @@ button:focus-visible,
   .launcher-map-water--ocean path,
   .launcher-map-water--lakes path { fill: Canvas; }
   .launcher-map-context { fill: Canvas; stroke: GrayText; }
-  .launcher-map-water--rivers path,
   .launcher-map-coastline,
   .launcher-map-boundary { stroke: CanvasText; }
   .launcher-map-country__shape,

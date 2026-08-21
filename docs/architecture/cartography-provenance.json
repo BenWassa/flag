@@ -37,13 +37,6 @@
       "role": "runtime-ocean",
       "sha256": "f9696a1337c746a0f6c8c13bc60d0f230d2ef8d105198d5657726c8f8e763fc2",
       "bytes": 10151895
-    },
-    "rivers": {
-      "path": "geojson/ne_10m_rivers_lake_centerlines.geojson",
-      "version": "5.0.0",
-      "role": "runtime-major-rivers",
-      "sha256": "bb854a900ecbd3b408df46d5e16e3e0f974ba55993f9d8b5c26e855273c0905a",
-      "bytes": 7307743
     }
   },
   "projection": {
@@ -77,8 +70,7 @@
     "canvasUnits": "835x723 projected canvas units",
     "physicalTolerance": {
       "ocean": 0.4,
-      "lakes": 0.15,
-      "rivers": 0.2
+      "lakes": 0.15
     }
   }
 }

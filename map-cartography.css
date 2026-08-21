@@ -57,15 +57,6 @@
   stroke: none;
 }
 
-.map-water--rivers path {
-  fill: none;
-  stroke: var(--map-water-line);
-  stroke-width: .62;
-  stroke-linecap: round;
-  stroke-linejoin: round;
-  vector-effect: non-scaling-stroke;
-}
-
 .map-context-country,
 .map-context-locator {
   stroke: none;
@@ -156,8 +147,7 @@
   .map-water--lakes path { fill: Canvas; }
 
   .map-coastline,
-  .map-shared-boundary,
-  .map-water--rivers path { stroke: CanvasText; }
+  .map-shared-boundary { stroke: CanvasText; }
 
   .map-viewport-control {
     border-color: ButtonText;
