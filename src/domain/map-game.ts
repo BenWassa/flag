@@ -10,6 +10,13 @@ import type {
   MapSession,
   MapSessionResult,
 } from './map-models.js';
+import {
+  activityForMode,
+  applyCountryEvidence,
+  createEvidenceSummary,
+  evidenceStrengthGoal,
+} from './evidence.js';
+import type { EvidenceActivity } from './models.js';
 
 export function createLocationRecord(countryId: string): LocationProgressRecord {
   return {
@@ -21,13 +28,14 @@ export function createLocationRecord(countryId: string): LocationProgressRecord 
     lifetimeIncorrectGuesses: 0,
     revealCount: 0,
     lapseCount: 0,
+    evidence: createEvidenceSummary(),
     confusionCounts: {},
   };
 }
 
 export function createInitialLocationProgress(countryIds: readonly string[]): LocationProgressState {
   return {
-    version: 1,
+    version: 2,
     records: Object.fromEntries(countryIds.map((countryId) => [countryId, createLocationRecord(countryId)])),
   };
 }
@@ -36,8 +44,9 @@ export function getLocationRecord(state: LocationProgressState, countryId: strin
   return state.records[countryId] ?? createLocationRecord(countryId);
 }
 
+/** Compatibility alias for the internal scheduler threshold. */
 export function locationMasteryGoal(record: LocationProgressRecord): number {
-  return record.lapseCount > 0 ? 2 : 3;
+  return evidenceStrengthGoal(record);
 }
 
 export function getLocationScopeStats(
@@ -117,24 +126,39 @@ export function currentMapTarget(session: MapSession): string | null {
 }
 
 function cloneProgressRecord(record: LocationProgressRecord): LocationProgressRecord {
-  return { ...record, confusionCounts: { ...record.confusionCounts } };
+  return {
+    ...record,
+    evidence: { ...record.evidence },
+    confusionCounts: { ...record.confusionCounts },
+  };
+}
+
+function replaceEvidenceRecord(
+  target: LocationProgressRecord,
+  next: LocationProgressRecord,
+): void {
+  Object.assign(target, next);
+  target.evidence = next.evidence;
+  target.confusionCounts = next.confusionCounts;
 }
 
 function recordWrongGuess(
   record: LocationProgressRecord,
   selectedCountryId: string,
   timestamp: string,
+  activity: EvidenceActivity,
 ): void {
   record.firstSeenAt ??= timestamp;
   record.lastSeenAt = timestamp;
   record.lastMissedAt = timestamp;
   record.lifetimeIncorrectGuesses += 1;
-  record.masteryStreak = 0;
-  record.lastMasteryCreditSessionId = undefined;
   record.confusionCounts[selectedCountryId] = (record.confusionCounts[selectedCountryId] ?? 0) + 1;
-
-  if (record.status === 'mastered') record.lapseCount += 1;
-  record.status = 'learning';
+  const applied = applyCountryEvidence(record, {
+    activity,
+    outcome: 'contradictory',
+    at: timestamp,
+  });
+  replaceEvidenceRecord(record, applied.record);
 }
 
 function recordResolution(
@@ -142,7 +166,8 @@ function recordResolution(
   sessionId: string,
   resolution: MapResolution,
   timestamp: string,
-): void {
+  activity: EvidenceActivity,
+): number {
   record.firstSeenAt ??= timestamp;
   record.lastSeenAt = timestamp;
   record.lifetimeResolved += 1;
@@ -150,22 +175,39 @@ function recordResolution(
   if (resolution === 'first-try') {
     record.lifetimeFirstTryCorrect += 1;
     record.lastCorrectAt = timestamp;
-    if (record.status === 'mastered') return;
-
-    record.status = 'learning';
-    if (record.lastMasteryCreditSessionId !== sessionId) {
-      record.masteryStreak += 1;
-      record.lastMasteryCreditSessionId = sessionId;
-      if (record.masteryStreak >= locationMasteryGoal(record)) {
-        record.status = 'mastered';
-        record.masteredAt = timestamp;
-      }
-    }
-    return;
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'clean-retrieval',
+      at: timestamp,
+      sessionId,
+    });
+    replaceEvidenceRecord(record, applied.record);
+    return applied.credit;
   }
 
-  if (resolution === 'revealed') record.revealCount += 1;
-  if (record.status === 'unseen') record.status = 'learning';
+  if (resolution === 'one-miss' || resolution === 'two-miss') {
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'assisted-retrieval',
+      at: timestamp,
+      sessionId,
+    });
+    replaceEvidenceRecord(record, applied.record);
+    return 0;
+  }
+
+  if (resolution === 'revealed') {
+    record.revealCount += 1;
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'passive-exposure',
+      at: timestamp,
+      sessionId,
+    });
+    replaceEvidenceRecord(record, applied.record);
+  }
+  // Play incorrect has already recorded its contradictory wrong selection.
+  return 0;
 }
 
 export interface ApplyMapGuessResult {
@@ -191,32 +233,34 @@ export function applyMapGuess(
   const correct = selectedCountryId === targetCountryId;
   const target = { ...current };
   const record = cloneProgressRecord(getLocationRecord(progress, targetCountryId));
+  const activity = activityForMode(session.mode);
 
   let resolution: MapResolution | undefined;
   let revealed = false;
+  let evidenceCredit = 0;
 
   if (correct) {
     resolution = target.misses === 0 ? 'first-try' : target.misses === 1 ? 'one-miss' : 'two-miss';
     target.resolved = true;
     target.resolution = resolution;
     target.selectedCountryId = selectedCountryId;
-    recordResolution(record, session.id, resolution, timestamp);
+    evidenceCredit = recordResolution(record, session.id, resolution, timestamp, activity);
   } else {
     target.misses += 1;
     target.selectedCountryId = selectedCountryId;
-    recordWrongGuess(record, selectedCountryId, timestamp);
+    recordWrongGuess(record, selectedCountryId, timestamp, activity);
 
     if (session.mode === 'test') {
       target.resolved = true;
       target.resolution = 'incorrect';
       resolution = 'incorrect';
-      recordResolution(record, session.id, resolution, timestamp);
+      recordResolution(record, session.id, resolution, timestamp, activity);
     } else if (target.misses >= 3) {
       target.resolved = true;
       target.resolution = 'revealed';
       resolution = 'revealed';
       revealed = true;
-      recordResolution(record, session.id, resolution, timestamp);
+      recordResolution(record, session.id, resolution, timestamp, activity);
     }
   }
 
@@ -230,6 +274,11 @@ export function applyMapGuess(
     revealed,
     responseTimeMs: Math.max(0, Math.round(responseTimeMs)),
     answeredAt: timestamp,
+    evidenceActivity: activity,
+    evidenceOutcome: correct
+      ? target.misses === 0 ? 'clean-retrieval' : 'assisted-retrieval'
+      : 'contradictory',
+    evidenceCredit,
   };
 
   const nextSession: MapSession = {
@@ -239,6 +288,7 @@ export function applyMapGuess(
   };
   const nextProgress: LocationProgressState = {
     ...progress,
+    version: 2,
     records: { ...progress.records, [targetCountryId]: record },
   };
 

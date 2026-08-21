@@ -25,19 +25,21 @@ Map-specific country membership may remain in map curriculum configuration, but 
 
 ### Domain
 
-`models.ts` owns shared product primitives including learning domains, activities, and geographic study scopes.
+`models.ts` owns shared product primitives including learning domains, activities, geographic study scopes and the persisted shared country-evidence summary.
 
-`progress.ts` owns flag-knowledge transitions, retention state, and scope statistics.
+`evidence.ts` is the narrow cross-domain evidence seam. It normalises passive exposure, assisted retrieval, clean retrieval and contradictory evidence; applies Learn/Play/Review weighting behind one reducer; and exposes `qualifiesForRegionMastery(record)` as the contract consumed by the earned-achievement layer. Issue #34 must use this selector rather than inspect raw scheduler/storage fields.
+
+`progress.ts` owns Flags/Outlines recognition transitions, retention state and scope statistics around the shared evidence reducer.
 
 `quiz.ts` owns target selection, distractor choice, seeded randomization, and correct-position balancing.
 
-Map learning keeps its own session/progress model because flag recognition and country-location knowledge are separate competencies.
+Locations and Neighbours keep their own session/progress models because location retrieval and complete-neighbour-set knowledge are distinct competencies. Their engines map resolved native outcomes into `evidence.ts` without flattening native miss, reveal, set-completion or confusion history.
 
 These modules have no DOM dependencies and can be moved into a React Native/Expo or backend environment later.
 
 ### Infrastructure
 
-`storage.ts` is the flag-progress persistence adapter. Map progress has its own storage adapter/key. A Firebase implementation should satisfy the same conceptual responsibilities rather than leaking Firestore APIs into domain/UI code.
+`storage.ts`, `outline-storage.ts`, `map-storage.ts` and `neighbor-storage.ts` persist the four independent learning ledgers. `evidence-storage.ts` provides the shared evidence-summary sanitiser/migration helper while each domain adapter remains responsible for translating its native legacy counters honestly.
 
 `flags.ts` is the flag asset-provider seam. MVP uses FlagCDN. A later local asset bundle or Firebase Storage provider can replace it centrally.
 
@@ -53,7 +55,7 @@ Active-round hard refresh intentionally returns to the round's stable scope rath
 
 ### State
 
-`AppStore` coordinates flag and location sessions, applies domain transitions, persists attempts, and exposes state to views. It no longer acts as the authoritative navigation model; the current typed URL route determines which stable screen or live session view should render.
+`AppStore` coordinates the four domain sessions, applies domain transitions, persists attempts, and exposes state to views. It passes stable internal `test` activity to the evidence layer as learner-facing Play without hard-coding scoring weights in UI/application code.
 
 Completed session objects remain in memory so browser Back/Forward can revisit a still-live round/result during the current process. They are not persisted as route state.
 
@@ -61,7 +63,7 @@ Completed session objects remain in memory so browser Back/Forward can revisit a
 
 Views are pure-ish HTML render functions. They consume current state and emit semantic `data-action` attributes; `app.ts` performs interaction routing. This avoids coupling learning rules or raw URL strings to screen templates.
 
-Home is a compact learning-domain index. Flags and Locations are peer domains; Outlines and Neighbors have reserved homes for Issues #2/#3. Each available domain then reuses the same domain → continent → region → Learn/Test/Review hierarchy where the mechanic supports it.
+Country-level scheduler values remain internal. Routine UI uses Unseen, Learning, Strong evidence and Due for review rather than individual-country Mastered achievements or scheduler `x/y` punch cards.
 
 ## Why no runtime framework yet
 
@@ -69,14 +71,18 @@ The application remains small enough that a framework would add installation and
 
 ## Persistence
 
-Flag LocalStorage keys are versioned, including:
+The four learning ledgers now use payload schema `version: 2` while retaining stable existing LocalStorage namespaces, including:
 
 - `flag-atlas:progress:v1`
-- `flag-atlas:attempts:v1`
+- `flag-atlas:outline-progress:v1`
+- `flag-atlas:location-progress:v1`
+- `flag-atlas:neighbor-progress:v1`
 
-Location learning uses separate persisted state/attempt history. A schema migration layer should be added before introducing a v2 persisted shape.
+The key suffix remains a compatibility namespace; the payload contains the authoritative schema version.
 
-Attempt history is bounded to prevent unbounded local-storage growth.
+Each loader accepts legacy payload `version: 1` and current payload `version: 2`, sanitises every record, deterministically reconstructs the shared evidence summary from known native history, and returns a v2 in-memory ledger. Existing strong records, lapses, confusion counts and domain-native counters are preserved. Historical clean retrievals whose Learn/Play mode cannot be known are retained as `legacyScoredRetrievals` rather than guessed.
+
+Attempt-history namespaces remain separate and bounded to prevent unbounded local-storage growth.
 
 ## Firebase path
 
@@ -100,9 +106,11 @@ For production-grade offline flag learning, vendor the 195 flag SVGs into the re
 
 ## Quality gates
 
-`scripts/verify.mjs` asserts the core flag curriculum and quiz invariants.
+`scripts/verify.mjs` asserts the core flag curriculum, quiz invariants, degraded states and shared UI hardening.
 
-Map verification scripts assert the location-game, Africa coverage, feedback, and map interaction contracts.
+`scripts/verify-learning-evidence.mjs` asserts passive/assisted/clean/Play/Review evidence semantics, lapse recovery, domain-specific mappings, v1 → v2 migration, ledger independence, the #34 qualification selector and country-level UI language.
+
+Map/outline/neighbour verification scripts assert their native learning engines, Africa coverage, feedback and interaction contracts.
 
 `scripts/verify-routing.mjs` asserts:
 
@@ -112,23 +120,23 @@ Map verification scripts assert the location-game, Africa coverage, feedback, an
 - invalid-route rejection;
 - active activity → stable scope refresh fallback contract;
 - absence of the legacy in-memory `viewStack`/history index;
-- Home learning-domain IA;
-- shared Back semantics across flags and locations;
+- current Home/scope IA;
+- shared Back semantics across domains;
 - PWA hash start route, cache version, and offline navigation fallback.
 
-CI runs build + every verification script before producing the GitHub Pages artifact.
+`npm test` runs `npm run check`, the production build and every verification script. CI executes it under Node 22 before uploading the exact `dist/` production artifact.
 
 ## Future test strategy
 
 As logic expands, add focused unit suites around:
 
-- state transition tables;
-- mastered lapse/recovery;
-- retention scheduling;
+- evidence transition tables;
+- lapse/recovery and review retention;
 - candidate weighting;
 - confusion-aware distractors;
 - deterministic seeded sessions;
 - persistence migrations;
+- region × domain qualification/achievement integration;
 - browser route transitions and focus restoration.
 
-A browser E2E suite should cover Home → Domain → Region → Learn → Results, Test-mode no-feedback behavior, cold deep links, refresh fallback, Back/Forward, and PWA/offline navigation.
+A browser E2E suite should cover Home → scope → domain Learn/Play → Results, Play-mode feedback behaviour, cold deep links, refresh fallback, Back/Forward, and PWA/offline navigation.

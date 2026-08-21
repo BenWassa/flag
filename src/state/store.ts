@@ -4,6 +4,7 @@ import {
   AFRICA_LAND_ADJACENCY,
   getAfricaNeighborScopeConfig,
 } from '../data/neighbors/index.js';
+import { activityForMode } from '../domain/evidence.js';
 import {
   advanceMapSession,
   applyMapGuess,
@@ -273,6 +274,7 @@ export class AppStore {
       countryId: question.countryId,
       selectedCountryId,
       responseTimeMs,
+      activity: activityForMode(this.session.mode),
     });
 
     this.progress = result.state;
@@ -412,6 +414,7 @@ export class AppStore {
       countryId: question.countryId,
       selectedCountryId,
       responseTimeMs,
+      activity: activityForMode(this.outlineSession.mode),
     });
 
     this.outlineProgress = result.state;

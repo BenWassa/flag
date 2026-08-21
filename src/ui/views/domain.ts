@@ -38,9 +38,9 @@ function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
             <h1 id="world-heading">World</h1>
             <p>Learn by continent or region. Keep what you know.</p>
           </div>
-          <div class="mastery-total" aria-label="${world.mastered} of ${world.total} flags mastered">
+          <div class="mastery-total" aria-label="${world.mastered} of ${world.total} flags have strong evidence">
             <strong>${world.mastered}</strong><span>/ ${world.total}</span>
-            <small>mastered</small>
+            <small>strong</small>
           </div>
         </div>
         ${progressStrip(world)}
@@ -80,7 +80,7 @@ function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
                     <small>${stats.total} flags · ${regions} regions</small>
                   </span>
                   <span class="continent-row__progress">${progressStrip(stats)}</span>
-                  <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
+                  <span class="continent-row__score" aria-label="${stats.mastered} of ${stats.total} strong"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
                   ${icon('chevron')}
                 </button>
                 <button
