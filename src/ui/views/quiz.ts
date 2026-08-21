@@ -1,9 +1,9 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
-import { getRecord, masteryGoal } from '../../domain/progress.js';
+import { getRecord } from '../../domain/progress.js';
 import type { ProgressState, QuizSession } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
-import { escapeHtml } from '../format.js';
+import { escapeHtml, statusLabel } from '../format.js';
 
 export function renderQuiz(
   session: QuizSession,
@@ -54,6 +54,7 @@ export function renderQuiz(
         ${options.map((country, index) => {
           const selected = answeredCountryId === country.id;
           const correct = country.id === target.id;
+          const continueFromCorrect = isLearnFeedback && selected && correct;
           let stateClass = '';
           if (isLearnFeedback) {
             if (correct) stateClass = 'answer-button--correct';
@@ -62,18 +63,22 @@ export function renderQuiz(
             stateClass = 'answer-button--selected';
           }
 
-          // Focus lands on the first choice rather than the heading, so the
-          // answers are one Tab apart and the scope is not re-announced on
-          // every question.
+          // A clean Learn answer becomes the continue control in place. This
+          // keeps thumb/focus in the task surface while feedback remains visible.
+          const action = continueFromCorrect ? 'next-question' : 'answer';
+          const disabled = isAnswered && !continueFromCorrect;
+          const label = continueFromCorrect
+            ? `${index + 1}. ${country.name}. Correct. Continue to the next question.`
+            : `${index + 1}. ${country.name}`;
           return `
-            <button class="answer-button ${stateClass}" data-action="answer" data-id="${country.id}" aria-label="${index + 1}. ${escapeHtml(country.name)}" ${isAnswered ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
-              <span class="answer-key" aria-hidden="true">${index + 1}</span>
-              <strong>${escapeHtml(country.name)}</strong>
+            <button class="answer-button ${stateClass}" data-action="${action}" ${continueFromCorrect ? 'data-autofocus' : ''} data-id="${country.id}" aria-label="${escapeHtml(label)}" ${disabled ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
+              <span class="answer-key" aria-hidden="true">${continueFromCorrect ? '→' : index + 1}</span>
+              <strong>${escapeHtml(country.name)}${continueFromCorrect ? ' · Next' : ''}</strong>
             </button>
           `;
         }).join('')}
 
-        ${isAnswered ? feedback(session, target.name, currentRecord.status, currentRecord.masteryStreak, masteryGoal(currentRecord), answeredCountryId === target.id) : ''}
+        ${isAnswered ? feedback(session, target.name, statusLabel(currentRecord), answeredCountryId === target.id) : ''}
         ${isAnswered ? '' : keyboardHint()}
       </section>
     </main>
@@ -107,23 +112,20 @@ function unavailable(): string {
 function feedback(
   session: QuizSession,
   countryName: string,
-  status: string,
-  streak: number,
-  goal: number,
+  evidenceLabel: string,
   correct: boolean,
 ): string {
   if (session.mode === 'test') {
     return '<div class="test-advance">Answer recorded</div>';
   }
 
-  const statusLabel = status === 'mastered' ? 'Mastered' : `Learning · ${streak} of ${goal} rounds`;
   return `
     <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}">
       <div class="feedback-copy">
         <strong>${correct ? 'Correct' : `Correct: ${escapeHtml(countryName)}`}</strong>
-        <span>${statusLabel}</span>
+        <span>${escapeHtml(evidenceLabel)}</span>
       </div>
-      <button class="button button--primary" data-action="next-question" data-autofocus>${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>
+      ${correct ? '' : `<button class="button button--primary" data-action="next-question" data-autofocus>${session.currentIndex === session.questions.length - 1 ? 'Results' : 'Next'}</button>`}
     </div>
   `;
 }
