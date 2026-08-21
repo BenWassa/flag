@@ -157,7 +157,7 @@ export function renderProgress(
 
       ${studiedCount === 0 ? `
         <div class="progress-first-use" role="status">
-          <strong>No learning evidence yet</strong>
+          <strong>Not practised yet</strong>
           <span>Start with any supported Africa domain. This screen will show what to practise next as evidence builds.</span>
         </div>
       ` : ''}
