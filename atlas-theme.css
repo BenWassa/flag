@@ -434,6 +434,35 @@ body { letter-spacing: -.006em; }
 .quiz-shell { width: min(100%, 860px); }
 .quiz-header { min-height: 54px; }
 
+/* The pannable map canvas is a real interactive surface, so it earns the same
+   standing-tile treatment as launcher-map and region-row rather than the flat
+   chrome used for feedback strips. */
+.map-stage {
+  border-radius: var(--radius-tile);
+  box-shadow: var(--depth-tile);
+}
+
+/* Neighbours' pre-hydration placeholder had no card framing at all, unlike
+   every other domain's map/stage container. Its hydrated state already
+   shares the .map-stage class above and inherits the same treatment. */
+.neighbor-map-loading,
+.neighbor-map-unavailable {
+  border-radius: var(--radius-tile);
+  box-shadow: var(--depth-tile);
+}
+
+.neighbor-progress {
+  height: 8px;
+  border-radius: 999px;
+}
+
+/* A floating overlay needs elevation to read as separate from the content
+   behind it — unlike the flat rows used for static lists elsewhere. */
+.neighbor-suggestions {
+  border-radius: var(--radius-md);
+  box-shadow: var(--depth-tile);
+}
+
 .quiz-progress {
   height: 5px;
   border-radius: 999px;
