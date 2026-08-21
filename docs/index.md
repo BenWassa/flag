@@ -9,6 +9,7 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`product/colour-system.md`](product/colour-system.md) — quantitative flag-derived colour decision and semantic palette.
 - [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
 - [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
+- [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema, qualification seam, support guards and reset semantics.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
 
 ## Sections

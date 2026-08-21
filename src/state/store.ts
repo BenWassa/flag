@@ -4,6 +4,12 @@ import {
   AFRICA_LAND_ADJACENCY,
   getAfricaNeighborScopeConfig,
 } from '../data/neighbors/index.js';
+import {
+  awardEligibleAchievements,
+  createInitialAchievementState,
+  type EarnedAchievementState,
+  type NewlyEarnedAchievement,
+} from '../domain/achievements.js';
 import { activityForMode } from '../domain/evidence.js';
 import {
   advanceMapSession,
@@ -48,6 +54,12 @@ import type {
 } from '../domain/models.js';
 import { buildQuiz } from '../domain/quiz.js';
 import {
+  achievementStorageIsWritable,
+  loadAchievementState,
+  resetAchievementStorage,
+  saveAchievementState,
+} from '../infrastructure/achievement-storage.js';
+import {
   appendMapAttempt,
   loadLocationProgress,
   mapStorageIsWritable,
@@ -66,6 +78,7 @@ import {
   saveOutlineProgress,
 } from '../infrastructure/outline-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
+import { createCountryEvidenceQualification } from './achievement-evidence-adapter.js';
 
 export type ViewState =
   | { name: 'home' }
@@ -100,6 +113,7 @@ export class AppStore {
   locationProgress: LocationProgressState;
   outlineProgress: ProgressState;
   neighborProgress: NeighborProgressState;
+  achievements: EarnedAchievementState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
   sessionResult: SessionResult | null = null;
@@ -124,6 +138,7 @@ export class AppStore {
   mapPersisting = true;
   outlinePersisting = true;
   neighborPersisting = true;
+  achievementPersisting = true;
 
   constructor() {
     const persisted = loadProgress();
@@ -172,18 +187,46 @@ export class AppStore {
       this.neighborProgress = { ...neighborInitial, records };
     }
 
+    this.achievements = loadAchievementState();
     this.persisting = storageIsWritable();
     this.mapPersisting = mapStorageIsWritable();
     this.outlinePersisting = outlineStorageIsWritable();
     this.neighborPersisting = neighborStorageIsWritable();
+    this.achievementPersisting = achievementStorageIsWritable();
+    this.refreshAchievements();
   }
 
   navigate(view: ViewState): void {
     this.view = view;
   }
 
+  /** Re-evaluate only unearned milestones against the current evidence contract. */
+  refreshAchievements(): NewlyEarnedAchievement[] {
+    const result = awardEligibleAchievements(
+      this.achievements,
+      createCountryEvidenceQualification({
+        flags: this.progress,
+        locations: this.locationProgress,
+        outlines: this.outlineProgress,
+        neighbors: this.neighborProgress,
+      }),
+    );
+    this.achievements = result.state;
+    if (result.newlyEarned.length > 0 && !saveAchievementState(this.achievements)) {
+      this.achievementPersisting = false;
+    }
+    return result.newlyEarned;
+  }
+
+  /** The current UI's Reset all progress action intentionally erases earned state too. */
+  resetAchievements(): void {
+    this.achievements = createInitialAchievementState();
+    resetAchievementStorage();
+  }
+
   resetProgress(): void {
     this.progress = createInitialProgress(COUNTRIES);
+    this.resetAchievements();
     this.abandonSession();
   }
 
@@ -285,6 +328,7 @@ export class AppStore {
     this.currentAttempt = result.attempt;
 
     result.attempt.statusBefore = before.status;
+    this.refreshAchievements();
     return result.attempt;
   }
 
@@ -346,6 +390,7 @@ export class AppStore {
 
     if (!saveLocationProgress(this.locationProgress)) this.mapPersisting = false;
     appendMapAttempt(result.attempt);
+    this.refreshAchievements();
     return result.outcome;
   }
 
@@ -423,6 +468,7 @@ export class AppStore {
     this.outlineSession.attempts.push(result.attempt);
     this.outlineAnsweredCountryId = selectedCountryId;
     this.outlineCurrentAttempt = result.attempt;
+    this.refreshAchievements();
     return result.attempt;
   }
 
@@ -486,6 +532,7 @@ export class AppStore {
     this.questionStartedAt = performance.now();
     if (!saveNeighborProgress(this.neighborProgress)) this.neighborPersisting = false;
     appendNeighborAttempt(result.attempt);
+    this.refreshAchievements();
     return result.outcome;
   }
 
