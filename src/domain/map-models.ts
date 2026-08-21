@@ -44,8 +44,6 @@ export interface MapWaterLayers {
   oceanPath?: string;
   /** Restrained recognition context. Never interactive. */
   lakes?: MapNamedPath[];
-  /** Major orientation rivers only. Never interactive. */
-  rivers?: MapNamedPath[];
 }
 
 export interface MapCountryGeometry {

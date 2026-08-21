@@ -17,9 +17,6 @@ function renderWater(asset: MapRegionAsset): string {
     <g class="map-water map-water--lakes" aria-hidden="true">
       ${(asset.water?.lakes ?? []).map((item) => `<path data-water-name="${escapeHtml(item.name)}" d="${escapeHtml(item.path)}" />`).join('')}
     </g>
-    <g class="map-water map-water--rivers" aria-hidden="true">
-      ${(asset.water?.rivers ?? []).map((item) => `<path data-water-name="${escapeHtml(item.name)}" d="${escapeHtml(item.path)}" />`).join('')}
-    </g>
   `;
 }
 

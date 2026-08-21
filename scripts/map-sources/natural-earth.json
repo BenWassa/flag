@@ -27,12 +27,6 @@
       "role": "runtime-major-lakes-reservoirs",
       "sha256": "2d036f53dedec578001c5c30c2959ee7d4eebc1306900fa4367c49929ec8f2d9"
     },
-    "rivers": {
-      "path": "geojson/ne_10m_rivers_lake_centerlines.geojson",
-      "version": "5.0.0",
-      "role": "runtime-major-rivers",
-      "sha256": "bb854a900ecbd3b408df46d5e16e3e0f974ba55993f9d8b5c26e855273c0905a"
-    },
     "minorIslands": {
       "path": "geojson/ne_10m_minor_islands.geojson",
       "version": "4.1.0",

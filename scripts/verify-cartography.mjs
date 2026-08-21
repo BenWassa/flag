@@ -30,11 +30,8 @@ const lakeNames = new Set(AFRICA_WATER.lakes?.map((item) => item.name));
 for (const name of ['Lake Victoria', 'Lake Tanganyika', 'Lake Malawi', 'Lake Chad']) {
   assert.ok(lakeNames.has(name), `${name} is retained as geographic recognition context.`);
 }
-const riverNames = new Set(AFRICA_WATER.rivers?.map((item) => item.name));
-for (const name of ['Nile', 'Congo', 'Niger', 'Zambezi']) {
-  assert.ok(riverNames.has(name), `${name} is retained as restrained river context.`);
-}
 assert.ok((AFRICA_WATER.oceanPath?.length ?? 0) > 1000, 'Ocean is source-derived instead of only a canvas color.');
+assert.equal('rivers' in AFRICA_WATER, false, 'Generated runtime water contract contains no river path data.');
 
 const provenance = AFRICA_CARTOGRAPHY_PROVENANCE;
 assert.equal(provenance.upstream, 'nvkelso/natural-earth-vector');
@@ -43,7 +40,7 @@ assert.equal(provenance.sources.countries.version, '5.1.1');
 assert.equal(provenance.sources.boundaries.version, '5.1.0');
 assert.equal(provenance.sources.ocean.version, '5.1.1');
 assert.equal(provenance.sources.lakes.version, '5.0.0');
-assert.equal(provenance.sources.rivers.version, '5.0.0');
+assert.equal('rivers' in provenance.sources, false, 'River source is not part of active production provenance.');
 assert.equal(provenance.sources.minorIslands.version, '4.1.0');
 for (const source of Object.values(provenance.sources)) {
   assert.match(source.sha256, /^[0-9a-f]{64}$/, `${source.path} has a pinned content hash.`);
@@ -63,7 +60,7 @@ assert.ok(
 assert.equal(provenance.runtimeOptimization.pathDigits, 1);
 assert.equal(provenance.runtimeOptimization.physicalTolerance.ocean, 0.4);
 assert.equal(provenance.runtimeOptimization.physicalTolerance.lakes, 0.15);
-assert.equal(provenance.runtimeOptimization.physicalTolerance.rivers, 0.2);
+assert.equal('rivers' in provenance.runtimeOptimization.physicalTolerance, false, 'Runtime optimisation has no river tolerance.');
 assert.equal(provenance.boundaryPolicy.scoredCountries, 54);
 assert.match(provenance.boundaryPolicy.somaliland, /canonical SOM/);
 assert.match(provenance.boundaryPolicy.westernSahara, /non-scoring context/);
@@ -106,7 +103,7 @@ const session = buildMapSession(westAsset, 'learn', 'cartography-render', ['GHA'
 const html = renderMapSvg(westAsset, session);
 assert.ok(html.includes('map-water--ocean'), 'Renderer includes source-derived ocean layer.');
 assert.ok(html.includes('map-water--lakes'), 'Renderer includes lake layer.');
-assert.ok(html.includes('map-water--rivers'), 'Renderer includes restrained river layer.');
+assert.ok(!html.includes('map-water--rivers'), 'Renderer emits no river layer.');
 assert.ok(html.includes('map-shared-boundary'), 'Renderer includes the single-stroke shared-border layer.');
 assert.ok(html.includes('data-map-command="fit-continent"'), 'Viewport exposes deterministic full-Africa reset.');
 assert.ok(html.includes('data-map-command="fit-region"'), 'Regional view exposes deterministic region fit.');
@@ -128,6 +125,7 @@ assert.ok(cartographyCss.includes('touch-action: none'), 'Map surface opts into 
 assert.ok(cartographyCss.includes('overflow: hidden'), 'Production viewport is not an oversized scroll canvas.');
 assert.ok(cartographyCss.includes('.map-shared-boundary'), 'Shared borders have a dedicated visual layer.');
 assert.ok(cartographyCss.includes('pointer-events: none'), 'Water/boundary context cannot intercept country taps.');
+assert.ok(!cartographyCss.includes('map-water--rivers'), 'Cartography CSS contains no river layer styling.');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(cartographyCss), 'Production cartography CSS uses shared design tokens.');
 
 const indexSource = await readFile('src/data/maps/index.ts', 'utf8');
@@ -147,5 +145,5 @@ assert.ok(africaGzipBytes < 300_000, `Lazy Africa runtime asset stays below 300 
 
 console.log(
   `Production cartography verification passed: ${provenance.topology.coordinateCountAfter}/${provenance.topology.coordinateCountBefore} coordinates, `
-  + `${AFRICA_WATER.lakes?.length ?? 0} lakes, ${AFRICA_WATER.rivers?.length ?? 0} rivers, ${africaModule.size} raw / ${africaGzipBytes} gzip bytes.`,
+  + `${AFRICA_WATER.lakes?.length ?? 0} lakes, no rivers, ${africaModule.size} raw / ${africaGzipBytes} gzip bytes.`,
 );

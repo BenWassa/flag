@@ -8,7 +8,6 @@ const PATH_DIGITS = 1;
 const PHYSICAL_TOLERANCE = Object.freeze({
   ocean: 0.4,
   lakes: 0.15,
-  rivers: 0.2,
 });
 
 function extractLiteral(source, name) {
@@ -158,7 +157,6 @@ for (let index = 0; index < coastlinePaths.length; index += 1) coastlinePaths[in
 
 if (water.oceanPath) water.oceanPath = simplifySvgPath(water.oceanPath, PHYSICAL_TOLERANCE.ocean);
 for (const lake of water.lakes ?? []) lake.path = simplifySvgPath(lake.path, PHYSICAL_TOLERANCE.lakes);
-for (const river of water.rivers ?? []) river.path = simplifySvgPath(river.path, PHYSICAL_TOLERANCE.rivers);
 
 provenance.runtimeOptimization = {
   pathDigits: PATH_DIGITS,
@@ -179,4 +177,4 @@ await writeFile(PROVENANCE_PATH, `${JSON.stringify(provenance, null, 2)}\n`);
 
 const afterBytes = Buffer.byteLength(source);
 console.log(`Optimized Africa runtime asset from ${beforeBytes} to ${afterBytes} bytes (${Math.round((afterBytes / beforeBytes) * 100)}%).`);
-console.log(`Physical path tolerances: ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}, rivers ${PHYSICAL_TOLERANCE.rivers}; final path precision ${PATH_DIGITS} decimal.`);
+console.log(`Physical path tolerances: ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}; final path precision ${PATH_DIGITS} decimal.`);

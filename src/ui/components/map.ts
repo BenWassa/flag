@@ -85,9 +85,6 @@ function renderInlandWater(asset: MapRegionAsset): string {
     <g class="map-water map-water--lakes" aria-hidden="true">
       ${(water?.lakes ?? []).map((item) => `<path data-water-name="${item.name}" d="${item.path}" />`).join('')}
     </g>
-    <g class="map-water map-water--rivers" aria-hidden="true">
-      ${(water?.rivers ?? []).map((item) => `<path data-water-name="${item.name}" d="${item.path}" />`).join('')}
-    </g>
   `;
 }
 

@@ -15,7 +15,7 @@ Runtime SVG coordinates are generated output. Do not hand-edit country paths.
 
 The production flow is:
 
-`pinned source geodata → canonical ISO3 normalization → topology-aware political processing → projection → topology-preserving simplification → derived fills/borders/coastline/adjacency → physical-water projection → scale-aware runtime optimization → continent-local asset`
+`pinned source geodata → canonical ISO3 normalization → topology-aware political processing → projection → topology-preserving simplification → derived fills/borders/coastline/adjacency → retained ocean/lake projection → scale-aware runtime optimization → continent-local asset`
 
 The historical 1:50m recommendation in the archived [Issue #1 plan](../closed/issue-1-map-plan.md) is superseded by this Issue #9 production decision.
 
@@ -33,7 +33,6 @@ Pinned official upstream commit:
 | Admin-0 Boundary Lines — land | provenance / disputed-boundary cross-check | 5.1.0 |
 | Ocean | runtime ocean geometry | 5.1.1 |
 | Lakes + Reservoirs | runtime major inland-water context | 5.0.0 |
-| Rivers + lake centerlines | restrained major-river context | 5.0.0 |
 | Minor Islands | evaluated supplemental source; not ownership authority | 4.1.0 |
 
 Official Natural Earth download families:
@@ -49,7 +48,7 @@ Natural Earth fits this PWA because it provides:
 - global 1:10m country coverage from a consistent cartographic source;
 - public-domain redistribution;
 - ISO/Admin-0 identifiers suitable for deterministic normalization;
-- companion physical-water themes;
+- companion physical-water themes, from which Atlas retains ocean and major lakes;
 - documented de-facto/de-jure and point-of-view behavior;
 - source files suitable for a reproducible offline application build.
 
@@ -106,13 +105,12 @@ The first production source build was too heavy for the PWA contract: the lazy A
 A deterministic second stage now:
 
 - rounds final political/context/shared-border/coastline path coordinates to **0.1 projected canvas unit** without independently re-simplifying neighboring country topology;
-- applies projection-space Ramer-Douglas-Peucker only to **non-interactive physical context**:
+- applies projection-space Ramer-Douglas-Peucker only to **non-interactive retained physical context**:
   - ocean: `0.4` canvas unit;
   - lakes: `0.15`;
-  - rivers: `0.2`;
 - emits final runtime path precision of **1 decimal digit**.
 
-The committed generated TypeScript source is **918,944 bytes**. Standard CI run #84 built `dist/data/maps/africa.js` at **920,449 bytes raw / 243,286 bytes gzip**, within the `<1 MB raw` / `<300 KB gzip` production budget.
+The Issue #54 generated TypeScript source is **919,901 bytes** after runtime optimisation. Its verified production build emits `dist/data/maps/africa.js` at **921,370 bytes raw / 243,737 bytes gzip**, within the `<1 MB raw` / `<300 KB gzip` production budget.
 
 ### Why the pinned boundary-line theme is not the rendered shared-border mesh
 
@@ -124,7 +122,7 @@ The renderer therefore paints:
 
 1. source-derived ocean/background;
 2. country/context fills;
-3. selected inland water and restrained rivers;
+3. selected inland lakes/reservoirs;
 4. one topology-derived shared political-border mesh;
 5. one topology-derived exterior coastline mesh.
 
@@ -138,7 +136,7 @@ The Africa generated module emits:
 - non-scoring context geometry;
 - shared political-border mesh;
 - coastline mesh;
-- source-derived ocean/lake/river paths;
+- source-derived ocean/lake paths;
 - regional first-view focus boxes;
 - land-border adjacency graph;
 - island locator metadata;
@@ -154,6 +152,8 @@ The same normalized topology is intentionally reusable for:
 
 Physical context exists for geographic recognition, not decoration.
 
+Atlas deliberately excludes linear rivers from runtime maps because they can be confused with political borders. Ocean and major lakes/reservoirs remain because their filled water areas provide orientation without creating competing border-like linework.
+
 Required lakes/reservoirs in regression coverage:
 
 - Lake Victoria
@@ -163,16 +163,9 @@ Required lakes/reservoirs in regression coverage:
 
 The generated Africa asset currently retains nine selected lakes/reservoirs when present/useful at this scale, including additional features such as Turkana, Albert, Kivu, Tana, and Nasser.
 
-Required major-river context:
+Linear river features are intentionally excluded from runtime cartography. At Atlas phone scale, river centre-lines can read like political borders and therefore compete with the boundary-recognition task. This is a product-level clarity decision rather than a data-source limitation.
 
-- Nile
-- Congo
-- Niger
-- Zambezi
-
-The generated asset currently retains five major rivers including the Orange River. Minor drainage is deliberately excluded.
-
-Ocean, lakes, and rivers use the **same projection/canvas** as political geography. They are `aria-hidden` cartographic context and `pointer-events: none`.
+Ocean and retained lakes use the **same projection/canvas** as political geography. They are `aria-hidden` cartographic context and `pointer-events: none`.
 
 ## Small-country interaction contract
 
@@ -241,7 +234,7 @@ Automated Issue #9 verification covers:
 - source commit/theme versions and SHA-256 provenance;
 - topology simplification and representative symmetric adjacency;
 - separate shared-border/coastline meshes;
-- required water features;
+- required ocean/lake context and explicit river exclusion;
 - Western Sahara/Bir Tawil context and canonical Somalia handling;
 - GMB/TGO-only mainland-callout policy;
 - five locator-only island targets;
@@ -252,6 +245,6 @@ Automated Issue #9 verification covers:
 - generation-entrypoint source-flag forwarding;
 - Africa runtime budget `< 1 MB raw` and `< 300 KB gzip`.
 
-Artifact visual QA additionally checks portrait and short-landscape full-continent/regional renders for extent, seam quality, water restraint, islands/callouts, and unobstructed geography.
+Artifact visual QA additionally checks portrait and short-landscape full-continent/regional renders for extent, seam quality, retained water restraint, border clarity, islands/callouts, and unobstructed geography.
 
 Before merge recommendation the branch must still be compared/integrated with the then-current `main`, the complete standard CI path rerun, and the exact final CI artifact inspected. Static/browser-emulated or raster artifact review is **not** claimed as physical iPhone/Android device testing.

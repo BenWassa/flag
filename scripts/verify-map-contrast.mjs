@@ -10,7 +10,6 @@ const neighbours = await readFile('src/styles/neighbors.css', 'utf8');
 const tokens = [
   '--map-ocean',
   '--map-inland-water',
-  '--map-water-line',
   '--map-context-land',
   '--map-context-border',
   '--map-active-land',
@@ -23,8 +22,8 @@ for (const token of tokens) {
 }
 
 for (const [surface, css, required] of [
-  ['launcher', launcher, ['--map-ocean', '--map-inland-water', '--map-water-line', '--map-context-land', '--map-active-land', '--map-active-border']],
-  ['Locations', `${locations}\n${cartography}`, tokens.slice(0, 7)],
+  ['launcher', launcher, ['--map-ocean', '--map-inland-water', '--map-context-land', '--map-active-land', '--map-active-border']],
+  ['Locations', `${locations}\n${cartography}`, tokens.slice(0, 6)],
   ['Neighbours', neighbours, ['--map-ocean', '--map-context-land', '--map-active-land', '--map-active-border', '--map-label-halo']],
 ]) {
   for (const token of required) assert.ok(css.includes(`var(${token})`), `${surface} consumes ${token}.`);
@@ -44,6 +43,11 @@ for (const [surface, css] of [['launcher', launcher], ['Locations', `${locations
 
 for (const css of [launcher, locations, cartography, neighbours]) {
   assert.ok(!/--map-[\w-]+:\s*#/i.test(css), 'Consumer sheets do not fork the central map palette.');
+}
+
+for (const css of [theme, launcher, locations, cartography, neighbours]) {
+  assert.ok(!css.includes('--map-water-line'), 'Obsolete river colour token is absent.');
+  assert.ok(!css.includes('map-water--rivers') && !css.includes('launcher-map-water--rivers'), 'No map surface retains river styling.');
 }
 
 console.log('Map contrast verification passed: one neutral token family serves launcher, Locations and Neighbours with semantic and forced-colours precedence.');
