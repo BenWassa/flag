@@ -48,7 +48,7 @@ function parseJson(raw: string | null): unknown {
 
 function uniqueStrings(value: unknown, predicate: (item: string) => boolean): string[] {
   if (!Array.isArray(value)) return [];
-  return [...new Set(value.filter((item): item is string => typeof item === 'string' && predicate(item)))].sort();
+  return [...new Set(value.filter((item): item is string => typeof item === 'string' && predicate(item)))];
 }
 
 /**
