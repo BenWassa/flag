@@ -15,6 +15,7 @@ The documentation is organised by purpose rather than by file format or feature 
 
 - [`architecture/`](architecture/) — durable technical decisions, system boundaries, routing, and data provenance.
 - [`product/`](product/) — current product requirements, behaviour, learning rules and content policies.
+- [`research/`](research/) — supporting investigations and evidentiary material that inform product decisions without replacing current product truth.
 - [`open/`](open/) — active issue plans and unresolved implementation work.
 - [`closed/`](closed/) — completed issue worklogs, release records, superseded plans, and historical reviews.
 
@@ -31,8 +32,9 @@ Africa remains the only complete production proving ground for Locations, Outlin
 ## Filing rules
 
 - Use lowercase kebab-case filenames.
-- Keep this structure shallow; add a new top-level category only when the existing four do not fit.
+- Keep this structure shallow; add a new top-level category only when the existing categories do not fit.
 - Move an issue document from `open/` to `closed/` when the issue is completed or superseded.
-- Put lasting decisions in `architecture/` or `product/`; do not make worklogs the only source of truth.
+- Put lasting decisions in `architecture/` or `product/`; do not make worklogs or research reports the only source of truth.
+- Put supporting studies, experiments and evidence in `research/`, and link the accepted interpretation back to product or design truth.
 - Keep `open/index.md` aligned with the active backlog when product sequencing changes.
 - Update this index and inbound links when moving a document.

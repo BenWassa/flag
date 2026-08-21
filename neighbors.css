@@ -241,7 +241,7 @@
   .neighbor-quiz-page { width: 100%; padding-top: var(--space-2); padding-bottom: var(--space-2); }
   .neighbor-quiz-header { margin-bottom: var(--space-2); }
   .neighbor-task {
-    grid-template-columns: minmax(0, 1.45fr) minmax(280px, .8fr);
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, .8fr);
     grid-template-areas:
       "map status"
       "map progress"
@@ -259,6 +259,8 @@
   .neighbor-resolution { grid-area: entry; position: relative; bottom: auto; }
   .neighbor-feedback { grid-area: feedback; }
   .neighbor-suggestions { max-height: min(34dvh, 180px); }
+  .neighbor-input-row { grid-template-columns: minmax(0, 1fr) 92px; }
+  .neighbor-input-row .button { min-height: 50px; padding-inline: var(--space-2); }
 }
 
 @media (prefers-reduced-motion: reduce) {
