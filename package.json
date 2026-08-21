@@ -8,6 +8,7 @@
     "node": ">=22"
   },
   "scripts": {
+    "dev": "node scripts/dev.mjs",
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
     "maps:generate": "node scripts/generate-map-assets.mjs",

@@ -31,6 +31,12 @@ Requires Node 22+.
 
 ```bash
 npm install
+npm run dev
+```
+
+The development server builds the app, serves it at `http://localhost:5173`, and rebuilds when source or static asset files change. To run the full verification suite:
+
+```bash
 npm test
 ```
 
