@@ -11,7 +11,10 @@ export type IconName =
   | 'location'
   | 'adjacency'
   | 'zoom-in'
-  | 'zoom-out';
+  | 'zoom-out'
+  | 'star'
+  | 'check'
+  | 'globe';
 
 const PATHS: Record<IconName, string> = {
   back: '<path d="M15 18l-6-6 6-6"/>',
@@ -25,6 +28,9 @@ const PATHS: Record<IconName, string> = {
   adjacency: '<circle cx="6" cy="12" r="2.3"/><circle cx="18" cy="7" r="2.3"/><circle cx="18" cy="17" r="2.3"/><path d="M8.2 11.1l7.5-3.1M8.2 12.9l7.5 3.1"/>',
   'zoom-in': '<circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.5 14.5L19 19M10.5 7.8v5.4M7.8 10.5h5.4"/>',
   'zoom-out': '<circle cx="10.5" cy="10.5" r="5.5"/><path d="M14.5 14.5L19 19M7.8 10.5h5.4"/>',
+  star: '<path d="M12 4.4l2.3 4.9 5.2.7-3.8 3.7 1 5.3-4.7-2.6-4.7 2.6 1-5.3-3.8-3.7 5.2-.7z" fill="currentColor" stroke="none"/>',
+  check: '<path d="M5.5 12.5l4.2 4.2 8.8-9.4"/>',
+  globe: '<circle cx="12" cy="12" r="8"/><path d="M4 12h16M12 4c2.4 2.3 3.6 5 3.6 8s-1.2 5.7-3.6 8c-2.4-2.3-3.6-5-3.6-8s1.2-5.7 3.6-8z"/>',
 };
 
 export function icon(name: IconName, className = ''): string {

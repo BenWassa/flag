@@ -19,6 +19,7 @@ import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastruct
 import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
+  atlasRouteForScope,
   isLearningDomain,
   normalizeAvailableRoute,
   parentRoute,
@@ -26,6 +27,7 @@ import {
   routeForScopeId,
   routeTitle,
   routesEqual,
+  scopeForId,
   scopeForQuickPlay,
   serializeRoutePath,
   stableRoute,
@@ -36,6 +38,7 @@ import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderDomainHome } from './ui/views/domain.js';
+import { renderContinent, renderRegion } from './ui/views/atlas.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
@@ -186,6 +189,11 @@ function applyRoute(requestedRoute: AppRoute): void {
     case 'progress':
       store.navigate({ name: 'progress' });
       break;
+    case 'atlas':
+      store.navigate(route.scope.kind === 'region'
+        ? { name: 'atlas-region', scope: route.scope }
+        : { name: 'atlas-continent', scope: route.scope });
+      break;
     case 'learning':
       if (route.activity !== undefined) {
         if (route.domain === 'flags' && store.session) {
@@ -295,11 +303,14 @@ function render(previousSelector: string | null = null): void {
     case 'home':
       root.innerHTML = renderHome(
         store.progress,
-        store.locationProgress,
-        store.outlineProgress,
-        store.neighborProgress,
         store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting,
       );
+      break;
+    case 'atlas-continent':
+      root.innerHTML = renderContinent(store.progress, store.view.scope, store.persisting);
+      break;
+    case 'atlas-region':
+      root.innerHTML = renderRegion(store.progress, store.view.scope, store.persisting);
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(
@@ -677,6 +688,14 @@ function openDomain(id: string | undefined): void {
   navigateStable({ name: 'learning', domain: id });
 }
 
+function openAtlas(id: string | undefined): void {
+  if (!id) return;
+  const scope = scopeForId(id);
+  if (!scope) return;
+  const route = atlasRouteForScope(scope);
+  if (route) navigateStable(route);
+}
+
 function openScope(domainValue: string | undefined, id: string | undefined): void {
   if (!isLearningDomain(domainValue) || !id) return;
   const route = routeForScopeId(domainValue, id);
@@ -743,6 +762,10 @@ root.addEventListener('click', (event) => {
   }
   if (action === 'quick-play') {
     quickPlay(element.dataset.domain, id);
+    return;
+  }
+  if (action === 'open-atlas') {
+    openAtlas(id);
     return;
   }
   if (action === 'open-domain') {

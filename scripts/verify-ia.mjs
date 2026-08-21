@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
-import { CONTINENTS } from '../dist/data/continents.js';
+import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
 import {
   AFRICA_MAP_COUNTRY_IDS,
   AFRICA_MAP_REGION_CONFIGS,
@@ -15,6 +15,7 @@ import { icon } from '../dist/ui/components/icons.js';
 import { renderLauncherMap } from '../dist/ui/components/launcher-map.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
+import { renderContinent, renderRegion } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -113,25 +114,20 @@ const westAfricaScope = { kind: 'region', id: 'west-africa', label: 'West Africa
 const africaRegionIds = AFRICA_MAP_REGION_CONFIGS.map((config) => config.scope.id).filter(Boolean).sort();
 const playIcon = icon('play');
 
-// Home keeps four lanes, but each row is split into an open control and a
-// direct Play control. The accessible name carries both scope and domain.
-const home = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
-const homeWithoutPersistence = renderHome(
-  flagProgress,
-  locationProgress,
-  outlineProgress,
-  neighborProgress,
-  false,
-);
+// Home is scope-first: one tactile card per continent, no domain choice and no
+// round start until a scope has actually been selected.
+const home = renderHome(flagProgress);
+const homeWithoutPersistence = renderHome(flagProgress, false);
 assertCommonSurface('Home', home);
 assertPreRoundContentRemoved('Home', home);
 assertNoLegacyInteractiveRow('Home', home, 'continent-row');
-assert.equal(occurrences(home, '<div class="continent-row">'), 4, 'Home renders four split domain rows.');
-const homeOpenButtons = actionTags(home, 'button', 'open-domain');
-const homePlayButtons = actionTags(home, 'button', 'quick-play');
-assert.equal(homeOpenButtons.length, 4, 'Home has four domain-open controls.');
-assert.equal(homePlayButtons.length, 4, 'Home has four direct Play controls.');
-assert.equal(occurrences(home, playIcon), 4, 'Every Home Play control uses the shared SVG icon.');
+const homeContinentCards = actionTags(home, 'button', 'open-atlas');
+assert.equal(homeContinentCards.length, CONTINENTS.length, 'Home renders one card per continent.');
+assert.deepEqual(
+  sortedIds(homeContinentCards),
+  CONTINENTS.map((continent) => continent.id).sort(),
+  'Home addresses every continent by its canonical id.',
+);
 assert.equal(home.includes('Choose a skill'), false, 'Deleted Home instruction stays deleted.');
 assert.equal(home.includes('Learning domains'), false, 'Deleted Home list heading stays deleted.');
 assert.equal(home.includes('4 available'), false, 'Deleted Home availability summary stays deleted.');
@@ -139,27 +135,60 @@ assert.equal(home.includes('storage-notice'), false, 'Home keeps the storage not
 assert.ok(
   homeWithoutPersistence.includes('storage-notice')
     && visibleText(homeWithoutPersistence).includes("today's progress will be lost"),
-  'Home fifth-argument persistence failure renders the honest storage notice.',
+  'Home persistence failure renders the honest storage notice.',
 );
+// World Flags has no continent restriction, so it stays a single direct Play
+// action rather than routing through a continent/region scope.
+const worldFlagsEntry = actionTags(home, 'button', 'quick-play');
+assert.equal(worldFlagsEntry.length, 1, 'Home keeps exactly one direct route into the world Flags curriculum.');
+assertButtonContract(worldFlagsEntry[0], { 'data-domain': 'flags', 'data-id': 'flags' });
+assert.equal(home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
 
-const homeContracts = [
-  ['flags', 'Play World flags'],
-  ['locations', 'Play Africa locations'],
-  ['outlines', 'Play Africa outlines'],
-  ['neighbors', 'Play Africa neighbours'],
-];
-for (const [domain, label] of homeContracts) {
-  const open = homeOpenButtons.filter((tag) => attribute(tag, 'data-id') === domain);
-  const play = homePlayButtons.filter((tag) => attribute(tag, 'data-domain') === domain);
-  assert.equal(open.length, 1, `Home opens ${domain} exactly once.`);
-  assert.equal(play.length, 1, `Home directly plays ${domain} exactly once.`);
-  assertButtonContract(play[0], {
-    'data-action': 'quick-play',
-    'data-domain': domain,
-    'data-id': domain,
-    'aria-label': label,
-  });
+// Continent surface: the regions of one continent, each showing which of the
+// four domains actually has data behind it.
+const continentSurface = renderContinent(flagProgress, africaScope);
+assertCommonSurface('Continent surface', continentSurface);
+assertPreRoundContentRemoved('Continent surface', continentSurface);
+const continentRegionCards = actionTags(continentSurface, 'button', 'open-atlas');
+assert.deepEqual(
+  sortedIds(continentRegionCards),
+  REGIONS.filter((region) => region.continentId === 'africa').map((region) => region.id).sort(),
+  'The Africa surface lists exactly its five production regions.',
+);
+assert.equal(
+  occurrences(continentSurface, 'domain-dot--absent'),
+  0,
+  'Every Africa region supports all four domains, so no indicator reads as absent.',
+);
+assert.ok(
+  occurrences(renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' }), 'domain-dot--absent') > 0,
+  'A continent without generated geometry marks its unsupported domains.',
+);
+assert.equal(actionTags(continentSurface, 'button', 'route-parent').length, 1, 'The continent surface has one Back control.');
+
+// Region surface: the four-domain play grid that replaces the old domain-first
+// entry point. Unsupported domains are inert, never launchers.
+const regionSurface = renderRegion(flagProgress, westAfricaScope);
+assertCommonSurface('Region surface', regionSurface);
+assertPreRoundContentRemoved('Region surface', regionSurface);
+const regionDomainTiles = actionTags(regionSurface, 'button', 'open-scope');
+assert.equal(regionDomainTiles.length, 4, 'A fully supported region offers all four domains.');
+for (const tag of regionDomainTiles) {
+  assert.equal(attribute(tag, 'data-id'), 'west-africa', 'Every domain tile targets the region scope it was opened from.');
 }
+assert.deepEqual(
+  regionDomainTiles.map((tag) => attribute(tag, 'data-domain')).sort(),
+  ['flags', 'locations', 'neighbors', 'outlines'],
+  'The region grid addresses domains by their stable identifiers.',
+);
+assert.ok(visibleText(regionSurface).includes('Neighbours'), 'The region grid uses the British-English domain label.');
+const shellRegion = renderRegion(flagProgress, { kind: 'region', id: 'western-europe', label: 'Western Europe' });
+assert.equal(
+  actionTags(shellRegion, 'button', 'open-scope').length,
+  1,
+  'A shell region only launches the domain that genuinely has data.',
+);
+assert.ok(shellRegion.includes('domain-play--absent'), 'Unsupported domains render as inert shells.');
 
 // Flags retains its genuine six-way continent decision, with the same split
 // row and scope-specific direct Play contract.

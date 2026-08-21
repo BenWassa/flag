@@ -661,3 +661,242 @@ body { letter-spacing: -.006em; }
     transform: none;
   }
 }
+
+/* ==========================================================================
+   Scope-first Atlas surfaces (Home / continent / region)
+
+   These three screens carry the arcade tier of the depth system: a 2px ink
+   border plus a hard 2px offset shadow that collapses diagonally under the
+   press. Ordinary chrome elsewhere keeps the soft --depth-tile treatment.
+   ========================================================================== */
+
+.page--atlas { width: min(100%, 560px); }
+
+.topbar--atlas { margin-bottom: 20px; }
+.topbar--atlas.topbar--detail { justify-content: space-between; }
+.topbar__balance { width: 44px; flex: 0 0 auto; }
+
+.page--atlas .brand-name {
+  font-size: clamp(26px, 8vw, 32px);
+  font-weight: 900;
+  letter-spacing: -.035em;
+}
+
+.atlas-title {
+  font-size: clamp(21px, 6vw, 26px);
+  font-weight: 900;
+  letter-spacing: -.035em;
+  text-align: center;
+}
+
+.atlas-title-block { display: flex; flex-direction: column; align-items: center; gap: 2px; }
+.atlas-title-block small {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--text-muted);
+}
+
+.atlas-eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--text-muted);
+  margin: 0 0 12px 4px;
+}
+
+.atlas-card-list { display: flex; flex-direction: column; gap: 14px; }
+
+.atlas-card,
+.atlas-utility,
+.domain-play {
+  border: 2px solid var(--text);
+  box-shadow: var(--depth-arcade);
+  background: var(--surface);
+  color: var(--text);
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
+}
+
+.atlas-card:active,
+.atlas-utility:active,
+.domain-play:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--text);
+}
+
+/* --- Continent / region cards ------------------------------------------- */
+
+.atlas-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 28px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.atlas-card__mark {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--text);
+  border-radius: 20px;
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.atlas-card--shell .atlas-card__mark {
+  background: var(--canvas);
+  color: var(--line-strong);
+}
+
+.atlas-card__mark .ui-icon { width: 32px; height: 32px; }
+
+.atlas-card__identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.atlas-card__identity strong {
+  font-size: clamp(20px, 5.6vw, 24px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+.atlas-card__identity small,
+.atlas-card__head small {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--text-muted);
+}
+
+.atlas-card__shell-note {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.atlas-card--region { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; }
+
+.atlas-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.atlas-card__head strong {
+  font-size: clamp(19px, 5.4vw, 23px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+/* --- Domain indicator dots ----------------------------------------------- */
+
+.domain-dots { display: flex; align-items: center; gap: 8px; }
+
+.domain-dot {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--text);
+  border-radius: 50%;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.domain-dot--absent { border-color: var(--line); color: var(--line-strong); background: var(--canvas); }
+.domain-dot .ui-icon { width: 16px; height: 16px; }
+
+/* --- Region detail: domain play grid ------------------------------------- */
+
+.domain-play-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.domain-play {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  aspect-ratio: 1 / 1;
+  padding: 12px;
+  border-radius: 28px;
+  background: var(--action);
+  color: var(--on-action);
+  cursor: pointer;
+}
+
+.domain-play__icon .ui-icon { width: 40px; height: 40px; stroke-width: 1.9; }
+
+.domain-play__label {
+  font-size: 13px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.domain-play--absent {
+  background: var(--canvas);
+  color: var(--text-muted);
+  border-color: var(--line);
+  box-shadow: none;
+  cursor: default;
+}
+
+.domain-play__note {
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+/* --- Utility action ------------------------------------------------------ */
+
+.atlas-utility {
+  display: block;
+  width: 100%;
+  margin-top: 20px;
+  padding: 17px 20px;
+  border-radius: 26px;
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: -.01em;
+  cursor: pointer;
+}
+
+.page--region .atlas-utility { margin-top: 0; }
+
+/* --- Short landscape ------------------------------------------------------ */
+
+@media (max-height: 600px) and (min-width: 700px) {
+  .page--atlas { width: min(100%, 720px); }
+  .atlas-card-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .atlas-card { padding: 10px; border-radius: 24px; }
+  .atlas-card__mark { width: 48px; height: 48px; border-radius: 16px; }
+  .atlas-card__mark .ui-icon { width: 26px; height: 26px; }
+  .domain-play-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .domain-play { aspect-ratio: auto; padding: 16px 10px; border-radius: 22px; }
+  .domain-play__icon .ui-icon { width: 30px; height: 30px; }
+  .topbar--atlas { margin-bottom: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-card:active,
+  .atlas-utility:active,
+  .domain-play:active {
+    transform: none;
+  }
+}

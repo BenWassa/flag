@@ -23,7 +23,7 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 - [#29 — Refine country learning evidence and Learn/Play mechanics](https://github.com/BenWassa/flag/issues/29)
 - [#34 — Implement earned region mastery, continent crests, and world crown](https://github.com/BenWassa/flag/issues/34)
-- [#35 — Add region detail screen with cross-domain competency progress](https://github.com/BenWassa/flag/issues/35)
+- [#35 — Add region detail screen with cross-domain competency progress](https://github.com/BenWassa/flag/issues/35) — implemented: Home → continent → region → four-domain play grid (`src/ui/views/atlas.ts`, `/atlas/*` routes). Mastery badges/gold accents on that screen remain neutral placeholders pending #34.
 - [#30 — Replace Flags Learn quiz with an interactive browse-and-reveal study surface](https://github.com/BenWassa/flag/issues/30)
 
 These issues are related but should remain separable: country evidence, earned achievements, region navigation and Flags study are distinct concerns.

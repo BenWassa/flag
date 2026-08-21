@@ -24,7 +24,7 @@
     "depth": {
       "primary": "0 4px 0 pressed-blue, collapsing to 0 1px 0 + translateY(3px) on press",
       "tile": "soft two-layer standing shadow (--depth-tile) on interactive tiles",
-      "arcade": "Home-only exception: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press"
+      "arcade": "Atlas scope-selection exception (Home continent list, continent region list, region domain-play grid): 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press. Domain launchers reached after a domain is chosen keep the soft tile depth."
     },
     "breakpoints": {
       "compact": "639px",
@@ -39,6 +39,7 @@
     "Complete continents earn silhouette crests; world completion alone earns the Crown",
     "Country records are live learning evidence, not prestige objects",
     "Mobile-first interaction and no horizontal scrolling for primary selection",
-    "Radius, depth, typography, navigation composition and motion are locked as Tactile Atlas; only achievement art direction (#34) and region-detail composition (#35) remain open"
+    "Radius, depth, typography, navigation composition and region-detail composition are locked as Tactile Atlas; only achievement art direction (#34) remains open",
+    "Navigation is scope-first: Home lists continents, a continent lists regions, a region opens the four-domain play grid (#35 implemented); domain launchers below that point are unchanged"
   ]
 }

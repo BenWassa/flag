@@ -94,6 +94,7 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // launcher actions, focus landing points, and the single mastery-goal source.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
+const { renderContinent, renderRegion } = await import('../dist/ui/views/atlas.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
 const { renderProgress } = await import('../dist/ui/views/progress.js');
 const { renderQuiz } = await import('../dist/ui/views/quiz.js');
@@ -101,10 +102,14 @@ const { renderResults } = await import('../dist/ui/views/results.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
 
 const fresh = createInitialProgress(COUNTRIES);
+const africaScopeFixture = { kind: 'continent', id: 'africa', label: 'Africa' };
+const westAfricaScopeFixture = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 const screens = {
   home: renderHome(fresh),
-  scope: renderScope(fresh, { kind: 'continent', id: 'africa', label: 'Africa' }),
-  region: renderScope(fresh, { kind: 'region', id: 'west-africa', label: 'West Africa' }),
+  atlasContinent: renderContinent(fresh, africaScopeFixture),
+  atlasRegion: renderRegion(fresh, westAfricaScopeFixture),
+  scope: renderScope(fresh, africaScopeFixture),
+  region: renderScope(fresh, westAfricaScopeFixture),
   progress: renderProgress(fresh, 'all'),
 };
 
@@ -118,8 +123,40 @@ for (const [name, html] of Object.entries(screens)) {
   assert.ok(!html.includes('NaN'), `${name} must not render NaN values.`);
 }
 
-assert.equal((screens.home.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
-assert.equal((screens.home.match(/data-action="quick-play"/g) ?? []).length, 4, 'Every learning domain has a direct Play control.');
+// Home is scope-first: it selects a continent rather than a learning domain.
+// The four domains are reached from a region, one level deeper.
+assert.equal(
+  (screens.home.match(/data-action="open-atlas"/g) ?? []).length,
+  CONTINENTS.length,
+  'Home exposes every continent.',
+);
+// Continents drive scope selection; the one exception is world Flags, which
+// has no continent restriction and stays a single direct Play action.
+assert.equal(
+  (screens.home.match(/data-action="quick-play"/g) ?? []).length,
+  1,
+  'Home offers exactly one direct Play action: world flags.',
+);
+assert.ok(
+  screens.home.includes('data-action="quick-play"') && screens.home.includes('data-domain="flags"') && screens.home.includes('data-id="flags"'),
+  'Home keeps a direct route into the world-wide Flags curriculum.',
+);
+assert.equal(screens.home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
+assert.equal(
+  (screens.atlasContinent.match(/data-action="open-atlas"/g) ?? []).length,
+  REGIONS.filter((region) => region.continentId === 'africa').length,
+  'The continent surface lists each of its regions.',
+);
+assert.equal(
+  (screens.atlasRegion.match(/data-action="open-scope"/g) ?? []).length,
+  4,
+  'A fully supported region offers all four learning domains.',
+);
+assert.ok(
+  renderRegion(fresh, { kind: 'region', id: 'western-europe', label: 'Western Europe' })
+    .includes('domain-play--absent'),
+  'A region without generated geometry shows honest unsupported domains.',
+);
 assert.ok(screens.scope.includes('Play Africa') && screens.scope.includes('Learn Africa'), 'The continent launcher exposes its two round choices.');
 assert.ok(!screens.scope.includes('All Africa'), 'The continent launcher does not offer a redundant all-continent selector.');
 assert.ok(screens.region.includes('Play West Africa') && screens.region.includes('Learn West Africa'), 'Selecting a region retargets both round choices.');

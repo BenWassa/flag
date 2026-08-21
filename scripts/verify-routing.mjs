@@ -125,20 +125,47 @@ for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
   }
 }
 
-assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/flags', 'A selected Flags region is state inside the continent launcher, so Back returns to the Flags list.');
-assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/flags');
+// Scope-first Back chain: a domain launcher was entered from its atlas scope,
+// so Back returns there rather than jumping to Home.
+assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/atlas/africa/west-africa');
+assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/atlas/africa');
 assert.equal(serializeRoutePath(parentRoute(flags)), '/');
 assert.equal(serializeRoutePath(parentRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(stableRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(outlinesLearn)), '/outlines/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(neighborsTest)), '/neighbors/africa/west-africa');
-for (const launcherRoute of [locationsAfrica, locationsWest, outlinesAfrica, outlinesWest, neighborsAfrica, neighborsWest]) {
+for (const [launcherRoute, expectedParent] of [
+  [locationsAfrica, '/atlas/africa'],
+  [locationsWest, '/atlas/africa/west-africa'],
+  [outlinesAfrica, '/atlas/africa'],
+  [outlinesWest, '/atlas/africa/west-africa'],
+  [neighborsAfrica, '/atlas/africa'],
+  [neighborsWest, '/atlas/africa/west-africa'],
+]) {
   assert.equal(
     serializeRoutePath(parentRoute(launcherRoute)),
-    '/',
-    `${serializeRoutePath(launcherRoute)} launcher Back must return Home, not an Africa-only domain screen.`,
+    expectedParent,
+    `${serializeRoutePath(launcherRoute)} launcher Back must return to the scope it was opened from.`,
   );
 }
+
+// The atlas surfaces themselves round-trip and nest World > continent > region.
+const atlasAfrica = parseRoutePath('/atlas/africa');
+const atlasWest = parseRoutePath('/atlas/africa/west-africa');
+assert.equal(serializeRoutePath(atlasAfrica), '/atlas/africa', 'Continent surface round-trips.');
+assert.equal(serializeRoutePath(atlasWest), '/atlas/africa/west-africa', 'Region surface round-trips.');
+assert.equal(serializeRoutePath(parentRoute(atlasWest)), '/atlas/africa', 'Region Back returns to its continent.');
+assert.equal(serializeRoutePath(parentRoute(atlasAfrica)), '/', 'Continent Back returns to the world.');
+assert.equal(routeTitle(atlasAfrica), 'Africa · Flag Atlas');
+assert.equal(routeTitle(atlasWest), 'West Africa · Flag Atlas');
+assert.equal(parseRoutePath('/atlas'), null, 'The atlas prefix alone is not a screen.');
+assert.equal(parseRoutePath('/atlas/nowhere'), null, 'Unknown continent must be rejected.');
+assert.equal(parseRoutePath('/atlas/africa/east-asia'), null, 'A region must belong to its atlas continent.');
+assert.equal(
+  serializeRoutePath(parseRoutePath('/atlas/europe/western-europe')),
+  '/atlas/europe/western-europe',
+  'Continents without full domain data are still navigable as shells.',
+);
 
 assert.equal(routeTitle(flagsWest), 'West Africa flags · Flag Atlas');
 assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Flag Atlas');
@@ -219,13 +246,21 @@ assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpr
 assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
-for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-  assert.ok(home.includes(`renderDomainRow('${domain}'`), `Home must render the ${domain} split row.`);
-}
-assert.ok(home.includes('data-action="quick-play"'), 'Every Home domain row shares the direct Play control contract.');
+assert.ok(home.includes('data-action="open-atlas"'), 'Home selects a continent through the scope-first atlas action.');
+assert.equal(
+  (home.match(/data-action="quick-play"/g) ?? []).length,
+  1,
+  'Home starts no round before a scope is chosen, except the direct world-flags entry.',
+);
 assert.equal(home.includes('Learning domains'), false, 'Home no longer needs a heading that restates its four-row index.');
 assert.equal(home.includes('4 available'), false, 'Home no longer carries the deleted availability summary.');
 assert.equal(home.includes('Choose a skill'), false, 'Home no longer explains the choice that the rows already make clear.');
+
+const atlasViews = await readFile('dist/ui/views/atlas.js', 'utf8');
+assert.ok(atlasViews.includes('data-action="open-atlas"'), 'The continent surface drills into a region.');
+assert.ok(atlasViews.includes('data-action="open-scope"'), 'The region surface opens a domain launcher.');
+assert.ok(atlasViews.includes('data-action="route-parent"'), 'Both atlas surfaces expose the shared Back contract.');
+assert.ok(atlasViews.includes('domain-play--absent'), 'Unsupported domains render as inert shells, not launchers.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
 const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');

@@ -1,115 +1,69 @@
-import { AFRICA_MAP_COUNTRY_IDS } from '../../data/map-scopes.js';
+import { CONTINENTS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
-import {
-  AFRICA_LAND_ADJACENCY,
-  AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
-  getAfricaNeighborScopeConfig,
-} from '../../data/neighbors/index.js';
-import { domainDisplayName } from '../../domain/display.js';
-import { createInitialLocationProgress, getLocationScopeStats } from '../../domain/map-game.js';
-import type { LocationProgressState } from '../../domain/map-models.js';
-import { createInitialNeighborProgress, getNeighborScopeStats } from '../../domain/neighbor-game.js';
-import type { NeighborProgressState } from '../../domain/neighbor-models.js';
-import type { LearningDomain, ProgressState, ScopeStats, StudyScope } from '../../domain/models.js';
-import { createInitialProgress, getScopeStats } from '../../domain/progress.js';
-import { brandMark, domainIcon, icon } from '../components/icons.js';
-import { progressStrip } from '../components/progress.js';
+import type { ProgressState, StudyScope } from '../../domain/models.js';
+import { getScopeStats } from '../../domain/progress.js';
+import { supportedDomainsForScope } from '../../domain/scope-support.js';
+import { brandMark, icon } from '../components/icons.js';
+import { escapeHtml } from '../format.js';
 
-const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
-const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
+function continentCard(continent: { id: string; name: string }, progress: ProgressState): string {
+  const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+  const stats = getScopeStats(COUNTRIES, progress, scope);
+  const domains = supportedDomainsForScope(scope).length;
+  const shell = domains < 4;
+  const name = escapeHtml(continent.name);
 
-function renderDomainRow(
-  domain: LearningDomain,
-  playScope: StudyScope,
-  subtitle: string,
-  stats: ScopeStats,
-): string {
-  const name = domainDisplayName(domain);
   return `
-    <div class="continent-row">
-      <button class="continent-row__open domain-tile__open" type="button" data-action="open-domain" data-id="${domain}">
-        <span class="domain-tile__icon">${domainIcon(domain)}</span>
-        <span class="continent-row__identity">
-          <strong>${name}</strong>
-          <small>${subtitle}</small>
-        </span>
-        <span class="continent-row__progress">${progressStrip(stats)}</span>
-        <span class="continent-row__score"><strong>${stats.mastered}</strong><small>/${stats.total}</small></span>
-        ${icon('chevron')}
-      </button>
-      <button
-        class="continent-row__play"
-        type="button"
-        data-action="quick-play"
-        data-domain="${domain}"
-        data-id="${domain}"
-        aria-label="Play ${playScope.label} ${name.toLowerCase()}"
-      >${icon('play')}</button>
-    </div>
+    <button
+      class="atlas-card${shell ? ' atlas-card--shell' : ''}"
+      type="button"
+      data-action="open-atlas"
+      data-id="${escapeHtml(continent.id)}"
+    >
+      <span class="atlas-card__mark" aria-hidden="true">${icon('globe')}</span>
+      <span class="atlas-card__identity">
+        <strong>${name}</strong>
+        <small>${stats.total} countries</small>
+      </span>
+      ${shell ? '<span class="atlas-card__shell-note">Flags only</span>' : ''}
+    </button>
   `;
 }
 
-export function renderHome(
-  progress: ProgressState,
-  locationProgressOrPersisting: LocationProgressState | boolean = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
-  outlineProgress: ProgressState = createInitialProgress(AFRICA_COUNTRIES),
-  neighborProgress: NeighborProgressState = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
-  persisting = true,
-): string {
-  const homePersisting = typeof locationProgressOrPersisting === 'boolean'
-    ? locationProgressOrPersisting
-    : persisting;
-  const locationProgress = typeof locationProgressOrPersisting === 'boolean'
-    ? createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS)
-    : locationProgressOrPersisting;
+export function renderHome(progress: ProgressState, persisting = true): string {
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
-  const africaScope: StudyScope = { kind: 'continent', id: 'africa', label: 'Africa' };
-  const flags = getScopeStats(COUNTRIES, progress, worldScope);
-  const locations = getLocationScopeStats(locationProgress, AFRICA_MAP_COUNTRY_IDS);
-  const locationStats: ScopeStats = { ...locations, due: 0 };
-  const outlines = getScopeStats(COUNTRIES, outlineProgress, africaScope);
-  const neighborScopeIds = getAfricaNeighborScopeConfig('africa')?.countryIds ?? [];
-  const neighbors = getNeighborScopeStats(neighborProgress, neighborScopeIds, AFRICA_LAND_ADJACENCY);
-  const neighborStats: ScopeStats = { ...neighbors, due: 0 };
+  const world = getScopeStats(COUNTRIES, progress, worldScope);
 
   return `
-    <main class="page page--home page--tile-index">
-      <header class="topbar">
+    <main class="page page--home page--atlas">
+      <header class="topbar topbar--atlas">
         <div class="brand-block">
           ${brandMark()}
-          <span class="brand-name">Flag Atlas</span>
+          <h1 class="brand-name" tabindex="-1" data-autofocus>Atlas</h1>
         </div>
-        <button class="text-icon-button" type="button" data-action="open-progress" aria-label="Open progress">
+        <button class="icon-button" type="button" data-action="open-progress" aria-label="Open progress">
           ${icon('ledger')}
-          <span>Progress</span>
         </button>
       </header>
 
-      <section class="world-overview">
-        <div class="overview-heading">
-          <div><h1 tabindex="-1" data-autofocus>Learn geography</h1></div>
-        </div>
-      </section>
-
-      ${homePersisting ? '' : `
+      ${persisting ? '' : `
         <p class="storage-notice">
           This browser is blocking storage, so today's progress will be lost when you close the tab.
         </p>
       `}
 
-      <section class="atlas-section">
-        <div class="continent-list">
-          ${renderDomainRow('flags', worldScope, 'World · 195 countries', flags)}
-          ${renderDomainRow('locations', africaScope, 'Africa · 54 countries', locationStats)}
-          ${renderDomainRow('outlines', africaScope, 'Africa · 54 countries', outlines)}
-          ${renderDomainRow(
-            'neighbors',
-            africaScope,
-            `Africa · ${AFRICA_STANDARD_NEIGHBOR_TARGET_IDS.length} countries`,
-            neighborStats,
-          )}
-        </div>
-      </section>
+      <h2 class="atlas-eyebrow">Continents</h2>
+      <div class="atlas-card-list">
+        ${CONTINENTS.map((continent) => continentCard(continent, progress)).join('')}
+      </div>
+
+      <button
+        class="atlas-utility"
+        type="button"
+        data-action="quick-play"
+        data-domain="flags"
+        data-id="flags"
+      >Play world flags · ${world.total}</button>
     </main>
   `;
 }

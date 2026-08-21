@@ -13,6 +13,7 @@ import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
+import { renderRegion } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -54,11 +55,19 @@ const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const outlineProgress = createInitialProgress(COUNTRIES);
 const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
-const homeHtml = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
-assert.equal((homeHtml.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
-assert.equal((homeHtml.match(/data-action="quick-play"/g) ?? []).length, 4, 'Home exposes one direct Play control per learning domain.');
+const homeHtml = renderHome(flagProgress);
+assert.equal((homeHtml.match(/data-action="open-atlas"/g) ?? []).length, 6, 'Home exposes all six continents.');
+const westAfricaHtml = renderRegion(flagProgress, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+assert.equal(
+  (westAfricaHtml.match(/data-action="open-scope"/g) ?? []).length,
+  4,
+  'A fully supported region exposes all four learning domains.',
+);
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
-  assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home exposes ${label} through its canonical display name.`);
+  assert.ok(
+    westAfricaHtml.includes(`>${label}</span>`),
+    `The region grid exposes ${label} through its canonical display name.`,
+  );
 }
 
 const flagsHomeHtml = renderDomainHome('flags', flagProgress);
@@ -79,4 +88,4 @@ for (const [name, html] of launchers) {
   }
 }
 
-console.log('Cross-domain integration verification passed: four-domain Home, direct Africa launchers, v15 Tactile Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: scope-first Home, four-domain region grid, direct Africa launchers, v15 Tactile Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

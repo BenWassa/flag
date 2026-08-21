@@ -14,7 +14,7 @@ The previously shipped flat “atlas index” aesthetic is superseded.
 
 Tactile Atlas is an adult, tactile geography-learning product: more physical and memorable than a flat atlas index, but quieter and more disciplined than reward-driven learning UI or neo-brutalism. Cool near-white canvas, crisp light surfaces, Atlas Blue as the sole ordinary action family, disciplined squircle tiers rather than pill-everything, shallow physical depth on primary controls, and geography left as the dominant visual material.
 
-Explicitly rejected as a general idiom: childlike rounded display faces, emerald or amber as generic action colours, XP/coin/streak economies, giant radii on every container, glassmorphism, bento dashboards, and gesture-only navigation. Thick black borders and hard offset shadows are rejected everywhere except one deliberate, contained exception — the Home arcade tier under [Interaction character](#interaction-character) — because Home is the single highest-frequency entry surface in the product and earns a harder tactile signature than ordinary chrome.
+Explicitly rejected as a general idiom: childlike rounded display faces, emerald or amber as generic action colours, XP/coin/streak economies, giant radii on every container, glassmorphism, bento dashboards, and gesture-only navigation. Thick black borders and hard offset shadows are rejected everywhere except one deliberate, contained exception — the Atlas arcade tier under [Interaction character](#interaction-character), covering Home and the continent/region scope-selection screens — because that journey is the single highest-frequency path through the product and earns a harder tactile signature than ordinary chrome.
 
 ## Core principle
 
@@ -182,7 +182,7 @@ The mechanism is a solid bottom shadow standing in for physical thickness, remov
 - **primary button** — rests on a solid `0 4px 0` pressed-blue depth with no ambient glow; on `:active` drops to `0 1px 0` and translates down 3px;
 - **answer button** — rests on `0 3px 0` in its semantic colour; on `:active` drops to `0 1px 0` and translates down 2px;
 - **tiles, icon buttons and row play controls** — no standing depth; they translate down 1px and darken slightly;
-- **Home domain tiles (arcade tier)** — a scoped exception to the three tiers above: a `2px solid` border in `--text` plus a hard `2px 2px 0` offset shadow (no colour, no blur), collapsing on press by translating diagonally to `(2px, 2px)` rather than dropping vertically. This is Home-only; every other tile (continent index, region rows, launcher status card) keeps the soft `--depth-tile` shadow described under [Shapes, radius and elevation](#shapes-radius-and-elevation).
+- **Atlas arcade tier** — a scoped exception to the three tiers above: a `2px solid` border in `--text` plus a hard `2px 2px 0` offset shadow (no colour, no blur), collapsing on press by translating diagonally to `(2px, 2px)` rather than dropping vertically. This covers the three scope-first Atlas surfaces (Home's continent list, the continent's region list, and the region's domain-play grid), because together they form one continuous scope-selection journey and a tone shift partway through it would read as a broken transition rather than a hierarchy signal. Every domain launcher and ordinary tile reached *after* a domain is chosen (region rows inside a launcher, the launcher status card) keeps the soft `--depth-tile` shadow described under [Shapes, radius and elevation](#shapes-radius-and-elevation).
 
 Press travel stays within 2–4px. Anything larger reads as a toy.
 
@@ -214,19 +214,15 @@ Do not use horizontal scrolling for primary navigation or scope selection.
 
 Navigation should be immediately scannable and support large touch targets.
 
-**Domain and continent selection use a two-column tile grid** so options can be compared simultaneously rather than scrolled through. Home renders its four learning domains as a 2×2; the Flags continent index renders its six continents as 2×3. Both carry the shared `page--tile-index` class, so the treatment is defined once.
+**Navigation is scope-first, not domain-first.** Home lists the six continents as a single-column stack of tactile cards; choosing one opens that continent's region list; choosing a region opens its region-detail screen, where the four learning domains finally appear as a 2×2 play grid. This mirrors the approved Tactile Cartographic mock-up (`research/UI_Mockup_Gemini.html`) and resolves #35's routed cross-domain region surface. World Flags — the one domain without a continent restriction — keeps a single direct Play action on Home rather than forcing a continent choice it doesn't need.
 
-Below 375px the grid collapses to a single column and tile height reduces, rather than letting two columns crush the labels.
+Continent and region cards stack in a single column on phone portrait so identity, country count and (on regions) the four domain indicator dots stay full width and scannable; short landscape (≥700px wide, ≤600px tall) switches the continent/region list to two columns and the region's domain grid to four columns, keeping the same cards rather than introducing a second layout.
 
-Tiles state identity and subtitle at the top and a progress strip at the bottom; the numeric score is omitted because the strip already carries an accessible label with the same counts. Home's four tiles additionally carry a 52px square icon badge — 2px-bordered, Atlas Blue fill, on-action icon colour — above the identity text, using the shared icon set's domain glyphs (flag, location, outline, adjacency) so a domain reads before its label is parsed. Region selection inside a launcher stays a single-column list — five regions do not benefit from side-by-side comparison, and the rows carry a selected state that reads better full width.
+Continents and regions without generated geometry beyond Flags still appear — as honest shells. A continent card shows a muted mark and a "Flags only" note instead of a country-count subtitle; a region's unsupported domain tiles render inert, in canvas grey with a "Coming soon" label, never as a launcher.
 
 ### Region detail
 
-A dedicated region-detail screen is required.
-
-It should make region identity, country count, four domain competencies, mastery state and Learn/Play entry points understandable without becoming a dense dashboard.
-
-Issue #35 owns implementation.
+The region-detail screen is implemented: region identity, country count, and the four domain competencies as a 2×2 Atlas Blue play grid, plus a Review progress utility action. Region × domain mastery badges, the complete-region gold accent and the mastery medallion header shown in the mock-up remain neutral/absent placeholders — they depend on #34's earned-mastery persistence landing first, and should not be guessed at before that model exists.
 
 ### Learning surfaces
 
@@ -379,15 +375,15 @@ The items this document previously deferred are resolved, and shipped in `atlas-
 
 1. overall visual personality and reference family — Tactile Atlas, see [Character](#character);
 2. shape/radius language — four-tier squircle scale, see [Shapes, radius and elevation](#shapes-radius-and-elevation);
-3. control depth and press physics — collapsing bottom-shadow depth, plus a scoped hard-offset arcade tier for Home, see [Interaction character](#interaction-character);
-4. navigation composition for Home / continents — two-column tile grid, see [Primary selection](#primary-selection);
+3. control depth and press physics — collapsing bottom-shadow depth, plus a scoped hard-offset arcade tier for the Home/continent/region journey, see [Interaction character](#interaction-character);
+4. navigation composition — scope-first Home → continent → region → domain-grid, see [Primary selection](#primary-selection);
 5. typography — system sans retained, personality via weight/tracking, see [Typography](#typography);
-6. motion intensity — short `ease` transitions, no springs, full reduced-motion coverage, see [Motion](#motion).
+6. motion intensity — short `ease` transitions, no springs, full reduced-motion coverage, see [Motion](#motion);
+7. **region-detail composition** — implemented per #35, see [Region detail](#region-detail).
 
 Still open, deliberately not decided here:
 
-7. **region-detail composition** — owned by #35, which did not exist as a routed screen when this document was last revised;
-8. **ordinary icon style** — the shared SVG icon set (`src/ui/components/icons.ts`) now includes domain-identity glyphs (flag, location, outline, adjacency) used on Home; a dedicated style pass over the remaining icon set has not been run;
+8. **ordinary icon style** — the shared SVG icon set (`src/ui/components/icons.ts`) now includes domain-identity glyphs (flag, location, outline, adjacency) used across Home and the atlas surfaces; a dedicated style pass over the remaining icon set has not been run;
 9. **region mastery badge/shield treatment**, 10. **continent crest art direction**, 11. **world Crown art direction** — all depend on the earned-mastery persistence model landing in #34; designing the art before that model exists would be guessing at what it needs to represent;
 12. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but the concrete milestone animation itself is not, for the same reason as 9–11.
 
