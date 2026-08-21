@@ -33,7 +33,7 @@ function renderDomainRow(
 ): string {
   const name = domainDisplayName(domain);
   return `
-    <div class="continent-row domain-tile">
+    <div class="continent-row">
       <button class="continent-row__open domain-tile__open" type="button" data-action="open-domain" data-id="${domain}">
         <span class="domain-tile__icon">${domainIcon(domain)}</span>
         <span class="continent-row__identity">
