@@ -1,3 +1,5 @@
+import type { LearningDomain } from '../../domain/models.js';
+
 export type IconName =
   | 'back'
   | 'close'
@@ -27,6 +29,14 @@ const PATHS: Record<IconName, string> = {
 
 export function icon(name: IconName, className = ''): string {
   return `<svg class="ui-icon ${className}" viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">${PATHS[name]}</svg>`;
+}
+
+/** Shared domain-identity glyph, used on Home tiles and in the launcher header. */
+export function domainIcon(domain: LearningDomain): string {
+  if (domain === 'flags') return icon('flag');
+  if (domain === 'locations') return icon('location');
+  if (domain === 'outlines') return icon('outline');
+  return icon('adjacency');
 }
 
 /** Two-tone product mark. Mirrors the swallowtail pennant in public/icons/app-icon.svg. */

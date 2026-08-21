@@ -12,18 +12,11 @@ import { createInitialNeighborProgress, getNeighborScopeStats } from '../../doma
 import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { LearningDomain, ProgressState, ScopeStats, StudyScope } from '../../domain/models.js';
 import { createInitialProgress, getScopeStats } from '../../domain/progress.js';
-import { brandMark, icon } from '../components/icons.js';
+import { brandMark, domainIcon, icon } from '../components/icons.js';
 import { progressStrip } from '../components/progress.js';
 
 const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
 const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
-
-function domainIcon(domain: LearningDomain): string {
-  if (domain === 'flags') return icon('flag');
-  if (domain === 'locations') return icon('location');
-  if (domain === 'outlines') return icon('outline');
-  return icon('adjacency');
-}
 
 function renderDomainRow(
   domain: LearningDomain,
