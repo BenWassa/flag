@@ -574,6 +574,46 @@ body { letter-spacing: -.006em; }
    row the reserved purple earned-Mastery signal before #29/#34 lands. */
 .mastery-row > span:not(.flag-frame) { color: var(--action); }
 
+/* Outline results used its own flat, border-bottom mini-ledger row instead of
+   the .mastery-row/.mistake-row card treatment above — bring it in line so
+   the same "mastered/missed this round" content doesn't look like two
+   different products depending on which domain produced it. */
+.mini-ledger__row,
+.outline-mistake-row {
+  margin-bottom: 7px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .025);
+}
+
+.mini-ledger__row:last-child,
+.outline-mistake-row:last-child { margin-bottom: 0; }
+
+.filter-tab:active { transform: translateY(1px); }
+
+/* Neighbours' round-complete summary used a bare heading instead of the
+   scored-hero card every other domain's results screen gives its headline
+   number (.result-score) — give it the same weight. */
+.neighbor-results-summary {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+}
+
+.neighbor-results-summary .overview-heading {
+  margin-bottom: 8px;
+}
+
+.neighbor-results-summary .overview-heading h1 {
+  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-weight: 820;
+}
+
 .storage-notice {
   border-radius: var(--radius-md);
   background: var(--surface-subtle);
