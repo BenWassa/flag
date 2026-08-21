@@ -26,6 +26,7 @@ export function renderQuiz(
   const isLearnFeedback = isAnswered && session.mode === 'learn';
   const currentRecord = getRecord(progress, target.id);
   const pct = ((session.currentIndex + (isAnswered ? 1 : 0)) / session.questions.length) * 100;
+  const isLastQuestion = session.currentIndex === session.questions.length - 1;
 
   return `
     <main class="quiz-shell">
@@ -67,13 +68,14 @@ export function renderQuiz(
           // keeps thumb/focus in the task surface while feedback remains visible.
           const action = continueFromCorrect ? 'next-question' : 'answer';
           const disabled = isAnswered && !continueFromCorrect;
+          const advanceLabel = isLastQuestion ? 'Results' : 'Next';
           const label = continueFromCorrect
-            ? `${index + 1}. ${country.name}. Correct. Continue to the next question.`
+            ? `${index + 1}. ${country.name}. Correct. ${isLastQuestion ? 'Show results.' : 'Continue to the next question.'}`
             : `${index + 1}. ${country.name}`;
           return `
             <button class="answer-button ${stateClass}" data-action="${action}" ${continueFromCorrect ? 'data-autofocus' : ''} data-id="${country.id}" aria-label="${escapeHtml(label)}" ${disabled ? 'disabled' : ''} ${!isAnswered && index === 0 ? 'data-autofocus' : ''}>
-              <span class="answer-key" aria-hidden="true">${continueFromCorrect ? '→' : index + 1}</span>
-              <strong>${escapeHtml(country.name)}${continueFromCorrect ? ' · Next' : ''}</strong>
+              <span class="answer-key" aria-hidden="true">${continueFromCorrect ? icon('chevron') : index + 1}</span>
+              <strong>${escapeHtml(country.name)}${continueFromCorrect ? ` · ${advanceLabel}` : ''}</strong>
             </button>
           `;
         }).join('')}
