@@ -53,14 +53,14 @@
 .neighbor-map-stage {
   height: clamp(260px, 43dvh, 440px);
   margin: 0;
-  background: var(--surface-subtle);
+  background: var(--map-ocean);
 }
-.neighbor-map-svg { background: var(--surface-subtle); }
+.neighbor-map-svg { background: var(--map-ocean); }
 .neighbor-map-context,
 .neighbor-map-puzzle-layer,
 .neighbor-map-label-layer { pointer-events: none; }
 .neighbor-map-context-country {
-  fill: color-mix(in srgb, var(--track) 74%, var(--surface-subtle));
+  fill: var(--map-context-land);
   stroke: none;
 }
 .neighbor-map-country__shape {
@@ -75,8 +75,8 @@
   stroke-width: 2;
 }
 .neighbor-map-country--unresolved .neighbor-map-country__shape {
-  fill: var(--surface);
-  stroke: var(--line-strong);
+  fill: var(--map-active-land);
+  stroke: var(--map-active-border);
   stroke-width: 1.35;
 }
 .neighbor-map-country--solved .neighbor-map-country__shape {
@@ -92,7 +92,7 @@
 }
 .neighbor-map-label text {
   fill: var(--text);
-  stroke: var(--surface);
+  stroke: var(--map-label-halo);
   stroke-width: 3.2;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
@@ -110,7 +110,7 @@
 .neighbor-map-label--revealed text { fill: var(--wrong); }
 .neighbor-map-label__leader {
   fill: none;
-  stroke: var(--line-strong);
+  stroke: var(--map-active-border);
   stroke-width: 1.15;
   stroke-linecap: round;
   vector-effect: non-scaling-stroke;
