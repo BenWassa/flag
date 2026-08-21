@@ -1,24 +1,31 @@
 import { COUNTRIES } from '../../data/countries.js';
 import type { LearningStatus, ProgressState } from '../../domain/models.js';
-import { getRecord, masteryGoal } from '../../domain/progress.js';
+import { getRecord, isDue } from '../../domain/progress.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
-import { MASTERY_RULE, escapeHtml, titleCase } from '../format.js';
+import { EVIDENCE_RULE, escapeHtml, statusLabel } from '../format.js';
 
 const EMPTY_STATES: Record<LearningStatus | 'all', { title: string; body: string }> = {
   all: { title: 'No flags loaded', body: 'The curriculum could not be read. Reload the page to try again.' },
   unseen: {
-    title: 'Every flag has been seen',
+    title: 'Every flag has scored evidence',
     body: 'Nothing is left untouched. Use Learning to see what still needs work.',
   },
   learning: {
     title: 'Nothing in progress',
-    body: 'Flags land here the first time you answer one. Start a round from the atlas to begin.',
+    body: 'Flags land here when retrieval evidence still needs strengthening.',
   },
   mastered: {
-    title: 'No flags mastered yet',
-    body: 'Answer a flag correctly in three separate rounds and it moves here.',
+    title: 'No strong evidence yet',
+    body: 'Clean retrieval builds strong evidence; Play can calibrate already-known flags faster.',
   },
+};
+
+const FILTER_LABELS: Record<LearningStatus | 'all', string> = {
+  all: 'All',
+  unseen: 'Unseen',
+  learning: 'Learning',
+  mastered: 'Strong',
 };
 
 export function renderProgress(
@@ -53,16 +60,16 @@ export function renderProgress(
         <button class="icon-button" data-action="home" aria-label="Back to atlas">${icon('back')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" ${resetArmed ? '' : 'data-autofocus'}>Progress</h1>
-          <span>${counts.mastered} mastered · ${counts.learning} learning · ${counts.unseen} unseen</span>
+          <span>${counts.mastered} strong · ${counts.learning} learning · ${counts.unseen} unseen</span>
         </div>
       </header>
 
-      <p class="ledger-note">${MASTERY_RULE}</p>
+      <p class="ledger-note">${EVIDENCE_RULE}</p>
 
-      <div class="filter-tabs" role="group" aria-label="Filter flags by learning status">
+      <div class="filter-tabs" role="group" aria-label="Filter flags by learning evidence">
         ${(['all', 'unseen', 'learning', 'mastered'] as const).map((item) => `
           <button class="filter-tab ${filter === item ? 'filter-tab--active' : ''}" data-action="filter-progress" data-id="${item}" aria-pressed="${filter === item}">
-            <span>${item === 'all' ? 'All' : titleCase(item)}</span><small>${filterCount(item)}</small>
+            <span>${FILTER_LABELS[item]}</span><small>${filterCount(item)}</small>
           </button>
         `).join('')}
       </div>
@@ -72,15 +79,17 @@ export function renderProgress(
           ${rows.map((country) => {
             const record = getRecord(progress, country.id);
             const detail = record.status === 'learning'
-              ? `${record.masteryStreak}/${masteryGoal(record)} toward mastery · ${record.lifetimeIncorrect} missed`
+              ? `${record.lifetimeCorrect} correct · ${record.lifetimeIncorrect} missed`
               : record.status === 'mastered'
                 ? `${record.lifetimeCorrect} correct · ${record.lapseCount} ${record.lapseCount === 1 ? 'lapse' : 'lapses'}`
-                : 'Not practised yet';
+                : record.evidence.passiveExposures > 0
+                  ? 'Seen in Learn · no scored retrieval yet'
+                  : 'Not practised yet';
             return `
               <div class="ledger-row">
                 ${flagImage(country, true, 'flag-frame--ledger')}
                 <span class="ledger-row__country"><strong>${escapeHtml(country.name)}</strong><small>${detail}</small></span>
-                <span class="status-chip status-chip--${record.status}">${titleCase(record.status)}</span>
+                <span class="status-chip status-chip--${record.status}">${statusLabel(record, isDue(record))}</span>
               </div>
             `;
           }).join('')}
