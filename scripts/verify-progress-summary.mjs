@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { COUNTRIES } from '../dist/data/countries.js';
-import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
+import { getAfricaNeighborScopeConfig } from '../dist/data/neighbors/index.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import {
   buildProgressSummary,
@@ -34,10 +34,12 @@ assert.equal(
   54,
   'Africa Locations uses the full generated map curriculum.',
 );
+const africaNeighborScope = getAfricaNeighborScopeConfig('africa');
+assert.ok(africaNeighborScope, 'Africa has a canonical Neighbours scope config.');
 assert.equal(
   africaSummaries.find((summary) => summary.domain === 'neighbors')?.total,
-  Object.keys(AFRICA_LAND_ADJACENCY).length,
-  'Neighbours excludes targets whose complete neighbour set is unsupported.',
+  africaNeighborScope.countryIds.length,
+  'Neighbours uses the canonical teachable target set and excludes incomplete geography.',
 );
 
 const freshFlags = buildProgressSummary(ledgers, africa, 'flags', now);
