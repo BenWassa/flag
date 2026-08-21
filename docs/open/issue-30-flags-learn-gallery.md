@@ -13,6 +13,6 @@ Replace the current Flags Learn multiple-choice loop with a low-pressure browse/
 - passive reveal does not create scored country evidence;
 - clean route into Play for the same scope;
 - World-scale gallery must remain mobile/performance safe;
-- final styling follows the new Atlas visual system from #32, not the superseded shipped aesthetic.
+- final styling follows the implemented Tactile Atlas system from #32.
 
 See `docs/product/learning-and-mastery.md` for evidence semantics.

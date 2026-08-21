@@ -392,4 +392,4 @@ Still open, deliberately not decided here:
 9. **region mastery badge/shield treatment**, 10. **continent crest art direction**, 11. **world Crown art direction** — all depend on the earned-mastery persistence model landing in #34; designing the art before that model exists would be guessing at what it needs to represent;
 12. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but the concrete milestone animation itself is not, for the same reason as 9–11.
 
-Once those are selected, rewrite this file from “foundations” into the complete production design system before implementing #32.
+Those achievement treatments will extend this production system under #34; they do not reopen the Tactile Atlas decisions implemented by #32.

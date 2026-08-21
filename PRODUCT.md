@@ -217,7 +217,7 @@ The semantic colour system, achievement hierarchy and product principles are loc
 
 The visual style is locked: **Tactile Atlas**. Shape language, radii, elevation, press physics, typography personality and motion are decided and implemented; see `DESIGN.md` for the complete specification.
 
-Issue #32 tracks the remaining rollout of that system across UI surfaces not yet ported. Achievement art direction (region mastery badges, continent crests, the world Crown) remains genuinely open and depends on #34's earned-mastery persistence landing first.
+Issue #32 records the implemented visual-system rollout. Achievement art direction (region mastery badges, continent crests, the world Crown) remains genuinely open and depends on #34's earned-mastery persistence landing first.
 
 `DESIGN.md`'s shipped Tactile Atlas aesthetic is now normative product truth, not a placeholder to be discarded on a future design pass.
 

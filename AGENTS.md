@@ -5,7 +5,7 @@ These instructions apply to the whole repository.
 ## Start with project context
 
 - Read `PRODUCT.md` and `DESIGN.md` before changing product behaviour or interface code.
-- `DESIGN.md` currently contains locked Atlas design foundations, **not a finished visual style**. Issue #32 owns the next visual-design decision and later implementation.
+- `DESIGN.md` defines the implemented Tactile Atlas production system. Issue #34 owns the remaining achievement-art direction for mastery badges, continent crests, the world Crown and milestone ceremony.
 - Read `docs/product/colour-system.md`, `docs/product/gamification.md`, and `docs/product/learning-and-mastery.md` before changing colours, mastery, completion, progress or achievement presentation.
 - Use `docs/index.md` as the documentation map and `docs/open/index.md` as the active-work/sequencing map.
 - Learner-facing product name is **Atlas**. Production rollout is tracked in #36; preserve stable legacy repository/storage/cache identifiers unless a migration is explicitly justified.

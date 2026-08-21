@@ -18,9 +18,9 @@ This directory mirrors active product/engineering work that benefits from a dura
 - [#32 — Define and implement the new Atlas visual system](https://github.com/BenWassa/flag/issues/32)
 - [#40 — Adopt Phosphor for routine Atlas iconography](https://github.com/BenWassa/flag/issues/40)
 
-#32's visual-design exploration is decided and documented in `DESIGN.md` (Tactile Atlas). Implementation is landing incrementally on `design/atlas-visual-system` (PR #38); the issue stays open until that branch merges to `main`.
+#32's Tactile Atlas implementation is complete on `design/atlas-visual-system` (PR #38) and awaits merge/closeout.
 
-#40 is the focused follow-up for the remaining ordinary-icon decision: Phosphor Bold is the baseline, exact domain glyphs must be auditioned at production sizes, and custom artwork stays reserved for Atlas identity and prestige.
+#40's Phosphor Bold routine-icon migration is implemented on the same branch with production-size audition, automated verification and browser evidence; repository closeout remains.
 
 ### 3. Learning / achievement architecture
 

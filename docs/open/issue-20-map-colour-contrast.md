@@ -20,4 +20,4 @@ Cartography still needs its own functional land/water/context tokens, but it mus
 
 ## Scope guard
 
-Do not change canonical geometry/topology, adjacency, projection or geopolitical policy. Coordinate presentation with #32 while preserving the existing map pipeline.
+Do not change canonical geometry/topology, adjacency, projection or geopolitical policy. Consume the implemented Tactile Atlas tokens and `DESIGN.md` while preserving the existing map pipeline.
