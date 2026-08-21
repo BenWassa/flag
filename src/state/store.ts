@@ -10,6 +10,7 @@ import {
   type EarnedAchievementState,
   type NewlyEarnedAchievement,
 } from '../domain/achievements.js';
+import { activityForMode } from '../domain/evidence.js';
 import {
   advanceMapSession,
   applyMapGuess,
@@ -77,7 +78,7 @@ import {
   saveOutlineProgress,
 } from '../infrastructure/outline-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
-import { createLegacyCountryEvidenceQualification } from './achievement-evidence-adapter.js';
+import { createCountryEvidenceQualification } from './achievement-evidence-adapter.js';
 
 export type ViewState =
   | { name: 'home' }
@@ -203,7 +204,7 @@ export class AppStore {
   refreshAchievements(): NewlyEarnedAchievement[] {
     const result = awardEligibleAchievements(
       this.achievements,
-      createLegacyCountryEvidenceQualification({
+      createCountryEvidenceQualification({
         flags: this.progress,
         locations: this.locationProgress,
         outlines: this.outlineProgress,
@@ -316,6 +317,7 @@ export class AppStore {
       countryId: question.countryId,
       selectedCountryId,
       responseTimeMs,
+      activity: activityForMode(this.session.mode),
     });
 
     this.progress = result.state;
@@ -457,6 +459,7 @@ export class AppStore {
       countryId: question.countryId,
       selectedCountryId,
       responseTimeMs,
+      activity: activityForMode(this.outlineSession.mode),
     });
 
     this.outlineProgress = result.state;
