@@ -10,8 +10,17 @@ import {
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS as AFRICA_TOPOLOGY_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
 } from './africa.js';
+import {
+  SOUTH_AMERICA_LAND_ADJACENCY,
+  SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+} from './south-america.js';
 
-export { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS };
+export {
+  AFRICA_LAND_ADJACENCY,
+  AFRICA_ZERO_LAND_NEIGHBOR_IDS,
+  SOUTH_AMERICA_LAND_ADJACENCY,
+  SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+};
 
 export interface NeighborContinentData {
   continentId: ContinentId;
@@ -36,6 +45,11 @@ const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData
     continentId: 'africa',
     adjacency: AFRICA_LAND_ADJACENCY,
     coverageExcludedIds: AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
+  },
+  'south-america': {
+    continentId: 'south-america',
+    adjacency: SOUTH_AMERICA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
   },
 };
 
