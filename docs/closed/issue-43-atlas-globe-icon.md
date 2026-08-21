@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/43
 
 ## Status
 
-Implemented on `brand/issue-43-atlas-globe`.
+Complete.
 
 ## Architecture
 
@@ -62,3 +62,7 @@ CI stays offline: it validates the committed outputs and their provenance, and n
 Service-worker cache advanced to `flag-atlas-v22` and the new shell icons are cached.
 
 Rendered inspection was performed at 1024, 512, 192, 64, 32 and 24 px and under circle/squircle maskable previews in headless Chromium. No installed-PWA or physical iOS/Android inspection was performed and none is claimed.
+
+## Closeout
+
+Merged through PR #67 in `1be7e0a4cb8093b343ca609772dc8276f01d7a69`. Full `npm test` and fresh GitHub CI passed after rebasing onto the merged global-expansion foundation. Installed-PWA and physical-device inspection remain unclaimed.

@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/41
 
 ## Status
 
-In progress.
+Complete.
 
 ## Problem
 
@@ -52,3 +52,7 @@ do not substitute for browser-specific `:focus-visible` behaviour.
 - A Firefox or WebKit runtime was not available in this environment, so that
   required cross-engine manual gate remains open and must not be inferred from
   the Chromium evidence.
+
+## Closeout
+
+Merged through PR #45 in `7c2acec59640464cedcfad12db74532c872395c1`. Automated focus-intent coverage, full `npm test`, and the recorded Opera/Chromium checks passed. Firefox/WebKit manual evidence remains unavailable and is not claimed; closure records the resumed delivery plan's explicit acceptance of the available substitute evidence.

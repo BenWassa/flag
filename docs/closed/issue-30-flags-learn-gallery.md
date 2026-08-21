@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/30
 
 ## Status
 
-Implemented on `feat/issue-30-flags-learn-gallery`.
+Complete.
 
 ## What Learn is now
 
@@ -41,3 +41,7 @@ This is why reveal is a direct DOM toggle in `toggleFlagReveal` rather than a re
 `scripts/verify-flags-study.mjs` covers full-scope browsing, the absence of scored answer controls, evidence isolation, hidden/revealed leakage in text, `alt` and accessible name, single-card reveal isolation, the Reveal all toggle, geographic grouping, lazy World loading and unchanged Learn/Play/review routing.
 
 Full `npm test` is green. Rendered QA in headless Chromium at 390×844 confirmed: the deep link lands on the gallery, hidden cards expose only the placeholder label, keyboard `Enter` reveals without moving focus, Play entry and Back both work, and World scope renders 195 lazily-loaded cards with no horizontal overflow.
+
+## Closeout
+
+Merged through PR #66 in `c2e04c83c3a8b808b7c565b78cfd3029809b8be5`. The rebased head and merged queue passed full `npm test`; GitHub CI passed on the exact rebased head. No physical-device or assistive-technology session is claimed.

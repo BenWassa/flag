@@ -1,5 +1,7 @@
 # Issue 57 — Global expansion foundation
 
+**Status:** Complete
+
 Implementation notes for the shared prerequisite to continent rollout.
 
 - Learner scope membership is separated from canonical country classification through `src/data/learning-scopes.ts`.
@@ -14,3 +16,7 @@ Implementation notes for the shared prerequisite to continent rollout.
 - Neighbours map geometry remains lazy and memoised by active scope, with failed scope loads retryable instead of relying on one Africa-only promise.
 
 The foundation intentionally adds no second playable continent. Issue #24 is the proving-ground consumer.
+
+## Closeout
+
+The original PR #63 became unreopenable when its temporary base branch was merged and removed. The same rebased branch was reviewed and merged to `main` through replacement PR #68 in `d92c1fc959b9c980729314e18ea882a535e68778`. Full `npm test`, the parameterised foundation verifier, and fresh GitHub CI passed on the exact rebased head. No new continent was bundled.

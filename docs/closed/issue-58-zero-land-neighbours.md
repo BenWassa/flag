@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/58
 
 ## Status
 
-Implemented on `feat/issue-58-zero-neighbours`.
+Complete.
 
 ## The bug this actually fixed
 
@@ -63,3 +63,7 @@ Existing stored Neighbours records survive — the capability adds targets, it d
 `scripts/verify-zero-neighbours.mjs` covers canonical empty adjacency, eligibility for known-vs-absent adjacency, region completability, the clean/recovered/exhausted evidence ladder, the empty-set completion guard, duplicate accounting, unchanged `n > 0` gameplay, the leak contract and its documented residual, and record survival.
 
 Full `npm test` is green. Rendered QA was performed against the built `dist/` artifact in headless Chromium at 390×844.
+
+## Closeout
+
+Merged through PR #65 in `d17c96a1a36504027dbcfe67d8b3834e44bc9cf8`. Full `npm test` and fresh GitHub CI passed after rebasing onto the river-free map baseline. The documented attempt-budget signal remains an accepted out-of-scope limitation.
