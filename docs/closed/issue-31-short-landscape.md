@@ -1,6 +1,8 @@
 # Issue #31 — Short-landscape sizing regressions
 
-GitHub: https://github.com/BenWassa/flag/issues/31
+**Status:** Complete.
+**Completed:** 2026-08-20, implemented in `b4d7ff0`/`7f3b932` ("Fix short-landscape mobile layout bugs in Outlines and Neighbours") and merged to `main`.
+**Issue:** [#31 — Fix mobile landscape sizing bugs](https://github.com/BenWassa/flag/issues/31) (closed)
 
 ## Goal
 

@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/32
 
 ## Status
 
-**Blocked on visual-style selection.**
+**Visual style selected (Tactile Atlas) and documented in `DESIGN.md`.** Implementation is landing incrementally on `design/atlas-visual-system` (PR #38): foundation tokens, Home/continent/region navigation and the scope-first IA (#35) are in place. The issue stays open until that branch merges to `main`; remaining work is routine icon migration (#40) and achievement art direction (#34).
 
 ## Locked foundations
 

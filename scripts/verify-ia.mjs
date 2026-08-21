@@ -119,6 +119,14 @@ const playIcon = icon('play');
 const home = renderHome(flagProgress);
 const homeWithoutPersistence = renderHome(flagProgress, false);
 assertCommonSurface('Home', home);
+assert.equal(home.includes('brand-mark'), false, 'Home presents the Atlas wordmark without a leading flag mark.');
+for (const mark of ['AF', 'AS', 'EU', 'NA', 'SA', 'OC']) {
+  assert.equal(
+    occurrences(home, `<span class="atlas-card__mark-code">${mark}</span>`),
+    1,
+    `Home gives ${mark} one distinct continent mark.`,
+  );
+}
 assertPreRoundContentRemoved('Home', home);
 assertNoLegacyInteractiveRow('Home', home, 'continent-row');
 const homeContinentCards = actionTags(home, 'button', 'open-atlas');
@@ -137,11 +145,10 @@ assert.ok(
     && visibleText(homeWithoutPersistence).includes("today's progress will be lost"),
   'Home persistence failure renders the honest storage notice.',
 );
-// World Flags has no continent restriction, so it stays a single direct Play
-// action rather than routing through a continent/region scope.
+// Home stays focused on the six continent choices. World Flags remains
+// available through the existing domain routes, not as a competing footer CTA.
 const worldFlagsEntry = actionTags(home, 'button', 'quick-play');
-assert.equal(worldFlagsEntry.length, 1, 'Home keeps exactly one direct route into the world Flags curriculum.');
-assertButtonContract(worldFlagsEntry[0], { 'data-domain': 'flags', 'data-id': 'flags' });
+assert.equal(worldFlagsEntry.length, 0, 'Home has no direct World Flags footer action.');
 assert.equal(home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
 
 // Continent surface: the regions of one continent, each showing which of the
@@ -156,12 +163,12 @@ assert.deepEqual(
   'The Africa surface lists exactly its five production regions.',
 );
 assert.equal(
-  occurrences(continentSurface, 'domain-dot--absent'),
+  occurrences(continentSurface, 'domain-launch--absent'),
   0,
   'Every Africa region supports all four domains, so no indicator reads as absent.',
 );
 assert.ok(
-  occurrences(renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' }), 'domain-dot--absent') > 0,
+  occurrences(renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' }), 'domain-launch--absent') > 0,
   'A continent without generated geometry marks its unsupported domains.',
 );
 assert.equal(actionTags(continentSurface, 'button', 'route-parent').length, 1, 'The continent surface has one Back control.');

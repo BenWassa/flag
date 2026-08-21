@@ -70,8 +70,6 @@ body { letter-spacing: -.006em; }
   letter-spacing: -.03em;
 }
 
-.brand-mark__cloth { fill: var(--action); }
-
 .icon-button,
 .text-icon-button {
   background: var(--surface);
@@ -711,7 +709,8 @@ body { letter-spacing: -.006em; }
 
 .atlas-card,
 .atlas-utility,
-.domain-play {
+.domain-play,
+.domain-launch {
   border: 2px solid var(--text);
   box-shadow: var(--depth-arcade);
   background: var(--surface);
@@ -721,10 +720,16 @@ body { letter-spacing: -.006em; }
 
 .atlas-card:active,
 .atlas-utility:active,
-.domain-play:active {
+.domain-play:active,
+.domain-launch:active {
   transform: translate(2px, 2px);
   box-shadow: 0 0 0 var(--text);
 }
+
+/* The region card is a container, not a single control: its identity button
+   and its four domain-launch buttons press independently, so the outer
+   wrapper itself never shows an active state. */
+.atlas-card--region:active { transform: none; box-shadow: var(--depth-arcade); }
 
 /* --- Continent / region cards ------------------------------------------- */
 
@@ -759,6 +764,13 @@ body { letter-spacing: -.006em; }
 
 .atlas-card__mark .ui-icon { width: 32px; height: 32px; }
 
+.atlas-card__mark-code {
+  font-size: 16px;
+  font-weight: 900;
+  letter-spacing: .04em;
+  line-height: 1;
+}
+
 .atlas-card__identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
 .atlas-card__identity strong {
@@ -787,7 +799,34 @@ body { letter-spacing: -.006em; }
   white-space: nowrap;
 }
 
-.atlas-card--region { flex-direction: column; align-items: stretch; gap: 14px; padding: 16px; }
+/* Region cards are a container, not a single control: no display:flex/cursor
+   of their own — the identity button and domain-launch row each behave like
+   ordinary tile content stacked inside the arcade-bordered wrapper. */
+.atlas-card--region {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 28px;
+  position: relative;
+}
+
+.atlas-card__open {
+  display: block;
+  width: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: transform 100ms ease, background-color 100ms ease;
+}
+
+.atlas-card__open:active { transform: translateY(1px); background: var(--canvas); }
 
 .atlas-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 
@@ -798,23 +837,28 @@ body { letter-spacing: -.006em; }
   line-height: 1;
 }
 
-/* --- Domain indicator dots ----------------------------------------------- */
+/* --- Domain launch row: each icon starts that domain's game directly ----- */
 
-.domain-dots { display: flex; align-items: center; gap: 8px; }
+.domain-launch-row { display: flex; align-items: center; gap: 10px; }
 
-.domain-dot {
-  width: 32px;
-  height: 32px;
+.domain-launch,
+.domain-launch--absent {
+  width: 48px;
+  height: 48px;
   display: grid;
   place-items: center;
-  border: 2px solid var(--text);
   border-radius: 50%;
-  background: var(--surface);
-  color: var(--text);
 }
 
-.domain-dot--absent { border-color: var(--line); color: var(--line-strong); background: var(--canvas); }
-.domain-dot .ui-icon { width: 16px; height: 16px; }
+.domain-launch { cursor: pointer; }
+.domain-launch .ui-icon { width: 22px; height: 22px; }
+
+.domain-launch--absent {
+  border: 2px solid var(--line);
+  color: var(--line-strong);
+  background: var(--canvas);
+}
+.domain-launch--absent .ui-icon { width: 22px; height: 22px; }
 
 /* --- Region detail: domain play grid ------------------------------------- */
 
@@ -839,7 +883,7 @@ body { letter-spacing: -.006em; }
   cursor: pointer;
 }
 
-.domain-play__icon .ui-icon { width: 40px; height: 40px; stroke-width: 1.9; }
+.domain-play__icon .ui-icon { width: 40px; height: 40px; }
 
 .domain-play__label {
   font-size: 13px;
@@ -887,6 +931,7 @@ body { letter-spacing: -.006em; }
   .atlas-card { padding: 10px; border-radius: 24px; }
   .atlas-card__mark { width: 48px; height: 48px; border-radius: 16px; }
   .atlas-card__mark .ui-icon { width: 26px; height: 26px; }
+  .atlas-card__mark-code { font-size: 14px; }
   .domain-play-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .domain-play { aspect-ratio: auto; padding: 16px 10px; border-radius: 22px; }
   .domain-play__icon .ui-icon { width: 30px; height: 30px; }
@@ -896,7 +941,9 @@ body { letter-spacing: -.006em; }
 @media (prefers-reduced-motion: reduce) {
   .atlas-card:active,
   .atlas-utility:active,
-  .domain-play:active {
+  .domain-play:active,
+  .domain-launch:active,
+  .atlas-card__open:active {
     transform: none;
   }
 }

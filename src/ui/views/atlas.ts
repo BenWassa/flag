@@ -11,18 +11,32 @@ function backButton(label: string): string {
   return `<button class="icon-button" type="button" data-action="route-parent" aria-label="${escapeHtml(label)}">${icon('back')}</button>`;
 }
 
-function domainDots(scope: StudyScope): string {
-  const dots = LEARNING_DOMAIN_IDS.map((domain) => {
+function domainLaunchRow(scope: StudyScope): string {
+  const label = escapeHtml(scope.label);
+  const buttons = LEARNING_DOMAIN_IDS.map((domain) => {
     const supported = scopeSupportsDomain(scope, domain);
     const name = escapeHtml(domainDisplayName(domain));
+
+    if (!supported) {
+      return `
+        <span class="domain-launch domain-launch--absent" title="${name} not available yet">
+          ${domainIcon(domain)}<span class="visually-hidden">${name} not available yet</span>
+        </span>
+      `;
+    }
+
     return `
-      <span
-        class="domain-dot${supported ? '' : ' domain-dot--absent'}"
-        title="${name}${supported ? '' : ' not available yet'}"
-      >${domainIcon(domain)}<span class="visually-hidden">${name}${supported ? '' : ' not available yet'}</span></span>
+      <button
+        class="domain-launch"
+        type="button"
+        data-action="quick-play"
+        data-domain="${domain}"
+        data-id="${escapeHtml(scope.id ?? '')}"
+        aria-label="Play ${label} ${name.toLowerCase()}"
+      >${domainIcon(domain)}</button>
     `;
   }).join('');
-  return `<span class="domain-dots">${dots}</span>`;
+  return `<span class="domain-launch-row">${buttons}</span>`;
 }
 
 function regionCard(region: { id: string; name: string }, progress: ProgressState): string {
@@ -31,18 +45,21 @@ function regionCard(region: { id: string; name: string }, progress: ProgressStat
   const name = escapeHtml(region.name);
 
   return `
-    <button
-      class="atlas-card atlas-card--region"
-      type="button"
-      data-action="open-atlas"
-      data-id="${escapeHtml(region.id)}"
-    >
-      <span class="atlas-card__head">
-        <strong>${name}</strong>
-        <small>${stats.total} countries</small>
-      </span>
-      ${domainDots(scope)}
-    </button>
+    <div class="atlas-card atlas-card--region">
+      <button
+        class="atlas-card__open"
+        type="button"
+        data-action="open-atlas"
+        data-id="${escapeHtml(region.id)}"
+        aria-label="${name} · ${stats.total} countries"
+      >
+        <span class="atlas-card__head">
+          <strong>${name}</strong>
+          <small>${stats.total} countries</small>
+        </span>
+      </button>
+      ${domainLaunchRow(scope)}
+    </div>
   `;
 }
 

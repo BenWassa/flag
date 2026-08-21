@@ -12,10 +12,11 @@
     "check": "tsc -p tsconfig.json --noEmit",
     "build": "node scripts/build.mjs",
     "maps:generate": "node scripts/generate-map-assets.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-british-english.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-british-english.mjs",
     "test": "npm run build && npm run verify"
   },
   "devDependencies": {
+    "@phosphor-icons/core": "2.1.1",
     "d3-geo": "3.1.1",
     "topojson-client": "3.1.0",
     "topojson-server": "3.0.1",

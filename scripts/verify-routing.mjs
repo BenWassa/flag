@@ -249,8 +249,8 @@ const home = await readFile('dist/ui/views/home.js', 'utf8');
 assert.ok(home.includes('data-action="open-atlas"'), 'Home selects a continent through the scope-first atlas action.');
 assert.equal(
   (home.match(/data-action="quick-play"/g) ?? []).length,
-  1,
-  'Home starts no round before a scope is chosen, except the direct world-flags entry.',
+  0,
+  'Home starts no round before a continent and region scope are chosen.',
 );
 assert.equal(home.includes('Learning domains'), false, 'Home no longer needs a heading that restates its four-row index.');
 assert.equal(home.includes('4 available'), false, 'Home no longer carries the deleted availability summary.');

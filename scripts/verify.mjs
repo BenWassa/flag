@@ -130,16 +130,12 @@ assert.equal(
   CONTINENTS.length,
   'Home exposes every continent.',
 );
-// Continents drive scope selection; the one exception is world Flags, which
-// has no continent restriction and stays a single direct Play action.
+// Continents own Home scope selection; World Flags does not compete with the
+// six continent cards as a footer action.
 assert.equal(
   (screens.home.match(/data-action="quick-play"/g) ?? []).length,
-  1,
-  'Home offers exactly one direct Play action: world flags.',
-);
-assert.ok(
-  screens.home.includes('data-action="quick-play"') && screens.home.includes('data-domain="flags"') && screens.home.includes('data-id="flags"'),
-  'Home keeps a direct route into the world-wide Flags curriculum.',
+  0,
+  'Home does not expose a direct World Flags footer action.',
 );
 assert.equal(screens.home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
 assert.equal(

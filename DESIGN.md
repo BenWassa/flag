@@ -214,7 +214,7 @@ Do not use horizontal scrolling for primary navigation or scope selection.
 
 Navigation should be immediately scannable and support large touch targets.
 
-**Navigation is scope-first, not domain-first.** Home lists the six continents as a single-column stack of tactile cards; choosing one opens that continent's region list; choosing a region opens its region-detail screen, where the four learning domains finally appear as a 2×2 play grid. This mirrors the approved Tactile Cartographic mock-up (`research/UI_Mockup_Gemini.html`) and resolves #35's routed cross-domain region surface. World Flags — the one domain without a continent restriction — keeps a single direct Play action on Home rather than forcing a continent choice it doesn't need.
+**Navigation is scope-first, not domain-first.** Home lists the six continents as a single-column stack of tactile cards; choosing one opens that continent's region list; choosing a region opens its region-detail screen, where the four learning domains finally appear as a 2×2 play grid. This mirrors the approved Tactile Cartographic mock-up (`research/UI_Mockup_Gemini.html`) and resolves #35's routed cross-domain region surface. Home does not add a competing World Flags footer action; it stays focused on the six geographic scope choices.
 
 Continent and region cards stack in a single column on phone portrait so identity, country count and (on regions) the four domain indicator dots stay full width and scannable; short landscape (≥700px wide, ≤600px tall) switches the continent/region list to two columns and the region's domain grid to four columns, keeping the same cards rather than introducing a second layout.
 
@@ -381,9 +381,12 @@ The items this document previously deferred are resolved, and shipped in `atlas-
 6. motion intensity — short `ease` transitions, no springs, full reduced-motion coverage, see [Motion](#motion);
 7. **region-detail composition** — implemented per #35, see [Region detail](#region-detail).
 
+Selected and implemented in #40:
+
+8. **ordinary icon style** — Phosphor Bold is the routine family for navigation, controls, utilities and domain identity. `src/ui/components/icons.ts` remains Atlas's semantic adapter and vendors only the selected paths from pinned `@phosphor-icons/core` assets, so the production build does not ship the catalogue. The domain mapping is Flags → `Flag`, Locations → `MapPin`, Outlines → `Polygon`, and Neighbours → `Intersect`. At 24px, `FlagBannerFold` read as a ribbon, `MapPinArea` added unnecessary detail, `Island` depicted a tropical palm-tree scene, and `Intersection` reduced to an ambiguous ∩. `Intersect`, paired with the visible Neighbours label, communicates two geographic areas meeting clearly enough that no Atlas-specific modification is needed. Fill may express a real state change in future, but is not a second decorative style. Do not mix Phosphor with Lucide or a parallel custom routine set. Custom artwork remains reserved for the Atlas brand mark and prestige.
+
 Still open, deliberately not decided here:
 
-8. **ordinary icon style** — the shared SVG icon set (`src/ui/components/icons.ts`) now includes domain-identity glyphs (flag, location, outline, adjacency) used across Home and the atlas surfaces; a dedicated style pass over the remaining icon set has not been run;
 9. **region mastery badge/shield treatment**, 10. **continent crest art direction**, 11. **world Crown art direction** — all depend on the earned-mastery persistence model landing in #34; designing the art before that model exists would be guessing at what it needs to represent;
 12. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but the concrete milestone animation itself is not, for the same reason as 9–11.
 
