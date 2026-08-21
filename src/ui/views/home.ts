@@ -72,7 +72,7 @@ export function renderHome(
   const neighborStats: ScopeStats = { ...neighbors, due: 0 };
 
   return `
-    <main class="page page--home">
+    <main class="page page--home page--tile-index">
       <header class="topbar">
         <div class="brand-block">
           ${brandMark()}

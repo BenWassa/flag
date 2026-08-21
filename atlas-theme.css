@@ -13,7 +13,11 @@
   --action-soft: #eaf0ff;
   --on-action: #ffffff;
   --on-action-muted: rgba(255, 255, 255, .84);
-  --focus-ring: rgba(37, 99, 235, .32);
+  /* Solid rather than a 32% tint: as the sole focus indicator the old value
+     sat near 1.6:1 against the canvas, under WCAG 2.2 SC 1.4.11's 3:1 for
+     non-text indicators. Pressed-blue clears it at roughly 7:1 and stays
+     distinguishable from the Atlas Blue fill of a focused primary button. */
+  --focus-ring: #1749b8;
   --correct: #137a55;
   --correct-soft: #e8f5ef;
   --correct-line: #8bc7ad;
@@ -24,6 +28,15 @@
   --mastery-soft: #f0eafd;
   --prestige: #e0af2f;
   --prestige-soft: #fff8df;
+  /* Compatibility aliases. Eighteen rules across styles.css, map.css and
+     neighbors.css still reference the legacy --mastered* family, which would
+     otherwise keep resolving to the pre-Atlas green (#e7f4ed / #82bca3) and
+     leave Locations and Neighbours a shade off the Flags and Outlines answer
+     buttons. Aliasing collapses both onto one correct-feedback scale without
+     touching learning logic; #29 owns retiring the terminology itself. */
+  --mastered: var(--correct);
+  --mastered-soft: var(--correct-soft);
+  --mastered-line: var(--correct-line);
   --learning: #8b6214;
   --learning-soft: #fff4da;
   --unseen: #667085;
@@ -132,13 +145,13 @@ body { letter-spacing: -.006em; }
 .mastery-list,
 .mistake-list { border-top: 0; }
 
-.page--home .continent-list {
+.page--tile-index .continent-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
 }
 
-.page--home .continent-row {
+.page--tile-index .continent-row {
   min-width: 0;
   grid-template-columns: minmax(0, 1fr) 48px;
   border: 1px solid var(--line);
@@ -149,14 +162,14 @@ body { letter-spacing: -.006em; }
   transition: border-color 140ms ease, box-shadow 140ms ease, transform 100ms ease;
 }
 
-.page--home .continent-row:hover {
+.page--tile-index .continent-row:hover {
   border-color: var(--line-strong);
   box-shadow: var(--depth-tile-hover);
 }
 
-.page--home .continent-row:active { transform: translateY(1px); }
+.page--tile-index .continent-row:active { transform: translateY(1px); }
 
-.page--home .continent-row__open {
+.page--tile-index .continent-row__open {
   min-height: 132px;
   grid-template-columns: 1fr;
   grid-template-rows: auto 1fr auto;
@@ -165,41 +178,41 @@ body { letter-spacing: -.006em; }
   padding: 17px 14px 15px 16px;
 }
 
-.page--home .continent-row__identity {
+.page--tile-index .continent-row__identity {
   align-self: start;
   gap: 3px;
 }
 
-.page--home .continent-row__identity strong {
+.page--tile-index .continent-row__identity strong {
   font-size: 18px;
   font-weight: 780;
   letter-spacing: -.025em;
 }
 
-.page--home .continent-row__identity small {
+.page--tile-index .continent-row__identity small {
   font-size: 12px;
   line-height: 1.35;
 }
 
-.page--home .continent-row__progress {
+.page--tile-index .continent-row__progress {
   align-self: end;
   width: 100%;
 }
 
-.page--home .continent-row__progress .status-strip {
+.page--tile-index .continent-row__progress .status-strip {
   height: 7px;
   border-radius: 999px;
 }
 
-.page--home .continent-row__score {
-  position: absolute;
-  pointer-events: none;
-  opacity: 0;
-}
+/* Removed outright rather than visually hidden: the adjacent status strip is
+   role="img" with an aria-label carrying the same mastered/learning/unseen
+   counts, so an opacity:0 score was announcing the tally a second time to
+   screen readers while sighted users saw it once. */
+.page--tile-index .continent-row__score { display: none; }
 
-.page--home .continent-row__open > .ui-icon { display: none; }
+.page--tile-index .continent-row__open > .ui-icon { display: none; }
 
-.page--home .continent-row__play {
+.page--tile-index .continent-row__play {
   width: 48px;
   min-height: 100%;
   border-left: 1px solid var(--line);
@@ -207,7 +220,7 @@ body { letter-spacing: -.006em; }
   color: var(--action);
 }
 
-.page--home .continent-row__play:active {
+.page--tile-index .continent-row__play:active {
   background: color-mix(in srgb, var(--action-soft) 76%, var(--action));
   transform: translateY(1px);
 }
@@ -435,8 +448,8 @@ body { letter-spacing: -.006em; }
 }
 
 @media (max-width: 374px) {
-  .page--home .continent-list { grid-template-columns: 1fr; }
-  .page--home .continent-row__open { min-height: 94px; }
+  .page--tile-index .continent-list { grid-template-columns: 1fr; }
+  .page--tile-index .continent-row__open { min-height: 94px; }
 }
 
 @media (min-width: 700px) {
@@ -466,11 +479,11 @@ body { letter-spacing: -.006em; }
 
   .button--primary:active,
   .answer-button:not(:disabled):active,
-  .page--home .continent-row:active,
+  .page--tile-index .continent-row:active,
   .icon-button:active,
   .text-icon-button:active,
   .region-row__play:active,
-  .page--home .continent-row__play:active {
+  .page--tile-index .continent-row__play:active {
     transform: none;
   }
 }
