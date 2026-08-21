@@ -1,3 +1,4 @@
+// v23 ships the source-derived Atlas globe brand mark and its PWA icon set.
 // v22 replaces the Flags Learn quiz with a browse-and-reveal study gallery.
 // v21 ships the mastery-first Progress experience and its production stylesheet.
 // v20 ships immediate Play feedback and the live round score.
@@ -9,7 +10,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v22';
+const VERSION = 'flag-atlas-v23';
 const SHELL = [
   './',
   './index.html',
@@ -25,6 +26,10 @@ const SHELL = [
   './neighbor-map-runtime.js',
   './manifest.webmanifest',
   './icons/app-icon.svg',
+  './icons/app-icon-192.png',
+  './icons/app-icon-512.png',
+  './icons/app-icon-maskable-512.png',
+  './icons/apple-touch-icon.png',
 ];
 
 self.addEventListener('install', (event) => {
