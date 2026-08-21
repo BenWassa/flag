@@ -14,6 +14,10 @@ Production implementation should update visible brand/metadata while preserving 
 
 Do not create a breaking migration purely for cosmetic consistency.
 
+## Status
+
+**Complete.** Learner-facing UI, browser titles and install metadata use Atlas while stable technical identifiers remain compatible.
+
 ## Acceptance criteria
 
 - Initial and routed browser titles use **Atlas**, including active and completed-round states across all four domains.
@@ -42,6 +46,10 @@ Implemented on the focused issue branch:
 - `npm test`: passed after building the production output and running the complete verifier chain, including the new Atlas brand contract. An initial run exposed an overly literal assertion for the dynamically composed Neighbours result title; the assertion was corrected to cover all four result-title source branches, then the complete suite passed.
 - Opera/Chromium browser inspection of the local production build at 390×844 confirmed Home title `Atlas`, visible `Atlas` heading, `en-GB`, Progress title `Progress · Atlas`, and manifest `name`/`short_name` both `Atlas`; no console warnings or errors occurred. Installed-PWA update behaviour and physical-device testing are not claimed.
 
-## Deferred closeout
+## Closeout
 
-Commit, push, merge, merged-tree verification, moving this file to `docs/closed/`, and closing/commenting on GitHub remain part of the authorised delivery workflow and are intentionally not performed in this implementation task.
+- Shipped through PR #47; merge commit `4efce75ff14f1b1db8cd4fa07309fc03c800f820`.
+- PR CI passed on implementation head `4ce67e8`.
+- `npm test` passed on merged `main` at `4efce75ff14f1b1db8cd4fa07309fc03c800f820` on 2026-08-21, including the focused Atlas brand verifier.
+- Opera/Chromium production inspection at 390×844 confirmed Home and Progress titles, visible Atlas identity, `en-GB`, manifest naming and no console warnings/errors.
+- Installed-PWA update behaviour and physical-device testing were not claimed because the issue's metadata contracts are covered by the production-build verifier and browser inspection.
