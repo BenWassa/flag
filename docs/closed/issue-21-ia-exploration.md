@@ -1,6 +1,6 @@
 # Issue #21 — IA exploration (superseded)
 
-**Status:** Superseded by [`docs/open/issue-21-simplified-ia.md`](../open/issue-21-simplified-ia.md) — retained for the reasoning behind the settled decisions.
+**Status:** Superseded by [`issue-21-simplified-ia.md`](issue-21-simplified-ia.md) — retained for the reasoning behind the settled decisions.
 **Issue:** [#21 — Simplify learning IA and progressively reveal only the next decision](https://github.com/BenWassa/flag/issues/21)
 **Register:** Product UI
 **Primary context:** A learner using one hand on a phone for a short, spontaneous practice session, wanting to start without reading instructions.

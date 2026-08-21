@@ -1,9 +1,10 @@
 # Issue #21 — Simplified IA implementation brief
 
-**Status:** Implementation-ready. Every decision listed in §3 is settled; do not reopen them without a new observation.
+**Status:** Complete.
+**Completed:** 2026-08-20, implemented in `fae780b` and merged to `main`.
 **Issue:** [#21 — Simplify learning IA and progressively reveal only the next decision](https://github.com/BenWassa/flag/issues/21)
 **Register:** Product UI (per `PRODUCT.md`; design laws in `DESIGN.md` are binding)
-**Supersedes:** [`docs/closed/issue-21-ia-exploration.md`](../closed/issue-21-ia-exploration.md)
+**Supersedes:** [`issue-21-ia-exploration.md`](issue-21-ia-exploration.md)
 **Primary context:** One hand, a phone, a spare three minutes, no appetite for reading. The learner wants to be answering a question, not configuring one.
 
 ---
@@ -410,3 +411,18 @@ Resolve during the build; none of them blocks starting.
 1. Do the four launcher domain adapters collapse fully into one function, or does Neighbours keep a thin adapter for its target-count metadata? Decide from the code once slice 5 is underway; prefer full collapse.
 2. Does the Flags continent list also want the launcher's Play-primary treatment at World scope, or is the Flags row's Play icon on Home sufficient? Ship the icon first, then judge.
 3. Where exactly the map layer sits in short landscape when the region list is long. §6.3 sets the constraint (Play reachable without scrolling); the composition is yours.
+
+---
+
+## 16. Closeout
+
+Issue #21 shipped in commit `fae780b` and is present on `main`.
+
+### Verification evidence
+
+- `npm test` passed on the merged `main` tree, including routing, IA, map, outline, neighbours, cross-domain, British-English, cartography and PWA verification.
+- The production build was walked in a browser at desktop size, 320 × 667 portrait and 667 × 375 short landscape. Play remained reachable, the layouts did not overflow, and the launcher preserved its required one- and two-column structures.
+- Keyboard selection, focus retention, selected-state accessible names, `aria-pressed` state, region Enter/Space activation, replace-only history and round Back-to-exact-scope behaviour were exercised and are covered by `scripts/verify-ia.mjs` and `scripts/verify-routing.mjs`.
+- The progressive map contract is covered deterministically: the launcher renders fully with no geometry; successful hydration appends the map; failed imports remain usable and retryable; stale asynchronous completions cannot hijack navigation.
+
+A fresh real-browser throttling and VoiceOver rerun was unavailable in the closeout environment. This closeout does not claim otherwise: the accepted substitute evidence is the prior browser accessibility-tree and keyboard walkthrough plus the explicit deferred, failure, retry and race assertions above.
