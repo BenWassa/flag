@@ -421,7 +421,7 @@ Near-term sequence:
 3. implement Flags Learn browse/reveal (#30);
 4. implement earned regional/continent/world achievements (#34);
 5. upgrade Progress across all four domains (#42);
-6. complete the production Atlas brand rollout (#36) and source-derived app icon (#43) in focused changes;
+6. close out the implemented Atlas brand rollout (#36) and deliver the source-derived app icon (#43) as focused work;
 7. continue Africa-first cartography/usability fixes while continent expansion remains deliberately parked.
 
 Focused bugs may ship sooner where independent.

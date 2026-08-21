@@ -21,9 +21,9 @@ Atlas combines fast geographic practice with persistent learning evidence and a 
 
 The product language is modern British English (`en-GB`). User-facing domain labels use **Neighbours**, and the learner-facing assessment activity is **Play**. Stable implementation contracts remain unchanged: the domain route is `/neighbors`, while Play continues to use internal `test` identifiers such as the `/test` route segment and `start-test` actions.
 
-The repository still uses the legacy name `flag`, and stable technical identifiers such as `flag-atlas:*` storage/cache namespaces may remain for compatibility. The learner-facing product name is **Atlas**; production brand rollout is tracked in #36.
+The repository still uses the legacy name `flag`, and stable technical identifiers such as `flag-atlas:*` storage/cache namespaces remain for compatibility. The learner-facing product name is **Atlas** across the UI and install metadata.
 
-Product truth lives in [`PRODUCT.md`](PRODUCT.md). Locked colour/gamification foundations and the pending visual-system status live in [`DESIGN.md`](DESIGN.md). Durable learning/mastery decisions are in [`docs/product/`](docs/product/) and current work sequencing is in [`docs/open/index.md`](docs/open/index.md).
+Product truth lives in [`PRODUCT.md`](PRODUCT.md). The implemented Tactile Atlas production system lives in [`DESIGN.md`](DESIGN.md). Durable learning/mastery decisions are in [`docs/product/`](docs/product/) and current work sequencing is in [`docs/open/index.md`](docs/open/index.md).
 
 ## Run locally
 

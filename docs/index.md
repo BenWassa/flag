@@ -23,7 +23,7 @@ Repository-level documents remain at the project root when they describe the who
 
 ## Current documentation status
 
-The learner-facing product name is now **Atlas** at the documentation/product-decision level. Production UI/metadata rollout is tracked in #36.
+The learner-facing product name is **Atlas** across current product documentation, production UI, browser titles, and install metadata. Stable legacy technical identifiers remain compatible as documented in `PRODUCT.md`.
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 

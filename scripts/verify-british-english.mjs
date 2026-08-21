@@ -42,7 +42,7 @@ const neighborRoute = parseRoutePath('/neighbors/africa/west-africa/test');
 assert.ok(neighborRoute && neighborRoute.name === 'learning' && neighborRoute.domain === 'neighbors');
 assert.equal(serializeRoutePath(neighborRoute), '/neighbors/africa/west-africa/test', 'British display copy must not migrate the stable route API.');
 assert.equal(neighborRoute.activity, 'test', 'Play remains backed by the stable internal Test activity.');
-assert.equal(routeTitle(neighborRoute), 'Play West Africa neighbours · Flag Atlas');
+assert.equal(routeTitle(neighborRoute), 'Play West Africa neighbours · Atlas');
 
 const homeHtml = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
 const flagsDomainHtml = renderDomainHome('flags', flagProgress);
@@ -192,7 +192,7 @@ const appForbiddenPhrases = [
   'neighbor set.',
   'neighbor progress erased',
   'Neighbor round complete',
-  ' neighbors · Flag Atlas',
+  ' neighbors · Atlas',
 ];
 for (const phrase of appForbiddenPhrases) {
   assert.equal(app.includes(phrase), false, `Built app live/document copy contains American-English phrase: ${phrase}`);
@@ -223,8 +223,8 @@ assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbo
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas visual shell changes invalidate the previous PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas styling remains part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Technical stylesheet filename remains stable.');
 
-console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v15 Tactile Atlas cache contract.');
+console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v16 Atlas brand cache contract.');

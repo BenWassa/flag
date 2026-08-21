@@ -77,7 +77,7 @@ Key rules:
 
 The learner-facing brand is **Atlas**.
 
-Issue #36 owns production UI/metadata rollout. Documentation can use Atlas now.
+Issue #36 records the production UI/metadata rollout. Learner-facing surfaces use Atlas while stable technical identifiers remain compatible.
 
 Do not casually rename stable legacy identifiers such as:
 

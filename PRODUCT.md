@@ -247,7 +247,7 @@ Issue #35 records the implemented region × domain cross-domain competency, surf
 - The repository name `flag` may remain.
 - Legacy `flag-atlas:*` storage/cache identifiers may remain where migration cost outweighs cosmetic consistency.
 
-Issue #36 owns the learner-facing product rename.
+Issue #36 records the learner-facing product rename.
 
 ## Cartography
 

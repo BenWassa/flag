@@ -280,7 +280,7 @@ assert.ok(atlasTheme.includes('prefers-reduced-motion: reduce'), 'The built Atla
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas owns the v15 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas brand rollout owns the v16 PWA cache.');
 assert.ok(serviceWorker.includes('./atlas-theme.css'), 'The Tactile Atlas stylesheet is part of the offline shell.');
 assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 

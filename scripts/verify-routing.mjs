@@ -156,7 +156,7 @@ for (const [launcherRoute, expectedParent] of [
 const atlasAfrica = parseRoutePath('/atlas/africa');
 assert.equal(serializeRoutePath(atlasAfrica), '/atlas/africa', 'Continent surface round-trips.');
 assert.equal(serializeRoutePath(parentRoute(atlasAfrica)), '/', 'Continent Back returns to the world.');
-assert.equal(routeTitle(atlasAfrica), 'Africa · Flag Atlas');
+assert.equal(routeTitle(atlasAfrica), 'Africa · Atlas');
 assert.equal(parseRoutePath('/atlas'), null, 'The atlas prefix alone is not a screen.');
 assert.equal(parseRoutePath('/atlas/nowhere'), null, 'Unknown continent must be rejected.');
 assert.equal(parseRoutePath('/atlas/africa/east-asia'), null, 'A region must belong to its atlas continent.');
@@ -171,10 +171,10 @@ assert.equal(
   'Continents without full domain data are still navigable as shells.',
 );
 
-assert.equal(routeTitle(flagsWest), 'West Africa flags · Flag Atlas');
-assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Flag Atlas');
-assert.equal(routeTitle(outlinesLearn), 'Learn West Africa outlines · Flag Atlas');
-assert.equal(routeTitle(neighborsTest), 'Play West Africa neighbours · Flag Atlas');
+assert.equal(routeTitle(flagsWest), 'West Africa flags · Atlas');
+assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Atlas');
+assert.equal(routeTitle(outlinesLearn), 'Learn West Africa outlines · Atlas');
+assert.equal(routeTitle(neighborsTest), 'Play West Africa neighbours · Atlas');
 assert.equal(serializeRoutePath(locationsTest), '/locations/africa/west-africa/test', 'Learner-facing Play keeps the stable /test route segment.');
 assert.equal(serializeRoutePath(neighborsTest), '/neighbors/africa/west-africa/test', 'Neighbours Play also keeps the stable /test route segment.');
 
@@ -308,11 +308,11 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas shell changes must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'The Tactile Atlas stylesheet must be part of the offline shell.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v15 Tactile Atlas PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v16 Atlas PWA shell.');
