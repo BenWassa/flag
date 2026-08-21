@@ -1,186 +1,367 @@
-# Flag Atlas Design System
+# Atlas Design Foundations
+
+## Status
+
+Atlas is entering a full visual redesign.
+
+This document records the **locked design foundations** that the next visual-style exploration must preserve. It intentionally does **not** lock the final shape language, radius system, elevation, typography personality, navigation composition, motion style, or exact crest/crown art direction yet.
+
+Issue #32 owns that next design phase and the later production implementation.
+
+The previously shipped flat “atlas index” aesthetic is no longer a requirement to preserve.
+
+## Core principle
+
+**Geography is the content. Interface is the instrument. Prestige is scarce.**
+
+Flags, maps, outlines and geographic context should remain the richest and most important visual objects. Product chrome may become more tactile and playful, but it should not visually overpower the geography.
+
+Gamification should concentrate around meaningful learning milestones rather than decorate every interaction.
+
+## Locked colour system
 
 ```yaml
 colors:
-  canvas: "#F5F7FA"
-  surface: "#FDFEFF"
-  surface-subtle: "#EEF1F5"
-  track: "#E2E6EC"
+  canvas: "#F6F8FB"
   text: "#101318"
-  text-muted: "#5A6472"
-  line: "#D6DCE4"
-  line-strong: "#AAB4C1"
-  action: "#1F4FD6"
-  action-hover: "#183CA0"
-  action-soft: "#E8EEFF"
-  on-action: "#F7F9FF"
-  on-action-muted: "rgba(247,249,255,.8)"
-  focus-ring: "rgba(31,79,214,.34)"
-  mastered: "#137A55"
-  mastered-soft: "#E7F4ED"
-  mastered-line: "#82BCA3"
-  learning: "#9A5B00"
-  learning-soft: "#FFF1D6"
-  unseen: "#626B78"
+  action: "#2563EB"
+  action-pressed: "#1749B8"
+  action-soft: "#EAF0FF"
+  correct: "#137A55"
   wrong: "#B42318"
-  wrong-soft: "#FCE8E6"
-  wrong-line: "#DCA7A2"
-  flag-line: "rgba(16,19,24,.10)"
-typography:
-  family: "-apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Helvetica, Arial, sans-serif"
-  body: "16px / 1.45"
-  screen-title: "32px / 1.08 / 760"
-  section-title: "18px / 1.2 / 700"
-  control: "14–16px / 650–700"
-rounded:
-  small: "6px"
-  medium: "9px"
-spacing:
-  base: "4px"
-  scale: [4, 8, 12, 16, 20, 24, 32, 40]
-components:
-  min-touch-target: "44px"
-  standard-control-height: "50px"
-  answer-height: "58px"
+  mastery: "#6D3FC0"
+  prestige: "#E0AF2F"
 ```
 
-## Overview
+These roles are semantic.
 
-Flag Atlas is an Operate surface. Its visual thesis is **the flag is the colour system**: national flags are the richest visual objects on screen, while the application behaves like a precise atlas index / international identification desk around them. The interface is quick, neutral, legible, and confident without adding game chrome.
+### Atlas Blue — action
 
-The system rejects the former warm-paper/editorial-card direction. It also avoids generic bento/card grids, decorative map textures, display serifs in operational UI, ornamental labels above headings, glass effects, and reward-style celebration.
+`#2563EB`
 
-## Product language
+Use for ordinary primary action, navigation emphasis, selection, focus and active controls.
 
-All learner-facing copy uses modern British English (`en-GB`), including visible text, document titles, metadata, accessible names and live-region announcements. The learner-facing domain name is **Neighbours**, and the learner-facing assessment activity is **Play**. Stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, the activity value `test`, `/test` route segment, `start-test` data actions, CSS/API property names such as `color`, and existing persistence keys retain their required implementation spelling.
+Pressed/depth state: `#1749B8`.
 
-Use **practice** as a noun and **practise** as a verb. Country display names are governed separately by `docs/product/country-naming.md`.
+Light selected/action surface: `#EAF0FF`.
 
-## Colours
+Blue was selected from the world-flag colour study because it is a major flag-derived colour family while remaining semantically available after reserving green and red for answer feedback.
 
-The application uses cool near-white neutrals and graphite text so flags remain visually dominant. `action` blue is reserved for primary actions, current selection, focus, and round progress. It is not a decorative accent.
+### Green — correct
 
-Learning semantics remain stable everywhere:
+`#137A55`
 
-- **Unseen:** neutral grey and an outlined state mark.
-- **Learning:** amber.
-- **Mastered:** green.
-- **Wrong/error:** red.
+Use for immediate correct-answer feedback and positive resolution of the current task.
 
-Every state is also expressed in text; colour is reinforcement only. Soft state backgrounds are allowed only where immediate answer feedback benefits from them.
+Green is transient. It should not become the general brand colour or the durable mastery colour.
 
-No colour is written as a literal outside the token block at the top of `styles.css`. Neutrals are tinted rather than pure: `surface` is a near-white carrying a trace of the action hue, and `on-action` is an off-white rather than `#FFF`. Every text colour meets WCAG AA against the surface it sits on; `unseen` in particular is set at `#626B78` rather than a lighter grey because it must clear 4.5:1 on `canvas`.
+### Red — wrong
+
+`#B42318`
+
+Use for immediate wrong-answer feedback, genuine error states and destructive actions where appropriate.
+
+Avoid routine decorative red so it retains immediate meaning.
+
+### Purple — mastery
+
+`#6D3FC0`
+
+Use for durable region × domain mastery.
+
+Purple is intentionally distinct from ordinary flag imagery and from the action/correct/wrong loop.
+
+### Gold — prestige / completeness
+
+`#E0AF2F`
+
+Gold is deliberately scarce.
+
+Use for:
+
+- complete-region accents;
+- continent-crest prestige detail;
+- the world Crown;
+- exceptional milestone treatment.
+
+Do not use gold for ordinary navigation, generic highlights, progress bars, routine active states or decorative trim.
+
+### Neutral base
+
+Canvas: `#F6F8FB`.
+
+Primary text: `#101318`.
+
+The supporting neutral scale may be refined during the visual-style pass, but it should stay cool, legible and subordinate to flags/maps.
+
+## Colour-study rule
+
+The global palette is derived from the aggregate visual vocabulary of national flags.
+
+Do **not** create separate continent, region or hemisphere theme colours from the research. Geographic identity should primarily come from maps, silhouettes, names and grouping rather than a parallel rainbow taxonomy.
+
+See `docs/product/colour-system.md`.
+
+## Achievement visual hierarchy
+
+### Country
+
+Country records are learning evidence, not prestigious mastery objects.
+
+Do not give individual countries crowns, medals or high-status mastery treatment.
+
+Country-level evidence may still need neutral/learning/review cues where operationally useful, but those should not compete with earned regional achievements.
+
+### Region × domain mastery
+
+The first learner-facing mastery state is one full learning domain across a region.
+
+Use a compact domain icon:
+
+- Flags — flag icon;
+- Outlines — country-outline icon;
+- Locations — map-pin/location icon;
+- Neighbours — adjacency/shared-border icon.
+
+Incomplete competency is neutral.
+
+Mastered competency becomes purple.
+
+In an expanded/dedicated region context, a mastered competency may use a fuller icon-on-shield badge treatment.
+
+Avoid shield-within-shield designs and unnecessary heraldic complexity.
+
+### Complete region
+
+When all required regional domain competencies are complete, use a restrained **gold accent or border**.
+
+Do not add a separate region emblem, medal or crown.
+
+Keep useful scope information such as country count.
+
+Do not show `100%` or `x/x` merely to restate completion.
+
+### Complete continent
+
+Award a **continent crest** based on the continent silhouette.
+
+The crest may use restrained purple/gold treatment and should feel materially rarer and more prestigious than region completion.
+
+Continents do not need completion quantities.
+
+### Complete world
+
+Reserve the **Crown** for world completion alone.
+
+The Crown is the highest visual status in the product. Do not add a higher tier above it.
+
+No `195/195` or percentage is required once the Crown has been earned.
+
+## Scarcity rule
+
+Visual prestige must scale inversely with frequency.
+
+**Purple competence → gold-complete region → continent crest → world Crown.**
+
+The higher the achievement, the less frequently its visual language should appear elsewhere.
+
+Do not dilute gold or Crown imagery through decorative reuse.
+
+## Interaction character
+
+Ordinary controls should feel responsive and satisfying.
+
+The exact visual mechanism is still open, but the design exploration may use:
+
+- tactile press response;
+- physical depth;
+- transform-based motion;
+- strong touch affordance;
+- softened geometry;
+- concise state transitions.
+
+Do not assume that a specific “Juicy Squircle” implementation, Tailwind class system, radius value or 3D border recipe is already final. Those belong to the next design decision.
+
+### Feedback intensity
+
+Use three broad intensity levels:
+
+1. **ordinary interaction** — responsive/tactile;
+2. **correct/wrong** — crisp, immediate semantic feedback;
+3. **earned milestone** — stronger but still controlled ceremony.
+
+Constant celebration makes meaningful milestones cheaper.
+
+## Layout foundations
+
+### Mobile first
+
+Phone portrait is the primary design context.
+
+Short landscape must be deliberately supported rather than treated as an afterthought.
+
+### Primary selection
+
+Do not use horizontal scrolling for primary navigation or scope selection.
+
+Navigation should be immediately scannable and support large touch targets.
+
+The exact card/list/grid language is intentionally pending the next visual-style decision.
+
+### Region detail
+
+A dedicated region-detail screen is required.
+
+It should make region identity, country count, four domain competencies, mastery state and Learn/Play entry points understandable without becoming a dense dashboard.
+
+Issue #35 owns implementation.
+
+### Learning surfaces
+
+In active rounds, the learning object should dominate available space:
+
+- flag;
+- map;
+- outline;
+- neighbour geography.
+
+Answer controls should remain easily reachable, especially on mobile.
+
+### Progress and results
+
+Treat analytics as compact, readable information surfaces.
+
+Prefer stacked/grouped information over spreadsheet-like tables.
+
+Avoid turning every statistic into a separate promotional card.
+
+## Maps and cartography
+
+The visual redesign must not create a second cartographic system.
+
+Production maps continue to use canonical geometry/topology and the existing projection/data pipeline.
+
+App chrome and map styling can evolve together, but cartography has distinct functional needs for:
+
+- land/water differentiation;
+- context geography;
+- targets;
+- solved/revealed states;
+- borders/coastlines;
+- lakes/rivers;
+- labels/callouts.
+
+Issue #20 owns the shared cartographic colour/contrast refinement.
+
+Do not theme maps by continent flag palette.
 
 ## Typography
 
-Use one system sans-serif family across headings, controls, metadata, and data. This is a task UI: consistency and scan speed outrank display personality.
+Typography must remain highly legible, mobile-safe and compatible with British-English product copy.
 
-- Screen titles: 2rem, tight but readable tracking, strong weight.
-- Section titles: 1.125rem.
-- Operational copy: 0.875–1rem.
-- Metadata: 0.6875–0.75rem only when genuinely secondary. 11px is a hard floor; nothing in the product renders text below it, including on small screens. Where a label will not fit at 11px, the label is replaced by a mark plus visually hidden text.
-- Numerals that compare across rows use tabular figures.
-- Do not introduce a display serif, monospace-as-costume, or fluid heading scale into the core product UI.
+The exact family, weight hierarchy and level of roundness/personality are **not yet locked**.
 
-## Layout
+Requirements that remain:
 
-The core page width is 860px with a 4px spacing base. Related controls group tightly; distinct sections separate by 24–32px.
+- body text must remain comfortable at phone scale;
+- metadata must not shrink into unreadability;
+- comparative numerals should use tabular figures where useful;
+- headings should create clear hierarchy without dominating the geography;
+- avoid novelty type that makes the product feel themed rather than durable.
 
-Home is an **atlas index**, not a grid of cards:
+## Shapes, radius and elevation
 
-1. compact product top bar;
-2. learning-domain index and direct entry points;
-3. scan-friendly domain/scope lists with progress encoded inside each row.
+**Not yet locked.**
 
-Launchers preserve the same hierarchy: scope and domain → named Play action → optional map layer → regions → named Learn action. A region route preselects that region in the same launcher; it does not open a separate screen or country ledger. Lists use rules and proximity rather than individual containers.
+The next design pass should explicitly decide:
 
-Quiz is an immersive task surface. The geography task owns the flexible central region; answers or entry controls remain reachable at the bottom on portrait mobile. At wider widths multiple-choice answers become 2×2. On short landscape screens, the learning visual and answer controls can sit side-by-side where the domain calls for it.
+- squircle vs conventional rounded rectangle language;
+- radius scale;
+- whether controls use physical bottom depth, soft shadow, inset treatment or another tactile model;
+- where elevation is appropriate;
+- how selected cards differ from buttons;
+- how achievement badges/crests relate to ordinary controls.
 
-## Elevation & Depth
+Do not preserve the old 6px/9px radius system merely because it is currently shipped.
 
-The product is predominantly flat. Rules, spacing, and surface contrast establish hierarchy.
+Do not introduce visual depth everywhere. Tactility and prestige should still have hierarchy.
 
-Flags may use a very light shadow and hairline border to remain legible against the canvas, especially white flags. Ordinary buttons, lists, panels, and navigation do not use shadows.
+## Motion
 
-## Shapes
+Motion should explain state and improve physicality, not become ambient decoration.
 
-Corners are modest:
+Requirements:
 
-- 6px for compact badges and keycaps.
-- 9px for controls.
+- transform/opacity are preferred for routine motion;
+- interactions should feel immediate;
+- milestone animation may be stronger than routine feedback;
+- avoid long blocking celebrations;
+- respect `prefers-reduced-motion`;
+- keep focus and page position stable through rerenders;
+- never let animation interfere with answer timing or accessibility announcements.
 
-Pills are reserved for cases where the semantic shape genuinely benefits from them; current core UI does not rely on pills. Large 18–28px card radii are outside the system.
+Exact spring/easing values are part of the next design pass.
 
-## Components
+## Accessibility
 
-### Progress strip
+Every visual state must remain understandable without colour alone.
 
-A 6px stacked horizontal bar: green Mastered, amber Learning, neutral remainder Unseen. Accompany it with textual counts.
+Preserve:
 
-### Primary / secondary buttons
+- visible keyboard focus;
+- 44px minimum practical touch targets where controls require it;
+- non-colour state cues;
+- answer-safe accessible names;
+- screen-reader announcements through stable live regions;
+- reduced-motion alternatives;
+- readable zoomed text;
+- mobile safe areas;
+- stable focus after state changes;
+- deliberate short-landscape behaviour.
 
-Primary uses action blue with white text. Secondary is white with a stronger neutral border. Tertiary actions are text-forward and visually quiet. All controls provide focus, hover where hover exists, active, and disabled behaviour.
+Gold should generally be treated as an accent rather than small text. Use dark text on gold surfaces where text is necessary and contrast supports it.
 
-### Atlas rows
+## Product language
 
-Domain, continent and region navigation use full-width split rows separated by horizontal rules. The row body navigates or selects, while a trailing 44px Play icon starts the named scope directly. Identity is left aligned, progress/status is secondary, and both controls have independent focus treatment and accessible names.
+All learner-facing copy uses modern British English (`en-GB`).
 
-### Launcher
+The learner-facing product name is **Atlas**.
 
-The launcher is a routed page, never a dialog. It always renders its region list and named Play and Learn actions without waiting for geometry. Locations, Outlines and Neighbours may progressively append the Africa map as a second control surface over the same selected-region state; Flags never requires a launcher map. Selecting a region updates both named actions without starting a round, and an explicit All Africa control clears the selection without impersonating Back.
+The learner-facing domain is **Neighbours** and the assessment action is **Play**.
 
-### Answer choices
+Stable technical identifiers may retain legacy spelling/naming for compatibility.
 
-Four large buttons with numeric 1–4 keycaps. Numeric keys activate choices on desktop keyboards. Learn feedback marks both correct and selected-wrong states with text plus semantic colour. Play mode withholds correctness.
+## Design anti-patterns
 
-### Learning ledger
+Do not introduce:
 
-Flat rows with a lazy-loaded flag thumbnail, country identity, evidence summary, and textual state badge. Filters use an underline-tab treatment rather than a pill container. Every filter has an empty state that names the condition and says what produces rows, because three of the four filters are empty on a first run. The ledger is also where the mastery rule is stated in plain language, and where progress can be erased through a two-step inline confirmation rather than a modal.
+- XP/coin/reward economies;
+- arbitrary streak rewards;
+- achievement spam;
+- crowns on ordinary objects;
+- gold as generic decoration;
+- continent/region colour themes;
+- decorative geography backgrounds that compete with real maps;
+- glassmorphism for its own sake;
+- bento/dashboard styling that fragments the learning hierarchy;
+- a parallel icon system of emoji/Unicode symbols;
+- framework/tooling changes justified only by fashion.
 
-### Flag frame
+## Decisions pending the next design session
 
-Flags come from a CDN, so every flag is wrapped in a frame that reserves its space and carries a fallback. When an image fails, the frame swaps to a dashed placeholder that says the image is unavailable, so a missing flag never becomes an unanswerable question with no explanation. Thumbnails show a mark plus visually hidden wording instead of shrinking the message below the type floor.
+The next design work should resolve, in order:
 
-### Empty and degraded states
+1. overall visual personality and reference family;
+2. shape/radius language;
+3. control depth and press physics;
+4. navigation composition for Home / continents / regions;
+5. region-detail composition;
+6. typography;
+7. ordinary icon style;
+8. region mastery badge/shield treatment;
+9. continent crest art direction;
+10. world Crown art direction;
+11. motion intensity and milestone ceremony;
+12. final component/token specification.
 
-Every list that can be empty says why it is empty and what fills it. Every remote asset has a labelled failure state. Neither is left to render as blank space.
-
-A scope with nothing to ask never opens a round. The learner stays on the screen they were on and the live region says why, because a quiz with no question in it is a dead end dressed as a task surface.
-
-### Storage notice
-
-Persistence is an enhancement, never a precondition for studying. When the browser refuses to store, the app keeps working from memory and says so once: a quiet rule and a sentence under the relevant overview, plus honest wording in the ledger footer, which otherwise claims a ledger is saved on the device that is refusing to save it. It is not an alert box and not a modal, because nothing is broken; the session simply will not outlive the tab.
-
-### Data boundaries
-
-Two boundaries do the defensive work so no view has to. A persisted ledger is rebuilt field by field on load, so a truncated write or a hand-edited record cannot reach a view as a thrown exception or a rendered `NaN`. All catalogue text is escaped on the way into markup, because the curriculum already carries `Australia & New Zealand` and `Côte d'Ivoire`. Inside those boundaries the views stay written against well-formed data.
-
-## Do’s & Don’ts
-
-### Do
-
-- Let actual geography provide visual richness.
-- Prefer rules and proximity over boxes around every group.
-- Keep Learn and Play visible and direct.
-- Preserve 44px minimum hit areas and mobile safe areas.
-- Use state colour consistently and pair it with text.
-- Keep routine motion within roughly 100–220ms and tied to state.
-- Animate transform and opacity only. The round-progress bar scales on the X axis rather than animating its width.
-- Verify small-height landscape as well as ordinary portrait widths.
-- Move focus deliberately after every re-render, and announce state changes through the persistent live region in `index.html` rather than through nodes that are themselves replaced.
-- Give every view a history entry so the platform Back gesture moves within the app instead of leaving it.
-- Size task visuals in `dvh` where a visible mobile URL bar could otherwise push controls below the fold.
-- Read learning records through their domain helpers and resolve catalogue IDs before the template, never with `!` inside it.
-
-### Don’t
-
-- Add streaks, XP, coins, confetti, mascots, or decorative achievements.
-- Reintroduce warm cream + serif editorial styling.
-- Add decorative world-map/grid backgrounds.
-- Turn continents, statistics, or result summaries into repetitive rounded cards.
-- Tint the interface from the active flag.
-- Use emoji, Unicode glyphs, or CSS-drawn shapes as interface icons. All marks, including the product mark, come from the shared SVG primitives in `src/ui/components/icons.ts`.
-- Write a colour literal anywhere but the token block, or duplicate a domain rule such as the mastery goal in a view.
-- Make mastered items dominate ordinary Learn sessions simply to show progress.
-- Let a storage write escape into an interaction handler. Studying continues when persistence fails.
-- Serve the app shell cache-first. The network decides which build runs; the cache is what makes it work offline.
+Once those are selected, rewrite this file from “foundations” into the complete production design system before implementing #32.

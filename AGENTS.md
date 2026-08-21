@@ -5,9 +5,21 @@ These instructions apply to the whole repository.
 ## Start with project context
 
 - Read `PRODUCT.md` and `DESIGN.md` before changing product behaviour or interface code.
-- Use `docs/index.md` as the documentation map. Read the relevant durable architecture or product documents before changing their area.
+- `DESIGN.md` currently contains locked Atlas design foundations, **not a finished visual style**. Issue #32 owns the next visual-design decision and later implementation.
+- Read `docs/product/colour-system.md`, `docs/product/gamification.md`, and `docs/product/learning-and-mastery.md` before changing colours, mastery, completion, progress or achievement presentation.
+- Use `docs/index.md` as the documentation map and `docs/open/index.md` as the active-work/sequencing map.
+- Learner-facing product name is **Atlas**. Production rollout is tracked in #36; preserve stable legacy repository/storage/cache identifiers unless a migration is explicitly justified.
 - Preserve the language contracts: learner-facing copy uses British English, `Neighbours`, and `Play`; stable internal identifiers such as `neighbors`, `/neighbors`, `test`, `/test`, and `start-test` remain unchanged unless a migration is explicitly requested.
 - Do not hand-edit generated cartography in `src/data/maps/africa.ts`. Follow `docs/architecture/cartography.md` and use the generation workflow.
+
+## Current learning/achievement boundary
+
+- Country-level records are live learning evidence and may remain rich/revisable.
+- Do not present an individual country as a prestigious learner-facing Mastery achievement.
+- Region × domain is the first learner-facing Mastery unit.
+- Complete region = restrained gold treatment; complete continent = continent crest; complete World = Crown only.
+- Earned mastery/completion is persistent in the current product model even if live country evidence later lapses/revalidates.
+- Africa is the first complete four-domain proving ground. Unsupported continent/domain shells must not count as complete.
 
 ## Verification
 
