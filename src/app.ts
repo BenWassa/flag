@@ -1,4 +1,4 @@
-import { COUNTRIES } from './data/countries.js';
+import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
 import { loadMapAsset } from './data/maps/index.js';
 import { AFRICA_LAND_ADJACENCY } from './data/neighbors/index.js';
 import { domainDisplayName } from './domain/display.js';
@@ -18,6 +18,7 @@ import {
   isLearningDomain,
   normalizeAvailableRoute,
   parentRoute,
+  routeForScope,
   routeForScopeId,
   routeTitle,
   routesEqual,
@@ -40,6 +41,7 @@ import { markFailedFlags } from './ui/components/flag.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderFocusIntent } from './ui/focus.js';
 import { renderDomainHome } from './ui/views/domain.js';
+import { renderFlagsStudy } from './ui/views/flags-study.js';
 import { renderContinent } from './ui/views/atlas.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
@@ -71,6 +73,10 @@ let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
 let launcherMapRequest = 0;
 let preserveScrollOnNextRoute = false;
+// Flags Learn reveal state is study, not evidence, so it stays ephemeral and
+// resets whenever the learner leaves the study surface.
+const revealedFlagIds = new Set<string>();
+let revealAllFlagNames = false;
 
 let pendingAnnouncement: number | null = null;
 
@@ -126,8 +132,42 @@ function routeHasActiveRound(route: LearningRoute): boolean {
   return false;
 }
 
+function isFlagsStudyRoute(route: AppRoute): boolean {
+  return route.name === 'learning' && route.domain === 'flags' && route.activity === 'learn';
+}
+
+/**
+ * Reveals or hides one card in place. The country name is written into the DOM
+ * only while revealed — keeping it out of the markup beforehand is what stops
+ * the answer leaking to assistive technology through hidden text.
+ */
+function toggleFlagReveal(button: HTMLElement, countryId: string): void {
+  const nameEl = button.querySelector<HTMLElement>('[data-flag-name]');
+  const image = button.querySelector<HTMLImageElement>('img.flag-image');
+  const country = COUNTRY_BY_ID.get(countryId);
+  if (!nameEl || !country) return;
+
+  const revealed = button.getAttribute('aria-expanded') !== 'true';
+  button.setAttribute('aria-expanded', String(revealed));
+  button.classList.toggle('flag-card--revealed', revealed);
+  nameEl.textContent = revealed ? country.name : '';
+  if (image) image.alt = revealed ? `${country.name} flag` : 'Flag to identify';
+
+  if (revealed) {
+    revealedFlagIds.add(countryId);
+    button.removeAttribute('aria-label');
+  } else {
+    revealedFlagIds.delete(countryId);
+    button.setAttribute('aria-label', button.dataset.hiddenLabel ?? 'Reveal the country.');
+  }
+}
+
 function normalizeRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning') return route;
+
+  // Flags Learn is a browsable study surface rather than a round, so it stays
+  // directly addressable without an active session.
+  if (isFlagsStudyRoute(route)) return route;
 
   if (route.activity !== undefined && !routeHasActiveRound(route)) {
     return stableRoute(route);
@@ -192,7 +232,9 @@ function applyRoute(requestedRoute: AppRoute): void {
       store.navigate({ name: 'atlas-continent', scope: route.scope });
       break;
     case 'learning':
-      if (route.activity !== undefined) {
+      if (isFlagsStudyRoute(route)) {
+        store.navigate({ name: 'flags-study', scope: route.scope ?? { kind: 'world', label: 'World' } });
+      } else if (route.activity !== undefined) {
         if (route.domain === 'flags' && store.session) {
           store.navigate(store.sessionResult
             ? { name: 'results', result: store.sessionResult }
@@ -233,6 +275,10 @@ router.subscribe((route) => {
   invalidatePendingRoundLaunch();
   cancelAllPending();
   resetArmed = false;
+  if (!route || !isFlagsStudyRoute(route)) {
+    revealedFlagIds.clear();
+    revealAllFlagNames = false;
+  }
   applyRoute(route ?? { name: 'home' });
 });
 
@@ -325,6 +371,9 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'scope':
       root.innerHTML = renderScope(store.progress, store.view.scope, store.persisting);
+      break;
+    case 'flags-study':
+      root.innerHTML = renderFlagsStudy(store.view.scope, revealedFlagIds, revealAllFlagNames);
       break;
     case 'progress':
       root.innerHTML = renderProgress(
@@ -491,6 +540,19 @@ root.addEventListener('click', (event) => {
     neighborsRound.submitGuess(id);
     return;
   }
+  // Revealing a name is a local toggle, deliberately outside the render cycle:
+  // a World-scope gallery is 195 cards and must not rebuild on every tap.
+  if (action === 'reveal-flag' && id) {
+    toggleFlagReveal(element, id);
+    return;
+  }
+  if (action === 'toggle-all-names') {
+    revealAllFlagNames = !revealAllFlagNames;
+    revealedFlagIds.clear();
+    announce(revealAllFlagNames ? 'All country names revealed.' : 'Country names hidden.');
+    finishInteraction(selector);
+    return;
+  }
   if (action === 'quick-play') {
     quickPlay(element.dataset.domain, id);
     return;
@@ -610,7 +672,7 @@ root.addEventListener('click', (event) => {
       break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
-        flagsRound.begin(flagsRound.currentScope(), 'learn');
+        router.navigate(routeForScope('flags', flagsRound.currentScope(), 'learn'));
         return;
       }
       break;

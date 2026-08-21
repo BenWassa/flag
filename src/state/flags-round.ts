@@ -42,6 +42,10 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
 
   let lastResultScope: StudyScope | null = null;
   let lastResultMode: StudyMode = 'learn';
+  // Flags Learn is a study surface rather than a round, so the only learn-mode
+  // rounds left are reviews. Repeat has to restore the activity that actually
+  // ran, or it would navigate back to the study gallery and drop the session.
+  let lastActivity: LearningActivity = 'test';
   let lastMissedIds: string[] = [];
   let pendingAdvance: number | null = null;
 
@@ -73,6 +77,7 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
       return;
     }
 
+    lastActivity = activity;
     const route = routeForScope('flags', scope, activity);
     setActiveRoundRoute(route);
     router.navigate(route, { replace: replaceRoute });
@@ -151,7 +156,7 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
 
   function repeat(): boolean {
     if (!lastResultScope) return false;
-    begin(lastResultScope, lastResultMode, undefined, undefined, lastResultMode, true);
+    begin(lastResultScope, lastResultMode, undefined, undefined, lastActivity, true);
     return true;
   }
 

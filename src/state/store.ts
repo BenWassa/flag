@@ -85,6 +85,7 @@ export type ViewState =
   | { name: 'atlas-continent'; scope: StudyScope }
   | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
+  | { name: 'flags-study'; scope: StudyScope }
   | { name: 'progress' }
   | { name: 'quiz' }
   | { name: 'results'; result: SessionResult }

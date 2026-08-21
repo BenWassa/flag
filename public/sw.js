@@ -1,3 +1,4 @@
+// v22 replaces the Flags Learn quiz with a browse-and-reveal study gallery.
 // v21 ships the mastery-first Progress experience and its production stylesheet.
 // v20 ships immediate Play feedback and the live round score.
 // v19 makes zero-land-neighbour countries learnable in Neighbours.
@@ -8,7 +9,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v21';
+const VERSION = 'flag-atlas-v22';
 const SHELL = [
   './',
   './index.html',

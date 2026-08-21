@@ -498,6 +498,40 @@ button:focus-visible,
 .flag-frame--failed .flag-fallback { display: grid; }
 .flag-frame--stage { width: min(100%, 470px); min-height: 150px; }
 
+/* Flags Learn: a scan-friendly gallery. Comparing related flag patterns is
+   itself the study, so the grid stays wide-first and never scrolls sideways. */
+.study-toolbar { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-3); }
+.study-toolbar .button { flex: 1 1 auto; }
+.study-hint { margin: 0 0 var(--space-5); color: var(--text-muted); font-size: 13px; }
+.study-group { margin-bottom: var(--space-8); }
+.study-group__heading { margin: 0 0 var(--space-3); font-size: 1rem; letter-spacing: -.01em; }
+
+.flag-gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.flag-card {
+  width: 100%;
+  min-height: 44px;
+  display: grid;
+  gap: 6px;
+  padding: var(--space-2);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease;
+}
+.flag-card--revealed { border-color: var(--line-strong); }
+.flag-card .flag-image { width: 100%; max-height: none; aspect-ratio: 3 / 2; }
+/* Reserves the name row so revealing a name never reflows the grid. */
+.flag-card__name { min-height: 20px; font-size: 13px; font-weight: 700; line-height: 1.25; }
+
 .answer-panel { display: grid; grid-template-columns: 1fr; gap: 8px; padding-top: 4px; }
 .answer-button {
   min-height: 58px;
