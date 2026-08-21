@@ -1,11 +1,11 @@
 import { COUNTRIES, COUNTRY_BY_ID } from '../../data/countries.js';
-import { AFRICA_LAND_ADJACENCY } from '../../data/neighbors/index.js';
+import { NEIGHBOR_GUESS_COUNTRY_IDS } from '../../data/neighbors/index.js';
 import { currentNeighborTarget, getCountrySuggestions } from '../../domain/neighbor-game.js';
 import type { NeighborGuessOutcome, NeighborSession } from '../../domain/neighbor-models.js';
 import { icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
 
-const ALLOWED_COUNTRY_IDS = new Set(Object.keys(AFRICA_LAND_ADJACENCY));
+const ALLOWED_COUNTRY_IDS = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 
 function countryName(countryId: string): string {
   return COUNTRY_BY_ID.get(countryId)?.name ?? countryId;
@@ -50,6 +50,7 @@ export function renderNeighborQuiz(
           class="neighbor-map-host"
           data-neighbor-map-host
           data-neighbor-map-key="${escapeHtml(mapKey)}"
+          data-scope-id="${escapeHtml(session.scope.id ?? '')}"
           data-target-id="${escapeHtml(target.countryId)}"
           data-found-ids="${escapeHtml(target.foundIds.join(','))}"
           data-revealed-ids="${escapeHtml(target.revealedIds.join(','))}"

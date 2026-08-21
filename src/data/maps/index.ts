@@ -1,29 +1,71 @@
 import {
-  AFRICA_MAP_COUNTRY_IDS,
-  getAfricaMapScopeConfig,
+  getMapContinentConfig,
+  getMapScopeConfig,
 } from '../map-scopes.js';
 import type {
+  ContinentId,
+} from '../../domain/models.js';
+import type {
   MapCountryGeometry,
+  MapNamedPath,
   MapRegionAsset,
+  MapViewportFocus,
+  MapWaterLayers,
 } from '../../domain/map-models.js';
 
-type AfricaDataModule = typeof import('./africa.js');
-
-let africaDataPromise: Promise<AfricaDataModule> | null = null;
-
-function loadAfricaData(): Promise<AfricaDataModule> {
-  africaDataPromise ??= import('./africa.js').catch((error: unknown) => {
-    // A transient offline or chunk-load failure must not poison every later
-    // attempt for the lifetime of the page.
-    africaDataPromise = null;
-    throw error;
-  });
-  return africaDataPromise;
+interface ContinentMapData {
+  viewBox: string;
+  geometry: Readonly<Record<string, MapCountryGeometry>>;
+  contextPaths: readonly string[];
+  sharedBoundaryPaths: readonly string[];
+  coastlinePaths: readonly string[];
+  water: Readonly<MapWaterLayers>;
+  scopeFocus: Readonly<Record<string, MapViewportFocus>>;
 }
 
-function cloneGeometry(data: AfricaDataModule, countryId: string): MapCountryGeometry {
-  const geometry = data.AFRICA_GEOMETRY[countryId];
-  if (!geometry) throw new Error(`Africa geometry missing for ${countryId}.`);
+type ContinentMapLoader = () => Promise<ContinentMapData>;
+
+const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
+  africa: async () => {
+    const data = await import('./africa.js');
+    return {
+      viewBox: data.AFRICA_VIEWBOX,
+      geometry: data.AFRICA_GEOMETRY,
+      contextPaths: data.AFRICA_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.AFRICA_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.AFRICA_COASTLINE_PATHS,
+      water: data.AFRICA_WATER,
+      scopeFocus: data.AFRICA_SCOPE_FOCUS,
+    };
+  },
+};
+
+const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();
+
+function loadContinentData(continentId: ContinentId): Promise<ContinentMapData> | null {
+  const loader = continentLoaders[continentId];
+  if (!loader) return null;
+
+  const cached = continentDataPromises.get(continentId);
+  if (cached) return cached;
+
+  const promise = loader().catch((error: unknown) => {
+    // A transient offline or chunk-load failure must not poison every later
+    // attempt for the lifetime of the page.
+    continentDataPromises.delete(continentId);
+    throw error;
+  });
+  continentDataPromises.set(continentId, promise);
+  return promise;
+}
+
+function cloneNamedPath(item: MapNamedPath): MapNamedPath {
+  return { ...item };
+}
+
+function cloneGeometry(data: ContinentMapData, countryId: string, continentId: ContinentId): MapCountryGeometry {
+  const geometry = data.geometry[countryId];
+  if (!geometry) throw new Error(`${continentId} geometry missing for ${countryId}.`);
   return {
     ...geometry,
     locator: geometry.locator ? { ...geometry.locator } : undefined,
@@ -38,30 +80,35 @@ function cloneGeometry(data: AfricaDataModule, countryId: string): MapCountryGeo
 }
 
 export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | null> {
-  const config = getAfricaMapScopeConfig(scopeId);
+  const config = getMapScopeConfig(scopeId);
   if (!config) return null;
+  const continent = getMapContinentConfig(config.continentId);
+  if (!continent) return null;
 
-  // Continent geometry is intentionally loaded only when a map scope is opened.
-  // The emitted ES module is then cached by the service worker after first use.
-  const data = await loadAfricaData();
+  // Continent geometry is intentionally loaded only when a supported map scope
+  // is opened. Each emitted ES module is then cached by the service worker.
+  const dataPromise = loadContinentData(config.continentId);
+  if (!dataPromise) return null;
+  const data = await dataPromise;
+
   const activeIds = new Set(config.countryIds);
-  const countries = config.countryIds.map((countryId) => cloneGeometry(data, countryId));
-  const contextCountries = AFRICA_MAP_COUNTRY_IDS
+  const countries = config.countryIds.map((countryId) => cloneGeometry(data, countryId, config.continentId));
+  const contextCountries = continent.countryIds
     .filter((countryId) => !activeIds.has(countryId))
-    .map((countryId) => cloneGeometry(data, countryId));
+    .map((countryId) => cloneGeometry(data, countryId, config.continentId));
 
   return {
     scope: config.scope,
-    viewBox: data.AFRICA_VIEWBOX,
+    viewBox: data.viewBox,
     countries,
     contextCountries,
-    contextPaths: [...data.AFRICA_EXTRA_CONTEXT_PATHS],
-    sharedBoundaryPaths: [...data.AFRICA_SHARED_BOUNDARY_PATHS],
-    coastlinePaths: [...data.AFRICA_COASTLINE_PATHS],
+    contextPaths: [...data.contextPaths],
+    sharedBoundaryPaths: [...data.sharedBoundaryPaths],
+    coastlinePaths: [...data.coastlinePaths],
     water: {
-      oceanPath: data.AFRICA_WATER.oceanPath,
-      lakes: (data.AFRICA_WATER.lakes ?? []).map((item) => ({ ...item })),
+      oceanPath: data.water.oceanPath,
+      lakes: (data.water.lakes ?? []).map(cloneNamedPath),
     },
-    initialFocus: data.AFRICA_SCOPE_FOCUS[scopeId],
+    initialFocus: data.scopeFocus[scopeId],
   };
 }

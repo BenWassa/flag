@@ -1,8 +1,18 @@
-import type { StudyScope } from '../domain/models.js';
+import type { ContinentId, StudyScope } from '../domain/models.js';
 
 export interface MapScopeConfig {
   scope: StudyScope;
+  continentId: ContinentId;
   countryIds: readonly string[];
+  /** Optional tuned label anchor for the compact launcher map, in percentages. */
+  launcherLabel?: Readonly<{ left: number; top: number }>;
+}
+
+export interface MapContinentConfig {
+  continentId: ContinentId;
+  scope: StudyScope;
+  countryIds: readonly string[];
+  regions: readonly MapScopeConfig[];
 }
 
 export const NORTH_AFRICA_MAP_COUNTRY_IDS = [
@@ -44,28 +54,39 @@ export const AFRICA_MAP_SCOPE: StudyScope = {
 export const AFRICA_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
   {
     scope: { kind: 'region', id: 'north-africa', label: 'North Africa' },
+    continentId: 'africa',
     countryIds: NORTH_AFRICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 49, top: 18 },
   },
   {
     scope: { kind: 'region', id: 'west-africa', label: 'West Africa' },
+    continentId: 'africa',
     countryIds: WEST_AFRICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 23, top: 35 },
   },
   {
     scope: { kind: 'region', id: 'central-africa', label: 'Central Africa' },
+    continentId: 'africa',
     countryIds: CENTRAL_AFRICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 45, top: 58 },
   },
   {
     scope: { kind: 'region', id: 'east-africa', label: 'East Africa' },
+    continentId: 'africa',
     countryIds: EAST_AFRICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 77, top: 46 },
   },
   {
     scope: { kind: 'region', id: 'southern-africa', label: 'Southern Africa' },
+    continentId: 'africa',
     countryIds: SOUTHERN_AFRICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 55, top: 82 },
   },
 ];
 
 export const AFRICA_MAP_CONFIG: MapScopeConfig = {
   scope: AFRICA_MAP_SCOPE,
+  continentId: 'africa',
   countryIds: AFRICA_MAP_COUNTRY_IDS,
 };
 
@@ -74,6 +95,54 @@ export const AFRICA_MAP_SCOPE_CONFIGS: readonly MapScopeConfig[] = [
   ...AFRICA_MAP_REGION_CONFIGS,
 ];
 
+export const AFRICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'africa',
+  scope: AFRICA_MAP_SCOPE,
+  countryIds: AFRICA_MAP_COUNTRY_IDS,
+  regions: AFRICA_MAP_REGION_CONFIGS,
+};
+
+/**
+ * Generated geography coverage is registered by continent. New continent work
+ * extends this registry rather than adding parallel lookup functions.
+ */
+export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freeze([
+  AFRICA_MAP_CONTINENT_CONFIG,
+]);
+
+const MAP_CONTINENT_BY_ID = new Map(
+  MAP_CONTINENT_CONFIGS.map((config) => [config.continentId, config]),
+);
+const MAP_SCOPE_BY_ID = new Map<string, MapScopeConfig>(
+  MAP_CONTINENT_CONFIGS.flatMap((continent) => [
+    [continent.scope.id as string, {
+      scope: continent.scope,
+      continentId: continent.continentId,
+      countryIds: continent.countryIds,
+    }] as const,
+    ...continent.regions.map((region) => [region.scope.id as string, region] as const),
+  ]),
+);
+
+export function getMapScopeConfig(scopeId: string): MapScopeConfig | undefined {
+  return MAP_SCOPE_BY_ID.get(scopeId);
+}
+
+export function getMapContinentConfig(continentId: ContinentId): MapContinentConfig | undefined {
+  return MAP_CONTINENT_BY_ID.get(continentId);
+}
+
+export function getMapContinentConfigForScope(scopeId: string): MapContinentConfig | undefined {
+  const scope = getMapScopeConfig(scopeId);
+  return scope ? getMapContinentConfig(scope.continentId) : undefined;
+}
+
+export function generatedMapCountryIds(): readonly string[] {
+  return MAP_CONTINENT_CONFIGS.flatMap((continent) => [...continent.countryIds]);
+}
+
+/** Compatibility seam for Africa-specific verification while callers migrate. */
 export function getAfricaMapScopeConfig(scopeId: string): MapScopeConfig | undefined {
-  return AFRICA_MAP_SCOPE_CONFIGS.find((config) => config.scope.id === scopeId);
+  const config = getMapScopeConfig(scopeId);
+  return config?.continentId === 'africa' ? config : undefined;
 }

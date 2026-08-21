@@ -1,19 +1,18 @@
-import { COUNTRIES } from '../data/countries.js';
-import { getAfricaMapScopeConfig } from '../data/map-scopes.js';
-import { getAfricaNeighborScopeConfig } from '../data/neighbors/index.js';
+import { countryIdsForLearningScope } from '../data/learning-scopes.js';
+import { getMapScopeConfig } from '../data/map-scopes.js';
+import { getNeighborScopeConfig } from '../data/neighbors/index.js';
 import { LEARNING_DOMAIN_IDS, type LearningDomain, type StudyScope } from './models.js';
 
 /**
- * Flags carries the full world curriculum; the other three domains only have
- * generated Africa geometry. Unsupported scopes must render as honest shells
- * rather than counting towards completion.
+ * Flags carries the full world curriculum. Geography-domain support is explicit
+ * and grows only when canonical generated coverage is registered for the scope.
  */
 export function scopeSupportsDomain(scope: StudyScope, domain: LearningDomain): boolean {
-  if (domain === 'flags') return true;
+  if (domain === 'flags') return countryIdsForLearningScope(scope).length > 0;
   if (!scope.id) return false;
   return domain === 'neighbors'
-    ? getAfricaNeighborScopeConfig(scope.id) !== undefined
-    : getAfricaMapScopeConfig(scope.id) !== undefined;
+    ? getNeighborScopeConfig(scope.id) !== undefined
+    : getMapScopeConfig(scope.id) !== undefined;
 }
 
 export function supportedDomainsForScope(scope: StudyScope): LearningDomain[] {
@@ -22,28 +21,21 @@ export function supportedDomainsForScope(scope: StudyScope): LearningDomain[] {
 
 /**
  * Canonical country membership for one supported scope/domain pair. Achievement
- * aggregation and progress summaries should consume this seam rather than
- * rebuilding geography membership from a second taxonomy.
+ * aggregation and progress summaries consume this seam rather than rebuilding
+ * geography membership from a second taxonomy.
  */
 export function countryIdsForSupportedScope(scope: StudyScope, domain: LearningDomain): string[] {
   if (!scopeSupportsDomain(scope, domain)) return [];
 
   if (domain === 'locations' || domain === 'outlines') {
-    return scope.id ? [...(getAfricaMapScopeConfig(scope.id)?.countryIds ?? [])] : [];
+    return scope.id ? [...(getMapScopeConfig(scope.id)?.countryIds ?? [])] : [];
   }
 
   if (domain === 'neighbors') {
-    return scope.id ? [...(getAfricaNeighborScopeConfig(scope.id)?.countryIds ?? [])] : [];
+    return scope.id ? [...(getNeighborScopeConfig(scope.id)?.countryIds ?? [])] : [];
   }
 
-  if (scope.kind === 'world') return COUNTRIES.map((country) => country.id);
-  if (scope.kind === 'continent') {
-    return COUNTRIES.filter((country) => country.continentId === scope.id).map((country) => country.id);
-  }
-  if (scope.kind === 'region') {
-    return COUNTRIES.filter((country) => country.regionId === scope.id).map((country) => country.id);
-  }
-  return [];
+  return [...countryIdsForLearningScope(scope)];
 }
 
 /** Missing or empty curriculum is never treated as completion. */
