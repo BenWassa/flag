@@ -44,7 +44,8 @@
   --radius-md: 12px;
   --radius-tile: 18px;
   --radius-hero: 24px;
-  --depth-primary: 0 4px 0 var(--action-pressed), 0 9px 22px rgba(23, 73, 184, .12);
+  --depth-primary: 0 4px 0 var(--action-pressed);
+  --depth-arcade: 2px 2px 0 var(--text);
   --depth-tile: 0 1px 2px rgba(16, 19, 24, .05), 0 7px 18px rgba(16, 19, 24, .055);
   --depth-tile-hover: 0 2px 4px rgba(16, 19, 24, .06), 0 10px 24px rgba(16, 19, 24, .075);
   --flag-shadow: 0 9px 24px rgba(16, 19, 24, .09);
@@ -223,6 +224,78 @@ body { letter-spacing: -.006em; }
 .page--tile-index .continent-row__play:active {
   background: color-mix(in srgb, var(--action-soft) 76%, var(--action));
   transform: translateY(1px);
+}
+
+/* Home is the highest-frequency game-entry surface, so it carries the
+   strongest neutral tactile treatment. Lower-level scope rows stay quieter. */
+.page--home .continent-list { gap: 14px; }
+
+.page--home .domain-tile {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--depth-arcade);
+}
+
+.page--home .domain-tile:hover {
+  border-color: var(--text);
+  box-shadow: var(--depth-arcade);
+}
+
+.page--home .domain-tile:active,
+.page--home .domain-tile:has(button:active) {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.page--home .domain-tile__open {
+  min-height: 150px;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr auto;
+  align-content: stretch;
+  gap: 8px;
+  padding: 14px;
+}
+
+.page--home .domain-tile__icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-tile);
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.page--home .domain-tile__icon .ui-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.page--home .domain-tile .continent-row__identity {
+  align-self: start;
+}
+
+.page--home .domain-tile .continent-row__identity strong {
+  font-size: 20px;
+  font-weight: 820;
+}
+
+.page--home .domain-tile .continent-row__identity small {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .055em;
+}
+
+.page--home .domain-tile .continent-row__progress {
+  align-self: end;
+}
+
+.page--home .domain-tile .continent-row__play {
+  width: 52px;
+  border-left: 2px solid var(--text);
 }
 
 .region-list {
@@ -450,6 +523,7 @@ body { letter-spacing: -.006em; }
 @media (max-width: 374px) {
   .page--tile-index .continent-list { grid-template-columns: 1fr; }
   .page--tile-index .continent-row__open { min-height: 94px; }
+  .page--home .domain-tile__open { min-height: 118px; }
 }
 
 @media (min-width: 700px) {
@@ -458,7 +532,7 @@ body { letter-spacing: -.006em; }
 
 @media (hover: hover) and (pointer: fine) {
   .button--primary:hover {
-    box-shadow: 0 4px 0 var(--action-pressed), 0 11px 26px rgba(23, 73, 184, .16);
+    box-shadow: 0 4px 0 var(--action-pressed);
   }
 
   .answer-button:not(:disabled):hover {
@@ -480,6 +554,7 @@ body { letter-spacing: -.006em; }
   .button--primary:active,
   .answer-button:not(:disabled):active,
   .page--tile-index .continent-row:active,
+  .page--home .domain-tile:has(button:active),
   .icon-button:active,
   .text-icon-button:active,
   .region-row__play:active,
