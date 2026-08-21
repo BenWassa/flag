@@ -37,6 +37,7 @@ import {
 import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
+import { renderFocusIntent } from './ui/focus.js';
 import { renderDomainHome } from './ui/views/domain.js';
 import { renderContinent } from './ui/views/atlas.js';
 import { renderHome } from './ui/views/home.js';
@@ -296,6 +297,7 @@ function restoreFocus(previousSelector: string | null): void {
 function render(previousSelector: string | null = null): void {
   const routeKey = currentRouteKey();
   const routeChanged = routeKey !== lastRenderedRouteKey;
+  const focusIntent = renderFocusIntent(lastRenderedRouteKey !== null);
 
   switch (store.view.name) {
     case 'home':
@@ -388,7 +390,7 @@ function render(previousSelector: string | null = null): void {
   }
   preserveScrollOnNextRoute = false;
   lastRenderedRouteKey = routeKey;
-  restoreFocus(previousSelector);
+  if (focusIntent === 'restore-or-autofocus') restoreFocus(previousSelector);
 }
 
 function currentFlagScope(): StudyScope {

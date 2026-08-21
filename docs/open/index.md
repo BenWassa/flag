@@ -31,6 +31,7 @@ Documentation may use Atlas now. Production UI/metadata should change in a focus
 
 ### 4. Existing presentation bugs / cartography
 
+- [#41 — Prevent intermittent focus outline on Atlas heading after refresh](issue-41-heading-focus.md)
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
 
