@@ -1,6 +1,5 @@
 import { CONTINENTS, REGIONS } from '../data/continents.js';
-import { AFRICA_MAP_SCOPE, getAfricaMapScopeConfig } from '../data/map-scopes.js';
-import { getAfricaNeighborScopeConfig } from '../data/neighbors/index.js';
+import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { domainDisplayName } from '../domain/display.js';
 import {
   LEARNING_DOMAIN_IDS,
@@ -8,6 +7,7 @@ import {
   type LearningDomain,
   type StudyScope,
 } from '../domain/models.js';
+import { scopeSupportsDomain } from '../domain/scope-support.js';
 
 export type AppRoute =
   | { name: 'home' }
@@ -77,11 +77,8 @@ export function scopeForQuickPlay(
   }
   if (!id) return null;
   const scope = routeForScopeId(domain, id)?.scope;
-  if (!scope || domain === 'flags') return scope ?? null;
-  const supported = domain === 'neighbors'
-    ? getAfricaNeighborScopeConfig(id)
-    : getAfricaMapScopeConfig(id);
-  return supported ? scope : null;
+  if (!scope) return null;
+  return scopeSupportsDomain(scope, domain) ? scope : null;
 }
 
 export function atlasRouteForScope(scope: StudyScope): AtlasRoute | null {
@@ -102,12 +99,7 @@ export function stableRoute(route: AppRoute): AppRoute {
 export function normalizeAvailableRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning' || route.domain === 'flags') return route;
 
-  const supported = route.scope?.id && (
-    route.domain === 'neighbors'
-      ? getAfricaNeighborScopeConfig(route.scope.id)
-      : getAfricaMapScopeConfig(route.scope.id)
-  );
-  if (supported) return route;
+  if (route.scope && scopeSupportsDomain(route.scope, route.domain)) return route;
 
   return {
     name: 'learning',
@@ -130,9 +122,8 @@ export function parentRoute(route: AppRoute): AppRoute | null {
   return atlasRouteForScope(route.scope) ?? { name: 'home' };
 }
 
-function acceptsDomainScope(domain: LearningDomain, contintentId: string): boolean {
-  if (domain === 'flags') return true;
-  return contintentId === 'africa';
+function acceptsDomainScope(domain: LearningDomain, scope: StudyScope): boolean {
+  return scopeSupportsDomain(scope, domain);
 }
 
 export function parseRoutePath(input: string): AppRoute | null {
@@ -177,8 +168,8 @@ export function parseRoutePath(input: string): AppRoute | null {
 
   const continent = CONTINENTS.find((item) => item.id === scopeSegment);
   if (!continent) return null;
-  if (!acceptsDomainScope(domain, continent.id)) return null;
   const continentScope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+  if (!acceptsDomainScope(domain, continentScope)) return null;
   if (segments.length === 2) return { name: 'learning', domain, scope: continentScope };
 
   if (isLearningActivity(regionOrActivitySegment)) {
@@ -190,8 +181,8 @@ export function parseRoutePath(input: string): AppRoute | null {
     (item) => item.id === regionOrActivitySegment && item.continentId === continent.id,
   );
   if (!region) return null;
-  if (domain !== 'flags' && region.continentId !== 'africa') return null;
   const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
+  if (!acceptsDomainScope(domain, regionScope)) return null;
   if (segments.length === 3) return { name: 'learning', domain, scope: regionScope };
 
   if (!isLearningActivity(activitySegment) || segments.length !== 4) return null;

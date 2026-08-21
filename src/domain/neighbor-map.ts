@@ -278,7 +278,9 @@ export function calculateNeighborClusterBounds(
   neighborIds: readonly string[],
 ): NeighborMapBounds {
   const ids = [targetId, ...neighborIds];
-  const geometryById = new Map(asset.countries.map((geometry) => [geometry.countryId, geometry]));
+  const geometryById = new Map(
+    [...asset.countries, ...(asset.contextCountries ?? [])].map((geometry) => [geometry.countryId, geometry]),
+  );
   const bounds = ids.map((countryId) => {
     const geometry = geometryById.get(countryId);
     const path = geometry ? canonicalCountryPolygonPath(geometry) : null;
@@ -440,7 +442,9 @@ export function deriveNeighborMapModel(
   const neighborSet = new Set(uniqueNeighbors);
   const foundSet = new Set(round.foundIds.filter((countryId) => neighborSet.has(countryId)));
   const revealedSet = new Set(round.revealedIds.filter((countryId) => neighborSet.has(countryId) && !foundSet.has(countryId)));
-  const geometryById = new Map(asset.countries.map((geometry) => [geometry.countryId, geometry]));
+  const geometryById = new Map(
+    [...asset.countries, ...(asset.contextCountries ?? [])].map((geometry) => [geometry.countryId, geometry]),
+  );
   const focus = calculateNeighborClusterBounds(asset, round.targetId, uniqueNeighbors);
   const occupied: LabelBox[] = [];
 
@@ -479,7 +483,7 @@ export function deriveNeighborMapModel(
   const extent = parseViewBox(asset.viewBox);
   const contextWindow = expandBounds(focus, 0.38, extent);
   const puzzleSet = new Set([round.targetId, ...uniqueNeighbors]);
-  const contextCountries = asset.countries
+  const contextCountries = [...asset.countries, ...(asset.contextCountries ?? [])]
     .filter((geometry) => !puzzleSet.has(geometry.countryId))
     .map((geometry) => ({ geometry, path: canonicalCountryPolygonPath(geometry) }))
     .filter((item): item is { geometry: MapCountryGeometry; path: string } => Boolean(item.path))

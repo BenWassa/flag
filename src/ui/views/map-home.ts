@@ -1,7 +1,6 @@
 import {
-  AFRICA_MAP_REGION_CONFIGS,
-  AFRICA_MAP_SCOPE,
-  getAfricaMapScopeConfig,
+  getMapContinentConfig,
+  getMapScopeConfig,
 } from '../../data/map-scopes.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState, MapRegionAsset } from '../../domain/map-models.js';
@@ -18,17 +17,18 @@ export function renderMapHome(
   persisting = true,
   mapAsset?: MapRegionAsset | null,
 ): string {
-  const config = getAfricaMapScopeConfig(scope.id ?? 'africa');
-  if (!config) {
+  const config = scope.id ? getMapScopeConfig(scope.id) : undefined;
+  const continent = config ? getMapContinentConfig(config.continentId) : undefined;
+  if (!config || !continent) {
     return '<main class="page"><h1 tabindex="-1" data-autofocus>Location scope unavailable</h1><button class="button" data-action="launcher-parent">Back</button></main>';
   }
 
   return renderLauncher({
     domain: 'locations',
-    continentScope: AFRICA_MAP_SCOPE,
+    continentScope: continent.scope,
     selectedRegion: config.scope.kind === 'region' ? config.scope : undefined,
     stats: locationStats(progress, config.countryIds),
-    regions: AFRICA_MAP_REGION_CONFIGS.map((region) => ({
+    regions: continent.regions.map((region) => ({
       scope: region.scope,
       stats: locationStats(progress, region.countryIds),
     })),
