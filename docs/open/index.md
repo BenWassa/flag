@@ -26,6 +26,7 @@ These issues are related but should remain separable: country evidence, earned a
 ### 3. Existing presentation bugs / cartography
 
 - [#41 — Prevent intermittent focus outline on Atlas heading after refresh](issue-41-heading-focus.md)
+- [#60 — Add immediate Play feedback and live score tracking](issue-60-play-feedback-score.md)
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
 
