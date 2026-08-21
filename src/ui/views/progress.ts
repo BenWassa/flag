@@ -151,7 +151,7 @@ export function renderProgress(
       ${!persistenceAvailable ? `
         <div class="progress-storage-state" role="status">
           <strong>Progress is temporary</strong>
-          <span>This browser is blocking storage. Your current session still works, but new evidence may not survive after the tab closes.</span>
+          <span>This browser is not allowing storage, so new evidence may only last until you close the tab.</span>
         </div>
       ` : ''}
 
@@ -233,7 +233,7 @@ export function renderProgress(
           ` : `
             <p>${persistenceAvailable
               ? 'Your four learning ledgers are stored on this device only.'
-              : 'Storage is blocked, so new evidence may only last for this tab.'}</p>
+              : 'This browser is not allowing storage, so new evidence may only last until you close the tab.'}</p>
             <button class="button button--tertiary" data-action="reset-request">Reset all progress</button>
           `}
         </div>
