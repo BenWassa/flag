@@ -7,43 +7,17 @@ import {
   type RegionDomainMasteryKey,
 } from '../domain/achievements.js';
 import type { ContinentId } from '../domain/models.js';
+import { parseJson } from './sanitize.js';
+import { createStorageGuard } from './storage-guard.js';
 
 export const ACHIEVEMENT_STORAGE_KEY = 'flag-atlas:earned-achievements:v1';
 
 const REGION_IDS = new Set(REGIONS.map((region) => region.id));
 const CONTINENT_IDS = new Set<ContinentId>(CONTINENTS.map((continent) => continent.id));
-let writable = true;
+const guard = createStorageGuard();
 
 export function achievementStorageIsWritable(): boolean {
-  return writable;
-}
-
-function readRaw(): string | null {
-  try {
-    return localStorage.getItem(ACHIEVEMENT_STORAGE_KEY);
-  } catch {
-    writable = false;
-    return null;
-  }
-}
-
-function writeRaw(value: string): boolean {
-  try {
-    localStorage.setItem(ACHIEVEMENT_STORAGE_KEY, value);
-    return true;
-  } catch {
-    writable = false;
-    return false;
-  }
-}
-
-function parseJson(raw: string | null): unknown {
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  return guard.isWritable();
 }
 
 function uniqueStrings(value: unknown, predicate: (item: string) => boolean): string[] {
@@ -77,18 +51,14 @@ export function migrateAchievementState(value: unknown): EarnedAchievementState 
 }
 
 export function loadAchievementState(): EarnedAchievementState {
-  return migrateAchievementState(parseJson(readRaw()));
+  return migrateAchievementState(parseJson(guard.readRaw(ACHIEVEMENT_STORAGE_KEY)));
 }
 
 export function saveAchievementState(state: EarnedAchievementState): boolean {
-  return writeRaw(JSON.stringify(state));
+  return guard.writeRaw(ACHIEVEMENT_STORAGE_KEY, JSON.stringify(state));
 }
 
 /** Full learner reset semantics: earned achievements are erased explicitly. */
 export function resetAchievementStorage(): void {
-  try {
-    localStorage.removeItem(ACHIEVEMENT_STORAGE_KEY);
-  } catch {
-    writable = false;
-  }
+  guard.removeRaw(ACHIEVEMENT_STORAGE_KEY);
 }

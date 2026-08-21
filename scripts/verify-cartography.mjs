@@ -123,7 +123,7 @@ assert.ok(viewportSource.includes('event.ctrlKey || event.metaKey'), 'Browser/pa
 assert.ok(viewportSource.includes("document.addEventListener('pointermove'"), 'Pointer gestures implement pan/pinch without a runtime map dependency.');
 assert.ok(viewportSource.includes('states.set(sessionId'), 'ViewBox survives answer-feedback rerenders by session.');
 
-const cartographyCss = await readFile('map-cartography.css', 'utf8');
+const cartographyCss = await readFile('src/styles/map-cartography.css', 'utf8');
 assert.ok(cartographyCss.includes('touch-action: none'), 'Map surface opts into explicit pointer pan/pinch handling.');
 assert.ok(cartographyCss.includes('overflow: hidden'), 'Production viewport is not an oversized scroll canvas.');
 assert.ok(cartographyCss.includes('.map-shared-boundary'), 'Shared borders have a dedicated visual layer.');

@@ -194,8 +194,12 @@ assert.ok(resultHtml.includes('1 of 1 first try'), 'Map results report first-try
 assert.ok(resultHtml.includes('map-country--first'), 'Completed map retains resolution color evidence.');
 assert.ok(!resultHtml.includes('map-country--current-correct'), 'Results do not retain transient in-round success styling.');
 assert.ok(
-  resultHtml.includes('data-action="exit-round"') && resultHtml.includes('Back to West Africa'),
-  'Results return to the same map scope through the unified route exit.',
+  resultHtml.includes('data-action="exit-round"') && resultHtml.includes('Back to Locations'),
+  'Results exit to the Locations launcher they actually land on, not a retired region screen.',
+);
+assert.ok(
+  !/Back to (West|East|North|Southern|Central) Africa/.test(resultHtml),
+  'Results never promise a region-detail destination that no longer exists.',
 );
 
 // The map launcher keeps one stable hierarchy while its geography loads lazily.
@@ -251,8 +255,8 @@ assert.equal(repaired.masteryStreak, 0);
 assert.equal(repaired.lifetimeFirstTryCorrect, 0);
 assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 
-const mapCss = await readFile('map.css', 'utf8');
-const styles = await readFile('styles.css', 'utf8');
+const mapCss = await readFile('src/styles/map.css', 'utf8');
+const styles = await readFile('src/styles/styles.css', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
 assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable.');

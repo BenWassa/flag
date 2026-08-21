@@ -1,7 +1,7 @@
 import type { MapRegionAsset, MapSessionResult } from '../../domain/map-models.js';
 import { icon } from '../components/icons.js';
 import { renderMapSvg } from '../components/map.js';
-import { escapeHtml } from '../format.js';
+import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult): string {
   const mode = result.session.mode;
@@ -14,7 +14,7 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
   return `
     <main class="page page--map-results">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} locations">${icon('back')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="${exitRoundLabel('locations')}">${icon('back')}</button>
         <div class="screen-title">
           <h1 id="map-result-heading" tabindex="-1" data-autofocus>Round complete</h1>
           <span>Locations · ${escapeHtml(result.session.scope.label)} · ${mode === 'learn' ? 'Learn' : 'Play'}</span>
@@ -43,8 +43,8 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
 
       <div class="map-results-actions">
         ${result.missedCountryIds.length ? `<button class="button button--primary" data-action="review-map-mistakes">Review mistakes</button>` : ''}
-        <button class="button button--secondary" data-action="repeat-map">Repeat ${mode === 'learn' ? 'Learn' : 'Play'}</button>
-        <button class="button button--tertiary" data-action="exit-round">Back to ${escapeHtml(result.session.scope.label)}</button>
+        <button class="button button--secondary" data-action="repeat-map">${repeatRoundLabel(mode)}</button>
+        <button class="button button--tertiary" data-action="exit-round">${exitRoundLabel('locations')}</button>
       </div>
     </main>
   `;

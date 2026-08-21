@@ -2,7 +2,7 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { domainDisplayName } from '../../domain/display.js';
 import type { NeighborSessionResult } from '../../domain/neighbor-models.js';
 import { icon } from '../components/icons.js';
-import { escapeHtml } from '../format.js';
+import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderNeighborResults(result: NeighborSessionResult): string {
   const missedNames = result.missedCountryIds
@@ -12,7 +12,7 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
   return `
     <main class="page">
       <header class="topbar topbar--detail">
-        <button class="icon-button" data-action="exit-round" aria-label="Exit neighbour results">${icon('close')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="${exitRoundLabel('neighbors')}">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>Round complete</h1>
           <span>${domainDisplayName('neighbors')} · ${escapeHtml(result.session.scope.label)}</span>
@@ -38,8 +38,8 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
       ` : ''}
 
       <div class="result-actions">
-        <button class="button button--primary" data-action="repeat-neighbors">Repeat scope</button>
-        <button class="button button--secondary" data-action="exit-round">Back to scope</button>
+        <button class="button button--secondary" data-action="repeat-neighbors">${repeatRoundLabel(result.session.mode)}</button>
+        <button class="button button--tertiary" data-action="exit-round">${exitRoundLabel('neighbors')}</button>
       </div>
     </main>
   `;

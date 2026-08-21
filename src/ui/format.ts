@@ -1,5 +1,6 @@
-import type { ProgressRecord } from '../domain/models.js';
+import type { LearningDomain, ProgressRecord, StudyMode } from '../domain/models.js';
 import { countryEvidenceState } from '../domain/evidence.js';
+import { domainDisplayName } from '../domain/display.js';
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
@@ -32,6 +33,19 @@ export function statusLabel(record: ProgressRecord, dueForReview = false): strin
     case 'learning': return 'Learning';
     case 'unseen': return 'Unseen';
   }
+}
+
+export function repeatRoundLabel(mode: StudyMode): string {
+  return mode === 'learn' ? 'Learn again' : 'Play again';
+}
+
+/**
+ * Exiting a round pops back to the domain launcher, which is titled by
+ * continent. Naming the round's own scope here promised a region screen that
+ * was retired with #35, so the label names the launcher the learner lands on.
+ */
+export function exitRoundLabel(domain: LearningDomain): string {
+  return `Back to ${domainDisplayName(domain)}`;
 }
 
 export const EVIDENCE_RULE =

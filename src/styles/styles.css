@@ -1,32 +1,19 @@
 :root {
   color-scheme: light;
-  --canvas: #f5f7fa;
-  --surface: #fdfeff;
-  --surface-subtle: #eef1f5;
-  --track: #e2e6ec;
-  --text: #101318;
-  --text-muted: #5a6472;
-  --line: #d6dce4;
-  --line-strong: #aab4c1;
-  --action: #1f4fd6;
-  --action-hover: #183ca0;
-  --action-soft: #e8eeff;
-  --on-action: #f7f9ff;
-  --on-action-muted: rgba(247, 249, 255, .8);
-  --focus-ring: rgba(31, 79, 214, .34);
-  --mastered: #137a55;
-  --mastered-soft: #e7f4ed;
-  --mastered-line: #82bca3;
-  --learning: #9a5b00;
-  --learning-soft: #fff1d6;
-  --unseen: #626b78;
-  --wrong: #b42318;
-  --wrong-soft: #fce8e6;
-  --wrong-line: #dca7a2;
+  /*
+   * This is the pre-Atlas token set. atlas-theme.css is loaded last (see
+   * index.html) and, per DESIGN.md's Implementation constraints, is a
+   * deliberate override layer rather than a rewrite of this file — so it
+   * redeclares --canvas, --action, --text, --radius-*, --flag-shadow, and
+   * every other brand/semantic/elevation token with the live Tactile Atlas
+   * values. Those redeclarations always win the cascade; a value declared
+   * here for one of those names is legacy and never actually renders. Only
+   * declare a token here if atlas-theme.css does not also declare it —
+   * currently that's --flag-line and the --space-* scale below, which stay
+   * live from this file. Adding a same-named token here "to fix a color"
+   * silently does nothing; the fix belongs in atlas-theme.css.
+   */
   --flag-line: rgba(16, 19, 24, .10);
-  --flag-shadow: 0 8px 22px rgba(16, 19, 24, .08);
-  --radius-sm: 6px;
-  --radius-md: 9px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;

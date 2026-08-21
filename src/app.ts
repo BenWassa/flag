@@ -1,18 +1,13 @@
-import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
-import { AFRICA_MAP_SCOPE } from './data/map-scopes.js';
+import { COUNTRIES } from './data/countries.js';
 import { loadMapAsset } from './data/maps/index.js';
 import { AFRICA_LAND_ADJACENCY } from './data/neighbors/index.js';
-import { loadOutlineAsset } from './data/outlines.js';
 import { domainDisplayName } from './domain/display.js';
 import type {
-  LearningActivity,
   LearningStatus,
-  StudyMode,
   StudyScope,
 } from './domain/models.js';
-import type { MapMode, MapRegionAsset } from './domain/map-models.js';
+import type { MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
-import { getRecord, masteryGoal } from './domain/progress.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
 import { flushNeighborAttempts, resetNeighborProgressStorage } from './infrastructure/neighbor-storage.js';
 import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastructure/outline-storage.js';
@@ -23,7 +18,6 @@ import {
   isLearningDomain,
   normalizeAvailableRoute,
   parentRoute,
-  routeForScope,
   routeForScopeId,
   routeTitle,
   routesEqual,
@@ -34,6 +28,13 @@ import {
   type AppRoute,
   type LearningRoute,
 } from './routing/routes.js';
+import { getActiveRoundRoute, setActiveRoundRoute } from './state/active-round.js';
+import { createFlagsRound } from './state/flags-round.js';
+import { createLocationsRound } from './state/locations-round.js';
+import { createNeighborsRound } from './state/neighbors-round.js';
+import { createOutlinesRound } from './state/outlines-round.js';
+import { invalidatePendingRoundLaunch } from './state/round-launch-guard.js';
+import type { RoundContext } from './state/round-context.js';
 import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
@@ -64,48 +65,12 @@ const store = new AppStore();
 const router = createHashRouter(window);
 const allowedNeighborCountryIds = new Set(Object.keys(AFRICA_LAND_ADJACENCY));
 let currentRoute: AppRoute = { name: 'home' };
-let activeRoundRoute: LearningRoute | null = null;
 let progressFilter: LearningStatus | 'all' = 'all';
 let resetArmed = false;
-let lastResultScope: StudyScope | null = null;
-let lastResultMode: StudyMode = 'learn';
-let lastMissedIds: string[] = [];
-let lastOutlineResultScope: StudyScope | null = null;
-let lastOutlineResultMode: StudyMode = 'learn';
-let lastOutlineMissedIds: string[] = [];
-let neighborQuery = '';
-let pendingAdvance: number | null = null;
-let pendingMapAdvance: number | null = null;
-let pendingOutlineAdvance: number | null = null;
 let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
 let launcherMapRequest = 0;
-let roundLaunchRequest = 0;
 let preserveScrollOnNextRoute = false;
-
-function cancelPendingAdvance(): void {
-  if (pendingAdvance === null) return;
-  window.clearTimeout(pendingAdvance);
-  pendingAdvance = null;
-}
-
-function cancelPendingMapAdvance(): void {
-  if (pendingMapAdvance === null) return;
-  window.clearTimeout(pendingMapAdvance);
-  pendingMapAdvance = null;
-}
-
-function cancelPendingOutlineAdvance(): void {
-  if (pendingOutlineAdvance === null) return;
-  window.clearTimeout(pendingOutlineAdvance);
-  pendingOutlineAdvance = null;
-}
-
-function cancelAllPending(): void {
-  cancelPendingAdvance();
-  cancelPendingMapAdvance();
-  cancelPendingOutlineAdvance();
-}
 
 let pendingAnnouncement: number | null = null;
 
@@ -119,8 +84,41 @@ function announce(message: string): void {
   }, 60);
 }
 
+function finishInteraction(previousSelector: string | null): void {
+  render(previousSelector);
+}
+
+/**
+ * Cancels every domain's pending auto-advance timer, not just one. Every
+ * round's `begin()` calls this defensively before starting, and route
+ * changes call it too. Declared before the round controllers exist (a
+ * hoisted function is safe to reference in their shared context, since its
+ * body only runs once they are constructed) rather than after, so the
+ * construction block below reads top-to-bottom as one unit.
+ */
+function cancelAllPending(): void {
+  flagsRound.cancelPending();
+  locationsRound.cancelPending();
+  outlinesRound.cancelPending();
+}
+
+const roundContext: RoundContext = {
+  store,
+  router,
+  announce,
+  finishInteraction,
+  getCurrentRoute: () => currentRoute,
+  cancelAllPending,
+};
+
+const flagsRound = createFlagsRound(roundContext);
+const locationsRound = createLocationsRound(roundContext);
+const outlinesRound = createOutlinesRound(roundContext);
+const neighborsRound = createNeighborsRound(roundContext);
+
 function routeHasActiveRound(route: LearningRoute): boolean {
-  if (!activeRoundRoute || !routesEqual(route, activeRoundRoute)) return false;
+  const active = getActiveRoundRoute();
+  if (!active || !routesEqual(route, active)) return false;
   if (route.domain === 'flags') return store.session !== null;
   if (route.domain === 'locations') return store.mapSession !== null && store.mapAsset !== null;
   if (route.domain === 'outlines') return store.outlineSession !== null && store.outlineAsset !== null;
@@ -232,24 +230,26 @@ function applyRoute(requestedRoute: AppRoute): void {
 router.subscribe((route) => {
   // Any intervening route change invalidates a lazy round start that is still
   // waiting for geometry. The winning start increments this token itself.
-  roundLaunchRequest += 1;
+  invalidatePendingRoundLaunch();
   cancelAllPending();
   resetArmed = false;
   applyRoute(route ?? { name: 'home' });
 });
 
 function discardActiveRound(): void {
-  if (!activeRoundRoute) return;
-  if (activeRoundRoute.domain === 'flags') store.abandonSession();
-  if (activeRoundRoute.domain === 'locations') store.abandonMapSession();
-  if (activeRoundRoute.domain === 'outlines') store.abandonOutlineSession();
-  if (activeRoundRoute.domain === 'neighbors') store.abandonNeighborSession();
-  activeRoundRoute = null;
-  neighborQuery = '';
+  const active = getActiveRoundRoute();
+  if (!active) return;
+  if (active.domain === 'flags') store.abandonSession();
+  if (active.domain === 'locations') store.abandonMapSession();
+  if (active.domain === 'outlines') store.abandonOutlineSession();
+  if (active.domain === 'neighbors') store.abandonNeighborSession();
+  setActiveRoundRoute(null);
+  neighborsRound.resetQuery();
 }
 
 function navigateStable(route: AppRoute): void {
-  if (activeRoundRoute && !routesEqual(route, stableRoute(activeRoundRoute))) discardActiveRound();
+  const active = getActiveRoundRoute();
+  if (active && !routesEqual(route, stableRoute(active))) discardActiveRound();
   router.navigate(route);
 }
 
@@ -307,7 +307,14 @@ function render(previousSelector: string | null = null): void {
       );
       break;
     case 'atlas-continent':
-      root.innerHTML = renderContinent(store.progress, store.view.scope, store.persisting);
+      // The continent surface shows region cards with a launch shortcut for
+      // all four domains at once (like Home, one level up), so its storage
+      // notice must reflect all four ledgers, not just Flags'.
+      root.innerHTML = renderContinent(
+        store.progress,
+        store.view.scope,
+        store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting,
+      );
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(
@@ -339,9 +346,7 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'results':
       root.innerHTML = renderResults(store.view.result);
-      lastResultScope = store.view.result.session.scope;
-      lastResultMode = store.view.result.session.mode;
-      lastMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
+      flagsRound.recordResult(store.view.result);
       break;
     case 'map-home':
       root.innerHTML = renderMapHome(
@@ -373,9 +378,6 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'outline-results':
       root.innerHTML = renderOutlineResults(store.view.result);
-      lastOutlineResultScope = store.view.result.session.scope;
-      lastOutlineResultMode = store.view.result.session.mode;
-      lastOutlineMissedIds = [...new Set(store.view.result.missed.map((attempt) => attempt.countryId))];
       break;
     case 'neighbor-home':
       root.innerHTML = renderNeighborHome(
@@ -387,7 +389,7 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'neighbor-quiz':
       if (!store.neighborSession) return;
-      root.innerHTML = renderNeighborQuiz(store.neighborSession, store.neighborLastOutcome, neighborQuery);
+      root.innerHTML = renderNeighborQuiz(store.neighborSession, store.neighborLastOutcome, neighborsRound.getQuery());
       break;
     case 'neighbor-results':
       root.innerHTML = renderNeighborResults(store.view.result);
@@ -404,291 +406,11 @@ function render(previousSelector: string | null = null): void {
   if (focusIntent === 'restore-or-autofocus') restoreFocus(previousSelector);
 }
 
-function currentFlagScope(): StudyScope {
-  if (currentRoute.name === 'learning' && currentRoute.domain === 'flags' && currentRoute.scope) {
-    return currentRoute.scope;
-  }
-  return { kind: 'world', label: 'World' };
-}
-
-function beginSession(
-  scope: StudyScope,
-  mode: StudyMode,
-  size?: number,
-  reviewIds?: string[],
-  activity: LearningActivity = mode,
-  replaceRoute = false,
-): void {
-  cancelAllPending();
-  if (!store.startSession(scope, mode, size, reviewIds)) {
-    announce(`${scope.label} has no flags to practise right now.`);
-    return;
-  }
-
-  activeRoundRoute = routeForScope('flags', scope, activity);
-  router.navigate(activeRoundRoute, { replace: replaceRoute });
-  const count = store.session?.questions.length ?? 0;
-  announce(`${scope.label}. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${count} flags. Question 1.`);
-}
-
-function currentMapScope(): StudyScope {
-  if (currentRoute.name === 'learning' && currentRoute.domain === 'locations' && currentRoute.scope) {
-    return currentRoute.scope;
-  }
-  if (store.view.name === 'map-results') return store.view.result.session.scope;
-  return store.mapSession?.scope ?? AFRICA_MAP_SCOPE;
-}
-
-async function beginMapSession(
-  mode: MapMode,
-  targetCountryIds?: readonly string[],
-  scope: StudyScope = currentMapScope(),
-  activity: LearningActivity = mode,
-  replaceRoute = false,
-): Promise<void> {
-  cancelAllPending();
-  const request = ++roundLaunchRequest;
-  const scopeId = scope.id ?? 'africa';
-  let asset: MapRegionAsset | null;
-  try {
-    asset = await loadMapAsset(scopeId);
-  } catch {
-    if (request === roundLaunchRequest) announce(`${scope.label} map could not be loaded.`);
-    return;
-  }
-  if (request !== roundLaunchRequest) return;
-  if (!asset) {
-    announce(`${scope.label} map could not be loaded.`);
-    return;
-  }
-  if (!store.startMapSession(asset, mode, targetCountryIds)) {
-    announce('No map locations are available for this round.');
-    return;
-  }
-
-  activeRoundRoute = routeForScope('locations', scope, activity);
-  router.navigate(activeRoundRoute, { replace: replaceRoute });
-  announce(`${asset.scope.label} locations. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${store.mapSession?.countryIds.length ?? 0} countries.`);
-}
-
-function currentOutlineScope(): StudyScope {
-  if (currentRoute.name === 'learning' && currentRoute.domain === 'outlines' && currentRoute.scope) {
-    return currentRoute.scope;
-  }
-  if (store.view.name === 'outline-results') return store.view.result.session.scope;
-  return store.outlineSession?.scope ?? AFRICA_MAP_SCOPE;
-}
-
-async function beginOutlineSession(
-  mode: StudyMode,
-  targetCountryIds?: readonly string[],
-  scope: StudyScope = currentOutlineScope(),
-  activity: LearningActivity = mode,
-  replaceRoute = false,
-): Promise<void> {
-  cancelAllPending();
-  const request = ++roundLaunchRequest;
-  let asset: Awaited<ReturnType<typeof loadOutlineAsset>>;
-  try {
-    asset = await loadOutlineAsset(scope.id ?? 'africa');
-  } catch {
-    if (request === roundLaunchRequest) announce(`${scope.label} silhouettes could not be loaded.`);
-    return;
-  }
-  if (request !== roundLaunchRequest) return;
-  if (!asset) {
-    announce(`${scope.label} silhouettes could not be loaded.`);
-    return;
-  }
-  const size = targetCountryIds ? Math.max(1, Math.min(10, targetCountryIds.length)) : 10;
-  if (!store.startOutlineSession(asset, mode, size, targetCountryIds)) {
-    announce('No country outlines are available for this round.');
-    return;
-  }
-
-  activeRoundRoute = routeForScope('outlines', scope, activity);
-  router.navigate(activeRoundRoute, { replace: replaceRoute });
-  announce(`${asset.scope.label} outlines. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round of ${store.outlineSession?.questions.length ?? 0} countries. Question 1.`);
-}
-
-function currentNeighborScope(): StudyScope {
-  if (currentRoute.name === 'learning' && currentRoute.domain === 'neighbors' && currentRoute.scope) return currentRoute.scope;
-  if (store.view.name === 'neighbor-results') return store.view.result.session.scope;
-  return store.neighborSession?.scope ?? AFRICA_MAP_SCOPE;
-}
-
-function beginNeighborSession(
-  mode: StudyMode,
-  targetCountryIds?: readonly string[],
-  scope: StudyScope = currentNeighborScope(),
-  activity: LearningActivity = mode,
-  replaceRoute = false,
-): void {
-  cancelAllPending();
-  const size = targetCountryIds?.length ?? 10;
-  if (!store.startNeighborSession(scope, mode, size, targetCountryIds)) {
-    announce(`${scope.label} has no land-neighbour targets to practise right now.`);
-    return;
-  }
-  neighborQuery = '';
-  activeRoundRoute = routeForScope('neighbors', scope, activity);
-  router.navigate(activeRoundRoute, { replace: replaceRoute });
-  const targetId = store.neighborSession?.countryIds[0];
-  const target = targetId ? COUNTRY_BY_ID.get(targetId) : undefined;
-  announce(`${scope.label} neighbours. ${activity === 'review' ? 'Review' : mode === 'learn' ? 'Learn' : 'Play'} round. ${target ? `Name every land neighbour of ${target.name}.` : ''}`);
-}
-
 function exitActiveRound(): void {
-  if (!activeRoundRoute) return;
+  if (!getActiveRoundRoute()) return;
   cancelAllPending();
   discardActiveRound();
   router.back();
-}
-
-function answerAnnouncement(countryId: string): string {
-  if (!store.session) return '';
-  const question = store.session.questions[store.session.currentIndex];
-  const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
-  if (!target) return '';
-  if (store.session.mode === 'test') return 'Answer recorded.';
-
-  const record = getRecord(store.progress, target.id);
-  const state = record.status === 'mastered'
-    ? 'Now mastered.'
-    : `Learning, ${record.masteryStreak} of ${masteryGoal(record)} rounds.`;
-  return countryId === target.id
-    ? `Correct. ${target.name}. ${state}`
-    : `Incorrect. The answer is ${target.name}. ${state}`;
-}
-
-function submitAnswer(countryId: string): void {
-  if (!store.session || store.answeredCountryId !== null) return;
-  store.answer(countryId);
-  announce(answerAnnouncement(countryId));
-
-  if (store.session.mode === 'test') {
-    cancelPendingAdvance();
-    pendingAdvance = window.setTimeout(() => {
-      pendingAdvance = null;
-      if (store.view.name !== 'quiz') return;
-      store.advance();
-      announceResult();
-      finishInteraction(null);
-    }, 180);
-  }
-}
-
-function outlineAnswerAnnouncement(countryId: string): string {
-  if (!store.outlineSession) return '';
-  const question = store.outlineSession.questions[store.outlineSession.currentIndex];
-  const target = question ? COUNTRY_BY_ID.get(question.countryId) : undefined;
-  if (!target) return '';
-  if (store.outlineSession.mode === 'test') return 'Answer recorded.';
-
-  const record = getRecord(store.outlineProgress, target.id);
-  const state = record.status === 'mastered'
-    ? 'Now mastered.'
-    : `Learning, ${record.masteryStreak} of ${masteryGoal(record)} rounds.`;
-  return countryId === target.id
-    ? `Correct. ${target.name}. ${state}`
-    : `Incorrect. The answer is ${target.name}. ${state}`;
-}
-
-function submitOutlineAnswer(countryId: string): void {
-  if (!store.outlineSession || store.outlineAnsweredCountryId !== null) return;
-  store.answerOutline(countryId);
-  announce(outlineAnswerAnnouncement(countryId));
-
-  if (store.outlineSession.mode === 'test') {
-    cancelPendingOutlineAdvance();
-    pendingOutlineAdvance = window.setTimeout(() => {
-      pendingOutlineAdvance = null;
-      if (store.view.name !== 'outline-quiz') return;
-      store.advanceOutline();
-      announceOutlineResult();
-      finishInteraction(null);
-    }, 180);
-  }
-}
-
-function mapAnswerAnnouncement(): string {
-  const outcome = store.mapLastOutcome;
-  const session = store.mapSession;
-  if (!outcome || !session) return '';
-  if (session.mode === 'test') return 'Location recorded.';
-  if (outcome.correct) {
-    if (outcome.misses === 0) return 'Correct on the first try.';
-    return `Correct after ${outcome.misses} ${outcome.misses === 1 ? 'miss' : 'misses'}.`;
-  }
-  if (outcome.revealed) {
-    const target = COUNTRY_BY_ID.get(outcome.targetCountryId);
-    return `Three misses. ${target?.name ?? 'The country'} is revealed in red.`;
-  }
-  const left = 3 - outcome.misses;
-  return `Incorrect. ${left} ${left === 1 ? 'try' : 'tries'} left.`;
-}
-
-function submitMapAnswer(countryId: string, selector: string): void {
-  if (store.view.name !== 'map-quiz' || !store.mapSession) return;
-  const currentId = store.mapSession.countryIds[store.mapSession.currentIndex];
-  if (!currentId || store.mapSession.targets[currentId]?.resolved) return;
-
-  const outcome = store.answerMap(countryId);
-  const advanceDelay = store.mapSession.mode === 'test'
-    ? 180
-    : outcome.revealed
-      ? 1400
-      : outcome.misses >= 2
-        ? 850
-        : outcome.misses === 1
-          ? 700
-          : 520;
-  announce(mapAnswerAnnouncement());
-  finishInteraction(selector);
-
-  if (!outcome.resolved) return;
-  cancelPendingMapAdvance();
-  pendingMapAdvance = window.setTimeout(() => {
-    pendingMapAdvance = null;
-    if (store.view.name !== 'map-quiz') return;
-    const result = store.advanceMap();
-    if (result) announceMapResult();
-    else if (store.mapSession) {
-      const nextId = store.mapSession.countryIds[store.mapSession.currentIndex];
-      const next = nextId ? COUNTRY_BY_ID.get(nextId) : undefined;
-      if (next) announce(`Next country. Find ${next.name}.`);
-    }
-    finishInteraction(null);
-  }, advanceDelay);
-}
-
-function neighborAnswerAnnouncement(): string {
-  const outcome = store.neighborLastOutcome;
-  if (!outcome) return '';
-  if (outcome.kind === 'duplicate') return 'Already guessed. No attempt used.';
-  const selected = COUNTRY_BY_ID.get(outcome.selectedCountryId)?.name ?? outcome.selectedCountryId;
-  if (outcome.resolved && outcome.resolution === 'exhausted') {
-    const remaining = outcome.revealedIds.map((id) => COUNTRY_BY_ID.get(id)?.name ?? id).join(', ');
-    return `Attempts exhausted. Remaining neighbours: ${remaining}.`;
-  }
-  if (outcome.resolved) return `Complete. ${outcome.foundCount} of ${outcome.totalNeighbors} neighbours found.`;
-  return outcome.kind === 'correct'
-    ? `Correct. ${selected}. ${outcome.foundCount} of ${outcome.totalNeighbors} found. ${outcome.remainingAttempts} attempts left.`
-    : `Incorrect. ${selected} is not in this neighbour set. ${outcome.remainingAttempts} attempts left.`;
-}
-
-function submitNeighborGuess(countryId: string): void {
-  if (store.view.name !== 'neighbor-quiz' || !store.neighborSession) return;
-  const targetId = store.neighborSession.countryIds[store.neighborSession.currentIndex];
-  if (!targetId || store.neighborSession.targets[targetId]?.resolved) return;
-  const outcome = store.answerNeighbor(countryId);
-  neighborQuery = '';
-  announce(neighborAnswerAnnouncement());
-  finishInteraction(outcome.resolved ? null : '[data-neighbor-input]');
-}
-
-function finishInteraction(previousSelector: string | null): void {
-  render(previousSelector);
 }
 
 function openDomain(id: string | undefined): void {
@@ -716,13 +438,13 @@ function quickPlay(domainValue: string | undefined, id: string | undefined): voi
   if (!scope) return;
 
   if (domainValue === 'flags') {
-    beginSession(scope, 'test');
+    flagsRound.begin(scope, 'test');
   } else if (domainValue === 'locations') {
-    void beginMapSession('test', undefined, scope);
+    void locationsRound.begin('test', undefined, scope);
   } else if (domainValue === 'outlines') {
-    void beginOutlineSession('test', undefined, scope);
+    void outlinesRound.begin('test', undefined, scope);
   } else {
-    beginNeighborSession('test', undefined, scope);
+    neighborsRound.begin('test', undefined, scope);
   }
 }
 
@@ -735,7 +457,8 @@ function replaceLauncherScope(
   if (!isLearningDomain(domainValue) || !id) return;
   const route = routeForScopeId(domainValue, id);
   if (!route?.scope || route.scope.kind !== expectedKind) return;
-  if (activeRoundRoute && !routesEqual(route, stableRoute(activeRoundRoute))) discardActiveRound();
+  const active = getActiveRoundRoute();
+  if (active && !routesEqual(route, stableRoute(active))) discardActiveRound();
 
   preserveScrollOnNextRoute = true;
   router.navigate(route, { replace: true });
@@ -761,11 +484,11 @@ root.addEventListener('click', (event) => {
     : `[data-action="${action}"]`;
 
   if (action === 'map-answer' && id) {
-    submitMapAnswer(id, selector);
+    locationsRound.submitAnswer(id, selector);
     return;
   }
   if (action === 'neighbor-guess' && id) {
-    submitNeighborGuess(id);
+    neighborsRound.submitGuess(id);
     return;
   }
   if (action === 'quick-play') {
@@ -808,63 +531,43 @@ root.addEventListener('click', (event) => {
     return;
   }
   if (action === 'start-map-learn' || action === 'start-map-test') {
-    void beginMapSession(action === 'start-map-learn' ? 'learn' : 'test');
+    void locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test');
     return;
   }
   if (action === 'start-outline-learn' || action === 'start-outline-test') {
-    void beginOutlineSession(action === 'start-outline-learn' ? 'learn' : 'test');
+    void outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test');
     return;
   }
   if (action === 'start-neighbor-learn' || action === 'start-neighbor-test') {
-    beginNeighborSession(action === 'start-neighbor-learn' ? 'learn' : 'test');
+    neighborsRound.begin(action === 'start-neighbor-learn' ? 'learn' : 'test');
     return;
   }
   if (action === 'next-neighbor') {
-    const result = store.advanceNeighbor();
-    neighborQuery = '';
-    if (result) announceNeighborResult();
-    else if (store.neighborSession) {
-      const nextId = store.neighborSession.countryIds[store.neighborSession.currentIndex];
-      const next = nextId ? COUNTRY_BY_ID.get(nextId) : undefined;
-      if (next) announce(`Next country. Name every land neighbour of ${next.name}.`);
-    }
-    finishInteraction(result ? null : '[data-neighbor-input]');
+    neighborsRound.advance();
     return;
   }
   if (action === 'review-neighbors' && store.view.name === 'neighbor-results') {
-    beginNeighborSession('learn', store.view.result.missedCountryIds, store.view.result.session.scope, 'review', true);
+    neighborsRound.reviewMistakes();
     return;
   }
   if (action === 'repeat-neighbors' && store.view.name === 'neighbor-results') {
-    beginNeighborSession(store.view.result.session.mode, undefined, store.view.result.session.scope, store.view.result.session.mode, true);
+    neighborsRound.repeat();
     return;
   }
   if (action === 'review-map-mistakes' && store.view.name === 'map-results') {
-    void beginMapSession(
-      'learn',
-      store.view.result.missedCountryIds,
-      store.view.result.session.scope,
-      'review',
-      true,
-    );
+    locationsRound.reviewMistakes();
     return;
   }
   if (action === 'repeat-map' && store.view.name === 'map-results') {
-    void beginMapSession(
-      store.view.result.session.mode,
-      undefined,
-      store.view.result.session.scope,
-      store.view.result.session.mode,
-      true,
-    );
+    locationsRound.repeat();
     return;
   }
   if (action === 'review-outline-mistakes' && store.view.name === 'outline-results') {
-    void beginOutlineSession('learn', lastOutlineMissedIds, store.view.result.session.scope, 'review', true);
+    outlinesRound.reviewMistakes();
     return;
   }
   if (action === 'repeat-outline' && store.view.name === 'outline-results') {
-    void beginOutlineSession(store.view.result.session.mode, undefined, store.view.result.session.scope, store.view.result.session.mode, true);
+    outlinesRound.repeat();
     return;
   }
   if (action === 'exit-round' || action === 'exit-quiz' || action === 'exit-map' || action === 'exit-outline') {
@@ -899,29 +602,29 @@ root.addEventListener('click', (event) => {
       store.resetMapProgress();
       store.resetOutlineProgress();
       store.resetNeighborProgress();
-      activeRoundRoute = null;
-      neighborQuery = '';
+      setActiveRoundRoute(null);
+      neighborsRound.resetQuery();
       resetArmed = false;
       progressFilter = 'all';
       announce('All flag, location, outline, and neighbour progress erased.');
       break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
-        beginSession(currentFlagScope(), 'learn');
+        flagsRound.begin(flagsRound.currentScope(), 'learn');
         return;
       }
       break;
     case 'start-test':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
-        beginSession(currentFlagScope(), 'test');
+        flagsRound.begin(flagsRound.currentScope(), 'test');
         return;
       }
       break;
     case 'answer':
-      if (id) submitAnswer(id);
+      if (id) flagsRound.submitAnswer(id);
       break;
     case 'outline-answer':
-      if (id) submitOutlineAnswer(id);
+      if (id) outlinesRound.submitAnswer(id);
       break;
     case 'next-question':
       store.advance();
@@ -930,28 +633,15 @@ root.addEventListener('click', (event) => {
       store.advanceOutline();
       break;
     case 'review-mistakes':
-      if (lastResultScope && lastMissedIds.length) {
-        beginSession(
-          lastResultScope,
-          'learn',
-          Math.max(4, Math.min(10, lastMissedIds.length)),
-          lastMissedIds,
-          'review',
-          true,
-        );
-        return;
-      }
+      if (flagsRound.reviewMistakes()) return;
       break;
     case 'repeat-scope':
-      if (lastResultScope) {
-        beginSession(lastResultScope, lastResultMode, undefined, undefined, lastResultMode, true);
-        return;
-      }
+      if (flagsRound.repeat()) return;
       break;
   }
 
-  announceResult();
-  announceOutlineResult();
+  flagsRound.announceResult();
+  outlinesRound.announceResult();
   finishInteraction(selector);
 });
 
@@ -970,9 +660,9 @@ root.addEventListener('input', (event) => {
     ? event.target
     : null;
   if (!input || store.view.name !== 'neighbor-quiz' || !store.neighborSession) return;
-  neighborQuery = input.value;
+  neighborsRound.setQuery(input.value);
   const suggestions = root.querySelector<HTMLElement>('#neighbor-suggestions');
-  if (suggestions) suggestions.innerHTML = renderNeighborSuggestions(store.neighborSession, neighborQuery);
+  if (suggestions) suggestions.innerHTML = renderNeighborSuggestions(store.neighborSession, neighborsRound.getQuery());
 });
 
 root.addEventListener('submit', (event) => {
@@ -981,39 +671,13 @@ root.addEventListener('submit', (event) => {
     : null;
   if (!form || store.view.name !== 'neighbor-quiz') return;
   event.preventDefault();
-  const country = resolveCountryGuess(COUNTRIES, allowedNeighborCountryIds, neighborQuery);
+  const country = resolveCountryGuess(COUNTRIES, allowedNeighborCountryIds, neighborsRound.getQuery());
   if (!country) {
     announce('Choose a country from the suggestions or enter a complete supported country name.');
     return;
   }
-  submitNeighborGuess(country.id);
+  neighborsRound.submitGuess(country.id);
 });
-
-function announceResult(): void {
-  if (store.view.name !== 'results') return;
-  const { correct, total, newlyMastered } = store.view.result;
-  const mastery = newlyMastered.length ? ` ${newlyMastered.length} newly mastered.` : '';
-  announce(`Round complete. ${correct} of ${total} correct.${mastery}`);
-}
-
-function announceOutlineResult(): void {
-  if (store.view.name !== 'outline-results') return;
-  const { correct, total, newlyMastered } = store.view.result;
-  const mastery = newlyMastered.length ? ` ${newlyMastered.length} newly mastered.` : '';
-  announce(`Outline round complete. ${correct} of ${total} correct.${mastery}`);
-}
-
-function announceMapResult(): void {
-  if (store.view.name !== 'map-results') return;
-  const { firstTryCorrect, total, missedCountryIds } = store.view.result;
-  announce(`Map round complete. ${firstTryCorrect} of ${total} first try. ${missedCountryIds.length} to review.`);
-}
-
-function announceNeighborResult(): void {
-  if (store.view.name !== 'neighbor-results') return;
-  const { cleanCompletions, total, missedCountryIds } = store.view.result;
-  announce(`Neighbour round complete. ${cleanCompletions} of ${total} clean completions. ${missedCountryIds.length} to review.`);
-}
 
 window.addEventListener('keydown', (event) => {
   if (event.metaKey || event.ctrlKey || event.altKey) return;
@@ -1038,7 +702,7 @@ window.addEventListener('keydown', (event) => {
       const id = focused.dataset.id;
       if (id) {
         event.preventDefault();
-        submitMapAnswer(id, `[data-action="map-answer"][data-id="${id}"]`);
+        locationsRound.submitAnswer(id, `[data-action="map-answer"][data-id="${id}"]`);
       }
     }
     return;
@@ -1056,7 +720,7 @@ window.addEventListener('keydown', (event) => {
       const countryId = question?.optionCountryIds[Number(event.key) - 1];
       if (countryId) {
         event.preventDefault();
-        submitOutlineAnswer(countryId);
+        outlinesRound.submitAnswer(countryId);
         finishInteraction(null);
       }
       return;
@@ -1065,7 +729,7 @@ window.addEventListener('keydown', (event) => {
     if (store.outlineAnsweredCountryId !== null && store.outlineSession.mode === 'learn' && event.key === 'Enter') {
       event.preventDefault();
       store.advanceOutline();
-      announceOutlineResult();
+      outlinesRound.announceResult();
       finishInteraction(null);
     }
     return;
@@ -1084,7 +748,7 @@ window.addEventListener('keydown', (event) => {
     const countryId = question?.optionCountryIds[Number(event.key) - 1];
     if (countryId) {
       event.preventDefault();
-      submitAnswer(countryId);
+      flagsRound.submitAnswer(countryId);
       finishInteraction(null);
     }
     return;
@@ -1093,7 +757,7 @@ window.addEventListener('keydown', (event) => {
   if (store.answeredCountryId !== null && store.session.mode === 'learn' && event.key === 'Enter') {
     event.preventDefault();
     store.advance();
-    announceResult();
+    flagsRound.announceResult();
     finishInteraction(null);
   }
 });

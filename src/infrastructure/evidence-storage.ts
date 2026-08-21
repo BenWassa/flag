@@ -4,14 +4,7 @@ import type {
   EvidenceOutcome,
 } from '../domain/models.js';
 import { createEvidenceSummary } from '../domain/evidence.js';
-
-function toCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
-}
-
-function toOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
+import { toCount, toOptionalString } from './sanitize.js';
 
 const ACTIVITIES: readonly EvidenceActivity[] = ['learn', 'play', 'review'];
 const OUTCOMES: readonly EvidenceOutcome[] = [

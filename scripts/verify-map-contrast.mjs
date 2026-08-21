@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const theme = await readFile('atlas-theme.css', 'utf8');
-const launcher = await readFile('styles.css', 'utf8');
-const locations = await readFile('map.css', 'utf8');
-const cartography = await readFile('map-cartography.css', 'utf8');
-const neighbours = await readFile('neighbors.css', 'utf8');
+const theme = await readFile('src/styles/atlas-theme.css', 'utf8');
+const launcher = await readFile('src/styles/styles.css', 'utf8');
+const locations = await readFile('src/styles/map.css', 'utf8');
+const cartography = await readFile('src/styles/map-cartography.css', 'utf8');
+const neighbours = await readFile('src/styles/neighbors.css', 'utf8');
 
 const tokens = [
   '--map-ocean',
