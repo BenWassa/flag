@@ -1,7 +1,7 @@
 # Issue #54 — Remove rivers from Atlas maps
 
-**Status:** implementation branch in progress  
-**Tracking:** GitHub Issue #54
+**Status:** implemented on branch; final PR CI/artifact closeout pending  
+**Tracking:** GitHub Issue #54 / PR #55
 
 ## Decision
 
@@ -16,20 +16,25 @@ Political geography remains unchanged: canonical country geometry, topology-deri
 
 ## Implementation contract
 
-The change is made at the shared cartography-data boundary, not by hiding a CSS layer. The active Natural Earth manifest, `MapWaterLayers`, map generator, runtime optimiser, generated Africa asset, launcher/Locations/Neighbours renderers, shared palette, forced-colours rules, verification and durable cartography documentation must all agree that rivers are absent.
+The change is made at the shared cartography-data boundary, not by hiding a CSS layer. The active Natural Earth manifest, `MapWaterLayers`, map generator, runtime optimiser, generated Africa asset, map-asset adapter, launcher/Locations/Neighbours renderers, shared palette, forced-colours rules, verification and durable cartography documentation all agree that rivers are absent.
 
-`src/data/maps/africa.ts` and `docs/architecture/cartography-provenance.json` remain generated outputs and must be regenerated with `npm run maps:generate` rather than hand-edited.
+`src/data/maps/africa.ts` and `docs/architecture/cartography-provenance.json` remain generated outputs and were regenerated through `npm run maps:generate` rather than hand-edited.
 
-## Verification
+The shell cache advances to `flag-atlas-v18` because shared shell-cached cartography CSS changed. The lazy continent-module loading contract is unchanged.
 
-Before merge:
+## Verification evidence
 
-1. sync current `main`;
-2. run `npm run check` and full `npm test` under Node 22;
-3. confirm generated/runtime assets contain no river source, paths or river-layer markup;
-4. confirm topology-derived borders, coastlines and adjacency remain intact;
-5. inspect the exact production `dist` artifact;
-6. verify service-worker cache invalidation for changed shell CSS;
-7. confirm final CI is green.
+A Node 22.23.2 regeneration/verification run completed successfully on the implemented tree:
 
-Manual phone/browser/device claims must only be recorded if actually performed.
+- `npm run check` — passed;
+- full `npm test` — passed;
+- generated political/context topology remained 40,775 / 56,682 coordinates after simplification;
+- Africa retained 54 canonical country geometries and the existing topology-derived adjacency/boundary contracts;
+- runtime physical context retained nine selected lakes/reservoirs and no rivers;
+- `dist/data/maps/africa.js` measured 921,370 bytes raw / 243,737 bytes gzip, within the existing budget;
+- production inspection found no `map-water--rivers`, `launcher-map-water--rivers`, or `runtime-major-rivers` markers;
+- built `sw.js` contained the v18 cache version.
+
+Before merge, final PR CI must still be green on the exact final commit and its uploaded production artifact must be inspected. Issue #20 should be reconciled only after #54 lands on `main`, so its closeout no longer asks reviewers to inspect river contrast.
+
+No physical-device, iOS Safari, Android Chromium or Windows High Contrast testing is claimed.
