@@ -1,4 +1,11 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
+import { REGIONS } from '../../data/continents.js';
+import {
+  getContinentAchievementReadModel,
+  getRegionAchievementReadModel,
+  getWorldAchievementReadModel,
+  type EarnedAchievementState,
+} from '../../domain/achievements.js';
 import type { LocationProgressState } from '../../domain/map-models.js';
 import type { LearningDomain, LearningStatus, ProgressState, StudyScope } from '../../domain/models.js';
 import type { NeighborProgressState } from '../../domain/neighbor-models.js';
@@ -8,10 +15,6 @@ import {
   type ProgressLedgers,
   type ProgressSummary,
 } from '../../domain/progress-summary.js';
-import { getRecord, masteryGoal } from '../../domain/progress.js';
-import { loadLocationProgress, mapStorageIsWritable } from '../../infrastructure/map-storage.js';
-import { loadNeighborProgress, neighborStorageIsWritable } from '../../infrastructure/neighbor-storage.js';
-import { loadOutlineProgress, outlineStorageIsWritable } from '../../infrastructure/outline-storage.js';
 import { domainIcon, icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
 
@@ -26,15 +29,15 @@ const EVIDENCE_LABELS = {
 } as const;
 
 function emptyLocationProgress(): LocationProgressState {
-  return { version: 1, records: {} };
+  return { version: 2, records: {} };
 }
 
 function emptyNeighborProgress(): NeighborProgressState {
-  return { version: 1, records: {} };
+  return { version: 2, records: {} };
 }
 
 function emptyProgress(): ProgressState {
-  return { version: 1, records: {} };
+  return { version: 2, records: {} };
 }
 
 function selectedDomain(filter: string): LearningDomain {
@@ -45,8 +48,9 @@ function selectedDomain(filter: string): LearningDomain {
   return 'flags';
 }
 
-function legacyStatusFilter(filter: string): LearningStatus | 'all' {
-  return filter === 'unseen' || filter === 'learning' || filter === 'mastered' ? filter : 'all';
+function legacyStatusFilter(filter: string): 'all' | 'unseen' | 'learning' | 'strong' {
+  if (filter === 'mastered') return 'strong';
+  return filter === 'unseen' || filter === 'learning' ? filter : 'all';
 }
 
 function summarySentence(summary: ProgressSummary): string {
@@ -90,22 +94,56 @@ function renderDomainSummary(summary: ProgressSummary, selected: boolean): strin
   `;
 }
 
+function renderAchievements(achievements: EarnedAchievementState): string {
+  const regions = ['north-africa', 'west-africa', 'central-africa', 'east-africa', 'southern-africa']
+    .map((regionId) => getRegionAchievementReadModel(achievements, regionId))
+    .filter((model): model is NonNullable<typeof model> => model !== null);
+  const africa = getContinentAchievementReadModel(achievements, 'africa');
+  const world = getWorldAchievementReadModel(achievements);
+  const regionLabels = new Map(REGIONS.map((region) => [region.id, region.name]));
+  return `
+    <section class="progress-achievements" aria-labelledby="progress-achievements-heading">
+      <div class="section-heading">
+        <h2 id="progress-achievements-heading">Earned achievements</h2>
+        <p>Persistent recognition is separate from current country evidence.</p>
+      </div>
+      <div class="ledger-list progress-achievement-list">
+        ${regions.map((region) => `
+          <div class="ledger-row progress-achievement-row ${region.complete ? 'progress-achievement-row--complete' : ''}">
+            <span class="ledger-row__country"><strong>${escapeHtml(regionLabels.get(region.regionId) ?? region.regionId)}</strong><small>${region.complete ? 'Complete region' : 'Region Mastery by domain'}</small></span>
+            <span class="progress-achievement-domains" aria-label="${region.regionId} earned Mastery by domain">
+              ${DOMAIN_IDS.map((domain) => `<span class="progress-achievement-domain ${region.domainMastery[domain] ? 'progress-achievement-domain--earned' : ''}" title="${region.domainMastery[domain] ? 'Earned' : 'Not earned'} ${domain}">${domainIcon(domain)}</span>`).join('')}
+            </span>
+          </div>
+        `).join('')}
+        <div class="ledger-row progress-achievement-row ${africa?.crestEarned ? 'progress-achievement-row--complete' : ''}">
+          <span class="ledger-row__country"><strong>Africa</strong><small>${africa?.crestEarned ? 'Continent completion' : 'Continent completion not earned'}</small></span>
+          <span class="progress-achievement-status">${africa?.crestEarned ? 'Crest earned' : 'Crest locked'}</span>
+        </div>
+        <div class="ledger-row progress-achievement-row">
+          <span class="ledger-row__country"><strong>World</strong><small>${world.crownEarned ? 'World completion' : 'World completion not earned'}</small></span>
+          <span class="progress-achievement-status">${world.crownEarned ? 'Crown earned' : 'Crown locked'}</span>
+        </div>
+      </div>
+    </section>
+  `;
+}
+
+const FILTER_LABELS: Record<LearningStatus | 'all', string> = {
+  all: 'All',
+  unseen: 'Unseen',
+  learning: 'Learning',
+  mastered: 'Strong',
+};
+
 export function renderProgress(
-  progress: ProgressState,
+  ledgers: ProgressLedgers,
+  achievements: EarnedAchievementState,
   filter: string = 'all',
   resetArmed = false,
   persisting = true,
 ): string {
-  const ledgers: ProgressLedgers = {
-    flags: progress,
-    locations: loadLocationProgress() ?? emptyLocationProgress(),
-    outlines: loadOutlineProgress() ?? emptyProgress(),
-    neighbors: loadNeighborProgress() ?? emptyNeighborProgress(),
-  };
-  const persistenceAvailable = persisting
-    && mapStorageIsWritable()
-    && outlineStorageIsWritable()
-    && neighborStorageIsWritable();
+  const persistenceAvailable = persisting;
   const summaries = buildScopeProgressSummaries(ledgers, AFRICA_SCOPE);
   const domain = selectedDomain(filter);
   const statusFilter = legacyStatusFilter(filter);
@@ -116,8 +154,7 @@ export function renderProgress(
       const country = COUNTRY_BY_ID.get(countryId);
       if (!country) return null;
       const evidence = evidenceForCountry(ledgers, domain, countryId);
-      const sourceStatus = evidence.sourceStatus;
-      if (domain === 'flags' && statusFilter !== 'all' && sourceStatus !== statusFilter) return null;
+      if (domain === 'flags' && statusFilter !== 'all' && evidence.status !== statusFilter) return null;
       return { country, evidence };
     })
     .filter((item): item is NonNullable<typeof item> => item !== null)
@@ -128,7 +165,7 @@ export function renderProgress(
         || left.country.name.localeCompare(right.country.name);
     });
 
-  const studiedCount = summaries.reduce((sum, item) => sum + item.learning + item.strong, 0);
+  const studiedCount = summaries.reduce((sum, item) => sum + item.learning + item.strong + item.due, 0);
   const hasHistory = studiedCount > 0;
   const grouped = new Map<string, typeof evidenceRows>();
   for (const row of evidenceRows) {
@@ -151,7 +188,6 @@ export function renderProgress(
       ${!persistenceAvailable ? `
         <div class="progress-storage-state" role="status">
           <strong>Progress is temporary</strong>
-          <span>This browser is not allowing storage, so new evidence may only last until you close the tab.</span>
         </div>
       ` : ''}
 
@@ -200,15 +236,10 @@ export function renderProgress(
                 <div class="progress-evidence-group">
                   <h3>${escapeHtml(regionLabel)} · ${EVIDENCE_LABELS[state]}</h3>
                   ${rows.map(({ country, evidence }) => {
-                    const record = domain === 'flags' ? getRecord(progress, country.id) : null;
-                    const legacyGoalMarker = record?.status === 'learning'
-                      ? `<!-- ${record.masteryStreak}/${masteryGoal(record)} toward mastery -->`
-                      : '';
                     return `
                       <div class="ledger-row">
                         <span class="ledger-row__country"><strong>${escapeHtml(country.name)}</strong><small>${EVIDENCE_LABELS[evidence.status]}</small></span>
-                        <span class="status-chip status-chip--${evidence.sourceStatus}">${EVIDENCE_LABELS[evidence.status]}</span>
-                        ${legacyGoalMarker}
+                        <span class="status-chip status-chip--${evidence.status}">${EVIDENCE_LABELS[evidence.status]}</span>
                       </div>
                     `;
                   }).join('')}
@@ -227,7 +258,7 @@ export function renderProgress(
       ${hasHistory ? `
         <div class="ledger-footer">
           ${resetArmed ? `
-            <p role="alert">Erase all learning evidence across Flags, Locations, Outlines and Neighbours? This cannot be undone. Issue #34 earned achievements are not implemented yet, so there is no separate achievement state to erase.</p>
+            <p role="alert">Erase all learning evidence and earned achievements across Flags, Locations, Outlines and Neighbours? This cannot be undone.</p>
             <button class="button button--danger" data-action="reset-confirm">Erase everything</button>
             <button class="button button--tertiary" data-action="reset-cancel" data-autofocus>Keep my progress</button>
           ` : `
@@ -238,6 +269,8 @@ export function renderProgress(
           `}
         </div>
       ` : ''}
+
+      ${renderAchievements(achievements)}
     </main>
   `;
 }

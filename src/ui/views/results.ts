@@ -6,7 +6,7 @@ import { escapeHtml } from '../format.js';
 
 export function renderResults(result: SessionResult): string {
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
-  const mastered = result.newlyMastered
+  const strongEvidence = result.newlyMastered
     .map((id) => COUNTRY_BY_ID.get(id))
     .filter((country) => country !== undefined);
 
@@ -32,19 +32,19 @@ export function renderResults(result: SessionResult): string {
       </section>
 
       <div class="result-statline" aria-label="Learning changes">
-        <span><strong>${result.newlyMastered.length}</strong> newly mastered</span>
+        <span><strong>${result.newlyMastered.length}</strong> newly strong</span>
         <span><strong>${result.missed.length}</strong> to review</span>
       </div>
 
-      ${mastered.length ? `
-        <section class="result-section" aria-labelledby="mastered-heading">
-          <div class="list-heading"><h2 id="mastered-heading">Mastered this round</h2><span>${mastered.length}</span></div>
+      ${strongEvidence.length ? `
+        <section class="result-section" aria-labelledby="strong-evidence-heading">
+          <div class="list-heading"><h2 id="strong-evidence-heading">Strong evidence this round</h2><span>${strongEvidence.length}</span></div>
           <div class="mastery-list">
-            ${mastered.map((country) => `
+            ${strongEvidence.map((country) => `
               <div class="mastery-row">
                 ${flagImage(country, true, 'flag-frame--tiny')}
                 <strong>${escapeHtml(country.name)}</strong>
-                <span>Mastered</span>
+                <span>Strong</span>
               </div>
             `).join('')}
           </div>

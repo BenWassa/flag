@@ -1,4 +1,10 @@
-import type { LearningStatus, StudyScope } from './models.js';
+import type {
+  CountryEvidenceSummary,
+  EvidenceActivity,
+  EvidenceOutcome,
+  LearningStatus,
+  StudyScope,
+} from './models.js';
 
 export type MapMode = 'learn' | 'test';
 export type MapResolution = 'first-try' | 'one-miss' | 'two-miss' | 'revealed' | 'incorrect';
@@ -93,6 +99,9 @@ export interface MapAttempt {
   revealed: boolean;
   responseTimeMs: number;
   answeredAt: string;
+  evidenceActivity?: EvidenceActivity;
+  evidenceOutcome?: EvidenceOutcome;
+  evidenceCredit?: number;
 }
 
 export interface MapSession {
@@ -127,12 +136,14 @@ export interface MapSessionResult {
 export interface LocationProgressRecord {
   countryId: string;
   status: LearningStatus;
+  /** Compatibility scheduler credit; learner-facing UI must not expose x/y thresholds. */
   masteryStreak: number;
   lifetimeResolved: number;
   lifetimeFirstTryCorrect: number;
   lifetimeIncorrectGuesses: number;
   revealCount: number;
   lapseCount: number;
+  evidence: CountryEvidenceSummary;
   firstSeenAt?: string;
   lastSeenAt?: string;
   lastCorrectAt?: string;
@@ -143,7 +154,7 @@ export interface LocationProgressRecord {
 }
 
 export interface LocationProgressState {
-  version: 1;
+  version: 2;
   records: Record<string, LocationProgressRecord>;
 }
 

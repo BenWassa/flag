@@ -320,7 +320,18 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderScope(store.progress, store.view.scope, store.persisting);
       break;
     case 'progress':
-      root.innerHTML = renderProgress(store.progress, progressFilter, resetArmed, store.persisting);
+      root.innerHTML = renderProgress(
+        {
+          flags: store.progress,
+          locations: store.locationProgress,
+          outlines: store.outlineProgress,
+          neighbors: store.neighborProgress,
+        },
+        store.achievements,
+        progressFilter,
+        resetArmed,
+        store.persisting,
+      );
       break;
     case 'quiz':
       if (!store.session) return;

@@ -1,12 +1,11 @@
 import { COUNTRIES } from '../data/countries.js';
-import { getAfricaMapScopeConfig } from '../data/map-scopes.js';
-import { getAfricaNeighborScopeConfig } from '../data/neighbors/index.js';
+import { countryEvidenceState, type EvidenceBackedRecord, type CountryEvidenceState } from './evidence.js';
 import type { LocationProgressState } from './map-models.js';
-import type { LearningDomain, LearningStatus, ProgressState, StudyScope } from './models.js';
+import type { LearningDomain, ProgressState, StudyScope } from './models.js';
 import type { NeighborProgressState } from './neighbor-models.js';
-import { scopeSupportsDomain } from './scope-support.js';
+import { countryIdsForSupportedScope, scopeSupportsDomain } from './scope-support.js';
 
-export type EvidenceState = 'unseen' | 'learning' | 'strong' | 'due';
+export type EvidenceState = Exclude<CountryEvidenceState, 'due-for-review'> | 'due';
 export type RecommendedProgressAction = 'review' | 'learn' | 'play';
 
 export interface ProgressLedgers {
@@ -33,7 +32,6 @@ export interface ProgressSummary {
 export interface ProgressCountryEvidence {
   countryId: string;
   status: EvidenceState;
-  sourceStatus: LearningStatus;
   due: boolean;
 }
 
@@ -44,27 +42,11 @@ const DOMAIN_LABELS: Record<LearningDomain, string> = {
   neighbors: 'Neighbours',
 };
 
-function countryIdsForScope(scope: StudyScope, domain: LearningDomain): string[] {
-  if (!scopeSupportsDomain(scope, domain)) return [];
-
-  if (domain === 'locations' || domain === 'outlines') {
-    return scope.id ? [...(getAfricaMapScopeConfig(scope.id)?.countryIds ?? [])] : [];
-  }
-  if (domain === 'neighbors') {
-    return scope.id ? [...(getAfricaNeighborScopeConfig(scope.id)?.countryIds ?? [])] : [];
-  }
-
-  if (scope.kind === 'world') return COUNTRIES.map((country) => country.id);
-  if (scope.kind === 'continent') return COUNTRIES.filter((country) => country.continentId === scope.id).map((country) => country.id);
-  if (scope.kind === 'region') return COUNTRIES.filter((country) => country.regionId === scope.id).map((country) => country.id);
-  return [];
-}
-
-function sourceStatus(ledgers: ProgressLedgers, domain: LearningDomain, countryId: string): LearningStatus {
-  if (domain === 'flags') return ledgers.flags.records[countryId]?.status ?? 'unseen';
-  if (domain === 'locations') return ledgers.locations.records[countryId]?.status ?? 'unseen';
-  if (domain === 'outlines') return ledgers.outlines.records[countryId]?.status ?? 'unseen';
-  return ledgers.neighbors.records[countryId]?.status ?? 'unseen';
+function recordForCountry(ledgers: ProgressLedgers, domain: LearningDomain, countryId: string): EvidenceBackedRecord | undefined {
+  if (domain === 'flags') return ledgers.flags.records[countryId];
+  if (domain === 'locations') return ledgers.locations.records[countryId];
+  if (domain === 'outlines') return ledgers.outlines.records[countryId];
+  return ledgers.neighbors.records[countryId];
 }
 
 function isDue(ledgers: ProgressLedgers, domain: LearningDomain, countryId: string, now: Date): boolean {
@@ -81,14 +63,10 @@ export function evidenceForCountry(
   countryId: string,
   now = new Date(),
 ): ProgressCountryEvidence {
-  const status = sourceStatus(ledgers, domain, countryId);
   const due = isDue(ledgers, domain, countryId, now);
-  return {
-    countryId,
-    sourceStatus: status,
-    due,
-    status: due ? 'due' : status === 'mastered' ? 'strong' : status,
-  };
+  const record = recordForCountry(ledgers, domain, countryId);
+  const evidenceState = record ? countryEvidenceState(record, due) : 'unseen';
+  return { countryId, due, status: evidenceState === 'due-for-review' ? 'due' : evidenceState };
 }
 
 export function buildProgressSummary(
@@ -98,7 +76,7 @@ export function buildProgressSummary(
   now = new Date(),
 ): ProgressSummary {
   const supported = scopeSupportsDomain(scope, domain);
-  const countryIds = countryIdsForScope(scope, domain);
+  const countryIds = countryIdsForSupportedScope(scope, domain);
   if (!supported) {
     return {
       domain,
@@ -121,9 +99,9 @@ export function buildProgressSummary(
   let due = 0;
   for (const countryId of countryIds) {
     const evidence = evidenceForCountry(ledgers, domain, countryId, now);
-    if (evidence.sourceStatus === 'unseen') unseen += 1;
-    else if (evidence.sourceStatus === 'learning') learning += 1;
-    else strong += 1;
+    if (evidence.status === 'unseen') unseen += 1;
+    else if (evidence.status === 'learning') learning += 1;
+    else if (evidence.status === 'strong') strong += 1;
     if (evidence.due) due += 1;
   }
 

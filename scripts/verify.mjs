@@ -91,16 +91,25 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // --- View rendering -------------------------------------------------------
 // The views are pure string builders, so their output can be asserted here
 // without a browser. These guard the states that are easy to break silently:
-// launcher actions, focus landing points, and the single mastery-goal source.
+// launcher actions, focus landing points, and evidence-language boundaries.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
 const { renderContinent } = await import('../dist/ui/views/atlas.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
 const { renderProgress } = await import('../dist/ui/views/progress.js');
+const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
 const { renderQuiz } = await import('../dist/ui/views/quiz.js');
 const { renderResults } = await import('../dist/ui/views/results.js');
 const { renderFocusIntent } = await import('../dist/ui/focus.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
+
+const renderProgressView = (state, filter = 'all', resetArmed = false, persisting = true) => renderProgress(
+  { flags: state, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
+  createInitialAchievementState(),
+  filter,
+  resetArmed,
+  persisting,
+);
 
 assert.equal(
   renderFocusIntent(false),
@@ -121,7 +130,7 @@ const screens = {
   atlasContinent: renderContinent(fresh, africaScopeFixture),
   scope: renderScope(fresh, africaScopeFixture),
   region: renderScope(fresh, westAfricaScopeFixture),
-  progress: renderProgress(fresh, 'all'),
+  progress: renderProgressView(fresh, 'all'),
 };
 
 for (const [name, html] of Object.entries(screens)) {
@@ -170,7 +179,7 @@ for (const [name, html] of Object.entries({ scope: screens.scope, region: screen
 }
 
 for (const filter of ['unseen', 'learning', 'mastered']) {
-  const html = renderProgress(fresh, filter);
+  const html = renderProgressView(fresh, filter);
   const isEmpty = filter !== 'unseen';
   assert.equal(
     html.includes('class="empty-state"'),
@@ -180,22 +189,27 @@ for (const filter of ['unseen', 'learning', 'mastered']) {
 }
 
 assert.ok(
-  !renderProgress(fresh, 'all').includes('data-action="reset-request"'),
+  !renderProgressView(fresh, 'all').includes('data-action="reset-request"'),
   'Reset must stay hidden until there is progress worth erasing.',
 );
 assert.ok(
-  renderProgress(learningState, 'all').includes('data-action="reset-request"'),
+  renderProgressView(learningState, 'all').includes('data-action="reset-request"'),
   'Reset must be reachable once flags have been studied.',
 );
 assert.ok(
-  renderProgress(learningState, 'all', true).includes('data-action="reset-confirm"'),
+  renderProgressView(learningState, 'all', true).includes('data-action="reset-confirm"'),
   'Reset must require a second, explicit confirmation.',
 );
 
 const lapsedProgress = { ...lapsed };
+const lapsedProgressHtml = renderProgressView(lapsedProgress, 'all');
 assert.ok(
-  renderProgress(lapsedProgress, 'all').includes('0/2 toward mastery'),
-  'The progress ledger must read its mastery goal from masteryGoal, including the post-lapse goal of 2.',
+  !lapsedProgressHtml.includes('0/2 toward mastery'),
+  'Routine progress UI must not expose the internal post-lapse scheduler threshold.',
+);
+assert.ok(
+  lapsedProgressHtml.includes('Learning'),
+  'A lapsed country is presented as Learning rather than as a mastery punch card.',
 );
 
 const quizSession = {
@@ -224,7 +238,7 @@ assert.ok(unanswered.includes('flag-fallback'), 'Every flag carries a fallback f
 const answered = renderQuiz(quizSession, fresh, quizSession.questions[0].countryId);
 assert.ok(
   answered.includes('data-action="next-question" data-autofocus'),
-  'After answering in Learn mode, focus must land on the advance control.',
+  'After a clean Learn answer, the correct answer becomes the focused advance control.',
 );
 assert.ok(!answered.includes('aria-live'), 'Announcements belong to the persistent live region, not re-rendered nodes.');
 
@@ -276,14 +290,14 @@ assert.deepEqual(repaired.confusionCounts, { MLI: 2 }, 'Only well-formed confusi
 // Corruption is repaired once, at the storage boundary, so the views can stay
 // written against well-formed records. This asserts that contract end to end.
 const repairedState = {
-  version: 1,
+  version: 2,
   records: {
     ...fresh.records,
     GHA: sanitizeRecord('GHA', { status: 'learning', masteryStreak: null, lifetimeIncorrect: undefined }),
     MLI: sanitizeRecord('MLI', { status: 'mastered', lifetimeCorrect: '9', lapseCount: null }),
   },
 };
-const repairedHtml = renderProgress(repairedState, 'all');
+const repairedHtml = renderProgressView(repairedState, 'all');
 assert.ok(!repairedHtml.includes('NaN'), 'A repaired ledger cannot render NaN into the progress screen.');
 assert.ok(!repairedHtml.includes('undefined'), 'A repaired ledger cannot render undefined into the progress screen.');
 assert.ok(
@@ -293,9 +307,9 @@ assert.ok(
 
 // A record the ledger never had at all: `getRecord` must supply the default
 // rather than let the view index into undefined.
-const missingRecords = { version: 1, records: {} };
-assert.doesNotThrow(() => renderProgress(missingRecords, 'all'), 'A ledger missing every record still renders.');
-assert.ok(!renderProgress(missingRecords, 'all').includes('undefined'), 'Missing records fall back to Unseen.');
+const missingRecords = { version: 2, records: {} };
+assert.doesNotThrow(() => renderProgressView(missingRecords, 'all'), 'A ledger missing every record still renders.');
+assert.ok(!renderProgressView(missingRecords, 'all').includes('undefined'), 'Missing records fall back to Unseen.');
 
 const emptyScopeQuiz = build({
   countries: COUNTRIES,
@@ -339,7 +353,7 @@ assert.ok(
   'The storage notice is static copy, not another live region inside the replaced #app.',
 );
 assert.ok(
-  renderProgress(learningState, 'all', false, false).includes('not allowing storage'),
+  renderProgressView(learningState, 'all', false, false).includes('not allowing storage'),
   'The ledger does not claim to be saved on a device that refuses to save it.',
 );
 

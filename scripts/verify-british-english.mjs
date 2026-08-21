@@ -50,7 +50,10 @@ const flagsLauncherHtml = renderScope(flagProgress, africaScope);
 const locationsLauncherHtml = renderMapHome(locationProgress, africaScope);
 const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope);
 const neighborsLauncherHtml = renderNeighborHome(neighborProgress, westAfricaScope);
-const progressHtml = renderProgress(flagProgress);
+const progressHtml = renderProgress(
+  { flags: flagProgress, locations: locationProgress, outlines: outlineProgress, neighbors: neighborProgress },
+  { version: 1, regionDomainMasteries: [], completeRegions: [], completeContinents: [], worldCrown: false },
+);
 
 const flagQuestions = buildQuiz({
   countries: COUNTRIES,

@@ -1,5 +1,5 @@
 import type { ProgressRecord } from '../domain/models.js';
-import { masteryGoal } from '../domain/progress.js';
+import { countryEvidenceState } from '../domain/evidence.js';
 
 const HTML_ESCAPES: Record<string, string> = {
   '&': '&amp;',
@@ -24,15 +24,15 @@ export function titleCase(value: string): string {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
-/**
- * The one place a learning record turns into a short status phrase. Every
- * surface reads the mastery goal from `masteryGoal` so the rule has a single
- * source of truth.
- */
-export function statusLabel(record: ProgressRecord): string {
-  if (record.status === 'learning') return `Learning ${record.masteryStreak}/${masteryGoal(record)}`;
-  return titleCase(record.status);
+/** Keep scheduler internals behind evidence language rather than exposing x/y thresholds. */
+export function statusLabel(record: ProgressRecord, dueForReview = false): string {
+  switch (countryEvidenceState(record, dueForReview)) {
+    case 'strong': return 'Strong evidence';
+    case 'due-for-review': return 'Due for review';
+    case 'learning': return 'Learning';
+    case 'unseen': return 'Unseen';
+  }
 }
 
-export const MASTERY_RULE =
-  'A flag is mastered after 3 correct answers in separate rounds. After a miss it returns to Learning and needs 2.';
+export const EVIDENCE_RULE =
+  'Clean retrieval builds strong evidence. Play can calibrate known material faster; misses stay in the learning record.';

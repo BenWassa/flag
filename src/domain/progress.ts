@@ -1,11 +1,17 @@
 import type {
   Country,
+  EvidenceActivity,
   ProgressRecord,
   ProgressState,
   QuizAttempt,
   ScopeStats,
   StudyScope,
 } from './models.js';
+import {
+  applyCountryEvidence,
+  createEvidenceSummary,
+  evidenceStrengthGoal,
+} from './evidence.js';
 
 const RETENTION_DAYS = [2, 7, 21, 60, 180];
 
@@ -19,13 +25,14 @@ export function createProgressRecord(countryId: string): ProgressRecord {
     currentCorrectStreak: 0,
     lapseCount: 0,
     retentionLevel: 0,
+    evidence: createEvidenceSummary(),
     confusionCounts: {},
   };
 }
 
 export function createInitialProgress(countries: Country[]): ProgressState {
   return {
-    version: 1,
+    version: 2,
     records: Object.fromEntries(countries.map((country) => [country.id, createProgressRecord(country.id)])),
   };
 }
@@ -34,8 +41,9 @@ export function getRecord(state: ProgressState, countryId: string): ProgressReco
   return state.records[countryId] ?? createProgressRecord(countryId);
 }
 
+/** Compatibility alias retained for selection/scheduler code. UI must not expose it as x/y progress. */
 export function masteryGoal(record: ProgressRecord): number {
-  return record.lapseCount > 0 ? 2 : 3;
+  return evidenceStrengthGoal(record);
 }
 
 export function isDue(record: ProgressRecord, now = new Date()): boolean {
@@ -47,6 +55,8 @@ export interface ApplyAttemptInput {
   countryId: string;
   selectedCountryId: string;
   responseTimeMs: number;
+  /** Defaults to Learn for backwards-compatible callers and old verification fixtures. */
+  activity?: EvidenceActivity;
   now?: Date;
 }
 
@@ -63,8 +73,9 @@ export function applyAttempt(
   const now = input.now ?? new Date();
   const timestamp = now.toISOString();
   const previous = getRecord(state, correctCountryId);
-  const record: ProgressRecord = {
+  let record: ProgressRecord = {
     ...previous,
+    evidence: { ...previous.evidence },
     confusionCounts: { ...previous.confusionCounts },
   };
 
@@ -73,52 +84,57 @@ export function applyAttempt(
   const streakBefore = record.masteryStreak;
   const priorTotal = record.lifetimeCorrect + record.lifetimeIncorrect;
   const priorAverage = record.averageResponseTimeMs ?? input.responseTimeMs;
+  const activity = input.activity ?? 'learn';
 
   record.firstSeenAt ??= timestamp;
   record.lastSeenAt = timestamp;
   record.averageResponseTimeMs =
     (priorAverage * priorTotal + input.responseTimeMs) / Math.max(1, priorTotal + 1);
 
+  let evidenceCredit = 0;
+
   if (correct) {
     record.lifetimeCorrect += 1;
     record.currentCorrectStreak += 1;
     record.lastCorrectAt = timestamp;
 
-    if (record.status === 'mastered') {
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'clean-retrieval',
+      at: timestamp,
+      sessionId: input.sessionId,
+    });
+    record = applied.record;
+    evidenceCredit = applied.credit;
+
+    if (statusBefore === 'mastered') {
       record.retentionLevel = Math.min(record.retentionLevel + 1, RETENTION_DAYS.length - 1);
       record.nextReviewAt = addDays(now, RETENTION_DAYS[record.retentionLevel]).toISOString();
-    } else if (record.lastMasteryCreditSessionId !== input.sessionId) {
-      record.masteryStreak += 1;
-      record.lastMasteryCreditSessionId = input.sessionId;
-      record.status = 'learning';
-
-      if (record.masteryStreak >= masteryGoal(record)) {
-        record.status = 'mastered';
-        record.masteredAt = timestamp;
-        record.retentionLevel = 0;
-        record.nextReviewAt = addDays(now, RETENTION_DAYS[0]).toISOString();
-      }
+    } else if (applied.becameStrong) {
+      record.retentionLevel = 0;
+      record.nextReviewAt = addDays(now, RETENTION_DAYS[0]).toISOString();
     }
   } else {
     record.lifetimeIncorrect += 1;
     record.currentCorrectStreak = 0;
     record.lastIncorrectAt = timestamp;
-    record.masteryStreak = 0;
-    record.lastMasteryCreditSessionId = undefined;
-
-    if (record.status === 'mastered') {
-      record.lapseCount += 1;
-    }
-
-    record.status = 'learning';
-    record.nextReviewAt = undefined;
-    record.retentionLevel = 0;
     record.confusionCounts[input.selectedCountryId] =
       (record.confusionCounts[input.selectedCountryId] ?? 0) + 1;
+
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'contradictory',
+      at: timestamp,
+      sessionId: input.sessionId,
+    });
+    record = applied.record;
+    record.nextReviewAt = undefined;
+    record.retentionLevel = 0;
   }
 
   const nextState: ProgressState = {
     ...state,
+    version: 2,
     records: {
       ...state.records,
       [correctCountryId]: record,
@@ -139,7 +155,40 @@ export function applyAttempt(
       statusAfter: record.status,
       streakBefore,
       streakAfter: record.masteryStreak,
+      evidenceActivity: activity,
+      evidenceOutcome: correct ? 'clean-retrieval' : 'contradictory',
+      evidenceCredit,
     },
+  };
+}
+
+/**
+ * Forward-compatible hook for Issue #30 and other browse/reveal study surfaces.
+ * Exposure is retained but deliberately cannot create scored strength credit.
+ */
+export function applyPassiveExposure(
+  state: ProgressState,
+  countryId: string,
+  now = new Date(),
+): ProgressState {
+  const timestamp = now.toISOString();
+  const previous = getRecord(state, countryId);
+  let record: ProgressRecord = {
+    ...previous,
+    evidence: { ...previous.evidence },
+    confusionCounts: { ...previous.confusionCounts },
+  };
+  record.firstSeenAt ??= timestamp;
+  record.lastSeenAt = timestamp;
+  record = applyCountryEvidence(record, {
+    activity: 'learn',
+    outcome: 'passive-exposure',
+    at: timestamp,
+  }).record;
+  return {
+    ...state,
+    version: 2,
+    records: { ...state.records, [countryId]: record },
   };
 }
 

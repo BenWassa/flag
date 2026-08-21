@@ -601,6 +601,15 @@ body { letter-spacing: -.006em; }
 
 .filter-tab:active { transform: translateY(1px); }
 
+.progress-achievement-list { margin-top: 10px; }
+.progress-achievement-row { align-items: center; }
+.progress-achievement-row--complete { border-color: color-mix(in srgb, var(--prestige) 58%, var(--line)); }
+.progress-achievement-domains { display: flex; gap: 5px; color: var(--text-muted); }
+.progress-achievement-domain { display: inline-flex; color: var(--text-muted); }
+.progress-achievement-domain--earned { color: var(--mastery); }
+.progress-achievement-status { color: var(--text-muted); font-size: 12px; font-weight: 700; }
+.progress-achievement-row--complete .progress-achievement-status { color: var(--prestige); }
+
 /* Neighbours' round-complete summary used a bare heading instead of the
    scored-hero card every other domain's results screen gives its headline
    number (.result-score) — give it the same weight. */

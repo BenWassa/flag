@@ -1,19 +1,24 @@
 import assert from 'node:assert/strict';
 import { COUNTRIES } from '../dist/data/countries.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { getAfricaNeighborScopeConfig } from '../dist/data/neighbors/index.js';
+import { createInitialLocationProgress } from '../dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
+import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
 import {
   buildProgressSummary,
   buildScopeProgressSummaries,
   evidenceForCountry,
 } from '../dist/domain/progress-summary.js';
+import { renderProgress } from '../dist/ui/views/progress.js';
 
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 const europe = { kind: 'continent', id: 'europe', label: 'Europe' };
 const flags = createInitialProgress(COUNTRIES);
-const locations = { version: 1, records: {} };
-const outlines = { version: 1, records: {} };
-const neighbors = { version: 1, records: {} };
+const locations = createInitialLocationProgress(countryIdsForSupportedScope(africa, 'locations'));
+const outlines = createInitialProgress(COUNTRIES.filter((country) => country.continentId === 'africa'));
+const neighbors = createInitialNeighborProgress(countryIdsForSupportedScope(africa, 'neighbors'));
 const ledgers = { flags, locations, outlines, neighbors };
 const now = new Date('2026-08-21T12:00:00Z');
 
@@ -24,6 +29,13 @@ assert.deepEqual(
   'Progress exposes the four learning domains in a stable order.',
 );
 assert.ok(africaSummaries.every((summary) => summary.supported), 'Africa supports all four production domains.');
+for (const summary of africaSummaries) {
+  assert.deepEqual(
+    summary.countryIds,
+    countryIdsForSupportedScope(africa, summary.domain),
+    `${summary.domain} membership comes from the canonical scope support seam.`,
+  );
+}
 assert.equal(
   africaSummaries.find((summary) => summary.domain === 'flags')?.total,
   54,
@@ -50,7 +62,7 @@ flags.records.GHA.status = 'mastered';
 flags.records.GHA.nextReviewAt = '2026-08-20T12:00:00Z';
 const dueFlags = buildProgressSummary(ledgers, africa, 'flags', now);
 assert.equal(dueFlags.due, 1, 'Due review is derived from stored review timing.');
-assert.equal(dueFlags.strong, 1, 'A due country can still retain strong source evidence.');
+assert.equal(dueFlags.strong, 0, 'Due evidence is presented as a distinct live state rather than double-counted as strong.');
 assert.equal(dueFlags.action, 'review', 'Due work takes priority over Learn and Play recommendations.');
 assert.equal(evidenceForCountry(ledgers, 'flags', 'GHA', now).status, 'due');
 
@@ -59,33 +71,20 @@ assert.equal(unsupported.supported, false, 'Unsupported continent/domain combina
 assert.equal(unsupported.total, 0, 'Unsupported curriculum is excluded from totals.');
 assert.equal(unsupported.action, null, 'Unsupported curriculum never receives a practice recommendation.');
 
-locations.records.GHA = {
-  countryId: 'GHA',
-  status: 'learning',
-  masteryStreak: 1,
-  lifetimeResolved: 1,
-  lifetimeFirstTryCorrect: 0,
-  lifetimeIncorrectGuesses: 1,
-  revealCount: 0,
-  lapseCount: 0,
-  confusionCounts: {},
-};
+locations.records.GHA.status = 'learning';
 const locationSummary = buildProgressSummary(ledgers, africa, 'locations', now);
 assert.equal(locationSummary.learning, 1, 'Location-specific records map into shared learning evidence.');
 
-neighbors.records.GHA = {
-  countryId: 'GHA',
-  status: 'mastered',
-  masteryStreak: 3,
-  lifetimeRounds: 3,
-  lifetimeCompleted: 3,
-  lifetimeCleanCompletions: 3,
-  lifetimeWrongGuesses: 0,
-  revealCount: 0,
-  lapseCount: 0,
-  confusionCounts: {},
-};
+neighbors.records.GHA.status = 'mastered';
 const neighborEvidence = evidenceForCountry(ledgers, 'neighbors', 'GHA', now);
 assert.equal(neighborEvidence.status, 'strong', 'Internal mastered status is presented as Strong evidence.');
+
+const earned = createInitialAchievementState();
+earned.regionDomainMasteries = ['west-africa:flags'];
+const rendered = renderProgress(ledgers, earned, 'domain:flags', false, true);
+assert.match(rendered, /Due for review/, 'Progress exposes live due evidence.');
+assert.match(rendered, /Earned achievements/, 'Progress exposes the persisted achievement section.');
+assert.match(rendered, /West Africa/, 'Progress renders the earned region/domain read model.');
+assert.doesNotMatch(rendered, /toward mastery/, 'Progress does not leak scheduler thresholds.');
 
 console.log('Progress summary verification passed.');
