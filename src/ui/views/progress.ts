@@ -265,7 +265,7 @@ export function renderProgress(
       ${!persistenceAvailable ? `
         <div class="progress-storage-state" role="status">
           <strong>Progress is temporary</strong>
-          <span>This browser is not allowing durable storage.</span>
+          <span>This browser is not allowing storage, so progress is temporary.</span>
         </div>
       ` : ''}
 
