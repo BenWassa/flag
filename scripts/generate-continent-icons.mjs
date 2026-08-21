@@ -1,19 +1,19 @@
 #!/usr/bin/env node
-import { createHash } from 'node:crypto';
-import { readFile, writeFile } from 'node:fs/promises';
+import { writeFile } from 'node:fs/promises';
 import { geoNaturalEarth1, geoPath } from 'd3-geo';
 import { merge } from 'topojson-client';
 import { topology } from 'topojson-server';
 import { presimplify, quantile, simplify } from 'topojson-simplify';
+import { fetchPinnedSource } from './lib/pinned-natural-earth.mjs';
 
-const MANIFEST_PATH = new URL('./map-sources/natural-earth.json', import.meta.url);
 const OUTPUT_PATH = new URL('../src/ui/components/continent-icons.ts', import.meta.url);
 const SIZE = 48;
 const PADDING = 3;
-// At navigation-icon scale, fine 1:10m coastline detail is noise. Retain the
-// highest-weight 0.5% of topology points: this keeps recognisable mainland
-// shapes (especially Europe) without turning archipelagos into visual static.
-const SIMPLIFICATION_QUANTILE = 0.995;
+// topojson-simplify's `quantile(topology, p)` returns the weight that retains
+// fraction `p` of source points, so this keeps 99.5% of them. At 48px the
+// level of detail that actually matters is set by the projected-space
+// decimation and minimum ring area below, not by this near-lossless pass.
+const RETAINED_POINT_FRACTION = 0.995;
 const MINIMUM_PROJECTED_RING_AREA = 0.35;
 const MINIMUM_RING_AREA_BY_CONTINENT = {
   europe: 8,
@@ -97,28 +97,13 @@ function fitCleanPath(path) {
   });
 }
 
-function sha256(bytes) {
-  return createHash('sha256').update(bytes).digest('hex');
-}
-
-const manifest = JSON.parse(await readFile(MANIFEST_PATH, 'utf8'));
-const source = manifest.sources.countries;
-const sourceUrl = `${manifest.rawBaseUrl}/${manifest.upstreamCommit}/${source.path}`;
-const response = await fetch(sourceUrl);
-if (!response.ok) throw new Error(`Could not fetch Natural Earth countries: ${response.status} ${response.statusText}`);
-
-const bytes = Buffer.from(await response.arrayBuffer());
-const digest = sha256(bytes);
-if (digest !== source.sha256) {
-  throw new Error(`Natural Earth countries sha256 mismatch: expected ${source.sha256}, received ${digest}.`);
-}
-
-const countries = JSON.parse(bytes.toString('utf8'));
+const { url: sourceUrl, json: readCountries } = await fetchPinnedSource('countries');
+const countries = readCountries();
 const sourceTopology = topology({ countries });
 const weightedTopology = presimplify(sourceTopology);
 const simplifiedTopology = simplify(
   weightedTopology,
-  quantile(weightedTopology, SIMPLIFICATION_QUANTILE),
+  quantile(weightedTopology, RETAINED_POINT_FRACTION),
 );
 const geometries = simplifiedTopology.objects.countries.geometries;
 const paths = {};
