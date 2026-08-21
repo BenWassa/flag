@@ -1,71 +1,286 @@
 # Continent expansion playbook
 
-This is the shared implementation contract for adding generated geography beyond Africa. Continent issues own curriculum and geopolitical policy; shared infrastructure owns mechanics.
+**Status:** planning source of truth for post-Africa curriculum expansion  
+**Reference implementation:** Africa  
+**Applies to:** continent expansion issues #22, #24, #25, #26, #27 and successor work  
+**Related:** #28 Middle East learning scope, #54 river removal, #57 shared foundation, #58 zero-land-neighbour learning
 
-## Source-of-truth model
+## Goal
 
-Keep these concepts separate:
+Make each new continent an onboarding exercise against one shared Atlas geography architecture rather than a new implementation of cartography, scope support, outlines or neighbour logic.
 
-1. **Country identity** — canonical ISO3 from `src/data/countries.ts`.
-2. **Canonical whole-country geometry** — derived from the pinned Natural Earth 1:10m source pipeline.
-3. **Scope display geometry** — the local projection/fragments needed for one learner-facing continent without changing country identity.
-4. **Learning-scope membership** — the countries that are playable in a continent or region; overlapping scopes may cross canonical continent boundaries.
-5. **Non-scoring context** — territory or neighbouring-country geometry shown for geographic truth but never promoted to a target by that scope.
+Africa is the quality baseline. New continents must reach the same standard across all four learning domains:
 
-Do not encode all five concepts into `continentId` / `regionId`, and do not create handwritten geometry or adjacency tables.
+- Flags;
+- Locations;
+- Outlines;
+- Neighbours.
 
-## Shared onboarding sequence
+Flags already has global country coverage, but each expansion must verify that Flags consumes the same learning-scope membership as the geography domains. A continent is not complete when only Locations/Outlines/Neighbours work.
 
-For each new continent:
+## Architecture principle
 
-1. Lock the exact ISO3 curriculum and region membership in the issue.
-2. Record territory, dispute, multipart-country and cross-continent-neighbour policy explicitly.
-3. Add one configuration to `scripts/map-continent-configs.mjs`; extend the existing generator instead of creating a second pipeline.
-4. Generate topology from the pinned Natural Earth sources. Global application-country land adjacency is derived before continent slicing; runtime map assets remain lazy by continent.
-5. Register the generated continent and its regions in the shared map/Neighbours loaders and learner-scope registry.
-6. Reuse the canonical map geometry for Locations and Outlines. Neighbours consumes topology-derived adjacency; Flags consumes the same learner-scope membership.
-7. Harden phone-scale framing, small-country interaction, regional focus and cross-continent context only where the generated geography demonstrates a need.
-8. Add the continent to the reusable verification contract and document any deliberate exceptions.
+The desired expansion path is:
 
-## Cartographic contract
+`declare curriculum + policy → generate canonical continent asset → derive domain support → verify → visually harden`
 
-- Natural Earth 1:10m is the production topology source.
-- Ocean, country/context fills, selected useful lakes, political borders and coastline are allowed layers.
-- Rivers are excluded from runtime maps.
-- Non-scoring context must not become an interactive Locations target.
-- Cross-continent Neighbours answers must remain complete even when the neighbouring country is outside the learner scope.
-- Multipart sovereign geometry may be clipped for local **display context** when required to avoid distorting the continent viewport; canonical identity and adjacency remain global.
-- Territory/dispute handling is reviewed per continent rather than copied from Africa by analogy.
+It must not be:
 
-## Four-domain completion contract
+`copy Africa code → rename constants → add another continent-specific subsystem`.
 
-A continent or region is complete only when the learner-facing matrix is explicit and supported:
+Issue #57 generalised the Africa-specific runtime and generation entry points. Africa remains the regression fixture proving that later continent onboarding does not change existing geography, gameplay or visual behaviour.
 
-| Domain | Requirement |
-| --- | --- |
-| Flags | Exact shared learner-scope membership |
-| Locations | Canonical generated map targets and usable framing |
-| Outlines | Derived from the same canonical generated country geometry |
-| Neighbours | Complete topology-derived land-neighbour sets; zero-neighbour countries handled by the existing eligibility rule |
+## Shared geography model
 
-Do not rebuild Flags data for each continent. Verify that Flags and generated geography resolve the same scope membership.
+Atlas must keep these concepts distinct:
 
-## Verification gate
+1. **country identity** — canonical ISO3 application identity;
+2. **canonical country geometry** — source-derived political geometry used by the production topology pipeline;
+3. **canonical geographic classification** — continent/formal-region metadata where useful;
+4. **learning scopes** — named country sets presented to learners; scopes may overlap or cross continent boundaries;
+5. **scope display/context geometry** — non-scoring surrounding geography used for orientation and truthful framing.
 
-Before an expansion PR is considered ready:
+Do not overload one `continentId` / `regionId` relationship to represent all five concepts.
 
-- exact continent and region ISO3 membership is deterministic;
-- regions partition the intended continent curriculum unless the issue explicitly defines overlap;
-- all four domains resolve through shared support selectors;
-- territory/context policy is asserted;
-- representative cross-border and cross-continent adjacency is asserted;
-- no river runtime data or rendering contract is reintroduced;
-- selected lake/context policy is asserted;
-- locator/callout inventory is deterministic;
-- continent assets remain lazy-loaded and within the issue's raw/gzip budget;
-- existing Africa behaviour remains a golden regression fixture;
-- `npm run check` and full `npm test` pass on Node 22;
-- the exact production `dist/` artifact is inspected;
-- phone-scale browser QA is recorded without claiming physical-device testing unless it was actually performed.
+Country records must never be duplicated simply because a country participates in more than one learning scope. Progress/evidence remains keyed to the canonical country identity within the relevant learning domain.
 
-The objective is that later expansions are primarily configuration, policy and visual hardening—not parallel implementations of geography infrastructure.
+## Learning-scope contract
+
+Each supported continent or region must have one canonical learning-scope definition containing at minimum:
+
+- stable scope ID;
+- learner-facing British-English label;
+- parent/navigation placement;
+- exact ordered/scored ISO3 membership;
+- supported learning domains;
+- cartographic parent asset;
+- any cross-continent membership/context requirement.
+
+All four domains must consume this shared membership contract rather than independently rebuilding country lists.
+
+Issue #28 is the model for overlapping scope requirements: `Middle East` is discoverable through Asia but includes Egypt while Egypt remains canonically African.
+
+## Canonical cartography contract
+
+All new continent maps inherit the production Natural Earth 1:10m topology pipeline and documented geopolitical policy.
+
+Required invariants:
+
+- no handwritten country geometry;
+- no second topology/map source;
+- canonical ISO3 reconciliation before scoring output;
+- topology-preserving political simplification;
+- country fills, one shared political-border mesh and one coastline mesh from the same canonical topology;
+- canonical geometry reused for Locations and Outlines;
+- land adjacency mechanically derived from canonical topology;
+- deterministic generated assets with provenance;
+- continent-local lazy runtime loading;
+- unresolved source features fail generation for explicit policy review rather than being silently guessed.
+
+### Physical context after #54
+
+The global Atlas runtime-map policy is:
+
+- keep ocean/background context;
+- keep selected major lakes/reservoirs where they materially aid orientation;
+- remove rivers entirely;
+- do not add replacement linear physical-geography layers.
+
+Political borders must remain unmistakable at phone scale.
+
+Lake inclusion is continent-specific and should be conservative. It is not a requirement to display every available lake.
+
+## Global adjacency requirement
+
+Neighbours must not repeat the Africa-only completeness limitation.
+
+Generation must evaluate application-country land adjacency against enough canonical global topology to determine each target's complete land-neighbour set, including borders that cross learner-continent boundaries.
+
+Examples that must remain complete when their continents are implemented include:
+
+- Colombia ↔ Panama;
+- Papua New Guinea ↔ Indonesia;
+- cross-Europe/Asia land relationships;
+- Egypt/Israel when both relevant scopes are available.
+
+Runtime data may still be sliced and lazy-loaded by continent. Generation-time knowledge must not truncate a country's real application-country land-neighbour set at a continent boundary.
+
+Zero-land-neighbour countries remain accurate empty adjacency records and are learnable through the explicit **No land neighbours** retrieval introduced by #58.
+
+## Required continent specification
+
+Every continent issue must resolve the following before implementation is considered complete.
+
+### 1. Curriculum table
+
+Record every canonical scored country and its ISO3.
+
+For each learner-facing region, record the exact membership and country count. The issue/documentation is authoritative enough that an implementer should not have to decide membership while coding.
+
+### 2. Four-domain support matrix
+
+Each issue must include a matrix such as:
+
+| Scope | Flags | Locations | Outlines | Neighbours |
+| --- | --- | --- | --- | --- |
+| Continent | required | required | required | required |
+| Region A | required | required | required | required |
+| Region B | required | required | required | required |
+
+Verified empty adjacency is a learnable answer, not a reason to exclude a Neighbours target. Missing topology coverage is not an acceptable substitute for complete geography.
+
+### 3. Political/territory policy
+
+Explicitly classify every relevant Natural Earth special/disputed/non-application feature as one of:
+
+- canonical scored country geometry;
+- merged into a canonical application country under documented policy;
+- non-scoring context;
+- excluded from the continent asset;
+- unresolved/blocking policy decision.
+
+Do not generalise Africa's Somaliland/Western Sahara/Bir Tawil decisions by analogy.
+
+### 4. Transcontinental/multipart policy
+
+For every transcontinental or geographically distant multipart application country, decide:
+
+- canonical country identity remains unchanged;
+- what whole-country geometry Outlines should use;
+- what geometry Locations should display as interactive in that scope;
+- what context is required for truthful recognition;
+- how complete land adjacency is derived;
+- whether a conventional learning scope overlaps the canonical continent taxonomy.
+
+### 5. Map framing
+
+For the continent and every region specify/verify:
+
+- full-continent minimum fit including required island locators;
+- sensible initial regional focus;
+- zoom-out to parent continent;
+- no cropping of scored cross-boundary learning-scope members;
+- useful context without overwhelming the target region;
+- short-landscape behaviour.
+
+Generated region focus may be the initial default but must be visually inspected and overridden/configured only through a documented deterministic mechanism when necessary.
+
+### 6. Small-country/island usability
+
+Apply the Africa policy:
+
+- mainland callouts are exceptional;
+- islands use one visible locator/dot plus a larger invisible hit surface when necessary;
+- never add both a redundant locator and callout;
+- do not infer a callout solely from polygon area;
+- real phone-scale/browser inspection determines whether assistance is justified.
+
+Each continent issue must record its final locator/callout inventory after QA.
+
+### 7. Outline integrity
+
+Outlines use canonical country geometry only.
+
+Verify:
+
+- consistent normalised framing;
+- preserved aspect ratio;
+- multipart/island treatment;
+- no country-name leakage in question accessibility metadata;
+- no alternate/manual silhouette source;
+- visual size/framing does not create avoidable answer cues.
+
+### 8. Neighbours integrity
+
+Verify for every eligible target:
+
+- complete direct-land-border set;
+- symmetric adjacency;
+- no maritime neighbours;
+- enclave/exclave relationships where canonical topology represents them;
+- high-degree targets;
+- cross-continent borders;
+- zero-neighbour policy;
+- disputed-boundary treatment inherited from documented production policy.
+
+### 9. Performance
+
+Each generated continent asset remains lazy-loaded.
+
+Record for the exact production artifact:
+
+- raw module size;
+- gzip size;
+- generated political coordinate counts where useful;
+- any asset-specific optimisation parameters;
+- whether the established runtime budget remains appropriate or needs an explicitly reviewed continent-specific adjustment.
+
+Do not silently increase a global/eager startup payload to accommodate expansion.
+
+### 10. Verification
+
+The shared verifier family should be parameterised by continent rather than copied into one verifier per continent unless a genuinely continent-specific policy needs a focused assertion.
+
+Automated gates must cover at minimum:
+
+- exact scored ISO3 reconciliation;
+- exact region/scope membership;
+- four-domain support consistency;
+- source/provenance integrity;
+- political topology output;
+- adjacency completeness/symmetry;
+- no river runtime contract;
+- required lake policy for the continent;
+- locator/callout inventory;
+- routing/direct links;
+- domain integration;
+- lazy loading/PWA compatibility;
+- production runtime budget.
+
+### 11. Visual release gate
+
+Inspect the exact production artifact, not source only.
+
+At minimum inspect:
+
+- full continent in phone portrait;
+- every region in phone portrait;
+- densest/smallest-country region;
+- representative Locations interaction;
+- representative Outlines questions including multipart/small countries;
+- representative Neighbours rounds including high-degree and edge-boundary targets;
+- short landscape;
+- pan/zoom reset/fit behaviour;
+- no horizontal page overflow;
+- lakes/context subordinate to political geography.
+
+Do not claim physical-device/browser testing that was not actually performed.
+
+## Definition of continent completion
+
+A continent is complete only when:
+
+- its canonical scored curriculum is explicit and reconciled;
+- every learner-facing region has explicit membership;
+- Flags, Locations, Outlines and Neighbours consume the same intended scopes;
+- canonical cartography is generated and lazy-loaded;
+- Outlines derive from that geometry;
+- Neighbours has complete topology-derived land adjacency;
+- river-free map policy is respected;
+- small-country/island decisions are visually hardened;
+- support metadata allows progress/achievement systems to treat the curriculum honestly;
+- full automated verification passes;
+- the exact production artifact passes the available visual QA;
+- durable documentation records any special policy.
+
+## Rollout order
+
+Recommended sequence on the shipped shared foundation:
+
+1. South America — proving ground for the generic second-continent path;
+2. North America — includes Northern America, Central America and Caribbean in one parent asset;
+3. Oceania — validates island-heavy/extreme-extent behaviour;
+4. Europe — dense microstate/transcontinental hardening;
+5. Asia — largest/most policy-complex expansion and consumes the Middle East/Caucasus decisions.
+
+Once the South America proving ground demonstrates that continent onboarding no longer requires repeated core refactors, later non-overlapping continent work may proceed in parallel where branch conflicts and shared-policy dependencies are controlled.

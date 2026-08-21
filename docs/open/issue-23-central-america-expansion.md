@@ -1,50 +1,45 @@
-# Issue #23: Central America cartography and gameplay expansion
+# Issue #23 — Central America standalone expansion superseded by #22
 
-**Status:** Needs scoping (not implementation-ready)
-**Proposed GitHub title:** Add Central America support for Locations, Outlines, and Neighbours
-**Primary intent:** Ship Central America as a distinct learning scope with clear boundaries from North America and South America workstreams.
+**Status:** superseded by #22; no separate implementation should be started.
 
-## Scoping note for the assignee
+## Resolution
 
-This issue should begin with boundary and taxonomy scoping. The assignee should tighten scope before code changes and document the final implementation plan.
+Central America remains a first-class learner-facing region, but its cartography and gameplay expansion should ship as part of the complete North America parent-continent work in Issue #22.
 
-## Why this issue exists
+The repository already models North America with three regions:
 
-The Americas are intentionally split into multiple workstreams to keep scope manageable. Central America has dense coastlines, smaller countries, and nearby-island complexity that warrants a dedicated issue.
+- Northern America;
+- Central America;
+- Caribbean.
 
-## Initial scope boundaries
+Running Central America as an independent topology/runtime workstream would duplicate the same generator, map-loader, context and adjacency concerns that the global expansion foundation is intended to centralise.
 
-- Add Central America geometry and scope metadata through existing generation pipelines.
-- Add Central America Locations gameplay support.
-- Add Central America Outlines support.
-- Add Central America Neighbours support with validated land-border adjacency.
-- Ensure region routes, labels, and selection flows are integrated consistently.
-- Add verification coverage for geometry, gameplay, and route behaviour.
+## Preserved curriculum
 
-## Nearby-area scoping questions (must be resolved early)
+Central America remains the 8-country learning scope:
 
-- Exact northern and southern limits: does this issue include Mexico and/or Panama adjacency specifics?
-- How should Belize-related and Caribbean coastal/island edge cases be treated?
-- Which Caribbean countries, if any, belong in this issue versus North America or a future Caribbean-specific split?
-- Are there tiny-country locator/callout needs comparable to existing Africa exceptions?
+- Belize (`BLZ`)
+- Costa Rica (`CRI`)
+- El Salvador (`SLV`)
+- Guatemala (`GTM`)
+- Honduras (`HND`)
+- Mexico (`MEX`)
+- Nicaragua (`NIC`)
+- Panama (`PAN`)
 
-## Required scoping deliverables
+Its learner-facing routes, region identity, four-domain support and region-level mastery remain required. Only the standalone implementation ticket is retired.
 
-1. Final Central America country/territory inclusion list.
-2. Region model and naming proposal aligned with product language conventions.
-3. Nearby-island and Caribbean boundary decision table.
-4. Risk list for map readability, labels, and touch targets on small geometries.
-5. Verification additions and expected CI coverage.
-6. Implementation sequencing plan that avoids regressions in existing continents.
+## Requirements transferred to #22
 
-## Out of scope until scoping is complete
+Issue #22 now owns:
 
-- Repartitioning all Americas globally in one pass.
-- Introducing new gameplay mechanics or alternate scoring systems.
+- canonical North America parent topology;
+- Central America region membership;
+- phone-scale small-country QA;
+- Mexico/US adjacency;
+- Panama/Colombia cross-continent adjacency;
+- Locations, Outlines and Neighbours for Central America;
+- shared Flags scope membership verification;
+- routing, persistence, performance and production-artifact QA.
 
-## Definition of done (to be refined by assignee)
-
-- Central America is playable and learnable as an explicit scope.
-- Neighbour and outline behaviour works with accepted inclusion boundaries.
-- Nearby-area policy is documented and reflected in tests.
-- CI remains green with updated verification scripts.
+No code or separate runtime asset should be created specifically to close #23.
