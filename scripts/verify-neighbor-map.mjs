@@ -211,7 +211,7 @@ for (const id of AFRICA_ZERO_LAND_NEIGHBOR_IDS) assert.ok(!AFRICA_STANDARD_NEIGH
 
 // Production structure: lazy geometry, existing viewport, shell/PWA and responsive/a11y contracts.
 const runtime = await readFile('dist/neighbor-map-runtime.js', 'utf8');
-assert.ok(runtime.includes("loadMapAsset('africa')"), 'Neighbor geometry is requested lazily only by the active map runtime.');
+assert.ok(runtime.includes('loadMapAsset(scopeId)') && runtime.includes('assetPromiseByScopeId'), 'Neighbour geometry is requested lazily and memoised by the active scope.');
 assert.ok(!runtime.includes('AFRICA_GEOMETRY'), 'Neighbor runtime does not eagerly embed the heavyweight canonical geometry module.');
 assert.ok(runtime.includes('detachedShell') && runtime.includes('patchNeighborMapShell'), 'Guess rerenders reuse the expensive SVG shell and patch puzzle layers only.');
 const renderer = await readFile('dist/ui/components/neighbor-map.js', 'utf8');
