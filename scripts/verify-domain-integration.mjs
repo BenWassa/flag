@@ -34,12 +34,14 @@ for (const id of AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS) {
 }
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
+assert.ok(indexHtml.includes('./atlas-theme.css'), 'Combined production shell includes the Tactile Atlas stylesheet.');
 assert.ok(indexHtml.includes('./outline.css'), 'Combined production shell retains the Outlines stylesheet.');
 assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell includes the Neighbours stylesheet.');
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas owns the v15 PWA cache.');
+assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
 assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
@@ -77,4 +79,4 @@ for (const [name, html] of launchers) {
   }
 }
 
-console.log('Cross-domain integration verification passed: four-domain Home, direct Africa launchers, v14 shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: four-domain Home, direct Africa launchers, v15 Tactile Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
