@@ -14,4 +14,4 @@ Learning scopes may overlap canonical geography metadata. Egypt remains canonica
 
 Separate canonical geographic classification from reusable learner-facing scope membership. Do not duplicate country records or hand-code membership independently per domain.
 
-This work should integrate with the future Atlas region-detail and mastery model once global domain coverage reaches the scope.
+This work should integrate with the region-card cross-domain surface and earned-mastery model once global domain coverage reaches the scope.

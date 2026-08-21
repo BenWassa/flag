@@ -23,7 +23,7 @@ function renderFlagsHome(progress: ProgressState, persisting: boolean): string {
   const world = getScopeStats(COUNTRIES, progress, worldScope);
 
   return `
-    <main class="page">
+    <main class="page page--tile-index">
       <header class="topbar topbar--detail">
         <button class="icon-button" type="button" data-action="route-parent" aria-label="Back to learning domains">${icon('back')}</button>
         <div class="screen-title">

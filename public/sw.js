@@ -1,11 +1,12 @@
-// v14 ships the simplified launcher IA and learner-facing Play terminology.
-// v13 refreshed British-English copy while retaining the v12 Neighbours map presentation runtime.
+// v15 ships the Tactile Atlas visual layer and its production stylesheet.
+// v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v14';
+const VERSION = 'flag-atlas-v15';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
+  './atlas-theme.css',
   './map.css',
   './map-cartography.css',
   './outline.css',

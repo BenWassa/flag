@@ -273,10 +273,15 @@ assert.ok(styles.includes('.launcher-map-region:focus-visible'), 'Keyboard-reach
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behavior.');
+assert.ok(indexHtml.includes('./atlas-theme.css'), 'The production shell loads the Tactile Atlas visual layer.');
+const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
+assert.ok(atlasTheme.includes('--action: #2563eb'), 'The built Atlas theme carries the locked primary action blue.');
+assert.ok(atlasTheme.includes('prefers-reduced-motion: reduce'), 'The built Atlas theme includes reduced-motion behaviour.');
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas owns the v15 PWA cache.');
+assert.ok(serviceWorker.includes('./atlas-theme.css'), 'The Tactile Atlas stylesheet is part of the offline shell.');
 assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
 // All-Africa engine smoke: a target from each region can coexist in one round.
@@ -285,4 +290,4 @@ const africaRound = buildMapSession(africaAsset, 'learn', 'africa-cross-region',
 assert.equal(africaRound.countryIds.length, 5, 'All-Africa round accepts targets across all five regions.');
 assert.deepEqual(new Set(africaRound.countryIds), new Set(representativeIds));
 
-console.log('Africa map verification passed: 54-country coverage, launcher hierarchy, regional context, island dots, callouts, feedback, and mobile contracts.');
+console.log('Africa map verification passed: 54-country coverage, launcher hierarchy, regional context, island dots, callouts, feedback, Atlas shell, and mobile contracts.');

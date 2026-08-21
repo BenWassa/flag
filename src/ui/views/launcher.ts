@@ -1,7 +1,7 @@
 import type { MapRegionAsset } from '../../domain/map-models.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import { domainDisplayName } from '../../domain/display.js';
-import { icon } from '../components/icons.js';
+import { domainIcon, icon } from '../components/icons.js';
 import { renderLauncherMap } from '../components/launcher-map.js';
 import { progressStrip } from '../components/progress.js';
 import { escapeHtml } from '../format.js';
@@ -101,6 +101,7 @@ export function renderLauncher(model: LauncherModel): string {
     <main class="page page--launcher" data-launcher-domain="${model.domain}" data-launcher-continent="${continentId}">
       <header class="topbar topbar--detail launcher-header">
         <button class="icon-button" type="button" data-action="launcher-parent" aria-label="${parentLabel}">${icon('back')}</button>
+        <span class="launcher-header__icon" aria-hidden="true">${domainIcon(model.domain)}</span>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${continentLabel}</h1>
           <span>${domainTitle} · ${model.regions.length} regions</span>

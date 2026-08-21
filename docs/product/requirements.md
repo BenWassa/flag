@@ -1,6 +1,6 @@
 # Atlas — Product Requirements
 
-**Status:** current product baseline; visual style pending Issue #32  
+**Status:** current product baseline; Tactile Atlas visual system implemented
 **Product:** mobile-first geography-learning PWA  
 **Core country catalogue:** 195 sovereign states  
 **Learning domains:** Flags, Locations, Outlines, Neighbours  
@@ -43,7 +43,7 @@ The durable conceptual path is:
 
 Navigation should progressively disclose only the next useful decision.
 
-A dedicated region-detail view is required because region is the first meaningful cross-domain mastery unit.
+Each region card is the cross-domain mastery surface, exposing all four learning domains directly without a separate region-detail step.
 
 Browser Back/Forward and direct links remain first-class product behaviour.
 
@@ -261,9 +261,9 @@ Future revalidation/decay is a separate product decision.
 
 Issue #34 owns implementation.
 
-## 9. Region detail
+## 9. Region cross-domain surface
 
-Atlas requires a dedicated stable routed region-detail screen.
+Atlas surfaces each region directly on its continent screen. The region card is the stable cross-domain surface; a dedicated intermediate region-detail route is not required.
 
 It should expose:
 
@@ -277,7 +277,7 @@ It should expose:
 
 It should not become a dense analytics dashboard.
 
-Issue #35 owns implementation.
+Issue #35 records this implemented composition. Achievement states remain owned by #34.
 
 ## 10. Gamification requirements
 
@@ -326,19 +326,9 @@ See `colour-system.md`.
 
 The palette, semantic hierarchy and gamification rules are locked.
 
-The final visual style is not.
+The final visual style is Tactile Atlas and is implemented. `DESIGN.md` defines its personality, radius system, depth and press physics, typography, scope-first navigation, routine iconography and motion system.
 
-Issue #32 must resolve and document:
-
-- overall personality;
-- shape/radius language;
-- depth/elevation/press physics;
-- typography personality;
-- navigation composition;
-- region-detail composition;
-- icon/shield treatment;
-- continent crest and world Crown art direction;
-- motion system.
+Issue #34 separately owns achievement persistence and the exact mastery-shield, continent-crest and world-Crown art direction.
 
 Do not infer React, Tailwind or another frontend framework/tooling migration from mock-up technology. The desired visual outcome and the implementation stack are separate decisions.
 
@@ -375,7 +365,7 @@ Issue #20 owns map colour/water contrast refinement.
 - URLs own durable navigation state;
 - session state owns transient round internals;
 - Back/Forward must work naturally;
-- stable screens, including the future region detail, must be directly addressable;
+- stable screens must be directly addressable; legacy region-detail URLs may collapse safely to their continent surface;
 - unavailable domain data is an availability concern rather than justification for parallel routing systems.
 
 ## 16. Accessibility
@@ -426,12 +416,12 @@ Primary active work is indexed in `../open/index.md`.
 
 Near-term sequence:
 
-1. lock these product foundations;
-2. select the final visual style and complete `DESIGN.md` under #32;
-3. implement/refine country evidence (#29);
+1. close out the implemented visual system (#32), routine icons (#40) and region-card composition (#35);
+2. implement/refine country evidence (#29);
+3. implement Flags Learn browse/reveal (#30);
 4. implement earned regional/continent/world achievements (#34);
-5. add region detail (#35);
-6. implement Flags Learn browse/reveal (#30) and production Atlas brand rollout (#36) in coordinated focused changes;
-7. continue cartography/usability fixes and continent expansion through their existing issues.
+5. upgrade Progress across all four domains (#42);
+6. complete the production Atlas brand rollout (#36) and source-derived app icon (#43) in focused changes;
+7. continue Africa-first cartography/usability fixes while continent expansion remains deliberately parked.
 
 Focused bugs may ship sooner where independent.

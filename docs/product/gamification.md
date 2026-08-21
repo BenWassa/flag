@@ -95,7 +95,7 @@ Clear, crisp and immediate. Green/red feedback should resolve the task without f
 
 A stronger transition is appropriate when a regional mastery or higher-order completion is first earned.
 
-The exact animation/art direction is deferred to the visual-system work in #32.
+The exact achievement animation/art direction is deferred to #34. Issue #32 supplies the implemented base interaction and motion language.
 
 ## What Atlas does not use
 
@@ -128,5 +128,6 @@ This prevents small achievements from borrowing the visual language of the rares
 
 - #29 — live country learning evidence and Learn/Play mechanics;
 - #34 — persistence and implementation of mastery/completion hierarchy;
-- #35 — region-detail screen where cross-domain competency becomes visible;
-- #32 — final visual language and milestone treatment.
+- #35 — region card where cross-domain competency becomes visible (no separate region-detail screen);
+- #32 — implemented Tactile Atlas base visual language;
+- #34 — earned mastery persistence and milestone artwork/treatment.

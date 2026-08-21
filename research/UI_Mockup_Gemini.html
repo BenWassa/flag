@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Flag Atlas - Tactile Cartographic Refinement</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        atlas: {
+                            /* The Structure */
+                            text: '#101318',
+                            'text-muted': '#64748B',
+                            /* The Surfaces */
+                            canvas: '#F6F8FB',
+                            'surface-card': '#FFFFFF',
+                            /* The Action */
+                            action: '#2563EB',
+                            'action-pressed': '#1749B8',
+                            'action-soft': '#EAF0FF',
+                            /* Transient Feedback */
+                            correct: '#137A55',
+                            wrong: '#B42318',
+                            /* Mastery */
+                            mastery: '#6D3FC0',
+                            gold: '#E0AF2F'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        /* Restrained, crisp arcade physics using structural ink */
+                        'tactile': '2px 2px 0px 0px #101318',
+                        'tactile-active': '0px 0px 0px 0px #101318',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        /* Smooth sliding transitions */
+        .screen-layer {
+            transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+    </style>
+</head>
+<body class="bg-slate-300 min-h-screen p-4 xl:p-8 font-sans text-atlas-text flex flex-col items-center">
+
+    <div class="max-w-2xl w-full mb-8 text-center">
+        <h1 class="text-3xl font-black tracking-tight text-slate-900 mb-2">Tactile Cartographic Flow</h1>
+        <p class="text-slate-600 font-bold">Click "Africa" and "West Africa" to test the native app transitions.</p>
+    </div>
+
+    <!-- Single Device Frame -->
+    <div class="relative w-[340px] h-[720px] bg-atlas-canvas rounded-[3rem] shadow-2xl border-[8px] border-slate-900 overflow-hidden">
+        
+        <!-- Physical Device Notch (always on top) -->
+        <div class="absolute top-0 inset-x-0 h-6 bg-slate-900 rounded-b-2xl w-1/2 mx-auto z-[100]"></div>
+        
+        <!-- -->
+        <!-- ==========================================
+             SCREEN 1: WORLD HOME
+             ========================================== -->
+        <div id="screen-1" class="screen-layer absolute inset-0 w-full h-full bg-atlas-canvas flex flex-col pt-16 pb-8 overflow-y-auto no-scrollbar z-30" style="transform: translateX(0%);">
+            
+            <div class="px-5">
+                <!-- Single Line Header -->
+                <div class="flex justify-between items-center mb-8">
+                    <h1 class="text-3xl font-black text-atlas-text tracking-tight">Global Atlas</h1>
+                    <div class="w-10 h-10 bg-atlas-surface-card border-2 border-atlas-text shadow-tactile rounded-2xl flex items-center justify-center active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer">
+                        <i class="ph-bold ph-gear-six text-lg"></i>
+                    </div>
+                </div>
+
+                <h3 class="text-xs font-black tracking-widest text-atlas-text-muted uppercase mb-4 ml-1">Continents</h3>
+
+                <!-- -->
+                <div class="flex flex-col gap-4">
+                    
+                    <!-- Africa (Active/Primary Action) -> TRIGGERS NAVIGATION -->
+                    <div onclick="navToContinent()" class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex p-3 gap-4 items-center select-none group">
+                        
+                        <!-- Soft Geometric Silhouette (Geography as Art) -->
+                        <div class="w-16 h-16 bg-atlas-action text-white rounded-[1.25rem] flex items-center justify-center flex-shrink-0 border-2 border-atlas-text shadow-tactile">
+                            <svg viewBox="0 0 100 100" class="w-10 h-10 drop-shadow-md">
+                                <path fill="currentColor" d="M 25 35 Q 40 20 60 25 Q 85 30 85 50 Q 75 80 60 90 Q 50 85 45 70 Q 30 60 20 50 Q 15 40 25 35 Z" />
+                            </svg>
+                        </div>
+
+                        <div class="flex flex-col">
+                            <h4 class="font-black text-atlas-text text-2xl leading-none mb-1">Africa</h4>
+                            <span class="text-[11px] font-bold text-atlas-text-muted uppercase tracking-wider">54 Countries</span>
+                        </div>
+                    </div>
+
+                    <!-- Europe -->
+                    <div class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex p-3 gap-4 items-center select-none">
+                        <div class="w-16 h-16 bg-atlas-canvas text-atlas-text rounded-[1.25rem] flex items-center justify-center flex-shrink-0 border-2 border-atlas-text">
+                            <svg viewBox="0 0 100 100" class="w-10 h-10 opacity-40">
+                                <path fill="currentColor" d="M 20 70 Q 20 40 40 30 Q 70 20 85 40 Q 90 60 70 70 Q 50 80 40 60 Q 30 80 20 70 Z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-black text-atlas-text text-2xl leading-none mb-1">Europe</h4>
+                            <span class="text-[11px] font-bold text-atlas-text-muted uppercase tracking-wider">44 Countries</span>
+                        </div>
+                    </div>
+
+                    <!-- Asia -->
+                    <div class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex p-3 gap-4 items-center select-none">
+                        <div class="w-16 h-16 bg-atlas-canvas text-atlas-text rounded-[1.25rem] flex items-center justify-center flex-shrink-0 border-2 border-atlas-text">
+                            <svg viewBox="0 0 100 100" class="w-10 h-10 opacity-40">
+                                <path fill="currentColor" d="M 20 50 Q 30 20 60 20 Q 90 30 90 60 Q 80 90 50 80 Q 20 90 20 50 Z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-black text-atlas-text text-2xl leading-none mb-1">Asia</h4>
+                            <span class="text-[11px] font-bold text-atlas-text-muted uppercase tracking-wider">48 Countries</span>
+                        </div>
+                    </div>
+
+                    <!-- Americas -->
+                    <div class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex p-3 gap-4 items-center select-none">
+                        <div class="w-16 h-16 bg-atlas-canvas text-atlas-text rounded-[1.25rem] flex items-center justify-center flex-shrink-0 border-2 border-atlas-text">
+                            <svg viewBox="0 0 100 100" class="w-10 h-10 opacity-40">
+                                <path fill="currentColor" d="M 40 10 Q 70 10 70 40 Q 50 50 60 70 Q 70 90 50 90 Q 30 70 40 50 Q 20 30 40 10 Z" />
+                            </svg>
+                        </div>
+                        <div class="flex flex-col">
+                            <h4 class="font-black text-atlas-text text-2xl leading-none mb-1">Americas</h4>
+                            <span class="text-[11px] font-bold text-atlas-text-muted uppercase tracking-wider">35 Countries</span>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- -->
+        <!-- ==========================================
+             SCREEN 2: CONTINENT (REGION LIST)
+             ========================================== -->
+        <div id="screen-2" class="screen-layer absolute inset-0 w-full h-full bg-atlas-canvas flex flex-col z-40" style="transform: translateX(100%);">
+            
+            <!-- Sticky Header -->
+            <div class="pt-16 pb-4 px-5 flex items-center justify-between bg-atlas-canvas/95 backdrop-blur-md mb-2 relative z-50">
+                <button onclick="navToWorld()" class="w-10 h-10 bg-atlas-surface-card border-2 border-atlas-text shadow-tactile flex items-center justify-center text-atlas-text active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all rounded-xl">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-2xl font-black text-atlas-text tracking-tight">Africa</h1>
+                <div class="w-10 h-10"></div> <!-- Balancer -->
+            </div>
+
+            <!-- Region List Content -->
+            <div class="px-5 pb-8 flex flex-col gap-4 overflow-y-auto no-scrollbar flex-1 relative z-40">
+                
+                <!-- West Africa (Complete) -> TRIGGERS NAVIGATION -->
+                <div onclick="navToRegion()" class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col p-4 gap-4 relative select-none">
+                    
+                    <!-- Rare Mastery Marker (Purple/Gold) -->
+                    <div class="absolute -top-2 -right-2 w-8 h-8 bg-atlas-mastery rounded-full flex items-center justify-center border-2 border-atlas-text shadow-tactile z-10">
+                        <i class="ph-fill ph-star text-atlas-gold text-[12px]"></i>
+                    </div>
+
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-black text-2xl text-atlas-text leading-none">West Africa</h3>
+                        <p class="text-[11px] text-atlas-text-muted font-bold uppercase tracking-wider">17 Countries</p>
+                    </div>
+                    
+                    <!-- Domain Indicators (Disciplined: completed is crisp graphite, NOT purple) -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-flag"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-shapes"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-map-pin"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-users-three"></i></div>
+                    </div>
+                </div>
+
+                <!-- East Africa (In Progress) -->
+                <div class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col p-4 gap-4 select-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-black text-2xl text-atlas-text leading-none">East Africa</h3>
+                        <p class="text-[11px] text-atlas-text-muted font-bold uppercase tracking-wider">14 Countries</p>
+                    </div>
+                    
+                    <!-- Domain Indicators (Partial) -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-flag"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-shapes"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-canvas border-2 border-slate-200 flex items-center justify-center text-slate-400"><i class="ph-bold ph-map-pin"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-canvas border-2 border-slate-200 flex items-center justify-center text-slate-400"><i class="ph-bold ph-users-three"></i></div>
+                    </div>
+                </div>
+
+                <!-- North Africa (In Progress) -->
+                <div class="bg-atlas-surface-card rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col p-4 gap-4 select-none">
+                    <div class="flex justify-between items-center">
+                        <h3 class="font-black text-2xl text-atlas-text leading-none">North Africa</h3>
+                        <p class="text-[11px] text-atlas-text-muted font-bold uppercase tracking-wider">7 Countries</p>
+                    </div>
+                    
+                    <!-- Domain Indicators (Partial) -->
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-full bg-atlas-surface-card border-2 border-atlas-text flex items-center justify-center text-atlas-text"><i class="ph-bold ph-flag"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-canvas border-2 border-slate-200 flex items-center justify-center text-slate-400"><i class="ph-bold ph-shapes"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-canvas border-2 border-slate-200 flex items-center justify-center text-slate-400"><i class="ph-bold ph-map-pin"></i></div>
+                        <div class="w-8 h-8 rounded-full bg-atlas-canvas border-2 border-slate-200 flex items-center justify-center text-slate-400"><i class="ph-bold ph-users-three"></i></div>
+                    </div>
+                </div>
+                
+                <!-- Spacer for scrolling -->
+                <div class="h-10"></div>
+            </div>
+        </div>
+
+        <!-- -->
+        <!-- ==========================================
+             SCREEN 3: REGION DETAIL (PLAY MENU)
+             ========================================== -->
+        <div id="screen-3" class="screen-layer absolute inset-0 w-full h-full bg-atlas-canvas flex flex-col z-50 overflow-hidden" style="transform: translateX(100%);">
+            
+            <!-- Geography as Art: Background Silhouette -->
+            <div class="absolute -right-20 top-20 text-slate-200 pointer-events-none z-0">
+                <svg viewBox="0 0 100 100" class="w-[400px] h-[400px]">
+                    <path fill="currentColor" d="M 25 35 Q 40 20 60 25 Q 85 30 85 50 Q 75 80 60 90 Q 50 85 45 70 Q 30 60 20 50 Q 15 40 25 35 Z" />
+                </svg>
+            </div>
+
+            <!-- Header -->
+            <div class="pt-16 pb-4 px-5 flex items-center justify-between relative z-50">
+                <button onclick="navBackToContinent()" class="w-10 h-10 bg-atlas-surface-card border-2 border-atlas-text shadow-tactile flex items-center justify-center text-atlas-text active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all rounded-xl">
+                    <i class="ph-bold ph-arrow-left text-lg"></i>
+                </button>
+                <div class="text-center">
+                    <h1 class="text-2xl font-black text-atlas-text tracking-tight">West Africa</h1>
+                    <p class="text-[11px] font-bold text-atlas-text-muted uppercase tracking-wider">17 Countries</p>
+                </div>
+                <div class="w-10 h-10"></div> <!-- Balancer -->
+            </div>
+
+            <div class="px-5 pb-8 flex flex-col flex-1 overflow-y-auto no-scrollbar relative z-40">
+                
+                <!-- Compact Mastery Medallion (Earned Marker, not screen-dominating) -->
+                <div class="flex items-center gap-4 mb-8 mt-2 bg-white/50 backdrop-blur-sm p-3 rounded-2xl border border-slate-200">
+                    <div class="w-12 h-12 bg-atlas-mastery rounded-[1rem] border-2 border-atlas-text shadow-tactile flex items-center justify-center rotate-3 flex-shrink-0">
+                        <i class="ph-fill ph-star text-atlas-gold text-2xl"></i>
+                    </div>
+                    <div>
+                        <h2 class="text-lg font-black text-atlas-text uppercase tracking-tight leading-none mb-1">Region Mastered</h2>
+                        <p class="text-xs text-atlas-text-muted font-bold">All competencies acquired.</p>
+                    </div>
+                </div>
+
+                <!-- Playable Domain Grid (Massive Atlas Blue Action Buttons) -->
+                <div class="grid grid-cols-2 gap-4 mb-6">
+                    
+                    <div class="bg-atlas-action text-white p-5 rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col items-center text-center gap-2 select-none relative">
+                        <!-- Tiny Purple Mastery Check (Preserves Blue=Action, Purple=Mastery) -->
+                        <div class="absolute -top-2 -right-2 w-7 h-7 bg-atlas-mastery rounded-full border-2 border-atlas-text flex items-center justify-center shadow-tactile z-10">
+                            <i class="ph-bold ph-check text-white text-xs"></i>
+                        </div>
+                        <i class="ph-fill ph-flag text-4xl"></i>
+                        <span class="font-black text-sm uppercase tracking-wider">Flags</span>
+                    </div>
+
+                    <div class="bg-atlas-action text-white p-5 rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col items-center text-center gap-2 select-none relative">
+                        <div class="absolute -top-2 -right-2 w-7 h-7 bg-atlas-mastery rounded-full border-2 border-atlas-text flex items-center justify-center shadow-tactile z-10">
+                            <i class="ph-bold ph-check text-white text-xs"></i>
+                        </div>
+                        <i class="ph-fill ph-shapes text-4xl"></i>
+                        <span class="font-black text-sm uppercase tracking-wider">Outlines</span>
+                    </div>
+
+                    <div class="bg-atlas-action text-white p-5 rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col items-center text-center gap-2 select-none relative">
+                        <div class="absolute -top-2 -right-2 w-7 h-7 bg-atlas-mastery rounded-full border-2 border-atlas-text flex items-center justify-center shadow-tactile z-10">
+                            <i class="ph-bold ph-check text-white text-xs"></i>
+                        </div>
+                        <i class="ph-fill ph-map-pin text-4xl"></i>
+                        <span class="font-black text-sm uppercase tracking-wider">Locations</span>
+                    </div>
+
+                    <div class="bg-atlas-action text-white p-5 rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all cursor-pointer flex flex-col items-center text-center gap-2 select-none relative">
+                        <div class="absolute -top-2 -right-2 w-7 h-7 bg-atlas-mastery rounded-full border-2 border-atlas-text flex items-center justify-center shadow-tactile z-10">
+                            <i class="ph-bold ph-check text-white text-xs"></i>
+                        </div>
+                        <i class="ph-fill ph-users-three text-4xl"></i>
+                        <span class="font-black text-sm uppercase tracking-wider">Neighbours</span>
+                    </div>
+
+                </div>
+                
+                <!-- Utility Action -->
+                <button class="w-full mt-auto bg-atlas-surface-card text-atlas-text font-black text-lg py-5 rounded-[2rem] border-2 border-atlas-text shadow-tactile active:translate-y-[2px] active:translate-x-[2px] active:shadow-tactile-active transition-all flex justify-center items-center gap-2 select-none">
+                    Review Progress
+                </button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- -->
+    <script>
+        const s1 = document.getElementById('screen-1');
+        const s2 = document.getElementById('screen-2');
+        const s3 = document.getElementById('screen-3');
+
+        // Navigates from World to Continent (Africa)
+        function navToContinent() {
+            s1.style.transform = 'translateX(-100%)'; 
+            s2.style.transform = 'translateX(0%)';    
+        }
+
+        // Navigates from Continent to Region (West Africa)
+        function navToRegion() {
+            s2.style.transform = 'translateX(-100%)'; 
+            s3.style.transform = 'translateX(0%)';    
+        }
+
+        // Navigates back from Continent to World
+        function navToWorld() {
+            s2.style.transform = 'translateX(100%)';  
+            s1.style.transform = 'translateX(0%)';    
+        }
+
+        // Navigates back from Region to Continent
+        function navBackToContinent() {
+            s3.style.transform = 'translateX(100%)';  
+            s2.style.transform = 'translateX(0%)';    
+        }
+    </script>
+</body>
+</html>

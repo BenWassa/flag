@@ -13,6 +13,7 @@ import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
+import { renderContinent } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -34,12 +35,14 @@ for (const id of AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS) {
 }
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
+assert.ok(indexHtml.includes('./atlas-theme.css'), 'Combined production shell includes the Tactile Atlas stylesheet.');
 assert.ok(indexHtml.includes('./outline.css'), 'Combined production shell retains the Outlines stylesheet.');
 assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell includes the Neighbours stylesheet.');
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified launcher IA owns the v14 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas owns the v15 PWA cache.');
+assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
 assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
@@ -52,11 +55,19 @@ const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const outlineProgress = createInitialProgress(COUNTRIES);
 const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
-const homeHtml = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
-assert.equal((homeHtml.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
-assert.equal((homeHtml.match(/data-action="quick-play"/g) ?? []).length, 4, 'Home exposes one direct Play control per learning domain.');
+const homeHtml = renderHome(flagProgress);
+assert.equal((homeHtml.match(/data-action="open-atlas"/g) ?? []).length, 6, 'Home exposes all six continents.');
+const africaAtlasHtml = renderContinent(flagProgress, { kind: 'continent', id: 'africa', label: 'Africa' });
+assert.equal(
+  (africaAtlasHtml.match(/data-action="quick-play"/g) ?? []).length,
+  20,
+  'Every Africa region exposes all four learning domains as direct launch shortcuts.',
+);
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
-  assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home exposes ${label} through its canonical display name.`);
+  assert.ok(
+    africaAtlasHtml.includes(`Play West Africa ${label.toLowerCase()}`),
+    `The continent surface exposes ${label} through its canonical display name.`,
+  );
 }
 
 const flagsHomeHtml = renderDomainHome('flags', flagProgress);
@@ -77,4 +88,4 @@ for (const [name, html] of launchers) {
   }
 }
 
-console.log('Cross-domain integration verification passed: four-domain Home, direct Africa launchers, v14 shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: scope-first Home, four-domain region grid, direct Africa launchers, v15 Tactile Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

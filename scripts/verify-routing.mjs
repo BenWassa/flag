@@ -125,20 +125,51 @@ for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
   }
 }
 
-assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/flags', 'A selected Flags region is state inside the continent launcher, so Back returns to the Flags list.');
-assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/flags');
+// Scope-first Back chain: a domain launcher was entered from its atlas scope,
+// so Back returns there rather than jumping to Home. There is no region-only
+// atlas screen, so a region-scoped launcher's Back returns to its continent.
+assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/atlas/africa');
+assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/atlas/africa');
 assert.equal(serializeRoutePath(parentRoute(flags)), '/');
 assert.equal(serializeRoutePath(parentRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(stableRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(outlinesLearn)), '/outlines/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(neighborsTest)), '/neighbors/africa/west-africa');
-for (const launcherRoute of [locationsAfrica, locationsWest, outlinesAfrica, outlinesWest, neighborsAfrica, neighborsWest]) {
+for (const [launcherRoute, expectedParent] of [
+  [locationsAfrica, '/atlas/africa'],
+  [locationsWest, '/atlas/africa'],
+  [outlinesAfrica, '/atlas/africa'],
+  [outlinesWest, '/atlas/africa'],
+  [neighborsAfrica, '/atlas/africa'],
+  [neighborsWest, '/atlas/africa'],
+]) {
   assert.equal(
     serializeRoutePath(parentRoute(launcherRoute)),
-    '/',
-    `${serializeRoutePath(launcherRoute)} launcher Back must return Home, not an Africa-only domain screen.`,
+    expectedParent,
+    `${serializeRoutePath(launcherRoute)} launcher Back must return to the scope it was opened from.`,
   );
 }
+
+// The atlas surface itself round-trips at the continent level; the retired
+// region-only "select a mode" screen no longer exists, so the legacy
+// three-segment /atlas/{continent}/{region} URL collapses onto its continent.
+const atlasAfrica = parseRoutePath('/atlas/africa');
+assert.equal(serializeRoutePath(atlasAfrica), '/atlas/africa', 'Continent surface round-trips.');
+assert.equal(serializeRoutePath(parentRoute(atlasAfrica)), '/', 'Continent Back returns to the world.');
+assert.equal(routeTitle(atlasAfrica), 'Africa · Flag Atlas');
+assert.equal(parseRoutePath('/atlas'), null, 'The atlas prefix alone is not a screen.');
+assert.equal(parseRoutePath('/atlas/nowhere'), null, 'Unknown continent must be rejected.');
+assert.equal(parseRoutePath('/atlas/africa/east-asia'), null, 'A region must belong to its atlas continent.');
+assert.deepEqual(
+  parseRoutePath('/atlas/africa/west-africa'),
+  atlasAfrica,
+  'The legacy region atlas URL resolves to its continent surface.',
+);
+assert.equal(
+  serializeRoutePath(parseRoutePath('/atlas/europe/western-europe')),
+  '/atlas/europe',
+  'Continents without full domain data are still navigable as shells.',
+);
 
 assert.equal(routeTitle(flagsWest), 'West Africa flags · Flag Atlas');
 assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Flag Atlas');
@@ -219,13 +250,22 @@ assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpr
 assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
-for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-  assert.ok(home.includes(`renderDomainRow('${domain}'`), `Home must render the ${domain} split row.`);
-}
-assert.ok(home.includes('data-action="quick-play"'), 'Every Home domain row shares the direct Play control contract.');
+assert.ok(home.includes('data-action="open-atlas"'), 'Home selects a continent through the scope-first atlas action.');
+assert.equal(
+  (home.match(/data-action="quick-play"/g) ?? []).length,
+  0,
+  'Home starts no round before a continent and region scope are chosen.',
+);
 assert.equal(home.includes('Learning domains'), false, 'Home no longer needs a heading that restates its four-row index.');
 assert.equal(home.includes('4 available'), false, 'Home no longer carries the deleted availability summary.');
 assert.equal(home.includes('Choose a skill'), false, 'Home no longer explains the choice that the rows already make clear.');
+
+const atlasViews = await readFile('dist/ui/views/atlas.js', 'utf8');
+assert.ok(atlasViews.includes('data-action="route-parent"'), 'The continent surface exposes the shared Back contract.');
+assert.ok(atlasViews.includes('data-action="quick-play"'), 'Region cards launch a domain directly, without an intermediate screen.');
+assert.equal(atlasViews.includes('data-action="open-atlas"'), false, 'Region cards no longer link into a retired region-detail screen.');
+assert.equal(atlasViews.includes('data-action="open-scope"'), false, 'The retired region "select a mode" screen must not return.');
+assert.ok(atlasViews.includes('domain-launch--absent'), 'Unsupported domains render as inert shells, not launchers.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
 const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');
@@ -268,10 +308,11 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v14'"), 'Simplified IA shell changes must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v15'"), 'Tactile Atlas shell changes must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'The Tactile Atlas stylesheet must be part of the offline shell.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v14 PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v15 Tactile Atlas PWA shell.');

@@ -31,7 +31,7 @@ The durable geographic hierarchy is:
 
 **World → Continent → Region**
 
-A dedicated **region detail** screen is required because the region is the first meaningful cross-domain learning unit.
+The region is the first meaningful cross-domain learning unit, so it must always surface its four domains together — as direct domain-launch shortcuts on the region's card in the continent surface, not through a separate region-detail screen.
 
 Country remains the canonical data identity and the atomic evidence unit underneath the learning engines, but country is not a learner-facing prestige tier.
 
@@ -215,11 +215,11 @@ See [`docs/product/colour-system.md`](docs/product/colour-system.md).
 
 The semantic colour system, achievement hierarchy and product principles are locked.
 
-The final **visual style is not yet locked**. Shape language, radii, elevation, motion, typography personality, navigation composition and exact crest/crown art direction are the next design task.
+The visual style is locked: **Tactile Atlas**. Shape language, radii, elevation, press physics, typography personality and motion are decided and implemented; see `DESIGN.md` for the complete specification.
 
-Issue #32 owns the future visual-system implementation after that style exploration is complete.
+Issue #32 records the implemented visual-system rollout. Achievement art direction (region mastery badges, continent crests, the world Crown) remains genuinely open and depends on #34's earned-mastery persistence landing first.
 
-The current shipped `DESIGN.md` aesthetic should not be treated as a requirement to preserve if it conflicts with the new direction.
+`DESIGN.md`'s shipped Tactile Atlas aesthetic is now normative product truth, not a placeholder to be discarded on a future design pass.
 
 ## Navigation and information architecture
 
@@ -230,13 +230,13 @@ Core navigation principles:
 - mobile-first;
 - no horizontal scrolling for primary selection;
 - geography and learning scope remain obvious;
-- region detail becomes the cross-domain competency surface;
+- the region card is the cross-domain competency surface — no separate region-detail screen sits between it and Play;
 - Learn and Play remain direct;
 - Back/Forward and direct links remain first-class;
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.
 
-Issue #35 owns the new region-detail screen.
+Issue #35 owns region × domain cross-domain competency, surfaced directly on the continent surface's region cards.
 
 ## Persistence and compatibility
 

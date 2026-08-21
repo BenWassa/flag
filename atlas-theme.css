@@ -1,0 +1,857 @@
+:root {
+  --canvas: #f6f8fb;
+  --surface: #ffffff;
+  --surface-subtle: #eef3fb;
+  --track: #e3e9f2;
+  --text: #101318;
+  --text-muted: #667085;
+  --line: #d9e0ea;
+  --line-strong: #b7c2d1;
+  --action: #2563eb;
+  --action-hover: #1d55cf;
+  --action-pressed: #1749b8;
+  --action-soft: #eaf0ff;
+  --on-action: #ffffff;
+  --on-action-muted: rgba(255, 255, 255, .84);
+  /* Solid rather than a 32% tint: as the sole focus indicator the old value
+     sat near 1.6:1 against the canvas, under WCAG 2.2 SC 1.4.11's 3:1 for
+     non-text indicators. Pressed-blue clears it at roughly 7:1 and stays
+     distinguishable from the Atlas Blue fill of a focused primary button. */
+  --focus-ring: #1749b8;
+  --correct: #137a55;
+  --correct-soft: #e8f5ef;
+  --correct-line: #8bc7ad;
+  --wrong: #b42318;
+  --wrong-soft: #fce8e6;
+  --wrong-line: #dca7a2;
+  --mastery: #6d3fc0;
+  --mastery-soft: #f0eafd;
+  --prestige: #e0af2f;
+  --prestige-soft: #fff8df;
+  /* Compatibility aliases. Eighteen rules across styles.css, map.css and
+     neighbors.css still reference the legacy --mastered* family, which would
+     otherwise keep resolving to the pre-Atlas green (#e7f4ed / #82bca3) and
+     leave Locations and Neighbours a shade off the Flags and Outlines answer
+     buttons. Aliasing collapses both onto one correct-feedback scale without
+     touching learning logic; #29 owns retiring the terminology itself. */
+  --mastered: var(--correct);
+  --mastered-soft: var(--correct-soft);
+  --mastered-line: var(--correct-line);
+  --learning: #8b6214;
+  --learning-soft: #fff4da;
+  --unseen: #667085;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-tile: 18px;
+  --radius-hero: 24px;
+  --depth-primary: 0 4px 0 var(--action-pressed);
+  --depth-arcade: 2px 2px 0 var(--text);
+  --depth-tile: 0 1px 2px rgba(16, 19, 24, .05), 0 7px 18px rgba(16, 19, 24, .055);
+  --depth-tile-hover: 0 2px 4px rgba(16, 19, 24, .06), 0 10px 24px rgba(16, 19, 24, .075);
+  --flag-shadow: 0 9px 24px rgba(16, 19, 24, .09);
+}
+
+html,
+body { background: var(--canvas); }
+
+body { letter-spacing: -.006em; }
+
+.page {
+  width: min(100%, 900px);
+  padding-left: clamp(16px, 4vw, 28px);
+  padding-right: clamp(16px, 4vw, 28px);
+}
+
+.topbar { margin-bottom: 28px; }
+
+.brand-name {
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: -.03em;
+}
+
+.icon-button,
+.text-icon-button {
+  background: var(--surface);
+  border-color: var(--line);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .035);
+}
+
+.icon-button:active,
+.text-icon-button:active {
+  transform: translateY(1px);
+  background: var(--surface-subtle);
+}
+
+.screen-title h1,
+.overview-heading h1 {
+  font-size: clamp(1.9rem, 8vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.02;
+  letter-spacing: -.045em;
+}
+
+.world-overview,
+.scope-overview {
+  padding-bottom: 22px;
+  border-bottom: 0;
+}
+
+.page--home .world-overview { padding-top: 6px; }
+.page--home .overview-heading { margin-bottom: 0; }
+.page--home .atlas-section { margin-top: 22px; }
+
+.button {
+  min-height: 52px;
+  border-radius: var(--radius-md);
+  font-weight: 760;
+  letter-spacing: -.01em;
+}
+
+.button--primary {
+  border-color: var(--action);
+  background: var(--action);
+  color: var(--on-action);
+  box-shadow: var(--depth-primary);
+  transform: translateY(0);
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 100ms ease, transform 100ms ease;
+}
+
+.button--primary:hover { background: var(--action-hover); }
+
+.button--primary:active {
+  background: var(--action-pressed);
+  border-color: var(--action-pressed);
+  box-shadow: 0 1px 0 var(--action-pressed);
+  transform: translateY(3px);
+}
+
+.button--secondary {
+  background: var(--surface);
+  border-color: var(--line-strong);
+}
+
+.button--tertiary {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--text);
+}
+
+.continent-list,
+.region-list,
+.mini-ledger,
+.ledger-list,
+.mastery-list,
+.mistake-list { border-top: 0; }
+
+.page--tile-index .continent-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.page--tile-index .continent-row {
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease, transform 100ms ease;
+}
+
+.page--tile-index .continent-row:hover {
+  border-color: var(--line-strong);
+  box-shadow: var(--depth-tile-hover);
+}
+
+.page--tile-index .continent-row:active { transform: translateY(1px); }
+
+.page--tile-index .continent-row__open {
+  min-height: 132px;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
+  align-content: stretch;
+  gap: 8px;
+  padding: 17px 14px 15px 16px;
+}
+
+.page--tile-index .continent-row__identity {
+  align-self: start;
+  gap: 3px;
+}
+
+.page--tile-index .continent-row__identity strong {
+  font-size: 18px;
+  font-weight: 780;
+  letter-spacing: -.025em;
+}
+
+.page--tile-index .continent-row__identity small {
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.page--tile-index .continent-row__progress {
+  align-self: end;
+  width: 100%;
+}
+
+.page--tile-index .continent-row__progress .status-strip {
+  height: 7px;
+  border-radius: 999px;
+}
+
+/* Removed outright rather than visually hidden: the adjacent status strip is
+   role="img" with an aria-label carrying the same mastered/learning/unseen
+   counts, so an opacity:0 score was announcing the tally a second time to
+   screen readers while sighted users saw it once. */
+.page--tile-index .continent-row__score { display: none; }
+
+.page--tile-index .continent-row__open > .ui-icon { display: none; }
+
+.page--tile-index .continent-row__play {
+  width: 48px;
+  min-height: 100%;
+  border-left: 1px solid var(--line);
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.page--tile-index .continent-row__play:active {
+  background: color-mix(in srgb, var(--action-soft) 76%, var(--action));
+  transform: translateY(1px);
+}
+
+/* Home is the highest-frequency game-entry surface, so it carries the
+   strongest neutral tactile treatment. Lower-level scope rows stay quieter. */
+.page--home .continent-list { gap: 14px; }
+
+.page--home .continent-row {
+  grid-template-columns: minmax(0, 1fr) 52px;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-hero);
+  box-shadow: var(--depth-arcade);
+}
+
+.page--home .continent-row:hover {
+  border-color: var(--text);
+  box-shadow: var(--depth-arcade);
+}
+
+.page--home .continent-row:active,
+.page--home .continent-row:has(button:active) {
+  transform: translate(2px, 2px);
+  box-shadow: none;
+}
+
+.page--home .domain-tile__open {
+  min-height: 150px;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto 1fr auto;
+  align-content: stretch;
+  gap: 8px;
+  padding: 14px;
+}
+
+.page--home .domain-tile__icon {
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--text);
+  border-radius: var(--radius-tile);
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.page--home .domain-tile__icon .ui-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.page--home .continent-row .continent-row__identity {
+  align-self: start;
+}
+
+.page--home .continent-row .continent-row__identity strong {
+  font-size: 20px;
+  font-weight: 820;
+}
+
+.page--home .continent-row .continent-row__identity small {
+  font-size: 11px;
+  font-weight: 650;
+  text-transform: uppercase;
+  letter-spacing: .055em;
+}
+
+.page--home .continent-row .continent-row__progress {
+  align-self: end;
+}
+
+.page--home .continent-row .continent-row__play {
+  width: 52px;
+  border-left: 2px solid var(--text);
+}
+
+.region-list {
+  display: grid;
+  gap: 9px;
+}
+
+.region-row {
+  grid-template-columns: minmax(0, 1fr) 50px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  overflow: hidden;
+  box-shadow: var(--depth-tile);
+  transition: box-shadow 140ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .region-row:hover { box-shadow: var(--depth-tile-hover); }
+}
+
+.region-row--selected {
+  border-color: color-mix(in srgb, var(--action) 44%, var(--line));
+  background: var(--action-soft);
+  box-shadow: inset 3px 0 0 var(--action);
+}
+
+.region-row__open {
+  min-height: 66px;
+  padding: 10px 12px 10px 15px;
+}
+
+.region-row__identity strong {
+  font-weight: 760;
+  letter-spacing: -.015em;
+}
+
+.region-row__status {
+  color: var(--action);
+  font-weight: 720;
+}
+
+.region-row__play {
+  width: 50px;
+  border-left-color: var(--line);
+  color: var(--action);
+  background: color-mix(in srgb, var(--action-soft) 62%, var(--surface));
+}
+
+.region-row__play:active {
+  background: var(--action-soft);
+  transform: translateY(1px);
+}
+
+.page--launcher .topbar { margin-bottom: 18px; }
+.launcher { gap: 0; }
+
+.launcher-header__icon {
+  width: 40px;
+  height: 40px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.launcher-header__icon .ui-icon { width: 22px; height: 22px; }
+
+.launcher__status {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+}
+
+.launcher__status .status-strip {
+  height: 8px;
+  border-radius: 999px;
+  background: var(--track);
+}
+
+/* The strip is the primary at-a-glance signal here; the adjacent numeric
+   line stays present for screen readers/precise counts but reads quieter
+   so it doesn't compete with it. */
+.launcher__status .scope-status-line strong {
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.launcher__status .scope-status-line span { font-size: 12px; }
+
+.launcher__play {
+  min-height: 58px;
+  margin-top: 15px;
+  border-radius: var(--radius-tile);
+  font-size: 17px;
+}
+
+.launcher-map-slot:not(:empty) { margin-top: 18px; }
+
+.launcher-map {
+  height: clamp(170px, 29dvh, 260px);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface-subtle);
+  box-shadow: var(--depth-tile);
+}
+
+.launcher__regions { margin-top: 24px; }
+
+.launcher__learn {
+  min-height: 50px;
+  margin-top: 12px;
+  border-radius: var(--radius-md);
+  color: var(--action);
+}
+
+.list-heading { margin-bottom: 10px; }
+
+.list-heading h2 {
+  font-size: 17px;
+  font-weight: 760;
+}
+
+/* These selectors still describe country-level scheduler evidence in the
+   current implementation. Keep them ordinary Atlas Blue until #29/#34
+   separates earned region/domain Mastery from live evidence. */
+.status-strip__mastered { background: var(--action); }
+.status-strip__learning { background: var(--learning); }
+.status-text--mastered { color: var(--action); }
+
+.quiz-shell { width: min(100%, 860px); }
+.quiz-header { min-height: 54px; }
+
+/* The pannable map canvas is a real interactive surface, so it earns the same
+   standing-tile treatment as launcher-map and region-row rather than the flat
+   chrome used for feedback strips. */
+.map-stage {
+  border-radius: var(--radius-tile);
+  box-shadow: var(--depth-tile);
+}
+
+/* Neighbours' pre-hydration placeholder had no card framing at all, unlike
+   every other domain's map/stage container. Its hydrated state already
+   shares the .map-stage class above and inherits the same treatment. */
+.neighbor-map-loading,
+.neighbor-map-unavailable {
+  border-radius: var(--radius-tile);
+  box-shadow: var(--depth-tile);
+}
+
+.neighbor-progress {
+  height: 8px;
+  border-radius: 999px;
+}
+
+/* A floating overlay needs elevation to read as separate from the content
+   behind it — unlike the flat rows used for static lists elsewhere. */
+.neighbor-suggestions {
+  border-radius: var(--radius-md);
+  box-shadow: var(--depth-tile);
+}
+
+.quiz-progress {
+  height: 5px;
+  border-radius: 999px;
+}
+
+.question-stage { padding-top: 12px; }
+
+.flag-stage {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.flag-image {
+  border-radius: 2px;
+  box-shadow: var(--flag-shadow);
+}
+
+.answer-panel { gap: 10px; }
+
+.answer-button {
+  min-height: 60px;
+  border-color: var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--line-strong) 70%, var(--text-muted));
+  transform: translateY(0);
+  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 90ms ease, transform 90ms ease;
+}
+
+.answer-button:not(:disabled):active {
+  box-shadow: 0 1px 0 var(--line-strong);
+  transform: translateY(2px);
+}
+
+.answer-button--correct {
+  background: var(--correct-soft);
+  border-color: var(--correct-line);
+  box-shadow: 0 3px 0 var(--correct);
+}
+
+.answer-button--correct .answer-key {
+  border-color: var(--correct);
+  color: var(--correct);
+}
+
+.answer-button--wrong {
+  background: var(--wrong-soft);
+  border-color: var(--wrong-line);
+  box-shadow: 0 3px 0 var(--wrong);
+}
+
+.answer-button--selected {
+  background: var(--action-soft);
+  border-color: var(--action);
+  box-shadow: 0 3px 0 var(--action-pressed);
+}
+
+.answer-key {
+  border-radius: var(--radius-sm);
+  font-weight: 800;
+}
+
+.answer-feedback { border-top-width: 1px; }
+.answer-feedback--correct { border-top-color: var(--correct); }
+.answer-feedback--wrong { border-top-color: var(--wrong); }
+
+.results-header { margin-bottom: 18px; }
+
+.result-score {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+}
+
+.result-score > strong {
+  font-size: clamp(3rem, 14vw, 4.25rem);
+  font-weight: 820;
+}
+
+.result-statline {
+  margin-top: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  overflow: hidden;
+}
+
+.result-statline span { padding: 13px 14px; }
+
+.mastery-list,
+.mistake-list,
+.ledger-list {
+  display: grid;
+  gap: 7px;
+}
+
+.mastery-row,
+.mistake-row,
+.ledger-row {
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .025);
+}
+
+/* Results still use legacy country-level “Mastered” copy. Do not give that
+   row the reserved purple earned-Mastery signal before #29/#34 lands. */
+.mastery-row > span:not(.flag-frame) { color: var(--action); }
+
+/* Outline results used its own flat, border-bottom mini-ledger row instead of
+   the .mastery-row/.mistake-row card treatment above — bring it in line so
+   the same "mastered/missed this round" content doesn't look like two
+   different products depending on which domain produced it. */
+.mini-ledger__row,
+.outline-mistake-row {
+  margin-bottom: 7px;
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .025);
+}
+
+.mini-ledger__row:last-child,
+.outline-mistake-row:last-child { margin-bottom: 0; }
+
+.filter-tab:active { transform: translateY(1px); }
+
+/* Neighbours' round-complete summary used a bare heading instead of the
+   scored-hero card every other domain's results screen gives its headline
+   number (.result-score) — give it the same weight. */
+.neighbor-results-summary {
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-hero);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+}
+
+.neighbor-results-summary .overview-heading {
+  margin-bottom: 8px;
+}
+
+.neighbor-results-summary .overview-heading h1 {
+  font-size: clamp(2.25rem, 10vw, 3rem);
+  font-weight: 820;
+}
+
+.storage-notice {
+  border-radius: var(--radius-md);
+  background: var(--surface-subtle);
+}
+
+@media (max-width: 374px) {
+  .page--tile-index .continent-list { grid-template-columns: 1fr; }
+  .page--tile-index .continent-row__open { min-height: 94px; }
+  .page--home .domain-tile__open { min-height: 118px; }
+}
+
+@media (min-width: 700px) {
+  .answer-panel { gap: 12px; }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .button--primary:hover {
+    box-shadow: 0 4px 0 var(--action-pressed);
+  }
+
+  .answer-button:not(:disabled):hover {
+    border-color: var(--action);
+    background: color-mix(in srgb, var(--action-soft) 44%, var(--surface));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: .01ms !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  .button--primary:active,
+  .answer-button:not(:disabled):active,
+  .page--tile-index .continent-row:active,
+  .page--home .continent-row:has(button:active),
+  .icon-button:active,
+  .text-icon-button:active,
+  .region-row__play:active,
+  .page--tile-index .continent-row__play:active {
+    transform: none;
+  }
+}
+
+/* ==========================================================================
+   Scope-first Atlas surfaces (Home / continent / region)
+
+   These three screens carry the arcade tier of the depth system: a 2px ink
+   border plus a hard 2px offset shadow that collapses diagonally under the
+   press. Ordinary chrome elsewhere keeps the soft --depth-tile treatment.
+   ========================================================================== */
+
+.page--atlas { width: min(100%, 560px); }
+
+.topbar--atlas { margin-bottom: 20px; }
+.topbar--atlas.topbar--detail { justify-content: space-between; }
+.topbar__balance { width: 44px; flex: 0 0 auto; }
+
+.page--atlas .brand-name {
+  font-size: clamp(26px, 8vw, 32px);
+  font-weight: 900;
+  letter-spacing: -.035em;
+}
+
+.atlas-title {
+  font-size: clamp(21px, 6vw, 26px);
+  font-weight: 900;
+  letter-spacing: -.035em;
+  text-align: center;
+}
+
+.atlas-eyebrow {
+  font-size: 11px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: .13em;
+  color: var(--text-muted);
+  margin: 0 0 12px 4px;
+}
+
+.atlas-card-list { display: flex; flex-direction: column; gap: 14px; }
+
+.atlas-card,
+.domain-launch {
+  border: 2px solid var(--text);
+  box-shadow: var(--depth-arcade);
+  background: var(--surface);
+  color: var(--text);
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
+}
+
+.atlas-card:active,
+.domain-launch:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--text);
+}
+
+/* The region card is a container, not a single control: its identity button
+   and its four domain-launch buttons press independently, so the outer
+   wrapper itself never shows an active state. */
+.atlas-card--region:active { transform: none; box-shadow: var(--depth-arcade); }
+
+/* --- Continent / region cards ------------------------------------------- */
+
+.atlas-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 28px;
+  text-align: left;
+  cursor: pointer;
+  position: relative;
+}
+
+.atlas-card__mark {
+  width: 60px;
+  height: 60px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  border: 2px solid var(--text);
+  border-radius: 20px;
+  background: var(--action);
+  color: var(--on-action);
+}
+
+.atlas-card--shell .atlas-card__mark {
+  background: var(--canvas);
+  color: var(--line-strong);
+}
+
+.atlas-card__mark .ui-icon { width: 32px; height: 32px; }
+
+.atlas-card__mark .continent-icon {
+  width: 46px;
+  height: 46px;
+  transform-origin: center;
+}
+
+.atlas-card__mark .continent-icon[data-continent="asia"] { transform: scale(1.2); }
+.atlas-card__mark .continent-icon[data-continent="europe"] { transform: scale(1.12); }
+.atlas-card__mark .continent-icon[data-continent="north-america"] { transform: scale(1.16); }
+.atlas-card__mark .continent-icon[data-continent="south-america"] { transform: translateX(1px); }
+.atlas-card__mark .continent-icon[data-continent="oceania"] { transform: translate(1px, 1px) scale(1.04); }
+
+.atlas-card__identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.atlas-card__identity strong {
+  font-size: clamp(20px, 5.6vw, 24px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+.atlas-card__identity small,
+.atlas-card__head small {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .09em;
+  color: var(--text-muted);
+}
+
+.atlas-card__shell-note {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+/* Region cards are a container, not a single control: no display:flex/cursor
+   of their own — the identity button and domain-launch row each behave like
+   ordinary tile content stacked inside the arcade-bordered wrapper. */
+.atlas-card--region {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
+  width: 100%;
+  padding: 16px;
+  border-radius: 28px;
+  position: relative;
+}
+
+.atlas-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+
+.atlas-card__head strong {
+  font-size: clamp(19px, 5.4vw, 23px);
+  font-weight: 900;
+  letter-spacing: -.03em;
+  line-height: 1;
+}
+
+/* --- Domain launch row: each icon starts that domain's game directly ----- */
+
+.domain-launch-row { display: flex; align-items: center; gap: 10px; }
+
+.domain-launch,
+.domain-launch--absent {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.domain-launch { cursor: pointer; }
+.domain-launch .ui-icon { width: 22px; height: 22px; }
+
+.domain-launch--absent {
+  border: 2px solid var(--line);
+  color: var(--line-strong);
+  background: var(--canvas);
+}
+.domain-launch--absent .ui-icon { width: 22px; height: 22px; }
+
+/* --- Short landscape ------------------------------------------------------ */
+
+@media (max-height: 600px) and (min-width: 700px) {
+  .page--atlas { width: min(100%, 720px); }
+  .atlas-card-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .atlas-card { padding: 10px; border-radius: 24px; }
+  .atlas-card__mark { width: 48px; height: 48px; border-radius: 16px; }
+  .atlas-card__mark .ui-icon { width: 26px; height: 26px; }
+  .atlas-card__mark .continent-icon { width: 38px; height: 38px; }
+  .topbar--atlas { margin-bottom: 14px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .atlas-card:active,
+  .domain-launch:active {
+    transform: none;
+  }
+}

@@ -11,22 +11,26 @@ This directory mirrors active product/engineering work that benefits from a dura
 - live country evidence vs earned regional mastery;
 - scarcity-based gamification hierarchy;
 - Africa-first complete proving ground;
-- dedicated region-detail requirement.
+- region × domain cross-domain competency, surfaced on the continent surface's region cards rather than a separate region-detail screen.
 
 ### 2. Visual direction
 
 - [#32 — Define and implement the new Atlas visual system](https://github.com/BenWassa/flag/issues/32)
+- [#40 — Adopt Phosphor for routine Atlas iconography](https://github.com/BenWassa/flag/issues/40)
 
-#32 is intentionally blocked on the next visual-design exploration. Do not implement a broad style rewrite until `DESIGN.md` is expanded from foundations into the final production system.
+#32's Tactile Atlas implementation is complete on `design/atlas-visual-system` (PR #38) and awaits merge/closeout.
+
+#40's Phosphor Bold routine-icon migration is implemented on the same branch with production-size audition, automated verification and browser evidence; repository closeout remains.
 
 ### 3. Learning / achievement architecture
 
 - [#29 — Refine country learning evidence and Learn/Play mechanics](https://github.com/BenWassa/flag/issues/29)
 - [#34 — Implement earned region mastery, continent crests, and world crown](https://github.com/BenWassa/flag/issues/34)
-- [#35 — Add region detail screen with cross-domain competency progress](https://github.com/BenWassa/flag/issues/35)
 - [#30 — Replace Flags Learn quiz with an interactive browse-and-reveal study surface](https://github.com/BenWassa/flag/issues/30)
 
 These issues are related but should remain separable: country evidence, earned achievements, region navigation and Flags study are distinct concerns.
+
+#35 (region cross-domain competency) is implemented on `design/atlas-visual-system`, pending merge via PR #38 — see [`issue-35-region-detail.md`](issue-35-region-detail.md). The separate region-detail screen it originally shipped was retired in favour of direct domain-launch shortcuts on the continent surface's region cards. Its mastery/gold visuals still depend on #34.
 
 ### 4. Brand rollout
 
@@ -38,9 +42,10 @@ Documentation may use Atlas now. Production UI/metadata should change in a focus
 
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
-- [#31 — Fix mobile landscape sizing bugs](https://github.com/BenWassa/flag/issues/31)
 
 Focused usability bugs may ship independently where they remain reproducible. #20 should consume the new semantic palette without changing canonical geometry.
+
+#31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
 ### 6. Geography expansion
 
@@ -58,7 +63,7 @@ Africa remains the production baseline. Other continents can appear as shell/nav
 
 - Read the GitHub Issue fully before implementation.
 - Read `PRODUCT.md`, `DESIGN.md`, and the relevant durable product/architecture docs.
-- Treat `DESIGN.md` as foundations-only until #32's style exploration is complete.
+- `DESIGN.md` is the locked production design system (Tactile Atlas); only achievement art direction (#34) remains genuinely open.
 - Preserve stable routing, country identity, storage and cartography contracts.
 - Use dedicated branches and focused PRs.
 - Run `npm test`, inspect the exact production artifact and confirm CI before merge.

@@ -142,5 +142,5 @@ Keep region country counts because they describe scope size, not achievement pro
 
 - #29 — refine the live evidence model and Learn/Play weighting;
 - #34 — implement persistent earned mastery/completion;
-- #35 — expose cross-domain competency on region detail;
+- #35 — expose cross-domain competency on the region card;
 - #30 — Flags-specific Learn surface.

@@ -15,7 +15,7 @@ Product copy is modern British English (`en-GB`). The learner-facing domain labe
 Read these before making product/UI changes:
 
 - `PRODUCT.md` — current Atlas product truth.
-- `DESIGN.md` — locked design foundations; final visual style is still pending Issue #32.
+- `DESIGN.md` — implemented Tactile Atlas production system; #34 owns remaining achievement art.
 - `docs/product/colour-system.md` — flag-derived semantic palette.
 - `docs/product/gamification.md` — mastery/completion scarcity hierarchy.
 - `docs/product/learning-and-mastery.md` — live country evidence vs persistent earned mastery.
@@ -32,8 +32,8 @@ Important current decisions:
 - Atlas Blue is action, green is correct, red is wrong, purple is mastery, gold is scarce prestige;
 - Africa is the first complete four-domain production proving ground;
 - other continents may appear as honest shells before their full data ships, but unsupported domains must never count as complete;
-- a dedicated region-detail screen is required (#35);
-- the final visual style is **not yet locked**. Do not preserve the old flat atlas-index aesthetic as a future requirement, and do not assume Tailwind/React/framework migration is part of the redesign.
+- region × domain cross-domain competency (#35) is surfaced directly on each region's card in the continent surface (identity, country count, one domain-launch shortcut per domain); there is no separate region-detail screen — it was built, then retired as redundant once the region card itself carried this;
+- the production visual style is **Tactile Atlas**. Preserve its documented system unless a focused product decision changes it; do not assume Tailwind/React/framework migration is part of future work.
 
 ## Commands
 
@@ -99,26 +99,22 @@ Read Issue #29 and `docs/product/learning-and-mastery.md` before changing schedu
 
 ## Visual work
 
-`DESIGN.md` currently contains **foundations, not a finished visual system**.
+`DESIGN.md` contains the implemented **Tactile Atlas** visual system.
 
-Locked:
+Implemented:
 
-- semantic palette;
-- mastery/prestige hierarchy;
-- mobile-first constraints;
-- geography dominance;
-- no horizontal scrolling for primary selection;
+- semantic palette and mastery/prestige hierarchy;
+- mobile-first scope-first navigation;
+- four-tier radius system and restrained tactile depth;
+- system-sans typography and reduced-motion behaviour;
+- Phosphor Bold routine iconography;
+- geography dominance and no horizontal scrolling for primary selection;
 - no XP/coin/reward economy.
 
-Open until #32 design exploration:
+Open under #34:
 
-- visual personality;
-- shape/radius/squircle language;
-- depth/elevation/press physics;
-- typography personality;
-- navigation composition;
-- exact badge/crest/Crown art direction;
-- motion system.
+- exact mastery-badge, continent-crest and world-Crown artwork;
+- earned-milestone ceremony.
 
 Do not introduce React, Tailwind or another frontend toolchain merely because a mock-up used it. Tooling changes require their own justification.
 
@@ -129,7 +125,7 @@ Do not introduce React, Tailwind or another frontend toolchain merely because a 
 - `docs/architecture/routing.md` — route schema and Back/Forward semantics.
 - `docs/architecture/cartography.md` — canonical topology/provenance policy.
 - `PRODUCT.md` — product truth.
-- `DESIGN.md` — current design foundations.
+- `DESIGN.md` — implemented production design system.
 - `docs/product/colour-system.md` — colour rationale/tokens.
 - `docs/product/gamification.md` — achievement hierarchy.
 - `docs/product/learning-and-mastery.md` — evidence/mastery split.

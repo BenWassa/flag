@@ -92,11 +92,6 @@ button:focus-visible,
 
 .brand-block { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
 .brand-name { font-size: 17px; font-weight: 750; letter-spacing: -.02em; }
-.brand-mark { display: block; flex: 0 0 auto; }
-.brand-mark__pole { stroke: var(--text); }
-.brand-mark__cloth { fill: var(--action); }
-.brand-mark__finial { fill: var(--text); }
-
 .ui-icon { display: block; }
 .icon-button,
 .text-icon-button {
@@ -350,7 +345,11 @@ button:focus-visible,
   stroke-width: .8;
   vector-effect: non-scaling-stroke;
 }
-.launcher-map-region { cursor: pointer; outline: none; }
+.launcher-map-region {
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
 .launcher-map-country__shape,
 .launcher-map-country__locator {
   fill: color-mix(in srgb, var(--track) 78%, var(--surface));

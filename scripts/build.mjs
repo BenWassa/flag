@@ -14,7 +14,15 @@ if (result.error) {
 }
 if (result.status !== 0) process.exit(result.status ?? 1);
 
-for (const file of ['index.html', 'styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css']) {
+for (const file of [
+  'index.html',
+  'styles.css',
+  'atlas-theme.css',
+  'map.css',
+  'map-cartography.css',
+  'outline.css',
+  'neighbors.css',
+]) {
   await cp(file, `dist/${file}`);
 }
 

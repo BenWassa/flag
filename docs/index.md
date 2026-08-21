@@ -5,7 +5,7 @@ The documentation is organised by purpose rather than by file format or feature 
 ## Start here
 
 - [`../PRODUCT.md`](../PRODUCT.md) — current Atlas product truth.
-- [`../DESIGN.md`](../DESIGN.md) — locked design foundations; final visual style is still pending #32.
+- [`../DESIGN.md`](../DESIGN.md) — the Tactile Atlas visual system: locked and implemented, with achievement art direction open pending #34.
 - [`product/colour-system.md`](product/colour-system.md) — quantitative flag-derived colour decision and semantic palette.
 - [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
 - [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
@@ -25,7 +25,7 @@ Repository-level documents remain at the project root when they describe the who
 
 The learner-facing product name is now **Atlas** at the documentation/product-decision level. Production UI/metadata rollout is tracked in #36.
 
-The old flat “Flag Atlas / atlas-index” visual system is superseded as a future design requirement. `DESIGN.md` now contains only the foundations that are already locked; #32 will replace it with the complete production visual system after the next design exploration.
+The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` now documents the implemented Tactile Atlas system; #32 is pending merge/closeout, while achievement art direction (badges/crest/Crown) stays open under #34.
 
 Africa remains the only complete production proving ground for Locations, Outlines and Neighbours. Other continent expansion work is tracked under #22–#27.
 

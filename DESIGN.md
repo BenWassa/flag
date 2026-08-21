@@ -1,14 +1,20 @@
-# Atlas Design Foundations
+# Atlas Design System
 
 ## Status
 
-Atlas is entering a full visual redesign.
+**The selected visual direction is Tactile Atlas, and it is implemented.**
 
-This document records the **locked design foundations** that the next visual-style exploration must preserve. It intentionally does **not** lock the final shape language, radius system, elevation, typography personality, navigation composition, motion style, or exact crest/crown art direction yet.
+The design exploration that this document previously deferred to has happened. Shape language, radius scale, elevation, press physics, typography, navigation composition and motion are now decided and shipped in `atlas-theme.css`, which layers over the existing hand-authored sheets rather than replacing them.
 
-Issue #32 owns that next design phase and the later production implementation.
+What remains genuinely unresolved is the achievement art direction — region mastery badges, continent crests and the world Crown. Those depend on earned-mastery persistence and are owned by #34, not by this document.
 
-The previously shipped flat “atlas index” aesthetic is no longer a requirement to preserve.
+The previously shipped flat “atlas index” aesthetic is superseded.
+
+### Character
+
+Tactile Atlas is an adult, tactile geography-learning product: more physical and memorable than a flat atlas index, but quieter and more disciplined than reward-driven learning UI or neo-brutalism. Cool near-white canvas, crisp light surfaces, Atlas Blue as the sole ordinary action family, disciplined squircle tiers rather than pill-everything, shallow physical depth on primary controls, and geography left as the dominant visual material.
+
+Explicitly rejected as a general idiom: childlike rounded display faces, emerald or amber as generic action colours, XP/coin/streak economies, giant radii on every container, glassmorphism, bento dashboards, and gesture-only navigation. Thick black borders and hard offset shadows are rejected everywhere except one deliberate, contained exception — the Atlas arcade tier under [Interaction character](#interaction-character), covering Home and the continent/region scope-selection screens — because that journey is the single highest-frequency path through the product and earns a harder tactile signature than ordinary chrome.
 
 ## Core principle
 
@@ -169,18 +175,20 @@ Do not dilute gold or Crown imagery through decorative reuse.
 
 ## Interaction character
 
-Ordinary controls should feel responsive and satisfying.
+Ordinary controls feel responsive and satisfying through **depth that collapses under the press**, not through bounce or scale.
 
-The exact visual mechanism is still open, but the design exploration may use:
+The mechanism is a solid bottom shadow standing in for physical thickness, removed as the control translates down by the same distance:
 
-- tactile press response;
-- physical depth;
-- transform-based motion;
-- strong touch affordance;
-- softened geometry;
-- concise state transitions.
+- **primary button** — rests on a solid `0 4px 0` pressed-blue depth with no ambient glow; on `:active` drops to `0 1px 0` and translates down 3px;
+- **answer button** — rests on `0 3px 0` in its semantic colour; on `:active` drops to `0 1px 0` and translates down 2px;
+- **tiles, icon buttons and row play controls** — no standing depth; they translate down 1px and darken slightly;
+- **Atlas arcade tier** — a scoped exception to the three tiers above: a `2px solid` border in `--text` plus a hard `2px 2px 0` offset shadow (no colour, no blur), collapsing on press by translating diagonally to `(2px, 2px)` rather than dropping vertically. This covers the three scope-first Atlas surfaces (Home's continent list, the continent's region list, and the region's domain-play grid), because together they form one continuous scope-selection journey and a tone shift partway through it would read as a broken transition rather than a hierarchy signal. Every domain launcher and ordinary tile reached *after* a domain is chosen (region rows inside a launcher, the launcher status card) keeps the soft `--depth-tile` shadow described under [Shapes, radius and elevation](#shapes-radius-and-elevation).
 
-Do not assume that a specific “Juicy Squircle” implementation, Tailwind class system, radius value or 3D border recipe is already final. Those belong to the next design decision.
+Press travel stays within 2–4px. Anything larger reads as a toy.
+
+Depth is a hierarchy signal, not a texture: primary actions and high-value interactive tiles carry it, ordinary rows and chrome do not.
+
+This supersedes the earlier instruction to treat the “Juicy Squircle” exploration as unresolved. What survived from it is thumb-friendly hit targets, satisfying press physics, soft geometry and compact mobile grids. What was rejected is giant radii everywhere, novelty type and reward-economy ornament. No CSS framework was introduced to implement any of it — see [Implementation constraints](#implementation-constraints).
 
 ### Feedback intensity
 
@@ -206,15 +214,17 @@ Do not use horizontal scrolling for primary navigation or scope selection.
 
 Navigation should be immediately scannable and support large touch targets.
 
-The exact card/list/grid language is intentionally pending the next visual-style decision.
+**Navigation is scope-first, not domain-first.** Home lists the six continents as a single-column stack of tactile cards; choosing one opens that continent's region list. Each region card is itself the cross-domain surface: it names the region, its country count, and carries one direct Play shortcut per learning domain, so choosing a domain starts a round immediately — there is no separate region-detail screen to pass through first. This resolves #35's cross-domain region surface one level higher than the original Tactile Cartographic mock-up (`research/UI_Mockup_Gemini.html`) proposed; the mock-up's dedicated region screen was built, then retired once the region card's own domain-launch row made it redundant. Home does not add a competing World Flags footer action; it stays focused on the six geographic scope choices.
 
-### Region detail
+Continent and region cards stack in a single column on phone portrait so identity, country count and (on regions) the four domain-launch shortcuts stay full width and scannable; short landscape (≥700px wide, ≤600px tall) switches the continent/region list to two columns, keeping the same cards rather than introducing a second layout.
 
-A dedicated region-detail screen is required.
+Each Home continent card uses a neutral, flat silhouette generated by `scripts/generate-continent-icons.mjs` from the same pinned Natural Earth country source as production cartography. The generator removes island detail that does not survive navigation-icon scale, while small optical transforms compensate for the continents' very different aspect ratios. These routine navigation marks carry no purple, gold, shield or ceremonial treatment. A future earned continent crest may reuse the recognisable silhouette, but must add the materially richer prestige composition owned by #34.
 
-It should make region identity, country count, four domain competencies, mastery state and Learn/Play entry points understandable without becoming a dense dashboard.
+Continents and regions without generated geometry beyond Flags still appear — as honest shells. A continent card shows a muted mark and a "Flags only" note instead of a country-count subtitle; a region card's unsupported domain-launch icons render inert, in canvas grey with a "not available yet" label, never as a launcher.
 
-Issue #35 owns implementation.
+### Region cross-domain competency
+
+Region × domain competency is surfaced on the region card itself, not a separate screen: region identity, country count, and one Atlas Blue domain-launch icon per learning domain that starts a round directly. The dedicated region-detail screen originally built for #35 (a 2×2 play grid reached by tapping the card) was retired once this direct row made the intermediate tap redundant. Region × domain mastery badges and the complete-region gold accent shown in the mock-up remain neutral/absent placeholders — they depend on #34's earned-mastery persistence landing first, and should not be guessed at before that model exists; when they land, they belong on the region card, not a resurrected detail screen.
 
 ### Learning surfaces
 
@@ -259,7 +269,7 @@ Do not theme maps by continent flag palette.
 
 Typography must remain highly legible, mobile-safe and compatible with British-English product copy.
 
-The exact family, weight hierarchy and level of roundness/personality are **not yet locked**.
+The system sans stack ships unchanged from the pre-Atlas shell — no display or novelty face was introduced. Personality comes from weight and tracking, not a font swap: screen titles and the brand name sit at 800 weight with tight negative letter-spacing (`-.03em` to `-.045em`), scaling with `clamp()` so they hold hierarchy from narrow phones up. Body copy and list labels stay at the existing weight; the contrast is deliberately concentrated at the top of the hierarchy rather than spread everywhere.
 
 Requirements that remain:
 
@@ -271,20 +281,28 @@ Requirements that remain:
 
 ## Shapes, radius and elevation
 
-**Not yet locked.**
+A tiered radius system, not one universal value:
 
-The next design pass should explicitly decide:
+```yaml
+radius:
+  compact: 8px   # badges, keycaps, answer-key chips
+  control: 12px  # buttons, inputs, list rows
+  tile:    18px  # domain/region interactive tiles, launcher status card
+  hero:    24px  # the results score card
+```
 
-- squircle vs conventional rounded rectangle language;
-- radius scale;
-- whether controls use physical bottom depth, soft shadow, inset treatment or another tactile model;
-- where elevation is appropriate;
-- how selected cards differ from buttons;
-- how achievement badges/crests relate to ordinary controls.
+This replaces the pre-Atlas 6px/9px pair outright: `--radius-sm` and `--radius-md` are redefined to 8px/12px rather than kept at their old values, so anything still reading those custom properties picks up the new scale automatically.
 
-Do not preserve the old 6px/9px radius system merely because it is currently shipped.
+Elevation is restrained and functional, not decorative:
 
-Do not introduce visual depth everywhere. Tactility and prestige should still have hierarchy.
+- **standing depth** — a soft two-layer shadow (`--depth-tile`) on interactive tiles and the launcher status card, distinguishing "this is a surface you can act on" from flat chrome;
+- **press depth** — the solid bottom-shadow-that-collapses model described under [Interaction character](#interaction-character), reserved for primary buttons and answer buttons;
+- **arcade depth** — a hard-edged exception (`--depth-arcade`: `2px solid` border plus `2px 2px 0` offset shadow, both in `--text`) used exclusively on Home's domain tiles, collapsing via diagonal translate rather than vertical drop; deliberately the one place this document's rejection of "thick black borders and hard offset shadows" does not apply, reserved for the product's single highest-frequency surface;
+- **flat** — rows, lists and ordinary chrome carry a hairline border and no shadow.
+
+Selected state (a region row) is a tint fill plus an inset accent bar, not elevation — selection and elevation answer different questions and should not be conflated.
+
+Achievement badges/crests/Crown are not yet designed; they are #34's responsibility once earned-mastery persistence exists, and should read as materially rarer than this ordinary tile/button vocabulary when they arrive.
 
 ## Motion
 
@@ -300,7 +318,7 @@ Requirements:
 - keep focus and page position stable through rerenders;
 - never let animation interfere with answer timing or accessibility announcements.
 
-Exact spring/easing values are part of the next design pass.
+Routine transitions use short `ease` timing rather than springs: 90–160ms depending on the property, colour and border changes slightly slower than shadow and transform. There is no bounce or overshoot anywhere in the shipped interaction set — physicality comes from the press-and-collapse depth model, not from spring easing. `prefers-reduced-motion: reduce` zeroes every transform-based press state and all transition/animation durations globally, rather than leaving individual components to opt out.
 
 ## Accessibility
 
@@ -347,21 +365,31 @@ Do not introduce:
 - a parallel icon system of emoji/Unicode symbols;
 - framework/tooling changes justified only by fashion.
 
-## Decisions pending the next design session
+## Implementation constraints
 
-The next design work should resolve, in order:
+Tactile Atlas is implemented as `atlas-theme.css`, a single override sheet layered after the five existing hand-authored stylesheets rather than a rewrite of them. It redefines the shared design tokens (`--action`, `--radius-*`, `--depth-*`) and the handful of selectors that needed new geometry; cartography (`map.css`, `map-cartography.css`) and the domain-specific outline/neighbour surfaces are untouched, per the rule above.
 
-1. overall visual personality and reference family;
-2. shape/radius language;
-3. control depth and press physics;
-4. navigation composition for Home / continents / regions;
-5. region-detail composition;
-6. typography;
-7. ordinary icon style;
-8. region mastery badge/shield treatment;
-9. continent crest art direction;
-10. world Crown art direction;
-11. motion intensity and milestone ceremony;
-12. final component/token specification.
+No React, Tailwind or other UI/CSS framework was introduced to build this. The existing framework-free TypeScript view layer, routing, and `data-action` interaction model are unchanged — this was a styling layer, not an architecture change.
 
-Once those are selected, rewrite this file from “foundations” into the complete production design system before implementing #32.
+## Resolved by Tactile Atlas
+
+The items this document previously deferred are resolved, and shipped in `atlas-theme.css`:
+
+1. overall visual personality and reference family — Tactile Atlas, see [Character](#character);
+2. shape/radius language — four-tier squircle scale, see [Shapes, radius and elevation](#shapes-radius-and-elevation);
+3. control depth and press physics — collapsing bottom-shadow depth, plus a scoped hard-offset arcade tier for the Home/continent/region journey, see [Interaction character](#interaction-character);
+4. navigation composition — scope-first Home → continent → region card with direct domain-launch shortcuts, see [Primary selection](#primary-selection);
+5. typography — system sans retained, personality via weight/tracking, see [Typography](#typography);
+6. motion intensity — short `ease` transitions, no springs, full reduced-motion coverage, see [Motion](#motion);
+7. **region cross-domain composition** — implemented per #35, see [Region cross-domain competency](#region-cross-domain-competency).
+
+Selected and implemented in #40:
+
+8. **ordinary icon style** — Phosphor Bold is the routine family for navigation, controls, utilities and domain identity. `src/ui/components/icons.ts` remains Atlas's semantic adapter and vendors only the selected paths from pinned `@phosphor-icons/core` assets, so the production build does not ship the catalogue. The domain mapping is Flags → `Flag`, Locations → `MapPin`, Outlines → `Polygon`, and Neighbours → `Intersect`. At 24px, `FlagBannerFold` read as a ribbon, `MapPinArea` added unnecessary detail, `Island` depicted a tropical palm-tree scene, and `Intersection` reduced to an ambiguous ∩. `Intersect`, paired with the visible Neighbours label, communicates two geographic areas meeting clearly enough that no Atlas-specific modification is needed. Fill may express a real state change in future, but is not a second decorative style. Do not mix Phosphor with Lucide or a parallel custom routine set. Custom artwork remains reserved for the Atlas brand mark and prestige.
+
+Still open, deliberately not decided here:
+
+9. **region mastery badge/shield treatment**, 10. **continent crest art direction**, 11. **world Crown art direction** — all depend on the earned-mastery persistence model landing in #34; designing the art before that model exists would be guessing at what it needs to represent;
+12. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but the concrete milestone animation itself is not, for the same reason as 9–11.
+
+Those achievement treatments will extend this production system under #34; they do not reopen the Tactile Atlas decisions implemented by #32.
