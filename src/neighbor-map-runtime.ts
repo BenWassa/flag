@@ -119,14 +119,14 @@ function discoverHosts(): void {
   root.querySelectorAll<HTMLElement>('[data-neighbor-map-host]').forEach(hydrateHost);
 }
 
-function hasFocusedNeighborInput(): boolean {
+function hasFocusedNeighborEntry(): boolean {
   return document.activeElement instanceof HTMLElement
-    && document.activeElement.matches('[data-neighbor-input]');
+    && document.activeElement.closest('.neighbor-entry') !== null;
 }
 
 function syncNeighborEntryViewport(): void {
   if (!root) return;
-  if (!root.querySelector('.neighbor-quiz-page') || !hasFocusedNeighborInput()) {
+  if (!root.querySelector('.neighbor-quiz-page') || !hasFocusedNeighborEntry()) {
     root.removeAttribute('data-neighbor-entry-active');
     root.style.removeProperty('--neighbor-visual-height');
     return;
