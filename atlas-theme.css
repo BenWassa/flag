@@ -434,7 +434,7 @@ body { letter-spacing: -.006em; }
   background: var(--surface-subtle);
 }
 
-@media (max-width: 430px) {
+@media (max-width: 374px) {
   .page--home .continent-list { grid-template-columns: 1fr; }
   .page--home .continent-row__open { min-height: 94px; }
 }
