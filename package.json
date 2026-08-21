@@ -13,7 +13,7 @@
     "build": "node scripts/build.mjs",
     "maps:generate": "node scripts/generate-map-assets.mjs",
     "icons:continents:generate": "node scripts/generate-continent-icons.mjs",
-    "verify": "node scripts/verify.mjs && node scripts/verify-learning-evidence.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-contrast.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-british-english.mjs && node scripts/verify-atlas-brand.mjs",
+    "verify": "node scripts/verify.mjs && node scripts/verify-learning-evidence.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-map-contrast.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-neighbor-keyboard.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-british-english.mjs && node scripts/verify-atlas-brand.mjs",
     "test": "npm run check && npm run build && npm run verify"
   },
   "devDependencies": {
