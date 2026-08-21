@@ -32,7 +32,7 @@ Important current decisions:
 - Atlas Blue is action, green is correct, red is wrong, purple is mastery, gold is scarce prestige;
 - Africa is the first complete four-domain production proving ground;
 - other continents may appear as honest shells before their full data ships, but unsupported domains must never count as complete;
-- a dedicated region-detail screen is required (#35);
+- region × domain cross-domain competency (#35) is surfaced directly on each region's card in the continent surface (identity, country count, one domain-launch shortcut per domain); there is no separate region-detail screen — it was built, then retired as redundant once the region card itself carried this;
 - the final visual style is **not yet locked**. Do not preserve the old flat atlas-index aesthetic as a future requirement, and do not assume Tailwind/React/framework migration is part of the redesign.
 
 ## Commands

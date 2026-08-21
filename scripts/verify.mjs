@@ -94,7 +94,7 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // launcher actions, focus landing points, and the single mastery-goal source.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
-const { renderContinent, renderRegion } = await import('../dist/ui/views/atlas.js');
+const { renderContinent } = await import('../dist/ui/views/atlas.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
 const { renderProgress } = await import('../dist/ui/views/progress.js');
 const { renderQuiz } = await import('../dist/ui/views/quiz.js');
@@ -107,7 +107,6 @@ const westAfricaScopeFixture = { kind: 'region', id: 'west-africa', label: 'West
 const screens = {
   home: renderHome(fresh),
   atlasContinent: renderContinent(fresh, africaScopeFixture),
-  atlasRegion: renderRegion(fresh, westAfricaScopeFixture),
   scope: renderScope(fresh, africaScopeFixture),
   region: renderScope(fresh, westAfricaScopeFixture),
   progress: renderProgress(fresh, 'all'),
@@ -138,20 +137,17 @@ assert.equal(
   'Home does not expose a direct World Flags footer action.',
 );
 assert.equal(screens.home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
+// Region cards no longer link to a separate region-detail screen; each one
+// carries a direct domain-launch shortcut per supported domain instead.
+assert.equal((screens.atlasContinent.match(/data-action="open-atlas"/g) ?? []).length, 0);
 assert.equal(
-  (screens.atlasContinent.match(/data-action="open-atlas"/g) ?? []).length,
-  REGIONS.filter((region) => region.continentId === 'africa').length,
-  'The continent surface lists each of its regions.',
-);
-assert.equal(
-  (screens.atlasRegion.match(/data-action="open-scope"/g) ?? []).length,
-  4,
-  'A fully supported region offers all four learning domains.',
+  (screens.atlasContinent.match(/data-action="quick-play"/g) ?? []).length,
+  REGIONS.filter((region) => region.continentId === 'africa').length * 4,
+  'The continent surface gives each of its regions all four domain-launch shortcuts.',
 );
 assert.ok(
-  renderRegion(fresh, { kind: 'region', id: 'western-europe', label: 'Western Europe' })
-    .includes('domain-play--absent'),
-  'A region without generated geometry shows honest unsupported domains.',
+  renderContinent(fresh, { kind: 'continent', id: 'europe', label: 'Europe' }).includes('domain-launch--absent'),
+  'A continent without generated geometry shows honest unsupported domains on its region cards.',
 );
 assert.ok(screens.scope.includes('Play Africa') && screens.scope.includes('Learn Africa'), 'The continent launcher exposes its two round choices.');
 assert.ok(!screens.scope.includes('All Africa'), 'The continent launcher does not offer a redundant all-continent selector.');

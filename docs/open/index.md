@@ -11,7 +11,7 @@ This directory mirrors active product/engineering work that benefits from a dura
 - live country evidence vs earned regional mastery;
 - scarcity-based gamification hierarchy;
 - Africa-first complete proving ground;
-- dedicated region-detail requirement.
+- region × domain cross-domain competency, surfaced on the continent surface's region cards rather than a separate region-detail screen.
 
 ### 2. Visual direction
 
@@ -30,7 +30,7 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 These issues are related but should remain separable: country evidence, earned achievements, region navigation and Flags study are distinct concerns.
 
-#35 (region-detail screen) is implemented on `design/atlas-visual-system`, pending merge via PR #38 — see [`issue-35-region-detail.md`](issue-35-region-detail.md). Its mastery/gold visuals still depend on #34.
+#35 (region cross-domain competency) is implemented on `design/atlas-visual-system`, pending merge via PR #38 — see [`issue-35-region-detail.md`](issue-35-region-detail.md). The separate region-detail screen it originally shipped was retired in favour of direct domain-launch shortcuts on the continent surface's region cards. Its mastery/gold visuals still depend on #34.
 
 ### 4. Brand rollout
 

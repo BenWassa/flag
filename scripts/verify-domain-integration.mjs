@@ -13,7 +13,7 @@ import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
-import { renderRegion } from '../dist/ui/views/atlas.js';
+import { renderContinent } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -57,16 +57,16 @@ const outlineProgress = createInitialProgress(COUNTRIES);
 const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
 const homeHtml = renderHome(flagProgress);
 assert.equal((homeHtml.match(/data-action="open-atlas"/g) ?? []).length, 6, 'Home exposes all six continents.');
-const westAfricaHtml = renderRegion(flagProgress, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+const africaAtlasHtml = renderContinent(flagProgress, { kind: 'continent', id: 'africa', label: 'Africa' });
 assert.equal(
-  (westAfricaHtml.match(/data-action="open-scope"/g) ?? []).length,
-  4,
-  'A fully supported region exposes all four learning domains.',
+  (africaAtlasHtml.match(/data-action="quick-play"/g) ?? []).length,
+  20,
+  'Every Africa region exposes all four learning domains as direct launch shortcuts.',
 );
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(
-    westAfricaHtml.includes(`>${label}</span>`),
-    `The region grid exposes ${label} through its canonical display name.`,
+    africaAtlasHtml.includes(`Play West Africa ${label.toLowerCase()}`),
+    `The continent surface exposes ${label} through its canonical display name.`,
   );
 }
 

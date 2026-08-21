@@ -16,9 +16,10 @@ export type AppRoute =
   | LearningRoute;
 
 /**
- * Scope-first navigation: continent and region surfaces that sit above the
- * domain launchers. `/atlas/africa` lists regions; `/atlas/africa/west-africa`
- * offers the four domains for that region.
+ * Scope-first navigation: the continent surface that sits above the domain
+ * launchers. `/atlas/africa` lists regions, each with direct domain-launch
+ * shortcuts; there is no separate region-only screen. Legacy
+ * `/atlas/{continent}/{region}` links collapse onto the continent surface.
  */
 export interface AtlasRoute {
   name: 'atlas';
@@ -84,8 +85,13 @@ export function scopeForQuickPlay(
 }
 
 export function atlasRouteForScope(scope: StudyScope): AtlasRoute | null {
-  if (scope.kind === 'world' || !scope.id) return null;
-  return { name: 'atlas', scope };
+  if (scope.kind === 'continent' && scope.id) return { name: 'atlas', scope };
+  if (scope.kind === 'region' && scope.id) {
+    const region = REGIONS.find((item) => item.id === scope.id);
+    const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
+    if (continent) return { name: 'atlas', scope: { kind: 'continent', id: continent.id, label: continent.name } };
+  }
+  return null;
 }
 
 export function stableRoute(route: AppRoute): AppRoute {
@@ -114,19 +120,7 @@ export function parentRoute(route: AppRoute): AppRoute | null {
   if (route.name === 'home') return null;
   if (route.name === 'progress') return { name: 'home' };
 
-  if (route.name === 'atlas') {
-    if (route.scope.kind === 'region' && route.scope.id) {
-      const region = REGIONS.find((item) => item.id === route.scope.id);
-      const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
-      if (continent) {
-        return {
-          name: 'atlas',
-          scope: { kind: 'continent', id: continent.id, label: continent.name },
-        };
-      }
-    }
-    return { name: 'home' };
-  }
+  if (route.name === 'atlas') return { name: 'home' };
 
   if (route.activity !== undefined) return stableRoute(route);
   if (!route.scope) return { name: 'home' };
@@ -163,7 +157,13 @@ export function parseRoutePath(input: string): AppRoute | null {
       (item) => item.id === regionOrActivitySegment && item.continentId === continent.id,
     );
     if (!region) return null;
-    return { name: 'atlas', scope: { kind: 'region', id: region.id, label: region.name } };
+    // The region-only "select a mode" screen was retired in favour of the
+    // direct domain-launch shortcuts on the continent surface; legacy
+    // /atlas/{continent}/{region} links collapse onto their continent.
+    return {
+      name: 'atlas',
+      scope: { kind: 'continent', id: continent.id, label: continent.name },
+    };
   }
 
   if (!isLearningDomain(domainSegment)) return null;
@@ -203,10 +203,10 @@ export function serializeRoutePath(route: AppRoute): string {
   if (route.name === 'progress') return '/progress';
 
   if (route.name === 'atlas') {
-    if (route.scope.kind === 'continent' && route.scope.id) return `/atlas/${route.scope.id}`;
-    const region = REGIONS.find((item) => item.id === route.scope.id);
-    if (!region) throw new Error(`Unknown atlas route scope: ${route.scope.id}`);
-    return `/atlas/${region.continentId}/${region.id}`;
+    if (route.scope.kind !== 'continent' || !route.scope.id) {
+      throw new Error(`Unknown atlas route scope: ${route.scope.id ?? route.scope.kind}`);
+    }
+    return `/atlas/${route.scope.id}`;
   }
 
   const segments: string[] = [route.domain];

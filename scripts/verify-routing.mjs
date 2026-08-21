@@ -126,8 +126,9 @@ for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
 }
 
 // Scope-first Back chain: a domain launcher was entered from its atlas scope,
-// so Back returns there rather than jumping to Home.
-assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/atlas/africa/west-africa');
+// so Back returns there rather than jumping to Home. There is no region-only
+// atlas screen, so a region-scoped launcher's Back returns to its continent.
+assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/atlas/africa');
 assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/atlas/africa');
 assert.equal(serializeRoutePath(parentRoute(flags)), '/');
 assert.equal(serializeRoutePath(parentRoute(locationsTest)), '/locations/africa/west-africa');
@@ -136,11 +137,11 @@ assert.equal(serializeRoutePath(parentRoute(outlinesLearn)), '/outlines/africa/w
 assert.equal(serializeRoutePath(parentRoute(neighborsTest)), '/neighbors/africa/west-africa');
 for (const [launcherRoute, expectedParent] of [
   [locationsAfrica, '/atlas/africa'],
-  [locationsWest, '/atlas/africa/west-africa'],
+  [locationsWest, '/atlas/africa'],
   [outlinesAfrica, '/atlas/africa'],
-  [outlinesWest, '/atlas/africa/west-africa'],
+  [outlinesWest, '/atlas/africa'],
   [neighborsAfrica, '/atlas/africa'],
-  [neighborsWest, '/atlas/africa/west-africa'],
+  [neighborsWest, '/atlas/africa'],
 ]) {
   assert.equal(
     serializeRoutePath(parentRoute(launcherRoute)),
@@ -149,21 +150,24 @@ for (const [launcherRoute, expectedParent] of [
   );
 }
 
-// The atlas surfaces themselves round-trip and nest World > continent > region.
+// The atlas surface itself round-trips at the continent level; the retired
+// region-only "select a mode" screen no longer exists, so the legacy
+// three-segment /atlas/{continent}/{region} URL collapses onto its continent.
 const atlasAfrica = parseRoutePath('/atlas/africa');
-const atlasWest = parseRoutePath('/atlas/africa/west-africa');
 assert.equal(serializeRoutePath(atlasAfrica), '/atlas/africa', 'Continent surface round-trips.');
-assert.equal(serializeRoutePath(atlasWest), '/atlas/africa/west-africa', 'Region surface round-trips.');
-assert.equal(serializeRoutePath(parentRoute(atlasWest)), '/atlas/africa', 'Region Back returns to its continent.');
 assert.equal(serializeRoutePath(parentRoute(atlasAfrica)), '/', 'Continent Back returns to the world.');
 assert.equal(routeTitle(atlasAfrica), 'Africa · Flag Atlas');
-assert.equal(routeTitle(atlasWest), 'West Africa · Flag Atlas');
 assert.equal(parseRoutePath('/atlas'), null, 'The atlas prefix alone is not a screen.');
 assert.equal(parseRoutePath('/atlas/nowhere'), null, 'Unknown continent must be rejected.');
 assert.equal(parseRoutePath('/atlas/africa/east-asia'), null, 'A region must belong to its atlas continent.');
+assert.deepEqual(
+  parseRoutePath('/atlas/africa/west-africa'),
+  atlasAfrica,
+  'The legacy region atlas URL resolves to its continent surface.',
+);
 assert.equal(
   serializeRoutePath(parseRoutePath('/atlas/europe/western-europe')),
-  '/atlas/europe/western-europe',
+  '/atlas/europe',
   'Continents without full domain data are still navigable as shells.',
 );
 
@@ -257,10 +261,11 @@ assert.equal(home.includes('4 available'), false, 'Home no longer carries the de
 assert.equal(home.includes('Choose a skill'), false, 'Home no longer explains the choice that the rows already make clear.');
 
 const atlasViews = await readFile('dist/ui/views/atlas.js', 'utf8');
-assert.ok(atlasViews.includes('data-action="open-atlas"'), 'The continent surface drills into a region.');
-assert.ok(atlasViews.includes('data-action="open-scope"'), 'The region surface opens a domain launcher.');
-assert.ok(atlasViews.includes('data-action="route-parent"'), 'Both atlas surfaces expose the shared Back contract.');
-assert.ok(atlasViews.includes('domain-play--absent'), 'Unsupported domains render as inert shells, not launchers.');
+assert.ok(atlasViews.includes('data-action="route-parent"'), 'The continent surface exposes the shared Back contract.');
+assert.ok(atlasViews.includes('data-action="quick-play"'), 'Region cards launch a domain directly, without an intermediate screen.');
+assert.equal(atlasViews.includes('data-action="open-atlas"'), false, 'Region cards no longer link into a retired region-detail screen.');
+assert.equal(atlasViews.includes('data-action="open-scope"'), false, 'The retired region "select a mode" screen must not return.');
+assert.ok(atlasViews.includes('domain-launch--absent'), 'Unsupported domains render as inert shells, not launchers.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
 const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');

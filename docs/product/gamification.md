@@ -128,5 +128,5 @@ This prevents small achievements from borrowing the visual language of the rares
 
 - #29 — live country learning evidence and Learn/Play mechanics;
 - #34 — persistence and implementation of mastery/completion hierarchy;
-- #35 — region-detail screen where cross-domain competency becomes visible;
+- #35 — region card where cross-domain competency becomes visible (no separate region-detail screen);
 - #32 — final visual language and milestone treatment.

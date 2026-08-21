@@ -31,7 +31,7 @@ The durable geographic hierarchy is:
 
 **World → Continent → Region**
 
-A dedicated **region detail** screen is required because the region is the first meaningful cross-domain learning unit.
+The region is the first meaningful cross-domain learning unit, so it must always surface its four domains together — as direct domain-launch shortcuts on the region's card in the continent surface, not through a separate region-detail screen.
 
 Country remains the canonical data identity and the atomic evidence unit underneath the learning engines, but country is not a learner-facing prestige tier.
 
@@ -230,13 +230,13 @@ Core navigation principles:
 - mobile-first;
 - no horizontal scrolling for primary selection;
 - geography and learning scope remain obvious;
-- region detail becomes the cross-domain competency surface;
+- the region card is the cross-domain competency surface — no separate region-detail screen sits between it and Play;
 - Learn and Play remain direct;
 - Back/Forward and direct links remain first-class;
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.
 
-Issue #35 owns the new region-detail screen.
+Issue #35 owns region × domain cross-domain competency, surfaced directly on the continent surface's region cards.
 
 ## Persistence and compatibility
 

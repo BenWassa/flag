@@ -38,7 +38,7 @@ import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderDomainHome } from './ui/views/domain.js';
-import { renderContinent, renderRegion } from './ui/views/atlas.js';
+import { renderContinent } from './ui/views/atlas.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
@@ -190,9 +190,7 @@ function applyRoute(requestedRoute: AppRoute): void {
       store.navigate({ name: 'progress' });
       break;
     case 'atlas':
-      store.navigate(route.scope.kind === 'region'
-        ? { name: 'atlas-region', scope: route.scope }
-        : { name: 'atlas-continent', scope: route.scope });
+      store.navigate({ name: 'atlas-continent', scope: route.scope });
       break;
     case 'learning':
       if (route.activity !== undefined) {
@@ -308,9 +306,6 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'atlas-continent':
       root.innerHTML = renderContinent(store.progress, store.view.scope, store.persisting);
-      break;
-    case 'atlas-region':
-      root.innerHTML = renderRegion(store.progress, store.view.scope, store.persisting);
       break;
     case 'domain':
       root.innerHTML = renderDomainHome(

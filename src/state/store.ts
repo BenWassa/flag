@@ -69,7 +69,6 @@ import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '..
 export type ViewState =
   | { name: 'home' }
   | { name: 'atlas-continent'; scope: StudyScope }
-  | { name: 'atlas-region'; scope: StudyScope }
   | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
   | { name: 'progress' }

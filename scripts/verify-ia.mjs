@@ -15,7 +15,7 @@ import { icon } from '../dist/ui/components/icons.js';
 import { renderLauncherMap } from '../dist/ui/components/launcher-map.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
-import { renderContinent, renderRegion } from '../dist/ui/views/atlas.js';
+import { renderContinent } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -150,46 +150,33 @@ assert.equal(home.includes('data-action="open-domain"'), false, 'Home no longer 
 const continentSurface = renderContinent(flagProgress, africaScope);
 assertCommonSurface('Continent surface', continentSurface);
 assertPreRoundContentRemoved('Continent surface', continentSurface);
-const continentRegionCards = actionTags(continentSurface, 'button', 'open-atlas');
+// Region cards are no longer a link to a separate "select a mode" screen —
+// each region's four domain-launch shortcuts identify it directly.
+const continentQuickPlay = actionTags(continentSurface, 'button', 'quick-play');
 assert.deepEqual(
-  sortedIds(continentRegionCards),
+  [...new Set(sortedIds(continentQuickPlay))],
   REGIONS.filter((region) => region.continentId === 'africa').map((region) => region.id).sort(),
   'The Africa surface lists exactly its five production regions.',
+);
+assert.equal(
+  actionTags(continentSurface, 'button', 'open-atlas').length,
+  0,
+  'Region cards no longer open a dead-end region-detail screen.',
 );
 assert.equal(
   occurrences(continentSurface, 'domain-launch--absent'),
   0,
   'Every Africa region supports all four domains, so no indicator reads as absent.',
 );
+const europeSurface = renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' });
 assert.ok(
-  occurrences(renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' }), 'domain-launch--absent') > 0,
+  occurrences(europeSurface, 'domain-launch--absent') > 0,
   'A continent without generated geometry marks its unsupported domains.',
 );
+// Unsupported domains render as inert shells on the region card itself, never
+// as launchers — quick-play only exists for domains that genuinely have data.
+assert.ok(visibleText(europeSurface).includes('Neighbours'), 'Region cards use the British-English domain label, even when inert.');
 assert.equal(actionTags(continentSurface, 'button', 'route-parent').length, 1, 'The continent surface has one Back control.');
-
-// Region surface: the four-domain play grid that replaces the old domain-first
-// entry point. Unsupported domains are inert, never launchers.
-const regionSurface = renderRegion(flagProgress, westAfricaScope);
-assertCommonSurface('Region surface', regionSurface);
-assertPreRoundContentRemoved('Region surface', regionSurface);
-const regionDomainTiles = actionTags(regionSurface, 'button', 'open-scope');
-assert.equal(regionDomainTiles.length, 4, 'A fully supported region offers all four domains.');
-for (const tag of regionDomainTiles) {
-  assert.equal(attribute(tag, 'data-id'), 'west-africa', 'Every domain tile targets the region scope it was opened from.');
-}
-assert.deepEqual(
-  regionDomainTiles.map((tag) => attribute(tag, 'data-domain')).sort(),
-  ['flags', 'locations', 'neighbors', 'outlines'],
-  'The region grid addresses domains by their stable identifiers.',
-);
-assert.ok(visibleText(regionSurface).includes('Neighbours'), 'The region grid uses the British-English domain label.');
-const shellRegion = renderRegion(flagProgress, { kind: 'region', id: 'western-europe', label: 'Western Europe' });
-assert.equal(
-  actionTags(shellRegion, 'button', 'open-scope').length,
-  1,
-  'A shell region only launches the domain that genuinely has data.',
-);
-assert.ok(shellRegion.includes('domain-play--absent'), 'Unsupported domains render as inert shells.');
 
 // Flags retains its genuine six-way continent decision, with the same split
 // row and scope-specific direct Play contract.
