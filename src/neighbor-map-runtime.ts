@@ -119,10 +119,40 @@ function discoverHosts(): void {
   root.querySelectorAll<HTMLElement>('[data-neighbor-map-host]').forEach(hydrateHost);
 }
 
+function hasFocusedNeighborInput(): boolean {
+  return document.activeElement instanceof HTMLElement
+    && document.activeElement.matches('[data-neighbor-input]');
+}
+
+function syncNeighborEntryViewport(): void {
+  if (!root) return;
+  if (!root.querySelector('.neighbor-quiz-page') || !hasFocusedNeighborInput()) {
+    root.removeAttribute('data-neighbor-entry-active');
+    root.style.removeProperty('--neighbor-visual-height');
+    return;
+  }
+
+  root.dataset.neighborEntryActive = 'true';
+  const viewport = window.visualViewport;
+  if (!viewport || viewport.scale !== 1) {
+    root.style.removeProperty('--neighbor-visual-height');
+    return;
+  }
+
+  root.style.setProperty('--neighbor-visual-height', `${Math.round(viewport.height)}px`);
+}
+
 if (root) {
   new MutationObserver((records) => {
     for (const record of records) for (const node of record.removedNodes) captureShell(node);
     discoverHosts();
+    queueMicrotask(syncNeighborEntryViewport);
   }).observe(root, { childList: true, subtree: true });
+
+  document.addEventListener('focusin', syncNeighborEntryViewport);
+  document.addEventListener('focusout', () => queueMicrotask(syncNeighborEntryViewport));
+  window.visualViewport?.addEventListener('resize', syncNeighborEntryViewport);
+
   discoverHosts();
+  syncNeighborEntryViewport();
 }
