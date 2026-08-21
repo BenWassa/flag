@@ -4,7 +4,29 @@ GitHub: https://github.com/BenWassa/flag/issues/60
 
 ## Status
 
-Proposed.
+Slice 1 and 2 implemented on `feat/issue-60-play-feedback`. Slice 3 (Locations, Outlines, Neighbours adoption) remains deliberately separate.
+
+### What shipped
+
+- `src/domain/round-feedback.ts` — the shared, DOM-free feedback/score contract: `AnswerTone`, `AnswerFeedback`, `RoundScore`, `roundScore()`, `answerFeedback()` and `scoreAnnouncement()`. It reads attempts the domain engines already scored; it decides no learning rules of its own.
+- `src/ui/components/round-feedback.ts` — the shared presentation for the live score strip and the feedback panel.
+- Flags Play now marks the chosen option and the true answer on the options themselves, and shows a `Correct` / `Not quite — Answer: …` panel in the same render turn as the submission.
+- Flags Play carries a live score strip (`n correct`, `n left`, and a streak from two consecutive correct answers).
+- Learn deliberately carries no live score: it stays the low-pressure study surface.
+
+### Round timing
+
+Play previously advanced 180 ms after an answer with no correctness signal at all, which is why the round felt unresponsive. The dwell is now outcome-aware — `PLAY_DWELL_CORRECT_MS = 620`, `PLAY_DWELL_WRONG_MS = 1500` — because a missed answer needs reading time and a correct one does not. `Enter` skips the remaining dwell through `FlagsRound.advanceNow()`, so rapid keyboard play is never gated on a timer.
+
+### Evidence and mastery
+
+Unchanged. The score is round-local and derived from `session.attempts`; nothing is persisted, and no qualification threshold, scheduler rule or achievement semantic was touched.
+
+### Verification
+
+`scripts/verify-play-feedback.mjs` covers the score model, streak reset, immediate correct/wrong render states, non-colour cues, the quiet Learn surface, reduced-motion coverage and the skippable dwell.
+
+Rendered QA was performed against the built `dist/` artifact in headless Chromium at 390×844 and 844×390: no answer leak before submitting, correct/wrong states render in the same turn, the score advances per answer, five keyboard answers completed in 883 ms, no horizontal overflow at 200% text scale, and no page errors. No physical-device or screen-reader testing was performed and none is claimed.
 
 ## Goal
 

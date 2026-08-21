@@ -754,8 +754,12 @@ window.addEventListener('keydown', (event) => {
     return;
   }
 
-  if (store.answeredCountryId !== null && store.session.mode === 'learn' && event.key === 'Enter') {
+  if (store.answeredCountryId !== null && event.key === 'Enter') {
     event.preventDefault();
+    if (store.session.mode === 'test') {
+      flagsRound.advanceNow();
+      return;
+    }
     store.advance();
     flagsRound.announceResult();
     finishInteraction(null);
