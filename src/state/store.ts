@@ -1,8 +1,9 @@
-import { AFRICA_MAP_COUNTRY_IDS } from '../data/map-scopes.js';
 import { COUNTRIES } from '../data/countries.js';
+import { generatedMapCountryIds } from '../data/map-scopes.js';
 import {
-  AFRICA_LAND_ADJACENCY,
-  getAfricaNeighborScopeConfig,
+  generatedNeighborCountryIds,
+  getNeighborScopeConfig,
+  landAdjacencyForScope,
 } from '../data/neighbors/index.js';
 import {
   awardEligibleAchievements,
@@ -106,8 +107,18 @@ function sessionId(): string {
   return `session-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-const AFRICA_COUNTRY_ID_SET = new Set<string>(AFRICA_MAP_COUNTRY_IDS);
-const AFRICA_COUNTRIES = COUNTRIES.filter((country) => AFRICA_COUNTRY_ID_SET.has(country.id));
+function supportedMapCountryIds(): readonly string[] {
+  return generatedMapCountryIds();
+}
+
+function supportedMapCountries() {
+  const supported = new Set(supportedMapCountryIds());
+  return COUNTRIES.filter((country) => supported.has(country.id));
+}
+
+function supportedNeighborCountryIds(): readonly string[] {
+  return generatedNeighborCountryIds();
+}
 
 export class AppStore {
   progress: ProgressState;
@@ -155,30 +166,32 @@ export class AppStore {
       this.progress = { ...initial, records };
     }
 
-    const locationInitial = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+    const mapCountryIds = supportedMapCountryIds();
+    const locationInitial = createInitialLocationProgress(mapCountryIds);
     const locationPersisted = loadLocationProgress();
     this.locationProgress = locationInitial;
     if (locationPersisted) {
       const records = { ...locationPersisted.records };
-      for (const countryId of AFRICA_MAP_COUNTRY_IDS) {
+      for (const countryId of mapCountryIds) {
         records[countryId] ??= locationInitial.records[countryId];
       }
       this.locationProgress = { ...locationInitial, records };
     }
 
-    const outlineInitial = createInitialProgress(AFRICA_COUNTRIES);
+    const mapCountries = supportedMapCountries();
+    const outlineInitial = createInitialProgress(mapCountries);
     const outlinePersisted = loadOutlineProgress();
     this.outlineProgress = outlineInitial;
     if (outlinePersisted) {
       const records = { ...outlineInitial.records };
-      for (const country of AFRICA_COUNTRIES) {
+      for (const country of mapCountries) {
         const record = outlinePersisted.records[country.id];
         if (record) records[country.id] = record;
       }
       this.outlineProgress = { ...outlineInitial, records };
     }
 
-    const neighborIds = Object.keys(AFRICA_LAND_ADJACENCY);
+    const neighborIds = supportedNeighborCountryIds();
     const neighborInitial = createInitialNeighborProgress(neighborIds);
     const neighborPersisted = loadNeighborProgress();
     this.neighborProgress = neighborInitial;
@@ -232,19 +245,19 @@ export class AppStore {
   }
 
   resetMapProgress(): void {
-    this.locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+    this.locationProgress = createInitialLocationProgress(supportedMapCountryIds());
     this.abandonMapSession();
     this.mapAsset = null;
   }
 
   resetOutlineProgress(): void {
-    this.outlineProgress = createInitialProgress(AFRICA_COUNTRIES);
+    this.outlineProgress = createInitialProgress(supportedMapCountries());
     this.abandonOutlineSession();
     this.outlineAsset = null;
   }
 
   resetNeighborProgress(): void {
-    this.neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
+    this.neighborProgress = createInitialNeighborProgress(supportedNeighborCountryIds());
     this.abandonNeighborSession();
   }
 
@@ -496,10 +509,12 @@ export class AppStore {
     size = 10,
     targetCountryIds?: readonly string[],
   ): boolean {
-    const config = getAfricaNeighborScopeConfig(scope.id ?? 'africa');
-    if (!config) return false;
+    const scopeId = scope.id ?? 'africa';
+    const config = getNeighborScopeConfig(scopeId);
+    const adjacency = landAdjacencyForScope(scopeId);
+    if (!config || !adjacency) return false;
     const session = buildNeighborSession(
-      AFRICA_LAND_ADJACENCY,
+      adjacency,
       this.neighborProgress,
       config.scope,
       config.countryIds,
