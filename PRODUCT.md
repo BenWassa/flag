@@ -215,11 +215,11 @@ See [`docs/product/colour-system.md`](docs/product/colour-system.md).
 
 The semantic colour system, achievement hierarchy and product principles are locked.
 
-The final **visual style is not yet locked**. Shape language, radii, elevation, motion, typography personality, navigation composition and exact crest/crown art direction are the next design task.
+The visual style is locked: **Tactile Atlas**. Shape language, radii, elevation, press physics, typography personality and motion are decided and implemented; see `DESIGN.md` for the complete specification.
 
-Issue #32 owns the future visual-system implementation after that style exploration is complete.
+Issue #32 tracks the remaining rollout of that system across UI surfaces not yet ported. Achievement art direction (region mastery badges, continent crests, the world Crown) remains genuinely open and depends on #34's earned-mastery persistence landing first.
 
-The current shipped `DESIGN.md` aesthetic should not be treated as a requirement to preserve if it conflicts with the new direction.
+`DESIGN.md`'s shipped Tactile Atlas aesthetic is now normative product truth, not a placeholder to be discarded on a future design pass.
 
 ## Navigation and information architecture
 

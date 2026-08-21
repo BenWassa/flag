@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "surface": "Atlas web app",
   "visitorMode": "operate",
-  "status": "visual-style-pending",
+  "status": "tactile-atlas",
   "tokens": {
     "colors": {
       "canvas": "#F6F8FB",
@@ -14,6 +14,17 @@
       "wrong": "#B42318",
       "mastery": "#6D3FC0",
       "prestige": "#E0AF2F"
+    },
+    "radius": {
+      "compact": "8px",
+      "control": "12px",
+      "tile": "18px",
+      "hero": "24px"
+    },
+    "depth": {
+      "primary": "0 4px 0 pressed-blue, collapsing to 0 1px 0 + translateY(3px) on press",
+      "tile": "soft two-layer standing shadow (--depth-tile) on interactive tiles",
+      "arcade": "Home-only exception: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press"
     },
     "breakpoints": {
       "compact": "639px",
@@ -28,6 +39,6 @@
     "Complete continents earn silhouette crests; world completion alone earns the Crown",
     "Country records are live learning evidence, not prestige objects",
     "Mobile-first interaction and no horizontal scrolling for primary selection",
-    "Final radius, depth, typography, navigation composition and motion language remain open until Issue 32 design exploration"
+    "Radius, depth, typography, navigation composition and motion are locked as Tactile Atlas; only achievement art direction (#34) and region-detail composition (#35) remain open"
   ]
 }
