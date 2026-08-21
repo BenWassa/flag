@@ -99,7 +99,19 @@ const { renderScope } = await import('../dist/ui/views/scope.js');
 const { renderProgress } = await import('../dist/ui/views/progress.js');
 const { renderQuiz } = await import('../dist/ui/views/quiz.js');
 const { renderResults } = await import('../dist/ui/views/results.js');
+const { renderFocusIntent } = await import('../dist/ui/focus.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
+
+assert.equal(
+  renderFocusIntent(false),
+  'none',
+  'Initial document render leaves focus under browser control.',
+);
+assert.equal(
+  renderFocusIntent(true),
+  'restore-or-autofocus',
+  'Subsequent navigation and same-route renders restore or deliberately move focus.',
+);
 
 const fresh = createInitialProgress(COUNTRIES);
 const africaScopeFixture = { kind: 'continent', id: 'africa', label: 'Africa' };
