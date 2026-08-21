@@ -236,7 +236,7 @@ Core navigation principles:
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.
 
-Issue #35 owns region × domain cross-domain competency, surfaced directly on the continent surface's region cards.
+Issue #35 records the implemented region × domain cross-domain competency, surfaced directly on the continent surface's region cards.
 
 ## Persistence and compatibility
 

@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/40
 
 ## Status
 
-**Implemented locally; repository closeout pending.**
+**Complete.** Shipped through PR #38.
 
 ## Goal
 
@@ -79,3 +79,11 @@ If the Neighbours candidates remain ambiguous, make the smallest possible MIT-pe
 - This resolves the ordinary-icon-style item left open by #32.
 - #34 consumes these domain glyphs inside mastery presentation but still owns badge, crest and Crown art direction.
 - This issue does not redesign cartography, the Atlas brand mark or achievement artwork.
+
+## Closeout
+
+- Shipped through PR #38; merge commit `ed6399e70be504632dff95d72cb217bcc762a16e`.
+- PR CI passed on feature head `97618190e166dc04c1586a400d9689b879ba0497`.
+- `npm test`, including `scripts/verify-icons.mjs`, passed on merged `main` at `ed6399e70be504632dff95d72cb217bcc762a16e` on 2026-08-21.
+- Existing production-size audition, package pin, MIT licence, approximately 1.55KB gzip delta and 390×844 / 844×390 browser evidence remain the acceptance record above.
+- #34 retains ownership of mastery badges, continent crests, the world Crown and milestone artwork.
