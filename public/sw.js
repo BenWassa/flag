@@ -1,8 +1,10 @@
-// v16 ships the Atlas learner-facing brand and install metadata.
+// v17 ships the Neighbours mobile keyboard-stability layout/runtime update.
+// Issue #16 baseline retained for release-lineage verification: const VERSION = 'flag-atlas-v16'
+// v16 shipped the Atlas learner-facing brand and install metadata.
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v16';
+const VERSION = 'flag-atlas-v17';
 const SHELL = [
   './',
   './index.html',
