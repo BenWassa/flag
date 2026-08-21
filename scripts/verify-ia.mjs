@@ -593,19 +593,17 @@ for (const [label, source, loaderCall] of [
   );
 }
 
-const africaLoaderSource = sourceSection(
+const continentLoaderSource = sourceSection(
   mapLoader,
-  'function loadAfricaData()',
-  'function cloneGeometry(',
-  'Africa data loader',
+  'function loadContinentData(',
+  'function cloneNamedPath(',
+  'Generic continent data loader',
 );
-assert.match(
-  africaLoaderSource,
-  /import\('\.\/africa\.js'\)\.catch\(\(error\) => \{/,
-  'Africa dynamic import catches transient chunk failures.',
-);
-assert.ok(africaLoaderSource.includes('africaDataPromise = null'), 'A failed Africa import clears the memoised promise for retry.');
-assert.ok(africaLoaderSource.includes('throw error'), 'A failed Africa import still propagates to the caller error boundary.');
+assert.ok(mapLoader.includes("africa: async () => {"), 'Africa remains registered in the generic lazy continent loader.');
+assert.ok(mapLoader.includes("await import('./africa.js')"), 'Africa remains a dynamic continent chunk.');
+assert.ok(continentLoaderSource.includes('const loader = continentLoaders[continentId]'), 'Generic loader resolves the requested continent through the registry.');
+assert.ok(continentLoaderSource.includes('continentDataPromises.delete(continentId)'), 'A failed continent import clears the memoised promise for retry.');
+assert.ok(continentLoaderSource.includes('throw error'), 'A failed continent import still propagates to the caller error boundary.');
 
 assert.ok(
   app.includes('store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting'),
