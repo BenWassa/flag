@@ -65,7 +65,7 @@ function renderRegionRow(
       >
         <span class="region-row__identity">
           <strong>${label}</strong>
-          <small>${region.stats.total} ${escapeHtml(unitLabel)} · ${region.stats.mastered} mastered</small>
+          <small>${region.stats.total} ${escapeHtml(unitLabel)} · ${region.stats.mastered} strong</small>
         </span>
         ${selected ? '<span class="region-row__status">Selected</span>' : ''}
         ${icon('chevron')}
@@ -111,7 +111,7 @@ export function renderLauncher(model: LauncherModel): string {
       <section class="launcher" aria-label="${continentLabel} ${domainName} launcher">
         <div class="launcher__status">
           <div class="scope-status-line">
-            <strong>${model.stats.mastered} mastered</strong>
+            <strong>${model.stats.mastered} strong evidence</strong>
             <span>${model.stats.learning} learning · ${model.stats.unseen} unseen</span>
           </div>
           ${model.selectedRegion ? `

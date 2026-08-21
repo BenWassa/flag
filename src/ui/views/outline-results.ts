@@ -5,7 +5,7 @@ import { escapeHtml } from '../format.js';
 
 export function renderOutlineResults(result: SessionResult): string {
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
-  const mastered = result.newlyMastered
+  const strongEvidence = result.newlyMastered
     .map((id) => COUNTRY_BY_ID.get(id))
     .filter((country) => country !== undefined);
   const missed = result.missed.flatMap((attempt) => {
@@ -30,15 +30,15 @@ export function renderOutlineResults(result: SessionResult): string {
       </section>
 
       <div class="result-statline" aria-label="Learning changes">
-        <span><strong>${result.newlyMastered.length}</strong> newly mastered</span>
+        <span><strong>${result.newlyMastered.length}</strong> newly strong</span>
         <span><strong>${result.missed.length}</strong> to review</span>
       </div>
 
-      ${mastered.length ? `
-        <section class="result-section" aria-labelledby="outline-mastered-heading">
-          <div class="list-heading"><h2 id="outline-mastered-heading">Mastered this round</h2><span>${mastered.length}</span></div>
+      ${strongEvidence.length ? `
+        <section class="result-section" aria-labelledby="outline-strong-heading">
+          <div class="list-heading"><h2 id="outline-strong-heading">Strong evidence this round</h2><span>${strongEvidence.length}</span></div>
           <div class="mini-ledger">
-            ${mastered.map((country) => `<div class="mini-ledger__row"><strong>${escapeHtml(country.name)}</strong><span class="status-text status-text--mastered">Mastered</span></div>`).join('')}
+            ${strongEvidence.map((country) => `<div class="mini-ledger__row"><strong>${escapeHtml(country.name)}</strong><span class="status-text status-text--mastered">Strong</span></div>`).join('')}
           </div>
         </section>
       ` : ''}

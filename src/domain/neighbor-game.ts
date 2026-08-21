@@ -1,4 +1,10 @@
-import type { Country, StudyMode, StudyScope } from './models.js';
+import type { Country, EvidenceActivity, EvidenceOutcome, StudyMode, StudyScope } from './models.js';
+import {
+  activityForMode,
+  applyCountryEvidence,
+  createEvidenceSummary,
+  evidenceStrengthGoal,
+} from './evidence.js';
 import type {
   NeighborAttempt,
   NeighborGuessOutcome,
@@ -23,13 +29,14 @@ export function createNeighborRecord(countryId: string): NeighborProgressRecord 
     lifetimeWrongGuesses: 0,
     revealCount: 0,
     lapseCount: 0,
+    evidence: createEvidenceSummary(),
     confusionCounts: {},
   };
 }
 
 export function createInitialNeighborProgress(countryIds: readonly string[]): NeighborProgressState {
   return {
-    version: 1,
+    version: 2,
     records: Object.fromEntries(countryIds.map((countryId) => [countryId, createNeighborRecord(countryId)])),
   };
 }
@@ -38,8 +45,9 @@ export function getNeighborRecord(state: NeighborProgressState, countryId: strin
   return state.records[countryId] ?? createNeighborRecord(countryId);
 }
 
+/** Compatibility alias for the internal scheduler threshold. */
 export function neighborMasteryGoal(record: NeighborProgressRecord): number {
-  return record.lapseCount > 0 ? 2 : 3;
+  return evidenceStrengthGoal(record);
 }
 
 export function neighborAttemptBudget(neighborCount: number): number {
@@ -170,29 +178,40 @@ export function currentNeighborTarget(session: NeighborSession): NeighborTargetS
 }
 
 function cloneRecord(record: NeighborProgressRecord): NeighborProgressRecord {
-  return { ...record, confusionCounts: { ...record.confusionCounts } };
+  return {
+    ...record,
+    evidence: { ...record.evidence },
+    confusionCounts: { ...record.confusionCounts },
+  };
+}
+
+function replaceEvidenceRecord(target: NeighborProgressRecord, next: NeighborProgressRecord): void {
+  Object.assign(target, next);
+  target.evidence = next.evidence;
+  target.confusionCounts = next.confusionCounts;
 }
 
 function markSeen(record: NeighborProgressRecord, timestamp: string): void {
   record.firstSeenAt ??= timestamp;
   record.lastSeenAt = timestamp;
-  if (record.status === 'unseen') record.status = 'learning';
 }
 
 function recordWrongGuess(
   record: NeighborProgressRecord,
   selectedCountryId: string,
-  firstWrongInRound: boolean,
   timestamp: string,
+  activity: EvidenceActivity,
 ): void {
   markSeen(record, timestamp);
   record.lifetimeWrongGuesses += 1;
   record.lastMissedAt = timestamp;
   record.confusionCounts[selectedCountryId] = (record.confusionCounts[selectedCountryId] ?? 0) + 1;
-  if (firstWrongInRound && record.status === 'mastered') record.lapseCount += 1;
-  record.status = 'learning';
-  record.masteryStreak = 0;
-  record.lastMasteryCreditSessionId = undefined;
+  const applied = applyCountryEvidence(record, {
+    activity,
+    outcome: 'contradictory',
+    at: timestamp,
+  });
+  replaceEvidenceRecord(record, applied.record);
 }
 
 function recordResolution(
@@ -200,34 +219,45 @@ function recordResolution(
   sessionId: string,
   target: NeighborTargetState,
   timestamp: string,
-): void {
+  activity: EvidenceActivity,
+): { outcome: EvidenceOutcome; credit: number } {
   markSeen(record, timestamp);
   record.lifetimeRounds += 1;
 
   if (target.resolution === 'exhausted') {
     record.revealCount += 1;
-    record.status = 'learning';
-    return;
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'passive-exposure',
+      at: timestamp,
+      sessionId,
+    });
+    replaceEvidenceRecord(record, applied.record);
+    return { outcome: 'passive-exposure', credit: 0 };
   }
 
   record.lifetimeCompleted += 1;
   record.lastCompletedAt = timestamp;
   if (target.wrongGuesses > 0) {
-    record.status = 'learning';
-    return;
+    const applied = applyCountryEvidence(record, {
+      activity,
+      outcome: 'assisted-retrieval',
+      at: timestamp,
+      sessionId,
+    });
+    replaceEvidenceRecord(record, applied.record);
+    return { outcome: 'assisted-retrieval', credit: 0 };
   }
 
   record.lifetimeCleanCompletions += 1;
-  if (record.status === 'mastered') return;
-  if (record.lastMasteryCreditSessionId === sessionId) return;
-
-  record.masteryStreak += 1;
-  record.lastMasteryCreditSessionId = sessionId;
-  record.status = 'learning';
-  if (record.masteryStreak >= neighborMasteryGoal(record)) {
-    record.status = 'mastered';
-    record.masteredAt = timestamp;
-  }
+  const applied = applyCountryEvidence(record, {
+    activity,
+    outcome: 'clean-retrieval',
+    at: timestamp,
+    sessionId,
+  });
+  replaceEvidenceRecord(record, applied.record);
+  return { outcome: 'clean-retrieval', credit: applied.credit };
 }
 
 export interface ApplyNeighborGuessResult {
@@ -257,8 +287,11 @@ export function applyNeighborGuess(
     guessedIds: [...current.guessedIds],
     revealedIds: [...current.revealedIds],
   };
+  const activity = activityForMode(session.mode);
   let nextProgress = progress;
   let kind: NeighborAttempt['kind'] = 'duplicate';
+  let evidenceOutcome: EvidenceOutcome | undefined;
+  let evidenceCredit = 0;
 
   if (!duplicate) {
     target.guessedIds.push(selectedCountryId);
@@ -271,9 +304,9 @@ export function applyNeighborGuess(
       markSeen(record, timestamp);
     } else {
       kind = 'wrong';
-      const firstWrongInRound = target.wrongGuesses === 0;
       target.wrongGuesses += 1;
-      recordWrongGuess(record, selectedCountryId, firstWrongInRound, timestamp);
+      recordWrongGuess(record, selectedCountryId, timestamp, activity);
+      evidenceOutcome = 'contradictory';
     }
 
     if (target.foundIds.length === target.neighborIds.length) {
@@ -285,9 +318,16 @@ export function applyNeighborGuess(
       target.revealedIds = target.neighborIds.filter((countryId) => !target.foundIds.includes(countryId));
     }
 
-    if (target.resolved) recordResolution(record, session.id, target, timestamp);
+    if (target.resolved) {
+      const resolutionEvidence = recordResolution(record, session.id, target, timestamp, activity);
+      // A final wrong guess remains contradictory in the per-attempt log; the
+      // record also retains the passive reveal generated by exhaustion.
+      if (kind === 'correct') evidenceOutcome = resolutionEvidence.outcome;
+      evidenceCredit = resolutionEvidence.credit;
+    }
     nextProgress = {
       ...progress,
+      version: 2,
       records: { ...progress.records, [target.countryId]: record },
     };
   }
@@ -307,6 +347,9 @@ export function applyNeighborGuess(
     resolved: target.resolved,
     responseTimeMs: Math.max(0, Math.round(responseTimeMs)),
     answeredAt: timestamp,
+    evidenceActivity: duplicate ? undefined : activity,
+    evidenceOutcome,
+    evidenceCredit,
   };
   const nextSession: NeighborSession = {
     ...session,

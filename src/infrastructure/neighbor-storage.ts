@@ -1,6 +1,8 @@
 import type { LearningStatus } from '../domain/models.js';
 import type { NeighborAttempt, NeighborProgressRecord, NeighborProgressState } from '../domain/neighbor-models.js';
+import { legacyEvidenceSummary, sanitizeEvidenceSummary } from './evidence-storage.js';
 
+// Stable namespace; payloads migrate from schema v1 to v2 on load/save.
 const PROGRESS_KEY = 'flag-atlas:neighbor-progress:v1';
 const ATTEMPTS_KEY = 'flag-atlas:neighbor-attempts:v1';
 const ATTEMPT_LIMIT = 2000;
@@ -58,21 +60,42 @@ export function sanitizeNeighborRecord(countryId: string, value: unknown): Neigh
   const status = STATUSES.find((item) => item === raw.status);
   if (!status) return null;
 
+  const lifetimeRounds = toCount(raw.lifetimeRounds);
+  const lifetimeCompleted = toCount(raw.lifetimeCompleted);
+  const lifetimeCleanCompletions = toCount(raw.lifetimeCleanCompletions);
+  const lifetimeWrongGuesses = toCount(raw.lifetimeWrongGuesses);
+  const revealCount = toCount(raw.revealCount);
+  const firstSeenAt = toOptionalString(raw.firstSeenAt);
+  const lastSeenAt = toOptionalString(raw.lastSeenAt);
+  const lastCompletedAt = toOptionalString(raw.lastCompletedAt);
+  const lastMissedAt = toOptionalString(raw.lastMissedAt);
+  const masteredAt = toOptionalString(raw.masteredAt);
+  const legacyEvidence = legacyEvidenceSummary({
+    passiveExposures: revealCount,
+    assistedRetrievals: Math.max(0, lifetimeCompleted - lifetimeCleanCompletions),
+    legacyScoredRetrievals: lifetimeCleanCompletions,
+    contradictions: lifetimeWrongGuesses,
+    strongEvidenceAt: masteredAt,
+    lastEvidenceAt: lastSeenAt,
+    lastScoredAt: lastCompletedAt ?? lastMissedAt ?? lastSeenAt,
+  });
+
   return {
     countryId,
     status,
     masteryStreak: toCount(raw.masteryStreak),
-    lifetimeRounds: toCount(raw.lifetimeRounds),
-    lifetimeCompleted: toCount(raw.lifetimeCompleted),
-    lifetimeCleanCompletions: toCount(raw.lifetimeCleanCompletions),
-    lifetimeWrongGuesses: toCount(raw.lifetimeWrongGuesses),
-    revealCount: toCount(raw.revealCount),
+    lifetimeRounds,
+    lifetimeCompleted,
+    lifetimeCleanCompletions,
+    lifetimeWrongGuesses,
+    revealCount,
     lapseCount: toCount(raw.lapseCount),
-    firstSeenAt: toOptionalString(raw.firstSeenAt),
-    lastSeenAt: toOptionalString(raw.lastSeenAt),
-    lastCompletedAt: toOptionalString(raw.lastCompletedAt),
-    lastMissedAt: toOptionalString(raw.lastMissedAt),
-    masteredAt: toOptionalString(raw.masteredAt),
+    evidence: sanitizeEvidenceSummary(raw.evidence, legacyEvidence),
+    firstSeenAt,
+    lastSeenAt,
+    lastCompletedAt,
+    lastMissedAt,
+    masteredAt,
     lastMasteryCreditSessionId: toOptionalString(raw.lastMasteryCreditSessionId),
     confusionCounts: toConfusions(raw.confusionCounts),
   };
@@ -89,14 +112,14 @@ export function loadNeighborProgress(): NeighborProgressState | null {
   }
   if (!parsed || typeof parsed !== 'object') return null;
   const state = parsed as { version?: unknown; records?: unknown };
-  if (state.version !== 1 || !state.records || typeof state.records !== 'object') return null;
+  if ((state.version !== 1 && state.version !== 2) || !state.records || typeof state.records !== 'object') return null;
 
   const records: Record<string, NeighborProgressRecord> = {};
   for (const [countryId, value] of Object.entries(state.records as Record<string, unknown>)) {
     const record = sanitizeNeighborRecord(countryId, value);
     if (record) records[countryId] = record;
   }
-  return { version: 1, records };
+  return { version: 2, records };
 }
 
 export function saveNeighborProgress(state: NeighborProgressState): boolean {

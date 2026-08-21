@@ -1,5 +1,7 @@
 import type { LearningStatus, ProgressRecord, ProgressState, QuizAttempt } from '../domain/models.js';
+import { legacyEvidenceSummary, sanitizeEvidenceSummary } from './evidence-storage.js';
 
+// Key names remain stable compatibility namespaces. The payload itself is schema v2.
 const PROGRESS_KEY = 'flag-atlas:progress:v1';
 const ATTEMPTS_KEY = 'flag-atlas:attempts:v1';
 
@@ -92,21 +94,37 @@ export function sanitizeRecord(countryId: string, value: unknown): ProgressRecor
   const status = STATUSES.find((item) => item === raw.status);
   if (!status) return null;
 
+  const lifetimeCorrect = toCount(raw.lifetimeCorrect);
+  const lifetimeIncorrect = toCount(raw.lifetimeIncorrect);
+  const firstSeenAt = toOptionalString(raw.firstSeenAt);
+  const lastSeenAt = toOptionalString(raw.lastSeenAt);
+  const lastCorrectAt = toOptionalString(raw.lastCorrectAt);
+  const lastIncorrectAt = toOptionalString(raw.lastIncorrectAt);
+  const masteredAt = toOptionalString(raw.masteredAt);
+  const legacyEvidence = legacyEvidenceSummary({
+    legacyScoredRetrievals: lifetimeCorrect,
+    contradictions: lifetimeIncorrect,
+    strongEvidenceAt: masteredAt,
+    lastEvidenceAt: lastSeenAt,
+    lastScoredAt: lastCorrectAt ?? lastIncorrectAt ?? lastSeenAt,
+  });
+
   return {
     countryId,
     status,
     masteryStreak: toCount(raw.masteryStreak),
-    lifetimeCorrect: toCount(raw.lifetimeCorrect),
-    lifetimeIncorrect: toCount(raw.lifetimeIncorrect),
+    lifetimeCorrect,
+    lifetimeIncorrect,
     currentCorrectStreak: toCount(raw.currentCorrectStreak),
     lapseCount: toCount(raw.lapseCount),
     retentionLevel: toCount(raw.retentionLevel),
+    evidence: sanitizeEvidenceSummary(raw.evidence, legacyEvidence),
     lastMasteryCreditSessionId: toOptionalString(raw.lastMasteryCreditSessionId),
-    firstSeenAt: toOptionalString(raw.firstSeenAt),
-    lastSeenAt: toOptionalString(raw.lastSeenAt),
-    lastCorrectAt: toOptionalString(raw.lastCorrectAt),
-    lastIncorrectAt: toOptionalString(raw.lastIncorrectAt),
-    masteredAt: toOptionalString(raw.masteredAt),
+    firstSeenAt,
+    lastSeenAt,
+    lastCorrectAt,
+    lastIncorrectAt,
+    masteredAt,
     nextReviewAt: toOptionalString(raw.nextReviewAt),
     averageResponseTimeMs: toOptionalNumber(raw.averageResponseTimeMs),
     confusionCounts: toConfusionCounts(raw.confusionCounts),
@@ -118,7 +136,7 @@ export function loadProgress(): ProgressState | null {
   if (!parsed || typeof parsed !== 'object') return null;
 
   const state = parsed as { version?: unknown; records?: unknown };
-  if (state.version !== 1) return null;
+  if (state.version !== 1 && state.version !== 2) return null;
   if (!state.records || typeof state.records !== 'object') return null;
 
   const records: Record<string, ProgressRecord> = {};
@@ -127,7 +145,7 @@ export function loadProgress(): ProgressState | null {
     if (record) records[countryId] = record;
   }
 
-  return { version: 1, records };
+  return { version: 2, records };
 }
 
 /** Returns false when the ledger could not be written, so the caller can say so. */

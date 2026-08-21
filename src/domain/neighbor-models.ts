@@ -1,4 +1,11 @@
-import type { LearningStatus, StudyMode, StudyScope } from './models.js';
+import type {
+  CountryEvidenceSummary,
+  EvidenceActivity,
+  EvidenceOutcome,
+  LearningStatus,
+  StudyMode,
+  StudyScope,
+} from './models.js';
 
 export type NeighborResolution = 'complete' | 'exhausted';
 export type NeighborGuessKind = 'correct' | 'wrong' | 'duplicate';
@@ -28,6 +35,9 @@ export interface NeighborAttempt {
   resolved: boolean;
   responseTimeMs: number;
   answeredAt: string;
+  evidenceActivity?: EvidenceActivity;
+  evidenceOutcome?: EvidenceOutcome;
+  evidenceCredit?: number;
 }
 
 export interface NeighborGuessOutcome {
@@ -67,6 +77,7 @@ export interface NeighborSessionResult {
 export interface NeighborProgressRecord {
   countryId: string;
   status: LearningStatus;
+  /** Compatibility scheduler credit; learner-facing UI must not expose x/y thresholds. */
   masteryStreak: number;
   lifetimeRounds: number;
   lifetimeCompleted: number;
@@ -74,6 +85,7 @@ export interface NeighborProgressRecord {
   lifetimeWrongGuesses: number;
   revealCount: number;
   lapseCount: number;
+  evidence: CountryEvidenceSummary;
   firstSeenAt?: string;
   lastSeenAt?: string;
   lastCompletedAt?: string;
@@ -84,7 +96,7 @@ export interface NeighborProgressRecord {
 }
 
 export interface NeighborProgressState {
-  version: 1;
+  version: 2;
   records: Record<string, NeighborProgressRecord>;
 }
 
