@@ -1,0 +1,68 @@
+name: Replay Issue 57 shared geography foundation
+
+on:
+  push:
+    branches: [issue-57-global-expansion-foundation]
+
+permissions:
+  contents: write
+
+jobs:
+  replay:
+    if: ${{ !contains(github.event.head_commit.message, 'Replay shared geography foundation') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - run: git fetch origin backup/issue-57-pre-main-sync
+      - run: |
+          git checkout origin/backup/issue-57-pre-main-sync -- \
+            scripts/generate-maps.mjs \
+            scripts/generate-neighbor-fixture.mjs \
+            scripts/map-continent-configs.mjs \
+            scripts/map-generation-core.mjs \
+            scripts/optimize-map-runtime.mjs \
+            scripts/verify-continent-contract.mjs \
+            scripts/verify-continent-foundation.mjs \
+            src/data/learning-scopes.ts \
+            src/data/map-scopes.ts \
+            src/data/maps/index.ts \
+            src/data/neighbors/index.ts \
+            src/domain/neighbor-map.ts \
+            src/domain/scope-support.ts \
+            src/neighbor-map-runtime.ts \
+            src/routing/routes.ts \
+            src/ui/components/launcher-map.ts \
+            src/ui/views/map-home.ts \
+            src/ui/views/neighbor-home.ts \
+            src/ui/views/neighbor-quiz.ts \
+            src/ui/views/outline-home.ts
+      - run: rm .github/workflows/replay-foundation.yml
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            scripts/generate-maps.mjs \
+            scripts/generate-neighbor-fixture.mjs \
+            scripts/map-continent-configs.mjs \
+            scripts/map-generation-core.mjs \
+            scripts/optimize-map-runtime.mjs \
+            scripts/verify-continent-contract.mjs \
+            scripts/verify-continent-foundation.mjs \
+            src/data/learning-scopes.ts \
+            src/data/map-scopes.ts \
+            src/data/maps/index.ts \
+            src/data/neighbors/index.ts \
+            src/domain/neighbor-map.ts \
+            src/domain/scope-support.ts \
+            src/neighbor-map-runtime.ts \
+            src/routing/routes.ts \
+            src/ui/components/launcher-map.ts \
+            src/ui/views/map-home.ts \
+            src/ui/views/neighbor-home.ts \
+            src/ui/views/neighbor-quiz.ts \
+            src/ui/views/outline-home.ts \
+            .github/workflows/replay-foundation.yml
+          git commit -m "Replay shared geography foundation"
+          git push
