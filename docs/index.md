@@ -2,14 +2,31 @@
 
 The documentation is organised by purpose rather than by file format or feature name.
 
+## Start here
+
+- [`../PRODUCT.md`](../PRODUCT.md) — current Atlas product truth.
+- [`../DESIGN.md`](../DESIGN.md) — locked design foundations; final visual style is still pending #32.
+- [`product/colour-system.md`](product/colour-system.md) — quantitative flag-derived colour decision and semantic palette.
+- [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
+- [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
+- [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
+
 ## Sections
 
 - [`architecture/`](architecture/) — durable technical decisions, system boundaries, routing, and data provenance.
-- [`product/`](product/) — current product requirements, behaviour, and content policies.
-- [`open/`](open/) — active issue plans and unresolved proposals.
+- [`product/`](product/) — current product requirements, behaviour, learning rules and content policies.
+- [`open/`](open/) — active issue plans and unresolved implementation work.
 - [`closed/`](closed/) — completed issue worklogs, release records, superseded plans, and historical reviews.
 
 Repository-level documents remain at the project root when they describe the whole project: [`README.md`](../README.md), [`PRODUCT.md`](../PRODUCT.md), and [`DESIGN.md`](../DESIGN.md).
+
+## Current documentation status
+
+The learner-facing product name is now **Atlas** at the documentation/product-decision level. Production UI/metadata rollout is tracked in #36.
+
+The old flat “Flag Atlas / atlas-index” visual system is superseded as a future design requirement. `DESIGN.md` now contains only the foundations that are already locked; #32 will replace it with the complete production visual system after the next design exploration.
+
+Africa remains the only complete production proving ground for Locations, Outlines and Neighbours. Other continent expansion work is tracked under #22–#27.
 
 ## Filing rules
 
@@ -17,4 +34,5 @@ Repository-level documents remain at the project root when they describe the who
 - Keep this structure shallow; add a new top-level category only when the existing four do not fit.
 - Move an issue document from `open/` to `closed/` when the issue is completed or superseded.
 - Put lasting decisions in `architecture/` or `product/`; do not make worklogs the only source of truth.
+- Keep `open/index.md` aligned with the active backlog when product sequencing changes.
 - Update this index and inbound links when moving a document.
