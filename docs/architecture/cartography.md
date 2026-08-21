@@ -110,7 +110,7 @@ A deterministic second stage now:
   - lakes: `0.15`;
 - emits final runtime path precision of **1 decimal digit**.
 
-The committed generated TypeScript source is **918,944 bytes**. Standard CI run #84 built `dist/data/maps/africa.js` at **920,449 bytes raw / 243,286 bytes gzip**, within the `<1 MB raw` / `<300 KB gzip` production budget.
+The Issue #54 generated TypeScript source is **919,901 bytes** after runtime optimisation. Its verified production build emits `dist/data/maps/africa.js` at **921,370 bytes raw / 243,737 bytes gzip**, within the `<1 MB raw` / `<300 KB gzip` production budget.
 
 ### Why the pinned boundary-line theme is not the rendered shared-border mesh
 
