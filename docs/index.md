@@ -10,11 +10,12 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
 - [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
 - [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema, qualification seam, support guards and reset semantics.
+- [`architecture/continent-expansion.md`](architecture/continent-expansion.md) — shared four-domain completion standard and onboarding contract for every post-Africa continent.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
 
 ## Sections
 
-- [`architecture/`](architecture/) — durable technical decisions, system boundaries, routing, and data provenance.
+- [`architecture/`](architecture/) — durable technical decisions, system boundaries, routing, data provenance, and continent-onboarding contracts.
 - [`product/`](product/) — current product requirements, behaviour, learning rules and content policies.
 - [`research/`](research/) — supporting investigations and evidentiary material that inform product decisions without replacing current product truth.
 - [`open/`](open/) — active issue plans and unresolved implementation work.
@@ -28,7 +29,7 @@ The learner-facing product name is **Atlas** across current product documentatio
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
-Africa remains the only complete production proving ground for Locations, Outlines and Neighbours. Other continent expansion work is tracked under #22–#27.
+Africa remains the complete production proving ground for Locations, Outlines and Neighbours. Post-Africa expansion is now governed by `architecture/continent-expansion.md`, with shared infrastructure tracked in #57, zero-land-neighbour parity tracked in #58, and continent rollout under #22/#24–#27. Standalone Central America #23 is superseded by the North America parent expansion.
 
 ## Filing rules
 
