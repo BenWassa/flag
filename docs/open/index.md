@@ -28,8 +28,9 @@ These issues are related but should remain separable: country evidence, earned a
 - [#41 — Prevent intermittent focus outline on Atlas heading after refresh](issue-41-heading-focus.md)
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
+- [#54 — Remove rivers from Atlas maps to clarify political borders](issue-54-remove-rivers.md)
 
-Focused usability bugs may ship independently where they remain reproducible. #20 should consume the new semantic palette without changing canonical geometry.
+Focused usability bugs may ship independently where they remain reproducible. #54 narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency. #20's retained ocean/lake/land/border contrast remains relevant.
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
