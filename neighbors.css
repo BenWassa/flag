@@ -1,7 +1,8 @@
 .neighbor-quiz-page {
   width: min(100%, 980px);
   max-width: none;
-  min-height: 100dvh;
+  min-height: 100vh;
+  min-height: 100svh;
   padding-top: max(var(--space-4), env(safe-area-inset-top));
   padding-bottom: max(var(--space-4), env(safe-area-inset-bottom));
 }
@@ -51,7 +52,7 @@
 }
 .neighbor-map-shell { height: 100%; }
 .neighbor-map-stage {
-  height: clamp(260px, 43dvh, 440px);
+  height: clamp(260px, 43svh, 440px);
   margin: 0;
   background: var(--map-ocean);
 }
@@ -127,7 +128,7 @@
   gap: var(--space-2);
   padding: var(--space-2) 0;
   background: var(--canvas);
-  scroll-margin-bottom: 32dvh;
+  scroll-margin-block: var(--space-2);
 }
 .neighbor-entry > label { font-size: 13px; font-weight: 700; }
 .neighbor-input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
@@ -150,7 +151,6 @@
   left: 0;
   right: 0;
   bottom: calc(100% + var(--space-1));
-  max-height: min(34dvh, 270px);
   max-height: min(28dvh, 230px);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -205,14 +205,44 @@
   .neighbor-input-row .button { min-height: 50px; padding-inline: var(--space-2); }
 }
 
-/* When the mobile keyboard materially shortens the visual viewport, retain a
-   useful geographic slice instead of forcing the learner to scroll away from input. */
+/* Phone portrait enters one compact coordinate system as soon as the answer
+   field owns focus. The stable #app flag survives same-route DOM replacement,
+   while visualViewport only contributes the currently visible height when it
+   is safe to do so. The map keeps its top edge and contracts only at the
+   bottom, so browser keyboard resizing has no reason to chase a sticky input. */
+@media (max-width: 720px) and (orientation: portrait) {
+  #app[data-neighbor-entry-active="true"] .neighbor-quiz-page {
+    min-height: var(--neighbor-visual-height, 100svh);
+    padding-top: max(var(--space-2), env(safe-area-inset-top));
+  }
+  #app[data-neighbor-entry-active="true"] .neighbor-quiz-header { margin-bottom: var(--space-2); }
+  #app[data-neighbor-entry-active="true"] .neighbor-task { gap: var(--space-2); }
+  #app[data-neighbor-entry-active="true"] .neighbor-status-line h2 { font-size: 1rem; }
+  #app[data-neighbor-entry-active="true"] .neighbor-map-stage {
+    height: clamp(140px, calc(var(--neighbor-visual-height, 410px) - 250px), 190px);
+  }
+  #app[data-neighbor-entry-active="true"] .neighbor-map-host,
+  #app[data-neighbor-entry-active="true"] .neighbor-map-loading,
+  #app[data-neighbor-entry-active="true"] .neighbor-map-unavailable { min-height: 140px; }
+  #app[data-neighbor-entry-active="true"] .neighbor-entry {
+    position: relative;
+    bottom: auto;
+    padding: 0;
+  }
+  #app[data-neighbor-entry-active="true"] .neighbor-suggestions {
+    max-height: min(34svh, 150px);
+  }
+}
+
+/* Android-style keyboard resize remains a CSS-only fallback when
+   visualViewport is absent or the browser changes the layout viewport too. */
 @media (max-height: 560px) and (orientation: portrait) {
-  .neighbor-map-stage { height: 190px; }
+  .neighbor-map-stage { height: 160px; }
   .neighbor-map-host,
   .neighbor-map-loading,
-  .neighbor-map-unavailable { min-height: 190px; }
+  .neighbor-map-unavailable { min-height: 160px; }
   .neighbor-task { gap: var(--space-2); }
+  .neighbor-entry { position: relative; bottom: auto; }
 }
 
 /* Wide screens use one task split, not a dashboard: map left, entry/status right. */
