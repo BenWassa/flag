@@ -120,13 +120,7 @@ const home = renderHome(flagProgress);
 const homeWithoutPersistence = renderHome(flagProgress, false);
 assertCommonSurface('Home', home);
 assert.equal(home.includes('brand-mark'), false, 'Home presents the Atlas wordmark without a leading flag mark.');
-for (const mark of ['AF', 'AS', 'EU', 'NA', 'SA', 'OC']) {
-  assert.equal(
-    occurrences(home, `<span class="atlas-card__mark-code">${mark}</span>`),
-    1,
-    `Home gives ${mark} one distinct continent mark.`,
-  );
-}
+assert.equal(occurrences(home, 'class="continent-icon"'), CONTINENTS.length, 'Home gives every continent an outline icon.');
 assertPreRoundContentRemoved('Home', home);
 assertNoLegacyInteractiveRow('Home', home, 'continent-row');
 const homeContinentCards = actionTags(home, 'button', 'open-atlas');

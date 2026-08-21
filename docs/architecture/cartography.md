@@ -148,6 +148,7 @@ The same normalized topology is intentionally reusable for:
 
 - **Issue #2 country silhouettes:** emit a normalized canonical country geometry without another geography source;
 - **Issue #3 neighboring-country game:** consume the topology-neighbor graph rather than maintaining manual adjacency.
+- **Home continent marks:** `npm run icons:continents:generate` produces six simplified, outline-only navigation SVG paths from the pinned countries source without creating a second runtime cartography dependency.
 
 ## Water-context policy
 
