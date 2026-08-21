@@ -7,6 +7,12 @@ on:
     paths:
       - research/flag_colour_study.py
       - .github/workflows/flag-colour-study.yml
+  pull_request:
+    branches:
+      - main
+    paths:
+      - research/flag_colour_study.py
+      - .github/workflows/flag-colour-study.yml
   workflow_dispatch:
 
 permissions:
@@ -27,6 +33,7 @@ jobs:
       - name: Run flag colour study
         run: python research/flag_colour_study.py
       - name: Commit generated research outputs
+        if: github.event_name != 'pull_request'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
@@ -37,3 +44,8 @@ jobs:
             git commit -m "Generate flag colour study outputs"
             git push origin HEAD:research/flag-colour-study
           fi
+      - name: Upload research outputs
+        uses: actions/upload-artifact@v4
+        with:
+          name: flag-colour-study
+          path: research/output/flag-colour-study
