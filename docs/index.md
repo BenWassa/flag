@@ -25,7 +25,7 @@ Repository-level documents remain at the project root when they describe the who
 
 The learner-facing product name is now **Atlas** at the documentation/product-decision level. Production UI/metadata rollout is tracked in #36.
 
-The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` now documents the implemented Tactile Atlas system; #32 is pending merge/closeout, while achievement art direction (badges/crest/Crown) stays open under #34.
+The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
 Africa remains the only complete production proving ground for Locations, Outlines and Neighbours. Other continent expansion work is tracked under #22–#27.
 

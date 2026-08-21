@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/35
 
 ## Status
 
-**Superseded on `design/atlas-visual-system`.** The dedicated region-detail screen (the 2×2 domain-play grid at `/atlas/{continent}/{region}`) shipped first, then was removed once the continent surface's per-region domain-launch shortcuts made it a redundant extra tap: every region card already names its four domains and starts a round directly, so the intermediate "select a mode" screen had nothing left to do. Cross-domain competency now lives one level up, on the continent surface. Move this doc to `closed/` once that decision merges to `main`.
+**Complete through intentional product simplification.** The dedicated region-detail screen shipped first, then was removed once per-region domain launchers made it a redundant extra tap. Cross-domain competency now lives directly on the continent surface.
 
 ## Goal
 
@@ -39,3 +39,12 @@ Final visual composition depends on #32.
 - The mastery medallion/badge shown in the approved mock-up.
 
 These require the earned-mastery persistence model that #34 owns and were left as neutral/absent placeholders rather than guessed at. Since there is no longer a separate region-detail screen, this treatment will land on the region card itself.
+
+## Closeout
+
+- Shipped through PR #38; merge commit `ed6399e70be504632dff95d72cb217bcc762a16e`.
+- The original dedicated-screen and combined Learn/Play-grid criteria were superseded explicitly: the simpler region card exposes identity, country count and four direct Play shortcuts without an intermediate navigation step. Learn remains available through each domain launcher rather than being duplicated on every region card.
+- Unsupported domains are inert labelled shells and cannot count towards completion. Legacy `/atlas/<continent>/<region>` URLs collapse safely to the continent surface.
+- `scripts/verify-ia.mjs`, `scripts/verify-routing.mjs` and `scripts/verify-domain-integration.mjs` passed in PR CI and in `npm test` on merged `main` at `ed6399e70be504632dff95d72cb217bcc762a16e` on 2026-08-21.
+- Browser inspection at 390×844 and 844×390 confirmed legible region identity/counts, four distinct domain controls, 48px launch targets and no horizontal overflow.
+- Purple region × domain mastery and complete-region gold treatment remain deferred to #34.

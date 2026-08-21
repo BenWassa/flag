@@ -13,16 +13,7 @@ This directory mirrors active product/engineering work that benefits from a dura
 - Africa-first complete proving ground;
 - region × domain cross-domain competency, surfaced on the continent surface's region cards rather than a separate region-detail screen.
 
-### 2. Visual direction
-
-- [#32 — Define and implement the new Atlas visual system](https://github.com/BenWassa/flag/issues/32)
-- [#40 — Adopt Phosphor for routine Atlas iconography](https://github.com/BenWassa/flag/issues/40)
-
-#32's Tactile Atlas implementation is complete on `design/atlas-visual-system` (PR #38) and awaits merge/closeout.
-
-#40's Phosphor Bold routine-icon migration is implemented on the same branch with production-size audition, automated verification and browser evidence; repository closeout remains.
-
-### 3. Learning / achievement architecture
+### 2. Learning / achievement architecture
 
 - [#29 — Refine country learning evidence and Learn/Play mechanics](https://github.com/BenWassa/flag/issues/29)
 - [#34 — Implement earned region mastery, continent crests, and world crown](https://github.com/BenWassa/flag/issues/34)
@@ -30,15 +21,15 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 These issues are related but should remain separable: country evidence, earned achievements, region navigation and Flags study are distinct concerns.
 
-#35 (region cross-domain competency) is implemented on `design/atlas-visual-system`, pending merge via PR #38 — see [`issue-35-region-detail.md`](issue-35-region-detail.md). The separate region-detail screen it originally shipped was retired in favour of direct domain-launch shortcuts on the continent surface's region cards. Its mastery/gold visuals still depend on #34.
+#32, #35 and #40 are complete through PR #38. Their closeout records are [`issue-32-atlas-visual-system.md`](../closed/issue-32-atlas-visual-system.md), [`issue-35-region-detail.md`](../closed/issue-35-region-detail.md) and [`issue-40-phosphor-icon-system.md`](../closed/issue-40-phosphor-icon-system.md). Region mastery/gold visuals remain owned by #34.
 
-### 4. Brand rollout
+### 3. Brand rollout
 
 - [#36 — Rename learner-facing product from Flag Atlas to Atlas](https://github.com/BenWassa/flag/issues/36)
 
 Documentation may use Atlas now. Production UI/metadata should change in a focused implementation while stable technical identifiers remain compatible.
 
-### 5. Existing presentation bugs / cartography
+### 4. Existing presentation bugs / cartography
 
 - [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
 - [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
@@ -47,7 +38,7 @@ Focused usability bugs may ship independently where they remain reproducible. #2
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
-### 6. Geography expansion
+### 5. Geography expansion
 
 - [#22 — North America](https://github.com/BenWassa/flag/issues/22)
 - [#23 — Central America](https://github.com/BenWassa/flag/issues/23)
