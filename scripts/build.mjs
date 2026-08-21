@@ -34,4 +34,4 @@ if (existsSync('public/icons')) {
   await cp('public/icons', 'dist/icons', { recursive: true });
 }
 
-console.log('Built Flag Atlas to dist/.');
+console.log('Built Atlas to dist/.');

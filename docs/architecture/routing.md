@@ -187,20 +187,18 @@ A syntactically valid route can also point to curriculum that is not enabled. Cu
 
 Stable titles derive from typed route state and canonical learner-facing display names, for example:
 
-- `Flags · Flag Atlas`;
-- `West Africa flags · Flag Atlas`;
-- `Play West Africa locations · Flag Atlas`;
-- `Play West Africa neighbours · Flag Atlas`.
+- `Flags · Atlas`;
+- `West Africa flags · Atlas`;
+- `Play West Africa locations · Atlas`;
+- `Play West Africa neighbours · Atlas`.
 
-Completed rounds add the result state explicitly, e.g. `Round complete · West Africa neighbours · Flag Atlas`.
+Completed rounds add the result state explicitly, e.g. `Round complete · West Africa neighbours · Atlas`.
 
 ## Home and branding decision
 
-**Keep `Flag Atlas` for now.**
+The learner-facing product name is **Atlas**. The Home IA is a compact geographic index of learning domains, with Flags, Locations, Outlines, and Neighbours as peers. Every row provides direct Play; its body reveals only the next real scope decision.
 
-Renaming is not necessary to solve the architecture problem and would create brand churn. The Home IA is a compact Atlas index of learning domains, with Flags, Locations, Outlines, and Neighbours as peers. Every row provides direct Play; its body reveals only the next real scope decision.
-
-The route/domain model therefore supports a future broader product name without another navigation rewrite. Branding is presentation; `flags` is one learning domain rather than the routing root.
+Branding remains presentation: stable routes and internal identifiers retain their compatibility names, while `flags` is one learning domain rather than the routing root.
 
 ## Known limitations
 

@@ -255,16 +255,16 @@ function navigateStable(route: AppRoute): void {
 
 function currentDocumentTitle(): string {
   if (store.view.name === 'results') {
-    return `Round complete · ${store.view.result.session.scope.label} flags · Flag Atlas`;
+    return `Round complete · ${store.view.result.session.scope.label} flags · Atlas`;
   }
   if (store.view.name === 'map-results') {
-    return `Round complete · ${store.view.result.session.scope.label} locations · Flag Atlas`;
+    return `Round complete · ${store.view.result.session.scope.label} locations · Atlas`;
   }
   if (store.view.name === 'outline-results') {
-    return `Round complete · ${store.view.result.session.scope.label} outlines · Flag Atlas`;
+    return `Round complete · ${store.view.result.session.scope.label} outlines · Atlas`;
   }
   if (store.view.name === 'neighbor-results') {
-    return `Round complete · ${store.view.result.session.scope.label} ${domainDisplayName('neighbors').toLowerCase()} · Flag Atlas`;
+    return `Round complete · ${store.view.result.session.scope.label} ${domainDisplayName('neighbors').toLowerCase()} · Atlas`;
   }
   return routeTitle(currentRoute);
 }

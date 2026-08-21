@@ -27,7 +27,7 @@ These issues are related but should remain separable: country evidence, earned a
 
 - [#36 — Rename learner-facing product from Flag Atlas to Atlas](https://github.com/BenWassa/flag/issues/36)
 
-Documentation may use Atlas now. Production UI/metadata should change in a focused implementation while stable technical identifiers remain compatible.
+The focused implementation now uses Atlas in production UI, browser titles, and install metadata while preserving stable technical identifiers. Issue closeout remains pending the branch verification and delivery workflow.
 
 ### 4. Existing presentation bugs / cartography
 

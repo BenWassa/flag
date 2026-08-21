@@ -6,7 +6,7 @@
 
 ## Source hierarchy
 
-Flag Atlas should not invent or maintain country names from memory.
+Atlas should not invent or maintain country names from memory.
 
 1. **UNGEGN World Geographical Names / UNTERM** — primary reference for current country names and article treatment. The UNGEGN country records expose English short/formal names and identify `UN terms` as their source.
 2. **UN Statistics Division M49** — primary reference for M49 codes, ISO alpha-3 linkage, UN statistical-region membership, and the UN's current day-to-day English country/area naming table. M49 states that its names are based on UNTERM.
@@ -24,7 +24,7 @@ The product teaches recognisable country names, so the UI uses a natural, compac
 
 Examples:
 
-- UNGEGN records `Gambia (the)` / `the Republic of the Gambia`; Flag Atlas renders **The Gambia**.
+- UNGEGN records `Gambia (the)` / `the Republic of the Gambia`; Atlas renders **The Gambia**.
 - The app may retain familiar compact teaching labels such as **North Korea**, **South Korea**, **Tanzania**, **Russia**, and **United States**, while official/alternate forms can live in aliases where useful.
 
 Article normalisation is intentional: parenthetical UN indexing such as `Gambia (the)` is converted into normal display English rather than shown literally.
@@ -35,7 +35,7 @@ British-English product copy does not override this naming policy. Canonical cou
 
 These names should be explicitly checked whenever the country catalog changes:
 
-| ISO3 | Current Flag Atlas display | Legacy / alternate forms to keep out of the primary label |
+| ISO3 | Current Atlas display | Legacy / alternate forms to keep out of the primary label |
 |---|---|---|
 | CPV | Cabo Verde | Cape Verde |
 | CIV | Côte d'Ivoire | Ivory Coast |

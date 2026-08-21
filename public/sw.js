@@ -1,7 +1,8 @@
-// v15 ships the Tactile Atlas visual layer and its production stylesheet.
+// v16 ships the Atlas learner-facing brand and install metadata.
+// v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v15';
+const VERSION = 'flag-atlas-v16';
 const SHELL = [
   './',
   './index.html',

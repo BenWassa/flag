@@ -9,7 +9,7 @@
 
 ## Production decision
 
-Flag Atlas uses **Natural Earth 1:10m** as the practical production cartography source and treats **UN Maps / UN Geospatial** as the boundary-policy, disputed-territory, and publication-disclaimer reference.
+Atlas uses **Natural Earth 1:10m** as the practical production cartography source and treats **UN Maps / UN Geospatial** as the boundary-policy, disputed-territory, and publication-disclaimer reference.
 
 Runtime SVG coordinates are generated output. Do not hand-edit country paths.
 
@@ -61,7 +61,7 @@ Official source: https://maps.un.org/
 
 UN products are used to review national-boundary authority/currentness, dispute treatment, and boundary/disclaimer practice. UN generalized geodata is useful as an authoritative comparison source; UN Clear Map is tied to UN publication/clearance practices.
 
-For Flag Atlas, UN material is therefore a **policy/audit reference**, not a silently substituted runtime geometry dependency. Any future decision to redistribute or directly build from a UN product requires a separate review of the applicable download, licensing, clearance, attribution/disclaimer, and offline-use terms.
+For Atlas, UN material is therefore a **policy/audit reference**, not a silently substituted runtime geometry dependency. Any future decision to redistribute or directly build from a UN product requires a separate review of the applicable download, licensing, clearance, attribution/disclaimer, and offline-use terms.
 
 ## Africa scored-country and dispute policy
 
@@ -69,7 +69,7 @@ The curriculum scores the application's canonical **54 Africa ISO3 countries**. 
 
 Current explicit handling:
 
-- Natural Earth's default Admin-0 presentation is de-facto; using it as source geometry is not an endorsement by Flag Atlas.
+- Natural Earth's default Admin-0 presentation is de-facto; using it as source geometry is not an endorsement by Atlas.
 - **Somaliland is not a separate scoring target.** Natural Earth's Somaliland feature is dissolved into canonical `SOM` before the scoring topology is generated.
 - **Western Sahara remains non-scoring context** and is not silently merged into `MAR`.
 - **Bir Tawil remains non-scoring context** and is not silently assigned to either `EGY` or `SDN`.

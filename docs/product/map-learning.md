@@ -9,7 +9,7 @@
 
 The map feature is complete as a product loop while scored geography is deliberately constrained to one region.
 
-- Dedicated **Country locations** entry point from the Flag Atlas home screen.
+- Dedicated **Country locations** entry point from the Atlas home screen.
 - **Learn** mode with Seterra-style guided feedback:
   - first-try correct → strong transient green confirmation, then stored off-white;
   - correct after one prior miss → amber/yellow immediately;
@@ -107,7 +107,7 @@ Current example: the primary UI label is **The Gambia**; `Gambia` remains an ali
 
 ## Visual-system decision
 
-Map mode is an extension of the Flag Atlas **Atlas Index** system, not a separate visual sub-product.
+Map mode is part of the shared Atlas product system, not a separate visual sub-product.
 
 - Shared typography, progress strips, state vocabulary, action hierarchy, spacing, radii, and color tokens are reused.
 - Large promotional cards, glass/blur surfaces, decorative shadows, oversized radii, and bespoke map-progress colors are excluded.

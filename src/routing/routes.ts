@@ -227,9 +227,9 @@ export function routesEqual(left: AppRoute | null, right: AppRoute | null): bool
 }
 
 export function routeTitle(route: AppRoute): string {
-  if (route.name === 'home') return 'Flag Atlas';
-  if (route.name === 'progress') return 'Progress · Flag Atlas';
-  if (route.name === 'atlas') return `${route.scope.label} · Flag Atlas`;
+  if (route.name === 'home') return 'Atlas';
+  if (route.name === 'progress') return 'Progress · Atlas';
+  if (route.name === 'atlas') return `${route.scope.label} · Atlas`;
 
   const domain = domainDisplayName(route.domain);
   const scope = route.scope?.label ?? (route.domain === 'flags' ? 'World' : undefined);
@@ -239,10 +239,10 @@ export function routeTitle(route: AppRoute): string {
       : route.activity === 'learn'
         ? 'Learn'
         : 'Play';
-    return `${activity}${scope ? ` ${scope}` : ''} ${domain.toLowerCase()} · Flag Atlas`;
+    return `${activity}${scope ? ` ${scope}` : ''} ${domain.toLowerCase()} · Atlas`;
   }
-  if (scope && route.scope) return `${scope} ${domain.toLowerCase()} · Flag Atlas`;
-  return `${domain} · Flag Atlas`;
+  if (scope && route.scope) return `${scope} ${domain.toLowerCase()} · Atlas`;
+  return `${domain} · Atlas`;
 }
 
 function pathSegments(input: string): string[] | null {

@@ -121,7 +121,7 @@ function refreshPollingWatches() {
 refreshPollingWatches();
 
 server.listen(port, host, () => {
-  console.log(`Flag Atlas is running at http://${host}:${port}`);
+  console.log(`Atlas is running at http://${host}:${port}`);
   console.log('Watching source and static assets for changes.');
 });
 

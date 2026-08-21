@@ -8,7 +8,7 @@ These instructions apply to the whole repository.
 - `DESIGN.md` defines the implemented Tactile Atlas production system. Issue #34 owns the remaining achievement-art direction for mastery badges, continent crests, the world Crown and milestone ceremony.
 - Read `docs/product/colour-system.md`, `docs/product/gamification.md`, and `docs/product/learning-and-mastery.md` before changing colours, mastery, completion, progress or achievement presentation.
 - Use `docs/index.md` as the documentation map and `docs/open/index.md` as the active-work/sequencing map.
-- Learner-facing product name is **Atlas**. Production rollout is tracked in #36; preserve stable legacy repository/storage/cache identifiers unless a migration is explicitly justified.
+- Learner-facing product name is **Atlas** across production UI and install metadata. Issue #36 records the rollout; preserve stable legacy repository/storage/cache identifiers unless a migration is explicitly justified.
 - Preserve the language contracts: learner-facing copy uses British English, `Neighbours`, and `Play`; stable internal identifiers such as `neighbors`, `/neighbors`, `test`, `/test`, and `start-test` remain unchanged unless a migration is explicitly requested.
 - Do not hand-edit generated cartography in `src/data/maps/africa.ts`. Follow `docs/architecture/cartography.md` and use the generation workflow.
 
