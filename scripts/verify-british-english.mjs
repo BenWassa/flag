@@ -162,7 +162,7 @@ const forbiddenRenderedPatterns = [
   /\bneighbors found\b/i,
   /\bneighboring countr(?:y|ies)\b/i,
   /\bland-border neighbor\b/i,
-  /\bland neighbor of\b/i,
+  /\bland neighbor\b/i,
   /\bneighbor learning status\b/i,
   /\bneighbor progress\b/i,
   /\bneighbor results\b/i,
