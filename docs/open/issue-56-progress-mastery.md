@@ -83,19 +83,51 @@ Primary implementation files:
 - `progress.css`;
 - production shell/build/PWA wiring;
 - `scripts/verify-progress-summary.mjs`;
-- `.impeccable/design.json`.
+- `DESIGN.md` and `.impeccable/design.json`.
 
 The dedicated `progress.css` keeps the redesign isolated from concurrent cartography work while consuming the existing Tactile Atlas variables. `atlas-theme.css` remains the authoritative token layer.
 
-## Verification contract
+## Verification evidence
 
-Before merge:
+### Automated gates
 
-- `npm run check` must pass under Node 22;
-- full `npm test` must pass;
-- deterministic coverage must protect earned/unearned/unavailable competency states, complete-region prestige, crest/Crown gating, earned-but-due behaviour, evidence disclosure/filtering, reset semantics and production shell wiring;
-- the exact CI production artifact must be inspected;
-- current `main` must be synced and service-worker lineage reconciled semantically;
-- CI must be green on the final head.
+GitHub Actions run #246 (`32515399374`) on head `0da13f516e7640017eed10d2c686f6cf0af10490` used Node `22.23.2` and passed:
 
-Interactive browser/device evidence is recorded only if it is actually available and performed.
+- standalone `npm run check`;
+- full `npm test`, including build plus every existing verifier;
+- the expanded Progress summary/presentation verifier;
+- British-English verification;
+- production artifact upload.
+
+Two earlier diagnostic runs failed for legitimate compatibility reasons and were fixed without weakening their contracts:
+
+1. run #241 caught the established storage-denied copy sentinel after the redesign inserted an extra word; the UI was corrected to preserve `not allowing storage`;
+2. run #242 reached the final British-English suite and caught removal of its `Not practised yet` spelling sentinel; the stronger new first-use headline was retained and the supporting copy restored that British wording.
+
+### Exact production artifact
+
+CI artifact `flag-atlas-dist` from run #246:
+
+- artifact ID: `9458578765`;
+- GitHub digest: `sha256:9861e5099ba042e9ab4fe217ec8f80c871db942e430a817c178712eca0d37ea3`;
+- downloaded ZIP independently matched that SHA-256;
+- 76 production files / 1,356,941 bytes unpacked.
+
+Direct inspection of the compiled artifact confirmed:
+
+- `progress.css` is shipped, linked by `index.html`, and included in the service-worker shell;
+- fresh Progress renders six continent marks, zero earned badges, zero crests and zero Crowns;
+- West Africa Flags Mastery remains visibly earned while Ghana's live Flags evidence is due for review;
+- complete-region state maps to the gold completion treatment;
+- canonical continent completion maps to exactly one crest in the exercised Africa state;
+- canonical world completion maps to exactly one Crown in the exercised renderer state;
+- cross-domain evidence filtering preserves both selected domain and selected evidence state;
+- `Crest locked`, `Crown locked`, and the superseded `Earned achievements` ledger label are absent from the compiled Progress modules.
+
+### Integration state
+
+Immediately after the final artifact inspection, `main` remained `fcdd46d59496857c8a2c74a6191eef65a05cbbc7`; the branch was 0 commits behind it. Concurrent PR #55 remains separate and owns river removal/cartography changes, including its own service-worker cache-line update; no #55 code is duplicated into this focused Progress branch.
+
+### QA limitation
+
+No interactive browser, physical-device, iOS Safari, Android Chromium, screen-reader, or Windows High Contrast session was available in this execution path, so none is claimed. Responsive, reduced-motion, focus, non-colour state and production-shell requirements are covered by the existing structural/CSS contracts and focused verifier additions; interactive visual QA remains a separate manual confidence check rather than fabricated evidence.
