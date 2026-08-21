@@ -2,6 +2,10 @@
 
 GitHub: https://github.com/BenWassa/flag/issues/56
 
+## Status
+
+Complete.
+
 ## Design diagnosis
 
 Issue #42 made Progress technically correct across all four domains, but the shipped hierarchy still read like an operational ledger. Live evidence and reset utilities appeared before plain-row achievement output, and continent/world achievement was expressed mainly through locked text labels.
@@ -131,3 +135,7 @@ Immediately after the final artifact inspection, `main` remained `fcdd46d5949685
 ### QA limitation
 
 No interactive browser, physical-device, iOS Safari, Android Chromium, screen-reader, or Windows High Contrast session was available in this execution path, so none is claimed. Responsive, reduced-motion, focus, non-colour state and production-shell requirements are covered by the existing structural/CSS contracts and focused verifier additions; interactive visual QA remains a separate manual confidence check rather than fabricated evidence.
+
+## Closeout
+
+Merged through PR #61 in `e410aef03955db59eb2d730074ee5bcd04d12a92`. Full `npm test` and fresh GitHub CI passed after integration with the preceding queue. The documented manual-environment limitations remain unchanged and are not represented as completed testing.

@@ -1,6 +1,6 @@
 # Issue #54 — Remove rivers from Atlas maps
 
-**Status:** implemented on branch; final PR CI/artifact closeout pending  
+**Status:** Complete
 **Tracking:** GitHub Issue #54 / PR #55
 
 ## Decision
@@ -38,3 +38,7 @@ A Node 22.23.2 regeneration/verification run completed successfully on the imple
 Before merge, final PR CI must still be green on the exact final commit and its uploaded production artifact must be inspected. Issue #20 should be reconciled only after #54 lands on `main`, so its closeout no longer asks reviewers to inspect river contrast.
 
 No physical-device, iOS Safari, Android Chromium or Windows High Contrast testing is claimed.
+
+## Closeout
+
+Merged through PR #55 in `1881fa7b004bb741971569a59386aaa27ecda7af`. Final GitHub CI was green, and subsequent integrated full-suite runs retained the verified 921,370-byte raw / 243,737-byte gzip Africa artifact with nine lakes and no rivers. The unavailable physical-device gates remain unclaimed.

@@ -4,7 +4,7 @@ GitHub: https://github.com/BenWassa/flag/issues/60
 
 ## Status
 
-Slice 1 and 2 implemented on `feat/issue-60-play-feedback`. Slice 3 (Locations, Outlines, Neighbours adoption) remains deliberately separate.
+Complete for the scoped Flags Play foundation. Follow-on Locations, Outlines and Neighbours adoption remains deliberately separate.
 
 ### What shipped
 
@@ -120,3 +120,7 @@ This is a UX feedback problem, not a rules-model problem.
 1. Flags Play immediate feedback + live score (foundation slice).
 2. Shared contract extraction and reuse points.
 3. Follow-on adoption in Locations, Outlines and Neighbours where interaction parity is valid.
+
+## Closeout
+
+Merged through PR #64 in `c58c36b515d55213b629fb37521fb63e63151d57`. Full `npm test` and fresh GitHub CI passed after integration with #58. The round-local score remains ephemeral and separate from mastery/economy state; follow-on domain adoption is deferred rather than implied complete.
