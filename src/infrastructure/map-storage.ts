@@ -1,57 +1,20 @@
 import type { LearningStatus } from '../domain/models.js';
 import type { LocationProgressRecord, LocationProgressState, MapAttempt } from '../domain/map-models.js';
 import { legacyEvidenceSummary, sanitizeEvidenceSummary } from './evidence-storage.js';
+import { createAttemptLog, loadVersionedRecords, saveVersionedRecords } from './ledger-storage.js';
+import { toConfusionCounts, toCount, toOptionalString } from './sanitize.js';
+import { createStorageGuard } from './storage-guard.js';
 
 // Stable namespace; payloads migrate from schema v1 to v2 on load/save.
 const PROGRESS_KEY = 'flag-atlas:location-progress:v1';
 const ATTEMPTS_KEY = 'flag-atlas:location-attempts:v1';
-const ATTEMPT_LIMIT = 2000;
-const FLUSH_DELAY_MS = 500;
 const STATUSES: readonly LearningStatus[] = ['unseen', 'learning', 'mastered'];
 
-let writable = true;
-let attemptCache: MapAttempt[] | null = null;
-let flushHandle: number | null = null;
+const guard = createStorageGuard();
+const attempts = createAttemptLog<MapAttempt>(guard, ATTEMPTS_KEY);
 
 export function mapStorageIsWritable(): boolean {
-  return writable;
-}
-
-function readRaw(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    writable = false;
-    return null;
-  }
-}
-
-function writeRaw(key: string, value: string): boolean {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    writable = false;
-    return false;
-  }
-}
-
-function toCount(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? Math.floor(value) : 0;
-}
-
-function toOptionalString(value: unknown): string | undefined {
-  return typeof value === 'string' && value.length > 0 ? value : undefined;
-}
-
-function toConfusions(value: unknown): Record<string, number> {
-  if (!value || typeof value !== 'object') return {};
-  const counts: Record<string, number> = {};
-  for (const [countryId, raw] of Object.entries(value as Record<string, unknown>)) {
-    const count = toCount(raw);
-    if (count > 0) counts[countryId] = count;
-  }
-  return counts;
+  return guard.isWritable();
 }
 
 export function sanitizeLocationRecord(countryId: string, value: unknown): LocationProgressRecord | null {
@@ -94,78 +57,28 @@ export function sanitizeLocationRecord(countryId: string, value: unknown): Locat
     lastMissedAt,
     masteredAt,
     lastMasteryCreditSessionId: toOptionalString(raw.lastMasteryCreditSessionId),
-    confusionCounts: toConfusions(raw.confusionCounts),
+    confusionCounts: toConfusionCounts(raw.confusionCounts),
   };
 }
 
 export function loadLocationProgress(): LocationProgressState | null {
-  const raw = readRaw(PROGRESS_KEY);
-  if (!raw) return null;
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-  if (!parsed || typeof parsed !== 'object') return null;
-  const state = parsed as { version?: unknown; records?: unknown };
-  if ((state.version !== 1 && state.version !== 2) || !state.records || typeof state.records !== 'object') return null;
-
-  const records: Record<string, LocationProgressRecord> = {};
-  for (const [countryId, value] of Object.entries(state.records as Record<string, unknown>)) {
-    const record = sanitizeLocationRecord(countryId, value);
-    if (record) records[countryId] = record;
-  }
-  return { version: 2, records };
+  return loadVersionedRecords(guard, PROGRESS_KEY, sanitizeLocationRecord);
 }
 
 export function saveLocationProgress(state: LocationProgressState): boolean {
-  return writeRaw(PROGRESS_KEY, JSON.stringify(state));
-}
-
-function loadMapAttempts(): MapAttempt[] {
-  if (attemptCache) return attemptCache;
-  const raw = readRaw(ATTEMPTS_KEY);
-  if (!raw) return (attemptCache = []);
-  try {
-    const parsed = JSON.parse(raw);
-    attemptCache = Array.isArray(parsed) ? parsed as MapAttempt[] : [];
-  } catch {
-    attemptCache = [];
-  }
-  return attemptCache;
+  return saveVersionedRecords(guard, PROGRESS_KEY, state);
 }
 
 export function appendMapAttempt(attempt: MapAttempt): void {
-  const attempts = loadMapAttempts();
-  attempts.push(attempt);
-  if (attempts.length > ATTEMPT_LIMIT) attempts.splice(0, attempts.length - ATTEMPT_LIMIT);
-  if (flushHandle !== null) return;
-  flushHandle = window.setTimeout(() => {
-    flushHandle = null;
-    flushMapAttempts();
-  }, FLUSH_DELAY_MS);
+  attempts.append(attempt);
 }
 
 export function flushMapAttempts(): void {
-  if (flushHandle !== null) {
-    window.clearTimeout(flushHandle);
-    flushHandle = null;
-  }
-  if (!attemptCache) return;
-  writeRaw(ATTEMPTS_KEY, JSON.stringify(attemptCache));
+  attempts.flush();
 }
 
 export function resetMapProgressStorage(): void {
-  if (flushHandle !== null) {
-    window.clearTimeout(flushHandle);
-    flushHandle = null;
-  }
-  attemptCache = [];
-  try {
-    localStorage.removeItem(PROGRESS_KEY);
-    localStorage.removeItem(ATTEMPTS_KEY);
-  } catch {
-    // In-memory reset remains useful even when the browser blocks persistence.
-  }
+  attempts.reset();
+  guard.removeRaw(PROGRESS_KEY);
+  guard.removeRaw(ATTEMPTS_KEY);
 }

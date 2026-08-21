@@ -33,7 +33,7 @@ Implemented:
 - a versioned independent `flag-atlas:earned-achievements:v1` persistence layer;
 - application-store backfill plus re-awarding after evidence-changing answers in all four domains;
 - explicit full-reset semantics for earned achievements;
-- region, continent and world read models for later presentation/#42 consumption;
+- region, continent and world read models for later presentation/#60 consumption;
 - deterministic verifier coverage for support guards, non-revocation, persistence, migration, reset, idempotency and four-ledger independence;
 - direct delegation to Issue #29's canonical `qualifiesForRegionMastery()` selector.
 

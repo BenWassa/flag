@@ -143,10 +143,14 @@ assert.ok(storageSource.includes('flag-atlas:neighbor-attempts:v1'));
 assert.ok(!storageSource.includes('flag-atlas:location-progress:v1'));
 assert.ok(!storageSource.includes('flag-atlas:progress:v2'));
 const appSource = await readFile('src/app.ts', 'utf8');
-assert.ok(appSource.includes("routeForScope('neighbors'"), 'Neighbours uses the shared Issue #10 route constructor.');
-assert.ok(appSource.includes("finishInteraction(outcome.resolved ? null : '[data-neighbor-input]')"), 'Sequential guesses restore input focus while the target remains active.');
+const neighborsRoundSource = await readFile('src/state/neighbors-round.ts', 'utf8');
+assert.ok(neighborsRoundSource.includes("routeForScope('neighbors'"), 'Neighbours uses the shared Issue #10 route constructor.');
+assert.ok(
+  neighborsRoundSource.includes("finishInteraction(outcome.resolved ? null : '[data-neighbor-input]')"),
+  'Sequential guesses restore input focus while the target remains active.',
+);
 assert.ok(appSource.includes("root.addEventListener('submit'"), 'Enter-to-submit uses the native form path.');
-const css = await readFile('neighbors.css', 'utf8');
+const css = await readFile('src/styles/neighbors.css', 'utf8');
 assert.ok(css.includes('min-height: 50px'), 'Mobile entry and suggestion rows exceed the 44px touch minimum.');
 assert.ok(css.includes('max-height: min(34dvh, 270px)'), 'Autocomplete is bounded so the virtual keyboard does not bury the task status.');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css), 'Neighbor CSS uses shared design tokens only.');

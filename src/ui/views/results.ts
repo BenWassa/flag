@@ -2,7 +2,7 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import type { SessionResult } from '../../domain/models.js';
 import { flagImage } from '../components/flag.js';
 import { icon } from '../components/icons.js';
-import { escapeHtml } from '../format.js';
+import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderResults(result: SessionResult): string {
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
@@ -19,7 +19,7 @@ export function renderResults(result: SessionResult): string {
   return `
     <main class="page results-page">
       <header class="topbar topbar--detail results-header">
-        <button class="icon-button" data-action="exit-round" aria-label="Back to ${escapeHtml(result.session.scope.label)} flags">${icon('close')}</button>
+        <button class="icon-button" data-action="exit-round" aria-label="${exitRoundLabel('flags')}">${icon('close')}</button>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${escapeHtml(result.session.scope.label)}</h1>
           <span>Flags · Round complete · ${result.session.mode === 'learn' ? 'Learn' : 'Play'}</span>
@@ -70,8 +70,8 @@ export function renderResults(result: SessionResult): string {
 
       <div class="result-actions">
         ${missed.length ? '<button class="button button--primary" data-action="review-mistakes">Review mistakes</button>' : ''}
-        <button class="button button--secondary" data-action="repeat-scope">Another round</button>
-        <button class="button button--tertiary" data-action="exit-round">Back to ${escapeHtml(result.session.scope.label)}</button>
+        <button class="button button--secondary" data-action="repeat-scope">${repeatRoundLabel(result.session.mode)}</button>
+        <button class="button button--tertiary" data-action="exit-round">${exitRoundLabel('flags')}</button>
       </div>
     </main>
   `;

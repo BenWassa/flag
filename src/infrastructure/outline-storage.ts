@@ -1,110 +1,39 @@
-import type { ProgressRecord, ProgressState, QuizAttempt } from '../domain/models.js';
+import type { ProgressState, QuizAttempt } from '../domain/models.js';
+import { createAttemptLog, loadVersionedRecords, saveVersionedRecords } from './ledger-storage.js';
 import { sanitizeRecord } from './storage.js';
+import { createStorageGuard } from './storage-guard.js';
 
 // Stable namespace; payloads migrate from schema v1 to v2 on load/save.
 const PROGRESS_KEY = 'flag-atlas:outline-progress:v1';
 const ATTEMPTS_KEY = 'flag-atlas:outline-attempts:v1';
-const ATTEMPT_LIMIT = 2000;
-const FLUSH_DELAY_MS = 500;
 
-let writable = true;
-let attemptCache: QuizAttempt[] | null = null;
-let flushHandle: number | null = null;
+const guard = createStorageGuard();
+const attempts = createAttemptLog<QuizAttempt>(guard, ATTEMPTS_KEY);
 
 export function outlineStorageIsWritable(): boolean {
-  return writable;
+  return guard.isWritable();
 }
 
-function readRaw(key: string): string | null {
-  try {
-    return localStorage.getItem(key);
-  } catch {
-    writable = false;
-    return null;
-  }
-}
-
-function writeRaw(key: string, value: string): boolean {
-  try {
-    localStorage.setItem(key, value);
-    return true;
-  } catch {
-    writable = false;
-    return false;
-  }
-}
-
+// Outlines shares Flags' ProgressRecord shape, so it reuses `sanitizeRecord`
+// from storage.ts rather than duplicating a domain-specific one.
 export function loadOutlineProgress(): ProgressState | null {
-  const raw = readRaw(PROGRESS_KEY);
-  if (!raw) return null;
-
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return null;
-  }
-
-  if (!parsed || typeof parsed !== 'object') return null;
-  const state = parsed as { version?: unknown; records?: unknown };
-  if ((state.version !== 1 && state.version !== 2) || !state.records || typeof state.records !== 'object') return null;
-
-  const records: Record<string, ProgressRecord> = {};
-  for (const [countryId, value] of Object.entries(state.records as Record<string, unknown>)) {
-    const record = sanitizeRecord(countryId, value);
-    if (record) records[countryId] = record;
-  }
-  return { version: 2, records };
+  return loadVersionedRecords(guard, PROGRESS_KEY, sanitizeRecord);
 }
 
 export function saveOutlineProgress(state: ProgressState): boolean {
-  return writeRaw(PROGRESS_KEY, JSON.stringify(state));
-}
-
-function loadOutlineAttempts(): QuizAttempt[] {
-  if (attemptCache) return attemptCache;
-  const raw = readRaw(ATTEMPTS_KEY);
-  if (!raw) return (attemptCache = []);
-  try {
-    const parsed = JSON.parse(raw);
-    attemptCache = Array.isArray(parsed) ? parsed as QuizAttempt[] : [];
-  } catch {
-    attemptCache = [];
-  }
-  return attemptCache;
+  return saveVersionedRecords(guard, PROGRESS_KEY, state);
 }
 
 export function appendOutlineAttempt(attempt: QuizAttempt): void {
-  const attempts = loadOutlineAttempts();
-  attempts.push(attempt);
-  if (attempts.length > ATTEMPT_LIMIT) attempts.splice(0, attempts.length - ATTEMPT_LIMIT);
-  if (flushHandle !== null) return;
-
-  flushHandle = window.setTimeout(() => {
-    flushHandle = null;
-    flushOutlineAttempts();
-  }, FLUSH_DELAY_MS);
+  attempts.append(attempt);
 }
 
 export function flushOutlineAttempts(): void {
-  if (flushHandle !== null) {
-    window.clearTimeout(flushHandle);
-    flushHandle = null;
-  }
-  if (!attemptCache) return;
-  writeRaw(ATTEMPTS_KEY, JSON.stringify(attemptCache));
+  attempts.flush();
 }
 
 export function resetOutlineProgressStorage(): void {
-  if (flushHandle !== null) {
-    window.clearTimeout(flushHandle);
-    flushHandle = null;
-  }
-  attemptCache = [];
-  try {
-    localStorage.removeItem(PROGRESS_KEY);
-    localStorage.removeItem(ATTEMPTS_KEY);
-  } catch {
-    // In-memory reset remains useful when persistence is blocked.
-  }
+  attempts.reset();
+  guard.removeRaw(PROGRESS_KEY);
+  guard.removeRaw(ATTEMPTS_KEY);
 }

@@ -103,7 +103,11 @@ function collectDirectoryTree(directory, paths) {
 function refreshPollingWatches() {
   const paths = new Set();
   for (const directory of ['src', 'public']) collectDirectoryTree(directory, paths);
-  for (const file of ['index.html', 'styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'tsconfig.json']) {
+  // Stylesheets live under src/styles/, so the recursive src/ walk above
+  // already covers them (this previously listed five of the six root CSS
+  // files by hand and had silently missed atlas-theme.css, meaning edits to
+  // it never triggered a rebuild here).
+  for (const file of ['index.html', 'tsconfig.json']) {
     if (existsSync(file)) paths.add(resolve(file));
   }
 

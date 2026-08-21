@@ -419,6 +419,9 @@ const progressComponent = await readFile('dist/ui/components/progress.js', 'utf8
 const domainView = await readFile('dist/ui/views/domain.js', 'utf8');
 const app = await readFile('dist/app.js', 'utf8');
 const mapLoader = await readFile('dist/data/maps/index.js', 'utf8');
+const roundLaunchGuard = await readFile('src/state/round-launch-guard.ts', 'utf8');
+const locationsRound = await readFile('src/state/locations-round.ts', 'utf8');
+const outlinesRound = await readFile('src/state/outlines-round.ts', 'utf8');
 
 const openControlRule = styles.match(/\.continent-row__open,\s*\.region-row__open\s*\{([^}]*)\}/)?.[1];
 assert.ok(openControlRule, 'Split-row open controls have a shared CSS rule.');
@@ -562,23 +565,30 @@ const routeSubscriptionSource = sourceSection(
   'Router subscription',
 );
 assert.ok(
-  routeSubscriptionSource.includes('roundLaunchRequest += 1'),
+  routeSubscriptionSource.includes('invalidatePendingRoundLaunch()'),
   'Every intervening route change invalidates a pending lazy round start.',
 );
-for (const [label, startMarker, endMarker, loaderCall] of [
-  ['map', 'async function beginMapSession(', 'function currentOutlineScope()', 'await loadMapAsset(scopeId)'],
-  ['outline', 'async function beginOutlineSession(', 'function currentNeighborScope()', "await loadOutlineAsset(scope.id ?? 'africa')"],
+assert.ok(
+  roundLaunchGuard.includes('roundLaunchRequest += 1'),
+  'The shared round-launch guard owns the stale-request counter Locations and Outlines both defer to.',
+);
+// Locations and Outlines each start a round by loading geometry
+// asynchronously first (a map/outline asset), so a stale load resolving
+// after the learner has navigated elsewhere must not silently start a
+// session or announce failure for a round nobody is looking at any more.
+for (const [label, source, loaderCall] of [
+  ['map', locationsRound, 'await loadMapAsset(scopeId)'],
+  ['outline', outlinesRound, "await loadOutlineAsset(scope.id ?? 'africa')"],
 ]) {
-  const launchSource = sourceSection(app, startMarker, endMarker, `${label} round launch`);
-  assert.ok(launchSource.includes('const request = ++roundLaunchRequest'), `${label} launch owns a stale-request token.`);
-  assert.ok(launchSource.includes(loaderCall), `${label} launch awaits its lazy asset.`);
-  assert.match(launchSource, /try\s*\{[\s\S]*?catch\s*\{/, `${label} lazy load has an error boundary.`);
+  assert.ok(source.includes('const request = beginRoundLaunch()'), `${label} launch owns a stale-request token.`);
+  assert.ok(source.includes(loaderCall), `${label} launch awaits its lazy asset.`);
+  assert.match(source, /try\s*\{[\s\S]*?catch\s*\{/, `${label} lazy load has an error boundary.`);
   assert.ok(
-    launchSource.includes('if (request === roundLaunchRequest)'),
+    source.includes('if (isCurrentRoundLaunch(request)) announce('),
     `${label} load failure only announces for the current request.`,
   );
   assert.ok(
-    launchSource.includes('if (request !== roundLaunchRequest)'),
+    source.includes('if (!isCurrentRoundLaunch(request)) return;'),
     `${label} stale completion exits before starting a session.`,
   );
 }

@@ -185,7 +185,20 @@ for (const [name, surface] of renderedSurfaces) {
   }
 }
 
-const app = await readFile('dist/app.js', 'utf8');
+// The interactive application is app.ts (the composition root: routing,
+// rendering, DOM wiring) plus one round-controller module per learning
+// domain (session orchestration, moved out of app.ts to keep it from
+// growing unbounded). Copy/spelling checks below scan the whole thing, not
+// just app.ts, since a domain's announce strings now live in its own module.
+const app = (await Promise.all(
+  [
+    'dist/app.js',
+    'dist/state/flags-round.js',
+    'dist/state/locations-round.js',
+    'dist/state/outlines-round.js',
+    'dist/state/neighbors-round.js',
+  ].map((file) => readFile(file, 'utf8')),
+)).join('\n');
 const appForbiddenPhrases = [
   'land-neighbor targets',
   ' neighbors. ',
