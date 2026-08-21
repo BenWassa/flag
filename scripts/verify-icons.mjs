@@ -47,11 +47,11 @@ const continentIcons = ['africa', 'asia', 'europe', 'north-america', 'south-amer
   .map((id) => continentIcon(id));
 assert.equal(new Set(continentIcons).size, 6, 'Every continent has distinct silhouette geometry.');
 for (const rendered of continentIcons) {
-  assert.ok(rendered.includes('class="continent-icon"'), 'Continent marks use the shared outline class.');
+  assert.ok(rendered.includes('class="continent-icon"'), 'Continent marks use the shared silhouette class.');
   assert.ok(rendered.includes('viewBox="0 0 48 48"'), 'Continent marks use the compact generated viewBox.');
-  assert.ok(rendered.includes('fill="none"'), 'Routine continent marks stay outline-only.');
-  assert.ok(rendered.includes('stroke="currentColor"'), 'Continent marks inherit their contextual colour.');
+  assert.ok(rendered.includes('fill="currentColor"'), 'Routine continent silhouettes inherit their contextual colour.');
+  assert.equal(rendered.includes('stroke='), false, 'Flat continent silhouettes do not add a second outline treatment.');
   assert.ok(rendered.includes('aria-hidden="true"'), 'The labelled continent card owns the accessible name.');
 }
 assert.equal(continentIcon('unknown'), '', 'Unknown continent IDs do not invent fallback geography.');
-console.log('Verified 6 generated Natural Earth continent outlines.');
+console.log('Verified 6 generated Natural Earth continent silhouettes.');
