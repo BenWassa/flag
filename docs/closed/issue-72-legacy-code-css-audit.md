@@ -1,12 +1,17 @@
 # Issue 72 — Legacy code paths, CSS architecture, and repository bloat audit
 
+**Status:** Complete.
+**Completed:** 2026-08-22, audit in this document and Phase 3 (CSS ownership) delivered in `89c7bf9`, merged to `main`.
+**Issue:** [#72 — Audit legacy code paths, CSS architecture, and repository bloat](https://github.com/BenWassa/flag/issues/72) (closed)
+**Follow-up:** the refresh-UX gap this audit found and deliberately carved out of scope is tracked separately as [#75](https://github.com/BenWassa/flag/issues/75).
+
 ## Status
 
-Audit completed (investigation only). No application code changes made.
+Audit complete. Phase 3 (CSS ownership — the audit's own stated "remaining value") delivered: 91 provably dead declarations removed across four stylesheets, proven a rendering no-op against the production build.
 
 **The reported bug is now reproduced and its root cause identified. It is not legacy code, a second application, or a stale service-worker cache** — those hypotheses are disproved below. See "Root cause — confirmed by reproduction".
 
-This document records findings before any cleanup/refactor work. Recommendations are separated from confirmed issues.
+This document records findings before any cleanup/refactor work, plus the Phase 3 delivery that followed. Recommendations are separated from confirmed issues.
 
 ---
 

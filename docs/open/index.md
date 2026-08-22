@@ -27,6 +27,12 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 ### 4. Platform quality and IA
 
+#72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
+complete and closed. Their closeout records are
+[`issue-72-legacy-code-css-audit.md`](../closed/issue-72-legacy-code-css-audit.md)
+and [`issue-74-full-continent-play.md`](../closed/issue-74-full-continent-play.md); each
+spun off a focused follow-up issue below.
+
 - [#71 — mobile gestures, map immersion, safe areas](https://github.com/BenWassa/flag/issues/71).
   The gesture layer, map immersion and safe-area work are implemented and
   browser-verified; see [`issue-71-mobile-interaction.md`](issue-71-mobile-interaction.md)
@@ -34,16 +40,14 @@ This directory mirrors active product/engineering work that benefits from a dura
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it.
-- [#72 — legacy code, CSS architecture, repository bloat](https://github.com/BenWassa/flag/issues/72).
-  Audit complete and Phase 3 (CSS ownership) delivered: 91 provably dead
-  declarations removed, and two verifiers re-pointed at the sheets that actually
-  own their values. See [`issue-72-legacy-code-css-audit.md`](issue-72-legacy-code-css-audit.md).
-  Remaining: Phase 2 (refresh UX) belongs in its own issue.
-- [#74 — full-continent Play entry](https://github.com/BenWassa/flag/issues/74).
-  Evaluation complete with a recommendation to add it as a distinct first row
-  above the region cards; the capability already works and is only unreachable
-  from the continent surface. See [`issue-74-full-continent-play.md`](issue-74-full-continent-play.md).
-  Delivery is a follow-up issue.
+- [#75 — fix silent round-drop on refresh](https://github.com/BenWassa/flag/issues/75).
+  UX gap found and root-caused during #72's audit, deliberately carved out as
+  its own issue. See the "Root cause" and "Phase 2" sections of
+  [`closed/issue-72-legacy-code-css-audit.md`](../closed/issue-72-legacy-code-css-audit.md).
+- [#76 — add full-continent Play entry to continent surface](https://github.com/BenWassa/flag/issues/76).
+  Delivery follow-up to #74's completed evaluation. Full IA decision, risk
+  assessment and implementation notes are in
+  [`closed/issue-74-full-continent-play.md`](../closed/issue-74-full-continent-play.md).
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
 

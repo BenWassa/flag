@@ -1,10 +1,15 @@
 # Issue 74 — Full-continent Play entry in the continent view
 
+**Status:** Complete.
+**Completed:** 2026-08-22, evaluation only (this issue's full scope) — no application code changed.
+**Issue:** [#74 — Evaluate full-continent Play entry in continent view](https://github.com/BenWassa/flag/issues/74) (closed)
+**Follow-up:** delivery is tracked separately as [#76 — Add full-continent Play entry to continent surface](https://github.com/BenWassa/flag/issues/76).
+
 ## Status
 
 Evaluation complete. **Recommended: add it**, as a distinct first row above the
 region cards. No implementation shipped in this issue; the implementation notes
-and verification expectations below are ready for a delivery issue.
+and verification expectations below carried directly into #76.
 
 ---
 
