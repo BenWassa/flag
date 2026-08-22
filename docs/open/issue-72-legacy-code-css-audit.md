@@ -368,3 +368,112 @@ Do not merge stylesheets before that map exists.
 The reported bug needs no cleanup work — it is architectural behaviour plus a UX gap, and should be handled as its own focused issue.
 
 Issue #72's remaining value is the **CSS ownership split** (Phase 3), which is now evidenced rather than suspected. Broad deletion or stylesheet consolidation should still wait for the selector map.
+
+---
+
+# Phase 3 — CSS ownership resolved (2026-08-22)
+
+Phase 3 is complete. The selector-ownership map the audit called for was built,
+and every declaration it proved dead has been removed.
+
+## What "dead" means here
+
+A declaration was treated as dead only when a later declaration in the cascade
+has **the same normalised selector, the same media context, and the same
+property**. Same selector implies same specificity, so the later declaration
+always wins and the earlier one can never affect any element. This also holds
+for shorthands: the winner is the same shorthand, so it resets exactly the same
+longhands.
+
+Two guards were applied:
+
+- **Grouped selectors.** A declaration in `a, b { … }` is removed only if the
+  property is overridden later for *every* selector in the group. Partial
+  overlaps were left alone.
+- **Fallback stacks.** A property repeated inside the *same* rule is deliberate
+  progressive enhancement, not duplication. `.neighbor-quiz-page`'s
+  `min-height: 100vh` followed by `100svh` is preserved.
+
+## Result
+
+| sheet | dead declarations removed | owner it lost to |
+|---|---|---|
+| `styles.css` | 74 | `atlas-theme.css` |
+| `map.css` | 11 | `map-cartography.css` |
+| `neighbors.css` | 4 | `atlas-theme.css` |
+| `outline.css` | 2 | `atlas-theme.css` |
+| **total** | **91** | |
+
+The audit counted 63 shared class *names* between `styles.css` and
+`atlas-theme.css`; measured at property level the overlap is 74 declarations
+across 40 rules.
+
+`atlas-theme.css` is confirmed as the production owner of component appearance,
+which matches its role as the Tactile Atlas layer in `DESIGN.md`. `styles.css`
+now owns structure and layout that atlas-theme does not restate.
+
+Several removed declarations were pre-colour-system fossils that said the wrong
+thing: `.answer-button--correct`, `.status-strip__mastered` and
+`.status-text--mastered` still used `--mastered` (purple) where `atlas-theme.css`
+correctly applies `--correct` (green) and `--action`. Anyone editing those lines
+would have seen no effect — exactly the trap this phase existed to remove.
+
+## Verification — proven to be a rendering no-op
+
+Two independent proofs, both against the production `dist/` build, Chromium 151
+(Playwright 1.62.1):
+
+1. **Cascade level.** Both builds' stylesheets were parsed by the browser's own
+   CSSOM, and the winning declaration was resolved for every
+   (media context, selector, property) triple. **5,761 keys before and after: 0
+   lost, 0 added, 0 with a changed winning value.**
+2. **DOM level.** Computed styles for ~50 properties on every element of 56
+   URL-reachable surfaces — Home, Progress, Atlas continent, all four domain
+   launchers, region launchers and Flags Learn — at 390×844, 844×390, 768×1024
+   and 320×568. **406,800 property comparisons, 0 differences.**
+
+Quiz and results surfaces were also captured but are not part of the numeric
+proof: question selection is seeded from `sessionId`, and Play mode auto-advances
+on a timer, so repeated runs legitimately differ. The cascade proof covers those
+selectors instead, and it covers them completely.
+
+## The more important finding: tests were guarding dead text
+
+Removing the dead declarations broke two verifiers, which is how a second and
+more serious problem surfaced. Both asserted CSS contracts against a sheet whose
+declarations are overridden at runtime, so both were passing on values that never
+applied:
+
+- `verify-ia.mjs` asserted `.launcher__learn { min-height: 44px }` in
+  `styles.css`. The live value is `50px`, from `atlas-theme.css`. The touch-target
+  guarantee held, but by accident — the test was not reading the number that
+  decides it.
+- `verify-map.mjs` asserted `overflow: auto` and
+  `touch-action: pan-x pan-y pinch-zoom` in `map.css` under the labels "the
+  continent map is natively pannable" and "touch gestures prioritize map panning".
+  Neither applies: `map-cartography.css` sets `overflow: hidden` and
+  `touch-action: none`, because the production map is an explicitly clipped
+  viewport driven by the pointer controller. The same file asserted
+  `touch-action: none` twelve lines later, contradicting itself.
+
+`map-cartography.css` had already recorded this in a comment — "Legacy
+verification strings are retained only as documentation" — an explicit
+acknowledgement that those `map.css` declarations existed to keep a test green
+rather than to affect rendering. That comment is now removed along with the
+declarations.
+
+Both verifiers now read the sheet that owns the value. The assertions were kept
+at equal or greater strength; `verify-ia.mjs` now parses the numeric
+`min-height` and asserts `>= 44px` rather than matching one hardcoded string.
+
+## Follow-up left open
+
+- **`--map-canvas-width` is now write-only.** `src/ui/components/map.ts` still
+  emits it as an inline style on `.map-svg`, but its only CSS consumer was the
+  `map.css` rule removed here; `map-cartography.css` sizes the SVG at `100%`.
+  Removing the inline style is a renderer change and belongs with the cartography
+  owner, not a CSS pass.
+- **Consolidation is still not recommended.** With ownership now unambiguous, the
+  seven-sheet split is defensible. Merging sheets would be a separate decision
+  needing its own justification.
+- **Phase 2 (refresh UX) is unchanged** and still belongs in its own issue.

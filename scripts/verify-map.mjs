@@ -260,9 +260,12 @@ const mapCartographyCss = await readFile('src/styles/map-cartography.css', 'utf8
 const styles = await readFile('src/styles/styles.css', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
-assert.ok(mapCss.includes('overflow: auto'), 'The continent map is natively pannable.');
-assert.ok(mapCss.includes('touch-action: pan-x pan-y pinch-zoom'), 'Touch gestures prioritize map panning and platform zoom.');
-assert.ok(mapCss.includes('--map-canvas-width'), 'Map canvas width follows the active asset viewBox.');
+// The map viewport contract is owned by map-cartography.css, which loads after
+// map.css and overrides it. These previously asserted map.css text that never
+// applied: the production map is an explicitly clipped viewport driven by the
+// pointer controller, not a native scroll canvas (Issue #72, CSS ownership).
+assert.ok(mapCartographyCss.includes('overflow: hidden'), 'The production map viewport is explicitly clipped rather than a native scroll canvas.');
+assert.ok(mapCartographyCss.includes('width: 100%'), 'Map canvas sizing follows the stable viewport while JavaScript drives the viewBox.');
 assert.ok(mapCss.includes('.map-context-locator'), 'Context islands use the same strengthened context visual system.');
 assert.ok(mapCss.includes('opacity: 1'), 'Normal context geography is no longer washed out by blanket low opacity.');
 assert.ok(!mapCss.includes('opacity: .28'), 'The previous strainingly faint context opacity is removed.');

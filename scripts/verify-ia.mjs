@@ -414,6 +414,7 @@ for (const html of allPreRoundSurfaces) {
 }
 
 const styles = await readFile('dist/styles.css', 'utf8');
+const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
 const mapStyles = await readFile('dist/map.css', 'utf8');
 const progressComponent = await readFile('dist/ui/components/progress.js', 'utf8');
 const domainView = await readFile('dist/ui/views/domain.js', 'utf8');
@@ -433,9 +434,13 @@ assert.match(playControlRule, /min-width:\s*44px/, 'Play controls meet the minim
 assert.match(playControlRule, /min-height:\s*44px/, 'Play controls meet the minimum height.');
 assert.match(playControlRule, /border-left:\s*1px solid var\(--line\)/, 'Play controls have a visible separator.');
 
-const learnRule = styles.match(/\.launcher__learn\s*\{([^}]*)\}/)?.[1];
-assert.ok(learnRule, 'Launcher Learn has a dedicated CSS rule.');
-assert.match(learnRule, /min-height:\s*44px/, 'Launcher Learn remains a real touch target.');
+// Touch-target sizing for Learn is owned by atlas-theme.css, which loads after
+// styles.css and overrides it. Asserting against styles.css measured a value
+// that never applied (Issue #72, CSS ownership).
+const learnRule = atlasTheme.match(/\.launcher__learn\s*\{([^}]*)\}/)?.[1];
+assert.ok(learnRule, 'Launcher Learn has a dedicated CSS rule in the sheet that owns its sizing.');
+const learnMinHeight = Number(learnRule.match(/min-height:\s*(\d+)px/)?.[1]);
+assert.ok(learnMinHeight >= 44, 'Launcher Learn remains a real touch target.');
 
 const allScopeRule = styles.match(/\.launcher__all-scope\s*\{([^}]*)\}/)?.[1];
 assert.ok(allScopeRule, 'All Africa has a dedicated CSS rule.');
