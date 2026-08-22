@@ -118,6 +118,14 @@ Open under #34:
 
 Do not introduce React, Tailwind or another frontend toolchain merely because a mock-up used it. Tooling changes require their own justification.
 
+## Working on issues
+
+Before starting work on an issue (and again before wrapping up a session that touched issues):
+
+- Run `gh issue list --state open` and compare it against `docs/open/index.md` and the files in `docs/open/`. Close out any GitHub issue that is actually done, superseded, or merged into another issue.
+- For any issue that is closed on GitHub but still has a doc in `docs/open/`, `git mv` that doc into `docs/closed/` and update `docs/open/index.md` to drop it from active sequencing (linking to the closed doc instead where useful, matching the existing `closed/issue-NN-*.md` closeout pattern).
+- `docs/open/index.md` is the source of truth for what's actually still active — keep it reconciled with GitHub state rather than letting it drift.
+
 ## Where to look before changing things
 
 - `docs/index.md` — documentation entry point.
