@@ -67,6 +67,32 @@ function regionCard(region: { id: string; name: string }, progress: ProgressStat
   `;
 }
 
+/**
+ * The continent-wide Play entry point (#76). Reuses the region card chassis
+ * and the identical domainLaunchRow so the four-domain vocabulary reads the
+ * same at every scope — only weight, size and copy set it apart, never the
+ * gold/purple prestige palette, so it can't be mistaken for a sixth region.
+ */
+function continentCard(
+  continent: { id: string; name: string },
+  regionCount: number,
+  progress: ProgressState,
+): string {
+  const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+  const stats = getScopeStats(COUNTRIES, progress, scope);
+  const name = escapeHtml(continent.name);
+
+  return `
+    <div class="atlas-card atlas-card--region atlas-card--continent">
+      <span class="atlas-card__head">
+        <strong>All of ${name}</strong>
+        <small>${stats.total} countries · ${regionCount} regions</small>
+      </span>
+      ${domainLaunchRow(scope)}
+    </div>
+  `;
+}
+
 export function renderContinent(
   progress: ProgressState,
   scope: StudyScope,
@@ -91,6 +117,7 @@ export function renderContinent(
       `}
 
       <div class="atlas-card-list">
+        ${continent ? continentCard(continent, regions.length, progress) : ''}
         ${regions.map((region) => regionCard(region, progress)).join('')}
       </div>
     </main>

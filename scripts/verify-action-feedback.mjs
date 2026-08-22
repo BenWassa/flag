@@ -103,8 +103,8 @@ for (const [name, markup, regions] of [['Africa', africa, 5], ['Europe', europe,
 }
 assert.equal(
   (africa.match(/class="domain-launch__label"/g) ?? []).length,
-  20,
-  'Africa: five regions × four named launchers.',
+  24,
+  'Africa: five regions plus the continent-wide entry × four named launchers.',
 );
 // An unavailable domain stays inert: labelled, but not a control.
 const absentTags = [...europe.matchAll(/<(span|button)[^>]*domain-launch--absent[^>]*>/g)];

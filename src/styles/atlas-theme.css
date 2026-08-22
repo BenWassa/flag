@@ -773,6 +773,21 @@ body { letter-spacing: -.006em; }
   position: relative;
 }
 
+/* The continent-wide Play entry (#76): same chassis and domain-launch row as
+   a region card, deliberately heavier so it never reads as a sixth region.
+   Atlas Blue only — gold and purple stay reserved for scarce prestige and
+   earned mastery (docs/product/colour-system.md). */
+.atlas-card--continent {
+  border-width: 3px;
+  border-color: var(--action);
+  background: var(--action-soft);
+  padding: 18px 16px;
+}
+
+.atlas-card--continent .atlas-card__head strong {
+  font-size: clamp(21px, 5.8vw, 25px);
+}
+
 .atlas-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
 
 .atlas-card__head strong {
@@ -987,6 +1002,88 @@ body { letter-spacing: -.006em; }
   .app-notice:not([hidden]) { animation: none; }
   .domain-launch.is-launching .domain-launch__mark { animation: none; opacity: .7; }
   .button--primary.is-launching { transform: none; }
+}
+
+/* Install banner: same floating-strip shape as .app-notice, but Atlas Blue
+   rather than the wrong/error palette — it names an available action, not a
+   problem. Persists across route changes because its host element lives
+   outside #app; only user dismissal, install, or a successful install event
+   hides it. */
+.install-banner:not([hidden]) {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 19;
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 420px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid var(--action);
+  border-radius: var(--radius-md);
+  background: var(--action-soft);
+  box-shadow: var(--depth-tile-hover);
+  animation: app-notice-in 160ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.install-banner__message {
+  min-width: 0;
+  flex: 1 1 auto;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.install-banner__action {
+  flex: 0 0 auto;
+  padding: 8px 14px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: var(--action);
+  color: var(--on-action);
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.install-banner__action:active { background: var(--action-pressed); }
+
+.install-banner__dismiss {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.install-banner__dismiss .ui-icon { width: 16px; height: 16px; }
+.install-banner__dismiss:active { background: color-mix(in srgb, var(--action) 20%, transparent); }
+
+@media (hover: hover) and (pointer: fine) {
+  .install-banner__action:hover { background: var(--action-pressed); }
+  .install-banner__dismiss:hover {
+    background: color-mix(in srgb, var(--action) 16%, transparent);
+    color: var(--text);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .install-banner:not([hidden]) { animation: none; }
+}
+
+@media (forced-colors: active) {
+  .install-banner:not([hidden]) { border: 2px solid CanvasText; background: Canvas; }
+  .install-banner__action { background: Highlight; color: HighlightText; }
 }
 
 @media (forced-colors: active) {

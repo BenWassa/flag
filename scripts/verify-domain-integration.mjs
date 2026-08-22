@@ -60,8 +60,8 @@ assert.equal((homeHtml.match(/data-action="open-atlas"/g) ?? []).length, 6, 'Hom
 const africaAtlasHtml = renderContinent(flagProgress, { kind: 'continent', id: 'africa', label: 'Africa' });
 assert.equal(
   (africaAtlasHtml.match(/data-action="quick-play"/g) ?? []).length,
-  20,
-  'Every Africa region exposes all four learning domains as direct launch shortcuts.',
+  24,
+  'Every Africa region, plus the continent-wide entry, exposes all four learning domains as direct launch shortcuts.',
 );
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(

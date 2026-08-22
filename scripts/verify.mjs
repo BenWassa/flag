@@ -162,8 +162,8 @@ assert.equal(screens.home.includes('data-action="open-domain"'), false, 'Home no
 assert.equal((screens.atlasContinent.match(/data-action="open-atlas"/g) ?? []).length, 0);
 assert.equal(
   (screens.atlasContinent.match(/data-action="quick-play"/g) ?? []).length,
-  REGIONS.filter((region) => region.continentId === 'africa').length * 4,
-  'The continent surface gives each of its regions all four domain-launch shortcuts.',
+  (REGIONS.filter((region) => region.continentId === 'africa').length + 1) * 4,
+  'The continent surface gives each of its regions, plus the continent-wide entry, all four domain-launch shortcuts.',
 );
 assert.ok(
   renderContinent(fresh, { kind: 'continent', id: 'europe', label: 'Europe' }).includes('domain-launch--absent'),

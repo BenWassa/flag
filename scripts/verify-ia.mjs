@@ -11,6 +11,7 @@ import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
+import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
 import { icon } from '../dist/ui/components/icons.js';
 import { renderLauncherMap } from '../dist/ui/components/launcher-map.js';
 import { renderDomainHome } from '../dist/ui/views/domain.js';
@@ -155,8 +156,8 @@ assertPreRoundContentRemoved('Continent surface', continentSurface);
 const continentQuickPlay = actionTags(continentSurface, 'button', 'quick-play');
 assert.deepEqual(
   [...new Set(sortedIds(continentQuickPlay))],
-  REGIONS.filter((region) => region.continentId === 'africa').map((region) => region.id).sort(),
-  'The Africa surface lists exactly its five production regions.',
+  [...REGIONS.filter((region) => region.continentId === 'africa').map((region) => region.id), 'africa'].sort(),
+  'The Africa surface lists its five production regions plus the continent-wide entry.',
 );
 assert.equal(
   actionTags(continentSurface, 'button', 'open-atlas').length,
@@ -168,6 +169,23 @@ assert.equal(
   0,
   'Every Africa region supports all four domains, so no indicator reads as absent.',
 );
+
+// #76: exactly one continent-scoped Play entry, first in the card list, styled
+// distinctly from region cards.
+const continentCards = openingTags(continentSurface, 'div').filter((tag) => hasClass(tag, 'atlas-card--continent'));
+assert.equal(continentCards.length, 1, 'The continent surface has exactly one continent-scoped launch row.');
+const continentScopedPlay = continentQuickPlay.filter((tag) => attribute(tag, 'data-id') === 'africa');
+assert.equal(continentScopedPlay.length, LEARNING_DOMAIN_IDS.length, 'The continent row exposes all four domain launchers.');
+for (const tag of continentScopedPlay) {
+  assert.equal(attribute(tag, 'data-domain') !== undefined, true, 'Each continent-scoped launcher names its domain.');
+}
+assert.ok(visibleText(continentSurface).includes('All of Africa'), 'The continent row reads as an aggregate, not a sixth region.');
+const firstAfricaRegionName = REGIONS.find((region) => region.continentId === 'africa')?.name;
+assert.ok(
+  continentSurface.indexOf('All of Africa') < continentSurface.indexOf(firstAfricaRegionName),
+  'The continent row renders first, above the region cards.',
+);
+
 const europeSurface = renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' });
 assert.ok(
   occurrences(europeSurface, 'domain-launch--absent') > 0,

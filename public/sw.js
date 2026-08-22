@@ -1,3 +1,8 @@
+// v26 ships #75's refresh-dropped-round notice and heading fix, #76's
+// continent-wide Play entry, and full mobile PWA installability (iOS
+// standalone launch metadata, manifest identity/category fields, and an
+// in-app install banner for Android/Chrome plus iOS Add-to-Home-Screen
+// instructions).
 // v25 ships the Issue #71 mobile interaction layer: layered navigation-gesture
 // ownership, control-free immersive maps, and PWA overscroll containment.
 // v24 ships visible action feedback (the #app-notice region and launcher busy
@@ -14,7 +19,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v25';
+const VERSION = 'flag-atlas-v26';
 const SHELL = [
   './',
   './index.html',

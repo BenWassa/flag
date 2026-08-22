@@ -10,6 +10,7 @@ import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-
 import { flushNeighborAttempts, resetNeighborProgressStorage } from './infrastructure/neighbor-storage.js';
 import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastructure/outline-storage.js';
 import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
+import { dismissInstallPrompt, isInstallPromptDismissed } from './infrastructure/install-prompt-storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
   atlasRouteForScope,
@@ -129,6 +130,86 @@ function notify(message: string): void {
 
 appNotice?.addEventListener('click', (event) => {
   if (event.target instanceof Element && event.target.closest('[data-notice-dismiss]')) dismissNotice();
+});
+
+/**
+ * Chrome/Edge/Samsung Internet fire `beforeinstallprompt`; iOS Safari never
+ * does and has no programmatic install path at all, so it gets a static
+ * instruction instead of an action button. `#install-banner` lives outside
+ * `#app` (see index.html) specifically so it survives every route's full
+ * innerHTML replacement in render().
+ */
+interface BeforeInstallPromptEvent extends Event {
+  prompt(): Promise<void>;
+  readonly userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
+}
+
+const installBanner = document.querySelector<HTMLElement>('#install-banner');
+let deferredInstallPrompt: BeforeInstallPromptEvent | null = null;
+
+function isStandaloneDisplay(): boolean {
+  const iosStandalone = (window.navigator as Navigator & { standalone?: boolean }).standalone;
+  return window.matchMedia('(display-mode: standalone)').matches || iosStandalone === true;
+}
+
+function isIosSafari(): boolean {
+  const ua = window.navigator.userAgent;
+  return /iPad|iPhone|iPod/.test(ua) && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua);
+}
+
+function hideInstallBanner(): void {
+  if (!installBanner) return;
+  installBanner.hidden = true;
+  installBanner.innerHTML = '';
+}
+
+function showInstallBanner(mode: 'install' | 'ios-instructions'): void {
+  if (!installBanner) return;
+  const message = mode === 'install'
+    ? 'Install Atlas for quick, full-screen access.'
+    : 'Add Atlas to your Home Screen: tap Share, then "Add to Home Screen".';
+  const action = mode === 'install'
+    ? '<button class="install-banner__action" type="button" data-install-action>Install</button>'
+    : '';
+  installBanner.innerHTML = `
+    <span class="install-banner__message">${escapeHtml(message)}</span>
+    ${action}
+    <button class="install-banner__dismiss" type="button" data-install-dismiss aria-label="Dismiss">${icon('close')}</button>
+  `;
+  installBanner.hidden = false;
+}
+
+installBanner?.addEventListener('click', (event) => {
+  if (!(event.target instanceof Element)) return;
+  if (event.target.closest('[data-install-dismiss]')) {
+    dismissInstallPrompt();
+    hideInstallBanner();
+    return;
+  }
+  if (event.target.closest('[data-install-action]') && deferredInstallPrompt) {
+    const promptEvent = deferredInstallPrompt;
+    deferredInstallPrompt = null;
+    void promptEvent.prompt();
+    void promptEvent.userChoice.then(() => {
+      dismissInstallPrompt();
+      hideInstallBanner();
+    });
+  }
+});
+
+if (!isStandaloneDisplay() && !isInstallPromptDismissed()) {
+  window.addEventListener('beforeinstallprompt', (event) => {
+    event.preventDefault();
+    deferredInstallPrompt = event as BeforeInstallPromptEvent;
+    showInstallBanner('install');
+  });
+  if (isIosSafari()) showInstallBanner('ios-instructions');
+}
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  dismissInstallPrompt();
+  hideInstallBanner();
 });
 
 /**
@@ -280,7 +361,17 @@ async function hydrateLauncherMap(route: AppRoute): Promise<void> {
 function applyRoute(requestedRoute: AppRoute): void {
   const route = normalizeRoute(requestedRoute);
   if (!routesEqual(route, requestedRoute)) {
+    // Mirrors normalizeRoute's own guard: an activity URL with no matching
+    // live session (a mid-round refresh discarded it, or the link was opened
+    // cold) gets silently redirected to its launcher. router.navigate below
+    // re-enters this function synchronously and calls dismissNotice() first,
+    // so the notice has to be raised after it returns, not before.
+    const droppedRound = requestedRoute.name === 'learning'
+      && !isFlagsStudyRoute(requestedRoute)
+      && requestedRoute.activity !== undefined
+      && !routeHasActiveRound(requestedRoute);
     router.navigate(route, { replace: true });
+    if (droppedRound) notify("That round isn't active anymore. Choose Play to start a new one.");
     return;
   }
 

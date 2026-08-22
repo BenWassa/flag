@@ -8,6 +8,16 @@
     <link rel="manifest" href="./manifest.webmanifest" />
     <link rel="icon" href="./icons/app-icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png" />
+    <!--
+      iOS Safari does not honour the manifest's "display": "standalone" — it
+      only launches chrome-free from the home screen when these proprietary
+      tags are present. mobile-web-app-capable is the non-WebKit successor,
+      kept alongside apple-mobile-web-app-capable rather than replacing it.
+    -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Atlas" />
     <link rel="stylesheet" href="./styles.css" />
     <link rel="stylesheet" href="./map.css" />
     <link rel="stylesheet" href="./map-cartography.css" />
@@ -37,6 +47,14 @@
       region so a message is seen and announced exactly once.
     -->
     <div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
+    <!--
+      Persists across every route render (#app is fully replaced on
+      navigation) because neither platform surfaces installability well on
+      its own: Chrome's install affordance is a small omnibox glyph, and iOS
+      Safari has no install prompt at all. Not a live region — it names an
+      available action, not something that just happened.
+    -->
+    <div id="install-banner" class="install-banner" hidden></div>
     <script type="module" src="./map-viewport.js"></script>
     <script type="module" src="./neighbor-map-runtime.js"></script>
     <script type="module" src="./app.js"></script>

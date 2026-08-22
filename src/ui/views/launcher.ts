@@ -103,7 +103,7 @@ export function renderLauncher(model: LauncherModel): string {
         <button class="icon-button" type="button" data-action="launcher-parent" aria-label="${parentLabel}">${icon('back')}</button>
         <span class="launcher-header__icon" aria-hidden="true">${domainIcon(model.domain)}</span>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${continentLabel}</h1>
+          <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${scopeLabel}</h1>
           <span>${domainTitle} · ${model.regions.length} regions</span>
         </div>
       </header>
