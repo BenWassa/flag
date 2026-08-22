@@ -4,7 +4,54 @@
 
 Audit completed (investigation only). No application code changes made.
 
+**The reported bug is now reproduced and its root cause identified. It is not legacy code, a second application, or a stale service-worker cache** — those hypotheses are disproved below. See "Root cause — confirmed by reproduction".
+
 This document records findings before any cleanup/refactor work. Recommendations are separated from confirmed issues.
+
+---
+
+# Root cause — confirmed by reproduction
+
+Reproduced 2026-08-22 against the production `dist/` build of `main`, served over HTTP with the service worker active, in Chromium 151 (Playwright 1.62.1) at a 390×844 phone viewport.
+
+## Steps
+
+1. Load the app; let the service worker install and take control.
+2. Navigate to `#/flags/africa/west-africa` (the West Africa Flags launcher).
+3. Start the round — the URL becomes `#/flags/africa/west-africa/test` and the quiz renders (`#app > .quiz-shell`, `h1` = "West Africa").
+4. Refresh.
+
+## Observed
+
+| | before refresh | after refresh |
+|---|---|---|
+| route | `#/flags/africa/west-africa/test` | `#/flags/africa/west-africa` |
+| rendered shell | `.quiz-shell` | `.page.page--launcher` |
+| `h1` | "West Africa" | **"Africa"** |
+| stylesheets loaded | 7 | identical 7 |
+| service worker | controlled | controlled |
+| caches present | `flag-atlas-v25` only | `flag-atlas-v25` only |
+
+## Mechanism
+
+`routeHasActiveRound()` in `src/app.ts` gates every activity route on live in-memory session state (`store.session`, `store.mapSession`, `store.outlineSession`, `store.neighborSession`). A reload discards that state by design, so the guard fails and the app redirects the activity route back to its launcher.
+
+The learner therefore lands on the **continent-scoped launcher**, whose heading is "Africa" and whose layout is a completely different shell from the quiz they were just in. That is the "older Africa-era app experience with different styling" in the report: it is the current launcher, not old code.
+
+## What this disproves
+
+- **Not stale assets.** The same seven stylesheets load before and after refresh, from a single `flag-atlas-v25` cache.
+- **Not a stale service worker.** `shellFromNetwork` is network-first for same-origin requests; the cache is only a fallback for failed fetches.
+- **Not a second application or legacy render path.** One router, one entry point, one shell rendered both times.
+
+## Classification
+
+This is **working as architected** (`PRODUCT.md`/`CLAUDE.md`: URLs own navigation state, session state owns quiz internals) with a **UX gap**, not a code-hygiene defect:
+
+- the redirect is silent — no notice explains that the in-progress round ended;
+- the destination heading ("Africa") is broader than the route the learner was in (West Africa), which reads as being thrown back to an older, wider screen.
+
+Any fix belongs in a focused UX issue (explain the dropped round, and/or land on the region-scoped launcher), **not** in a legacy-code cleanup. No cleanup in this audit would have changed this behaviour.
 
 ---
 
@@ -168,13 +215,25 @@ Styles are split by responsibility:
 
 ## Assessment
 
-The number of CSS files is not itself a problem.
+The number of CSS files is not itself a problem. For Atlas, feature-owned styles are preferable to one large stylesheet.
 
-For Atlas, feature-owned styles are preferable to one large stylesheet.
+The confirmed concern is **historical layering between the two largest sheets**, now measured rather than hypothesised:
 
-The concern is historical layering:
+| sheet | lines |
+|---|---|
+| `atlas-theme.css` | 995 |
+| `styles.css` | 938 |
+| `progress.css` | 404 |
+| `map.css` | 402 |
+| `neighbors.css` | 320 |
+| `map-cartography.css` | 157 |
+| `outline.css` | 79 |
 
-Possible risks:
+**63 class selectors are defined in both `styles.css` and `atlas-theme.css`** — including `.button`, `.button--primary`, `.answer-button`, `.answer-panel`, `.answer-feedback` and its three state modifiers. `atlas-theme.css` loads later and acts as an override layer that re-styles components `styles.css` already owns.
+
+That split is the real finding of this audit. It means a component's final appearance is decided by two files, and a change in the "wrong" one is silently overridden — which is how the codebase acquires rules that look dead but are not, and rules that look live but are.
+
+Remaining risks, still unproven and needing the selector map below:
 
 - selectors that no longer have owners;
 - old redesign rules surviving;
@@ -252,45 +311,50 @@ The project is large enough now that automated dead-code checks should be added 
 
 ---
 
-# Root cause assessment
+# Root cause assessment — resolved
 
-Current confidence:
+Superseded by "Root cause — confirmed by reproduction" above. The earlier ranking was wrong:
 
-## Most likely
+| earlier hypothesis | verdict |
+|---|---|
+| PWA/service worker stale assets (*most likely*) | **disproved** — network-first fetch, single live cache, identical assets across refresh |
+| a remaining legacy render path (*possible*) | **disproved** — one router, one entry, same shell before and after |
+| a separate old application in source (*unlikely*) | **disproved** — no unreferenced modules found |
 
-PWA/service worker stale asset behaviour.
+The observed behaviour is the session guard redirecting an unresumable activity route to its launcher.
 
-## Possible
+---
 
-A remaining legacy render path exists but has not been demonstrated.
+# Repository hygiene — measured
 
-## Unlikely
-
-A completely separate old application still exists in active source.
+- `dist/` is correctly git-ignored; no generated artifacts are tracked.
+- No unreferenced TypeScript modules found in `src/` (every module is imported by at least one other).
+- No confirmed dead-code deletion candidates. Automated unused-export/unused-selector tooling is still the right way to go further; manual inspection found nothing.
 
 ---
 
 # Recommended remediation sequence
 
-## Phase 1 — Reproduce and capture
+## Phase 1 — Reproduce and capture — **done**
 
-- reproduce on production build;
-- inspect worker/cache state;
-- capture loaded assets.
+Completed; see the reproduction section above. No asset-lifecycle problem exists to fix.
 
-## Phase 2 — Asset lifecycle hardening
+## Phase 2 — Refresh UX (new, separate issue)
 
-Only if confirmed:
+The real user-facing problem. Out of scope for this audit:
 
-- improve worker update behaviour;
-- improve cache naming/invalidations;
-- add diagnostics.
+- tell the learner their in-progress round ended rather than redirecting silently;
+- consider landing on the region-scoped launcher instead of the continent one, so the heading matches the route they left.
 
-## Phase 3 — CSS audit
+## Phase 3 — CSS ownership (the substantive cleanup)
 
-- map selectors;
-- remove proven dead rules;
-- consolidate only where ownership improves.
+Highest-value work remaining in this issue's scope:
+
+1. map the 63 selectors shared by `styles.css` and `atlas-theme.css`;
+2. for each, decide which sheet owns it and delete the loser;
+3. only then consider consolidation.
+
+Do not merge stylesheets before that map exists.
 
 ## Phase 4 — UI cleanup
 
@@ -301,6 +365,6 @@ Only if confirmed:
 
 # Decision
 
-Issue #72 should remain an audit/cleanup umbrella.
+The reported bug needs no cleanup work — it is architectural behaviour plus a UX gap, and should be handled as its own focused issue.
 
-Do not perform broad deletion or CSS consolidation until the refresh issue is reproduced with asset-level evidence.
+Issue #72's remaining value is the **CSS ownership split** (Phase 3), which is now evidenced rather than suspected. Broad deletion or stylesheet consolidation should still wait for the selector map.

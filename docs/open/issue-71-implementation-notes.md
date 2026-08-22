@@ -4,7 +4,73 @@ This document tracks implementation decisions after the Issue 71 mobile interact
 
 ## Status
 
-Implementation branch planning.
+Navigation-gesture layer implemented and verified in a browser. Physical-device validation still outstanding.
+
+---
+
+## Confirmed defect: the gesture never fired on touch devices
+
+The original pointer-event implementation (`a046c01`) could not work on a real device, confirmed by driving CDP touch events in Chromium at a 390×844 viewport:
+
+```
+down touch x=6 y=500 tgt=MAIN
+move touch x=31
+(stream ends — browser claimed the drag as a scroll and cancelled the pointer)
+```
+
+Because the drag was never `preventDefault`ed, the browser took the touch for scrolling and cancelled the pointer stream after roughly one move. The 72 px threshold was unreachable, so edge-swipe back silently did nothing.
+
+### Fix
+
+`src/navigation-gestures.ts` now drives the gesture from touch events and *claims* it with `preventDefault()` once horizontal intent is unambiguous (`dx > 12 px` and `dx > dy`). Vertical scrolling is unaffected because vertical drift past 48 px disarms the gesture before any claim is made — verified: a drag from the edge gutter still scrolls the page (`scrollY` 0 → 503).
+
+### Ownership hardening
+
+Per the specification's priority model (controls → maps → scrolling → navigation):
+
+- yields to `[data-map-viewport]` and to interactive elements including `summary`, `label`, `[role="button"]`, `[role="slider"]`, `[role="textbox"]`;
+- yields to any genuinely horizontally scrollable ancestor, detected from real `scrollWidth`/`clientWidth` overflow rather than a hardcoded selector list;
+- a disqualified gesture is abandoned for the rest of the touch instead of re-arming mid-scroll (the previous code could navigate after a scroll wandered sideways);
+- requires horizontal dominance and disarms on any leftward reversal.
+
+Note: the abandoned `feature/issue-71-mobile-interaction-upgrade` branch contains a competing `src/ui/mobile-gestures.ts` that is never imported, and excludes `[data-map-surface]` — an attribute that does not exist anywhere in the codebase. The real attribute is `[data-map-viewport]`. That branch should not be merged.
+
+---
+
+## Browser verification
+
+`scripts/verify-mobile-gestures.mjs` guards the deterministic contract and runs in `npm test`. Behavioural checks were run separately in Chromium 151 (Playwright 1.62.1), 390×844 DPR 2 with touch, against the production `dist/` build — 13/13 passing:
+
+- edge swipe navigates back from a nested route;
+- swipe at Home does nothing (never exits the app);
+- vertical-dominant drag does not navigate;
+- mid-screen swipe does not navigate;
+- a drag starting on a live Locations map pans the map and does not navigate;
+- vertical scrolling from the edge gutter still scrolls;
+- no persistent map zoom controls render;
+- `overscroll-behavior-y: contain` applies (no PWA pull-to-refresh mid-round);
+- no horizontal page scroll at 390 px or in short landscape.
+
+## Screen-by-screen audit
+
+Home, Progress, Atlas continent, all four domain launchers and Flags study, each at 390×844, 844×390, 320×568 and 768×1024:
+
+- **no horizontal overflow on any surface at any of the four viewports;**
+- Home touch targets all ≥ 44 px.
+
+One accepted finding: on the launcher mini-map at 320 px and in short landscape, the smallest tappable SVG region shapes measure ~36×56 px (Southern Africa) and ~44×78 px (Central Africa). These are rendered geography, not icons — resizing them would distort the map — and every region also has a full-width row below the map with a ≥ 44 px target, satisfying the specification's accessible-fallback requirement. No change made.
+
+## PWA
+
+`viewport-fit=cover` is present and browser zoom is not suppressed (no `user-scalable=no` / `maximum-scale`). `overscroll-behavior-y: contain` was added to `body` so a pull-to-refresh cannot discard an in-progress round in the installed PWA; horizontal overscroll is deliberately left alone so platform edge-back still works.
+
+Shell cache advanced to `flag-atlas-v25`.
+
+---
+
+## Not verified
+
+No physical device was used. Chromium CDP touch emulation is not iOS Safari or Android Chrome, and emulated safe-area insets are not a notched device. The acceptance criteria requiring physical Pixel/iPhone/installed-PWA validation remain genuinely open.
 
 ## Repository touch points
 
