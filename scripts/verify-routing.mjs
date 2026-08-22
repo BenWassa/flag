@@ -248,6 +248,11 @@ assert.ok(
 );
 assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpreted through the shared learning route state.');
 assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
+assert.ok(app.includes('installNavigationGestures'), 'The app installs the shared edge-swipe navigation contract.');
+const navigationGestures = await readFile('dist/navigation-gestures.js', 'utf8');
+assert.ok(navigationGestures.includes('EDGE_GUTTER_PX'), 'Back swipe is restricted to an edge gesture.');
+assert.ok(navigationGestures.includes('getParentRoute() !== null'), 'Back swipe cannot leave the app from Home.');
+assert.ok(navigationGestures.includes('[data-map-viewport'), 'Back swipe yields to map pan and pinch gestures.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
 assert.ok(home.includes('data-action="open-atlas"'), 'Home selects a continent through the scope-first atlas action.');

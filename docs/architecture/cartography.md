@@ -185,15 +185,18 @@ The production map uses native SVG `viewBox` handling rather than a runtime pan/
 
 - minimum view fits the complete parent continent including island locators;
 - region rounds initially use generated regional focus bounds;
-- users can always fit Africa again and can restore the regional frame;
+- pinch-out returns toward the complete-continent minimum; the regional frame is
+  used for the opening view rather than exposed as persistent toolbar chrome;
 - max map zoom is 5.5×;
 - Pointer Events provide drag/pinch behavior;
 - wheel/trackpad zoom is supported;
 - Ctrl/Meta-modified wheel is left to browser/page zoom behavior;
 - viewport state is stored by map session and restored across answer-feedback rerenders;
-- pan/zoom controls occupy a dedicated toolbar row outside scoring geography.
+- direct manipulation owns the map surface: drag to pan and pinch to zoom. There
+  is no persistent zoom, Region or Africa toolbar, so the geography remains the
+  visual focus and the map never competes with scoring targets for tap space.
 
-The toolbar placement is intentional: an earlier overlay design was rejected because it could cover Madagascar/Mauritius-area targets.
+An earlier overlay toolbar was rejected because it could cover Madagascar/Mauritius-area targets. The later dedicated toolbar row is also intentionally absent on mobile: pinch-out supplies the natural return toward the full-continent frame.
 
 ## Runtime loading and PWA behavior
 

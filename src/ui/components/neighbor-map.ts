@@ -1,6 +1,5 @@
 import type { MapRegionAsset } from '../../domain/map-models.js';
 import type { NeighborMapCountry, NeighborMapModel } from '../../domain/neighbor-map.js';
-import { icon } from './icons.js';
 import { escapeHtml } from '../format.js';
 
 function renderContext(asset: MapRegionAsset, model: NeighborMapModel): string {
@@ -76,17 +75,6 @@ export function neighborMapSummary(model: NeighborMapModel): string {
   return parts.join(' ');
 }
 
-function renderControls(): string {
-  return `
-    <div class="map-viewport-controls" aria-label="Map view controls">
-      <button class="map-viewport-control" type="button" data-map-command="zoom-in" aria-label="Zoom in">${icon('zoom-in')}</button>
-      <button class="map-viewport-control" type="button" data-map-command="zoom-out" aria-label="Zoom out">${icon('zoom-out')}</button>
-      <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-region" aria-label="Fit target and all neighbours">Fit</button>
-      <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-continent" aria-label="Fit all of Africa">Africa</button>
-    </div>
-  `;
-}
-
 export function renderNeighborMap(
   asset: MapRegionAsset,
   model: NeighborMapModel,
@@ -126,7 +114,6 @@ export function renderNeighborMap(
               </g>
             </svg>
           </div>
-          ${renderControls()}
         </div>
       </div>
     </div>

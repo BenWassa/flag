@@ -105,17 +105,16 @@ assert.ok(html.includes('map-water--ocean'), 'Renderer includes source-derived o
 assert.ok(html.includes('map-water--lakes'), 'Renderer includes lake layer.');
 assert.ok(!html.includes('map-water--rivers'), 'Renderer emits no river layer.');
 assert.ok(html.includes('map-shared-boundary'), 'Renderer includes the single-stroke shared-border layer.');
-assert.ok(html.includes('data-map-command="fit-continent"'), 'Viewport exposes deterministic full-Africa reset.');
-assert.ok(html.includes('data-map-command="fit-region"'), 'Regional view exposes deterministic region fit.');
-assert.ok(html.includes('data-map-command="zoom-in"') && html.includes('data-map-command="zoom-out"'), 'Keyboard/pointer zoom controls are available.');
+assert.equal(html.includes('data-map-command='), false, 'Map view stays free of toolbar command chrome.');
+assert.ok(html.includes('data-map-viewport'), 'Map view exposes a direct-manipulation gesture surface.');
 assert.ok(html.includes('data-map-hit'), 'Touch targets can be normalized to CSS pixels as zoom changes.');
 assert.ok(html.indexOf('map-water--ocean') < html.indexOf('map-active-countries'), 'Ocean renders below country fills.');
 assert.ok(html.indexOf('map-water--lakes') > html.indexOf('map-active-countries'), 'Lakes cut into land above country fills.');
 
 const viewportSource = await readFile('src/map-viewport.ts', 'utf8');
 assert.ok(viewportSource.includes('DEFAULT_MAX_ZOOM = 5.5'), 'Viewport has a bounded production max zoom.');
-assert.ok(viewportSource.includes('fitContinent'), 'Viewport can always return to continent fit.');
-assert.ok(viewportSource.includes('fitRegion'), 'Viewport can restore regional framing.');
+assert.ok(viewportSource.includes('fitContinent'), 'Viewport can fit the complete continent at its minimum zoom.');
+assert.ok(viewportSource.includes('fitRegion'), 'Viewport can establish the regional opening frame.');
 assert.ok(viewportSource.includes('event.ctrlKey || event.metaKey'), 'Browser/page zoom modifiers are not captured.');
 assert.ok(viewportSource.includes("document.addEventListener('pointermove'"), 'Pointer gestures implement pan/pinch without a runtime map dependency.');
 assert.ok(viewportSource.includes('states.set(sessionId'), 'ViewBox survives answer-feedback rerenders by session.');

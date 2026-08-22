@@ -32,7 +32,7 @@
 html { min-height: 100%; background: var(--canvas); scrollbar-color: var(--line-strong) var(--canvas); }
 body {
   margin: 0;
-  min-height: 100vh;
+  min-height: 100svh;
   background: var(--canvas);
   color: var(--text);
   font-size: 16px;
@@ -47,7 +47,7 @@ button:focus-visible,
 [tabindex="-1"]:focus { outline: none; }
 [tabindex="-1"]:focus-visible { outline: 3px solid var(--focus-ring); }
 ::selection { background: var(--action-soft); color: var(--text); }
-#app { min-height: 100dvh; }
+#app { min-height: 100svh; }
 
 .visually-hidden {
   position: absolute;
@@ -64,7 +64,7 @@ button:focus-visible,
 .page {
   width: min(100%, 860px);
   margin: 0 auto;
-  padding: max(var(--space-6), env(safe-area-inset-top)) var(--space-4) max(var(--space-10), env(safe-area-inset-bottom));
+  padding: max(var(--space-6), env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) max(var(--space-10), env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
 }
 
 .topbar {
@@ -416,12 +416,12 @@ button:focus-visible,
 .status-text--mastered { color: var(--mastered); }
 
 .quiz-shell {
-  min-height: 100dvh;
+  min-height: 100svh;
   width: min(100%, 820px);
   margin: 0 auto;
   display: grid;
   grid-template-rows: auto minmax(260px, 1fr) auto;
-  padding: max(12px, env(safe-area-inset-top)) var(--space-4) max(16px, env(safe-area-inset-bottom));
+  padding: max(12px, env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
 }
 .quiz-header {
   min-height: 50px;

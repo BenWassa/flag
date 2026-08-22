@@ -221,7 +221,7 @@ assert.ok(!runtime.includes('AFRICA_GEOMETRY'), 'Neighbor runtime does not eager
 assert.ok(runtime.includes('detachedShell') && runtime.includes('patchNeighborMapShell'), 'Guess rerenders reuse the expensive SVG shell and patch puzzle layers only.');
 const renderer = await readFile('dist/ui/components/neighbor-map.js', 'utf8');
 assert.ok(renderer.includes('data-map-viewport') && renderer.includes('data-map-focus'), 'Neighbor map reuses the production viewport abstraction and fitted focus contract.');
-assert.ok(renderer.includes('fit-region') && renderer.includes('fit-continent'), 'Neighbor map exposes predictable cluster reset and Africa fit.');
+assert.equal(renderer.includes('data-map-command='), false, 'Neighbor map stays free of toolbar command chrome.');
 assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography stays text-entry driven and non-clickable.');
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');

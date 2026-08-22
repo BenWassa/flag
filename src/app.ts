@@ -35,6 +35,7 @@ import { createOutlinesRound } from './state/outlines-round.js';
 import { invalidatePendingRoundLaunch } from './state/round-launch-guard.js';
 import type { RoundContext } from './state/round-context.js';
 import { AppStore } from './state/store.js';
+import { installNavigationGestures } from './navigation-gestures.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { icon } from './ui/components/icons.js';
 import { escapeHtml } from './ui/format.js';
@@ -910,6 +911,14 @@ document.addEventListener('visibilitychange', () => {
     flushOutlineAttempts();
     flushNeighborAttempts();
   }
+});
+
+installNavigationGestures({
+  getParentRoute: () => parentRoute(currentRoute),
+  onBack: () => {
+    const parent = parentRoute(currentRoute);
+    if (parent) navigateStable(parent);
+  },
 });
 
 if ('serviceWorker' in navigator) {

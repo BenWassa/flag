@@ -256,6 +256,7 @@ assert.equal(repaired.lifetimeFirstTryCorrect, 0);
 assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 
 const mapCss = await readFile('src/styles/map.css', 'utf8');
+const mapCartographyCss = await readFile('src/styles/map-cartography.css', 'utf8');
 const styles = await readFile('src/styles/styles.css', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
@@ -271,6 +272,10 @@ assert.ok(mapCss.includes('.map-country--current-correct'), 'First-try correct t
 assert.ok(mapCss.includes('.map-country--recorded'), 'Test taps keep neutral visible acknowledgment.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
+assert.ok(mapCartographyCss.includes('touch-action: none'), 'The custom map controller owns pan and pinch gestures.');
+assert.equal(westQuizHtml.includes('map-viewport-control'), false, 'Location maps stay visually immersive without zoom toolbar chrome.');
+assert.ok(styles.includes('env(safe-area-inset-left)'), 'Shared layouts avoid the left safe area in landscape.');
+assert.ok(styles.includes('env(safe-area-inset-right)'), 'Shared layouts avoid the right safe area in landscape.');
 const launcherLabelRule = styles.match(/\.launcher-map__label\s*\{([^}]*)\}/)?.[1] ?? '';
 assert.match(launcherLabelRule, /font-size:\s*clamp\(11px,/, 'Launcher map overlay labels preserve the 11px typography floor.');
 assert.ok(styles.includes('.launcher-map-region:focus-visible'), 'Keyboard-reachable launcher map regions have a visible focus treatment.');

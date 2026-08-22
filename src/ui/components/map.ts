@@ -4,7 +4,6 @@ import type {
   MapSession,
   MapTargetState,
 } from '../../domain/map-models.js';
-import { icon } from './icons.js';
 
 function resolutionClass(state: MapTargetState | undefined, showFeedback: boolean): string {
   if (!showFeedback || !state?.resolved || !state.resolution) return '';
@@ -97,17 +96,6 @@ function renderBoundaries(asset: MapRegionAsset): string {
   `;
 }
 
-function renderViewportControls(asset: MapRegionAsset): string {
-  return `
-    <div class="map-viewport-controls" aria-label="Map view controls">
-      <button class="map-viewport-control" type="button" data-map-command="zoom-in" aria-label="Zoom in">${icon('zoom-in')}</button>
-      <button class="map-viewport-control" type="button" data-map-command="zoom-out" aria-label="Zoom out">${icon('zoom-out')}</button>
-      ${asset.scope.kind === 'region' ? `<button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-region" aria-label="Fit ${asset.scope.label}">Region</button>` : ''}
-      <button class="map-viewport-control map-viewport-control--label" type="button" data-map-command="fit-continent" aria-label="Fit all of Africa">Africa</button>
-    </div>
-  `;
-}
-
 export interface RenderMapOptions {
   interactive?: boolean;
   showFeedback?: boolean;
@@ -190,7 +178,6 @@ export function renderMapSvg(
           ${assistedHitTarget(asset, session, interactive)}
         </svg>
       </div>
-      ${interactive ? renderViewportControls(asset) : ''}
     </div>
   `;
 }
