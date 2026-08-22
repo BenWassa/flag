@@ -265,26 +265,12 @@ assert.equal(getLocationRecord(independentLocations, gha).status, 'unseen');
 assert.equal(getNeighborRecord(independentNeighbors, gha).status, 'unseen');
 
 // Routine UI no longer exposes scheduler x/y punch cards or individual-country Mastered achievements.
-// Pin this record's review date in the future so the fixture tests the Strong-evidence label
-// rather than becoming time-dependent as the real calendar advances.
-const strongUiState = {
-  ...recovering.state,
-  records: {
-    ...recovering.state.records,
-    [gha]: {
-      ...recovering.state.records[gha],
-      nextReviewAt: '2999-01-01T00:00:00.000Z',
-    },
-  },
-};
 const progressHtml = renderProgress(
-  { flags: strongUiState, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
+  { flags: recovering.state, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
   { version: 1, regionDomainMasteries: [], completeRegions: [], completeContinents: [], worldCrown: false },
-  'all',
 );
 assert.ok(!/\b\d+\/\d+ toward mastery\b/i.test(progressHtml));
 assert.ok(!/>Mastered</.test(progressHtml));
-assert.ok(progressHtml.includes('Strong evidence'));
 
 const fresh = createInitialProgress(COUNTRIES);
 const questions = buildQuiz({

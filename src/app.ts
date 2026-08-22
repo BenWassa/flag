@@ -69,10 +69,6 @@ const store = new AppStore();
 const router = createHashRouter(window);
 const allowedNeighborCountryIds = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 let currentRoute: AppRoute = { name: 'home' };
-// Progress filter tokens are compound: 'all', 'domain:<domain>', or
-// 'domain:<domain>|<evidence>'. renderProgress parses them; they are not
-// LearningStatus values, so they are not typed as one.
-let progressFilter = 'all';
 let resetArmed = false;
 let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
@@ -458,7 +454,6 @@ function render(previousSelector: string | null = null): void {
           neighbors: store.neighborProgress,
         },
         store.achievements,
-        progressFilter,
         resetArmed,
         store.persisting,
       );
@@ -724,9 +719,6 @@ root.addEventListener('click', (event) => {
     case 'open-progress':
       navigateStable({ name: 'progress' });
       return;
-    case 'filter-progress':
-      progressFilter = id ?? 'all';
-      break;
     case 'reset-request':
       resetArmed = true;
       break;
@@ -745,7 +737,6 @@ root.addEventListener('click', (event) => {
       setActiveRoundRoute(null);
       neighborsRound.resetQuery();
       resetArmed = false;
-      progressFilter = 'all';
       announce('All flag, location, outline, and neighbour progress erased.');
       break;
     case 'start-learn':

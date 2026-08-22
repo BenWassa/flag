@@ -83,33 +83,26 @@ assert.equal(neighborEvidence.status, 'strong', 'Internal mastered status is pre
 // Issue #56 presentation contract: earned geography is primary while live evidence remains independently actionable.
 const earned = createInitialAchievementState();
 earned.regionDomainMasteries = ['west-africa:flags'];
-const rendered = renderProgress(ledgers, earned, 'domain:flags', false, true);
+const rendered = renderProgress(ledgers, earned, false, true);
 assert.match(rendered, /<h2 id="progress-mastery-heading">Mastery<\/h2>/, 'Progress leads with the mastery geography.');
 assert.match(rendered, /data-continent="africa"/, 'Progress reuses source-derived continent geography.');
 assert.match(rendered, /West Africa/, 'Progress renders the earned region/domain read model.');
 assert.match(rendered, /progress-mastery-badge--earned/, 'Earned region/domain Mastery receives the dedicated purple badge treatment.');
-assert.match(rendered, /Due for review/, 'Live due evidence remains visible alongside persistent earned Mastery.');
-assert.match(rendered, /Practise next/, 'Operational learning guidance remains available beneath Mastery.');
-assert.match(rendered, /progress-evidence-disclosure/, 'Country evidence is retained behind progressive disclosure.');
 assert.match(rendered, /progress-mastery-badge--unavailable/, 'Unsupported non-Africa competencies are distinct from unearned supported competencies.');
 assert.doesNotMatch(rendered, /Crest locked|Crown locked|Earned achievements/, 'Locked prestige objects are not used as routine decoration.');
 assert.doesNotMatch(rendered, /toward mastery/, 'Progress does not leak scheduler thresholds.');
-
-const locationFiltered = renderProgress(ledgers, earned, 'domain:locations|learning', false, true);
-assert.match(locationFiltered, /Learning evidence/, 'Evidence drill-down remains present after changing domain/filter.');
-assert.match(locationFiltered, /Locations · 54 supported countries/, 'Composite evidence filters preserve the selected domain.');
-assert.match(locationFiltered, /filter-tab filter-tab--active[^>]*data-id="domain:locations\|learning"/, 'The selected evidence filter remains semantically active.');
+assert.doesNotMatch(rendered, /Practise next|progress-evidence-disclosure/, 'The operational Practise next recommendation and per-country evidence drill-down were cut as low-value duplicates of Mastery.');
 
 const complete = createInitialAchievementState();
 complete.completeRegions = ['west-africa'];
 complete.completeContinents = ['africa'];
 complete.worldCrown = true;
-const completedRendered = renderProgress(ledgers, complete, 'domain:flags', false, true);
+const completedRendered = renderProgress(ledgers, complete, false, true);
 assert.match(completedRendered, /progress-region-mastery--complete/, 'Canonical complete-region state receives the restrained prestige treatment.');
 assert.match(completedRendered, /progress-continent-mark--crest/, 'A continent crest renders only for an earned continent completion state.');
 assert.match(completedRendered, /progress-world-crown/, 'The singular World Crown renders when canonical world completion is earned.');
 
-const resetRendered = renderProgress(ledgers, earned, 'domain:flags', true, true);
+const resetRendered = renderProgress(ledgers, earned, true, true);
 assert.match(resetRendered, /Erase all learning evidence and earned achievements/, 'Reset continues to cover live evidence and earned achievements together.');
 
 const shellHtml = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');

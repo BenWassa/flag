@@ -252,7 +252,7 @@ Answer controls should remain easily reachable, especially on mobile.
 
 Treat analytics as compact, readable information surfaces.
 
-Progress is specifically **mastery-first**: geographic earned state comes before operational `Practise next` guidance, detailed country evidence is progressively disclosed, and reset/storage utilities come last. Live country evidence remains distinct from persistent earned achievement, including the earned-but-now-due case.
+Progress is specifically **mastery-first**: geographic earned state is the whole surface, with reset/storage utilities last. The operational `Practise next` recommendation and the progressively disclosed per-country evidence drill-down were cut (they duplicated per-domain state already visible in Mastery without adding a real recommendation); domain-launch shortcuts on region cards remain the way to start a session. Live country evidence remains distinct from persistent earned achievement, including the earned-but-now-due case.
 
 Prefer stacked/grouped information over spreadsheet-like tables.
 

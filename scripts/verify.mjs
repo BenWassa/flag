@@ -103,10 +103,9 @@ const { renderResults } = await import('../dist/ui/views/results.js');
 const { renderFocusIntent } = await import('../dist/ui/focus.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
 
-const renderProgressView = (state, filter = 'all', resetArmed = false, persisting = true) => renderProgress(
+const renderProgressView = (state, resetArmed = false, persisting = true) => renderProgress(
   { flags: state, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
   createInitialAchievementState(),
-  filter,
   resetArmed,
   persisting,
 );
@@ -130,7 +129,7 @@ const screens = {
   atlasContinent: renderContinent(fresh, africaScopeFixture),
   scope: renderScope(fresh, africaScopeFixture),
   region: renderScope(fresh, westAfricaScopeFixture),
-  progress: renderProgressView(fresh, 'all'),
+  progress: renderProgressView(fresh),
 };
 
 for (const [name, html] of Object.entries(screens)) {
@@ -178,38 +177,24 @@ for (const [name, html] of Object.entries({ scope: screens.scope, region: screen
   assert.ok(!html.includes('mini-ledger') && !html.includes('stat-legend'), `${name} launcher stays free of the deleted pre-round ledger and legend.`);
 }
 
-for (const filter of ['unseen', 'learning', 'mastered']) {
-  const html = renderProgressView(fresh, filter);
-  const isEmpty = filter !== 'unseen';
-  assert.equal(
-    html.includes('class="empty-state"'),
-    isEmpty,
-    `The ${filter} ledger filter must show an empty state only when it has no rows.`,
-  );
-}
-
 assert.ok(
-  !renderProgressView(fresh, 'all').includes('data-action="reset-request"'),
+  !renderProgressView(fresh).includes('data-action="reset-request"'),
   'Reset must stay hidden until there is progress worth erasing.',
 );
 assert.ok(
-  renderProgressView(learningState, 'all').includes('data-action="reset-request"'),
+  renderProgressView(learningState).includes('data-action="reset-request"'),
   'Reset must be reachable once flags have been studied.',
 );
 assert.ok(
-  renderProgressView(learningState, 'all', true).includes('data-action="reset-confirm"'),
+  renderProgressView(learningState, true).includes('data-action="reset-confirm"'),
   'Reset must require a second, explicit confirmation.',
 );
 
 const lapsedProgress = { ...lapsed };
-const lapsedProgressHtml = renderProgressView(lapsedProgress, 'all');
+const lapsedProgressHtml = renderProgressView(lapsedProgress);
 assert.ok(
   !lapsedProgressHtml.includes('0/2 toward mastery'),
   'Routine progress UI must not expose the internal post-lapse scheduler threshold.',
-);
-assert.ok(
-  lapsedProgressHtml.includes('Learning'),
-  'A lapsed country is presented as Learning rather than as a mastery punch card.',
 );
 
 const quizSession = {
@@ -297,7 +282,7 @@ const repairedState = {
     MLI: sanitizeRecord('MLI', { status: 'mastered', lifetimeCorrect: '9', lapseCount: null }),
   },
 };
-const repairedHtml = renderProgressView(repairedState, 'all');
+const repairedHtml = renderProgressView(repairedState);
 assert.ok(!repairedHtml.includes('NaN'), 'A repaired ledger cannot render NaN into the progress screen.');
 assert.ok(!repairedHtml.includes('undefined'), 'A repaired ledger cannot render undefined into the progress screen.');
 assert.ok(
@@ -308,8 +293,8 @@ assert.ok(
 // A record the ledger never had at all: `getRecord` must supply the default
 // rather than let the view index into undefined.
 const missingRecords = { version: 2, records: {} };
-assert.doesNotThrow(() => renderProgressView(missingRecords, 'all'), 'A ledger missing every record still renders.');
-assert.ok(!renderProgressView(missingRecords, 'all').includes('undefined'), 'Missing records fall back to Unseen.');
+assert.doesNotThrow(() => renderProgressView(missingRecords), 'A ledger missing every record still renders.');
+assert.ok(!renderProgressView(missingRecords).includes('undefined'), 'Missing records fall back to Unseen.');
 
 const emptyScopeQuiz = build({
   countries: COUNTRIES,
@@ -353,7 +338,7 @@ assert.ok(
   'The storage notice is static copy, not another live region inside the replaced #app.',
 );
 assert.ok(
-  renderProgressView(learningState, 'all', false, false).includes('not allowing storage'),
+  renderProgressView(learningState, false, false).includes('not allowing storage'),
   'The ledger does not claim to be saved on a device that refuses to save it.',
 );
 
