@@ -114,3 +114,52 @@ Required before closing Issue 71:
 - Physical Android validation.
 - Physical iOS Safari/PWA validation.
 - Evidence recorded in Issue 71.
+
+---
+
+## Re-verification on current `main` (2026-08-22)
+
+Re-run after `main` moved on (floating Play answer feedback, `0.4.2`, and the
+Issue #72 CSS ownership pass), to confirm the gesture layer had not regressed.
+Chromium 151 (Playwright 1.62.1), 390×844 DPR 2 with touch, CDP touch events
+against the production `dist/` build — **12/12 passing**:
+
+| check | evidence |
+|---|---|
+| edge swipe navigates back from a nested route | `#/flags/africa/west-africa` → `#/atlas/africa` |
+| swipe at Home does not exit the app | `#/` → `#/` |
+| mid-screen swipe does not navigate | route unchanged |
+| vertical-dominant edge drag does not navigate | route unchanged |
+| vertical scroll from the edge gutter still scrolls | `scrollY` 0 → 616 |
+| drag on a live Locations map does not navigate | route unchanged |
+| drag on a live Locations map pans it | `viewBox` x 88.2 → 0 |
+| no persistent map zoom/reset controls | 0 found |
+| `overscroll-behavior-y: contain` on `body` | `contain` |
+| `viewport-fit=cover` present | `width=device-width, initial-scale=1, viewport-fit=cover` |
+| browser zoom not suppressed | no `user-scalable=no`, no `maximum-scale` |
+| no horizontal overflow | 32 surface/viewport combinations clean |
+
+The last row covers 8 surfaces (Home, Progress, Atlas continent, and the Flags,
+Locations, Outlines and Neighbours launchers plus a region launcher) at 390×844,
+844×390, 320×568 and 768×1024.
+
+The Issue #72 CSS pass was independently proven to be a rendering no-op
+(5,761 cascade winners and 406,800 computed-style comparisons unchanged), and
+these gesture results confirm it did not disturb map or scroll ownership.
+
+**This does not advance the issue's remaining acceptance criteria.** They require
+physical hardware, and CDP touch emulation is still not iOS Safari or Android
+Chrome. Issue #71 stays open on:
+
+- physical Pixel / Android Chrome;
+- physical iPhone / iOS Safari and the installed PWA;
+- real notch / Dynamic Island / gesture-bar safe-area behaviour.
+
+## Repository hygiene note
+
+`origin/feature/issue-71-mobile-interaction-upgrade` still exists and still holds
+the unmergeable `src/ui/mobile-gestures.ts` described above (never imported,
+keyed to a `[data-map-surface]` attribute that does not exist). It should be
+deleted rather than merged. `origin/docs/issue-71-mobile-interaction-spec` and
+`origin/issue-72-legacy-code-css-audit-fix` are both fully merged into `main` and
+can also be deleted.
