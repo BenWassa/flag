@@ -424,9 +424,18 @@ button:focus-visible,
   min-height: 100svh;
   width: min(100%, 820px);
   margin: 0 auto;
+  position: relative;
   display: grid;
-  grid-template-rows: auto minmax(260px, 1fr) auto;
-  padding: max(12px, env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(var(--space-4), env(safe-area-inset-left));
+  /* Rows size to their own content so the flag and options sit close
+     together near the top; leftover viewport height pools in the trailing
+     flexible row instead of centring the flag mid-screen. */
+  grid-template-rows: auto auto auto minmax(var(--space-4), 1fr);
+  /* The bottom inset always carries an extra --feedback-clearance: the
+     floating .answer-feedback card is reserved that room permanently, not
+     only once answered, so its appearance never resizes anything above it
+     — on a short viewport the page gains a scrollbar instead of the card
+     overlapping the last option. */
+  padding: max(12px, env(safe-area-inset-top)) max(var(--space-4), env(safe-area-inset-right)) calc(max(16px, env(safe-area-inset-bottom)) + var(--feedback-clearance, 100px)) max(var(--space-4), env(safe-area-inset-left));
 }
 .quiz-header {
   min-height: 50px;
@@ -466,7 +475,11 @@ button:focus-visible,
 .quiz-count { width: 46px; text-align: right; color: var(--text-muted); font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
 .quiz-count > span { padding: 0 2px; color: var(--line-strong); }
 
-.question-stage { display: grid; grid-template-rows: auto 1fr; min-height: 0; padding: var(--space-4) 0 var(--space-3); }
+/* Rows stay implicit/auto rather than a fixed template: Play mode inserts an
+   extra .round-score row between the meta line and the flag, and a fixed
+   two-row template would strand that third child in an unstyled implicit
+   row instead of sizing it with the rest. */
+.question-stage { display: grid; min-height: 0; padding: var(--space-3) 0 var(--space-2); }
 .question-meta { display: flex; align-items: baseline; justify-content: space-between; gap: var(--space-4); color: var(--text-muted); font-size: 12px; }
 .question-meta strong { color: var(--action); font-size: 12px; }
 
@@ -573,19 +586,32 @@ button:focus-visible,
 .answer-button--wrong .answer-key { border-color: var(--wrong); color: var(--wrong); }
 .answer-button--selected { background: var(--action-soft); border-color: var(--action); }
 
+/* Floats over the option list instead of sitting in flow below it: an
+   in-flow panel here used to grow the answer-panel's content height and
+   shrink the flexible row above it, visibly shunting the flag and options
+   upward the instant an answer landed. Anchored to .quiz-shell (the nearest
+   positioned ancestor) it overlays the bottom of the screen and never
+   changes anyone else's layout. */
 .answer-feedback {
-  min-height: 62px;
-  margin-top: 4px;
-  padding: 10px 0 0;
-  border-top: 2px solid var(--line);
+  position: absolute;
+  left: max(var(--space-4), env(safe-area-inset-left));
+  right: max(var(--space-4), env(safe-area-inset-right));
+  bottom: max(var(--space-4), env(safe-area-inset-bottom));
+  z-index: 5;
+  min-height: 56px;
+  padding: 12px 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-4);
 }
-.answer-feedback--correct { border-top-color: var(--mastered); }
-.answer-feedback--wrong { border-top-color: var(--wrong); }
-.answer-feedback--neutral { border-top-color: var(--line-strong); }
+.answer-feedback--correct { background: var(--mastered-soft); border-color: var(--mastered-line); }
+.answer-feedback--wrong { background: var(--wrong-soft); border-color: var(--wrong-line); }
+.answer-feedback--neutral { border-color: var(--line-strong); }
 .feedback-copy { display: grid; gap: 2px; min-width: 0; }
 .feedback-copy strong { font-size: 15px; }
 .feedback-copy span { color: var(--text-muted); font-size: 12px; }
@@ -769,11 +795,11 @@ button:focus-visible,
   .result-actions { grid-template-columns: 1.3fr 1fr; }
   .result-actions .button--tertiary { grid-column: 1 / -1; }
   .quiz-shell { padding-inline: var(--space-6); }
+  .answer-feedback { left: var(--space-6); right: var(--space-6); }
 }
 
 @media (min-width: 700px) {
   .answer-panel { grid-template-columns: 1fr 1fr; }
-  .answer-feedback,
   .test-advance,
   .quiz-hint { grid-column: 1 / -1; }
 }
@@ -809,10 +835,12 @@ button:focus-visible,
 }
 
 @media (max-height: 720px) {
+  .quiz-shell { --feedback-clearance: 80px; }
   .question-stage { padding-top: 8px; }
   .flag-stage { min-height: 180px; padding-block: 12px; }
   .flag-image { max-height: 38dvh; }
   .answer-button { min-height: 52px; }
+  .answer-feedback { min-height: 48px; padding: 10px 14px; }
 }
 
 /* The launcher can split earlier than a quiz because its compact right rail
@@ -855,11 +883,15 @@ button:focus-visible,
     grid-template-columns: minmax(240px, 1.1fr) minmax(290px, .9fr);
     grid-template-rows: auto minmax(0, 1fr);
     column-gap: var(--space-6);
+    /* The answer column already centres its buttons within a flexible row
+       here, leaving natural slack around them — the generous portrait
+       reserve would just force a scrollbar on an already-tight landscape
+       phone for no benefit. */
+    --feedback-clearance: 28px;
   }
   .quiz-header { grid-column: 1 / -1; }
   .question-stage { grid-column: 1; grid-row: 2; }
   .answer-panel { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; align-content: center; }
-  .answer-feedback,
   .test-advance,
   .quiz-hint { grid-column: 1; }
   .flag-image { max-height: 60dvh; }

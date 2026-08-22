@@ -458,12 +458,11 @@ body { letter-spacing: -.006em; }
 }
 
 .answer-feedback {
-  border-top-width: 1px;
   animation: answer-feedback-in 140ms ease-out;
 }
-.answer-feedback--correct { border-top-color: var(--correct); }
-.answer-feedback--wrong { border-top-color: var(--wrong); }
-.answer-feedback--neutral { border-top-color: var(--line-strong); }
+.answer-feedback--correct { border-color: var(--correct-line); background: var(--correct-soft); }
+.answer-feedback--wrong { border-color: var(--wrong-line); background: var(--wrong-soft); }
+.answer-feedback--neutral { border-color: var(--line-strong); }
 
 @keyframes answer-feedback-in {
   from { opacity: 0; transform: translateY(3px); }
