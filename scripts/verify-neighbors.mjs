@@ -162,7 +162,7 @@ assert.ok(
 assert.ok(appSource.includes("root.addEventListener('submit'"), 'Enter-to-submit uses the native form path.');
 const css = await readFile('src/styles/neighbors.css', 'utf8');
 assert.ok(css.includes('min-height: 50px'), 'Mobile entry and suggestion rows exceed the 44px touch minimum.');
-assert.ok(css.includes('max-height: min(34dvh, 270px)'), 'Autocomplete is bounded so the virtual keyboard does not bury the task status.');
+assert.ok(css.includes('max-height: min(28dvh, 230px)'), 'Autocomplete is bounded so the virtual keyboard does not bury the task status.');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css), 'Neighbor CSS uses shared design tokens only.');
 const generationSource = await readFile('scripts/generate-neighbor-fixture.mjs', 'utf8');
 assert.ok(generationSource.includes('MAP_GENERATION_CONFIGS'), 'Lightweight fixtures are mechanically extracted from configured production topology outputs.');

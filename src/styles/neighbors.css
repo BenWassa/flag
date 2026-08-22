@@ -154,7 +154,6 @@
   left: 0;
   right: 0;
   bottom: calc(100% + var(--space-1));
-  max-height: min(34dvh, 270px);
   max-height: min(28dvh, 230px);
   overflow-y: auto;
   overscroll-behavior: contain;

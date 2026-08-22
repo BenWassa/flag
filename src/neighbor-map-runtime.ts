@@ -9,6 +9,7 @@ const root = document.querySelector<HTMLElement>('#app');
 const assetByScopeId = new Map<string, MapRegionAsset>();
 const assetPromiseByScopeId = new Map<string, Promise<MapRegionAsset | null>>();
 let detachedShell: { key: string; node: HTMLElement } | null = null;
+let neighborEntryFocusActive = false;
 
 function nameForId(countryId: string): string {
   return COUNTRY_BY_ID.get(countryId)?.name ?? countryId;
@@ -144,7 +145,15 @@ function hasFocusedNeighborEntry(): boolean {
 
 function syncNeighborEntryViewport(): void {
   if (!root) return;
-  if (!root.querySelector('.neighbor-quiz-page') || !hasFocusedNeighborEntry()) {
+  if (!root.querySelector('.neighbor-quiz-page')) {
+    neighborEntryFocusActive = false;
+    root.removeAttribute('data-neighbor-entry-active');
+    root.style.removeProperty('--neighbor-visual-height');
+    return;
+  }
+
+  if (hasFocusedNeighborEntry()) neighborEntryFocusActive = true;
+  if (!neighborEntryFocusActive) {
     root.removeAttribute('data-neighbor-entry-active');
     root.style.removeProperty('--neighbor-visual-height');
     return;
@@ -167,8 +176,19 @@ if (root) {
     queueMicrotask(syncNeighborEntryViewport);
   }).observe(root, { childList: true, subtree: true });
 
-  document.addEventListener('focusin', syncNeighborEntryViewport);
-  document.addEventListener('focusout', () => queueMicrotask(syncNeighborEntryViewport));
+  document.addEventListener('focusin', (event) => {
+    if (event.target instanceof Element && event.target.closest('.neighbor-entry')) {
+      neighborEntryFocusActive = true;
+    }
+    syncNeighborEntryViewport();
+  });
+  document.addEventListener('focusout', (event) => {
+    const next = event.relatedTarget;
+    if (!(next instanceof Element) || !next.closest('.neighbor-entry')) {
+      neighborEntryFocusActive = false;
+    }
+    queueMicrotask(syncNeighborEntryViewport);
+  });
   window.visualViewport?.addEventListener('resize', syncNeighborEntryViewport);
 
   discoverHosts();

@@ -17,6 +17,9 @@ assert.ok(!css.includes('scroll-margin-bottom: 32dvh'), 'The previous large keyb
 assert.ok(runtime.includes('window.visualViewport'), 'The Neighbours runtime feature-detects visualViewport.');
 assert.ok(runtime.includes('viewport.scale !== 1'), 'Visual viewport sizing is disabled while browser zoom is active.');
 assert.ok(runtime.includes("root.dataset.neighborEntryActive = 'true'"), 'Keyboard-entry layout state is owned by the stable app root across same-route rerenders.');
+assert.ok(runtime.includes('let neighborEntryFocusActive = false'), 'Keyboard-entry focus state has an explicit lifecycle latch.');
+assert.ok(runtime.includes('event.relatedTarget'), 'Focus cleanup distinguishes internal entry focus changes from leaving the entry surface.');
+assert.ok(runtime.includes('neighborEntryFocusActive = false'), 'Leaving the entry surface clears the focused layout state.');
 assert.ok(runtime.includes('queueMicrotask(syncNeighborEntryViewport)'), 'Focus-out cleanup waits through synchronous Neighbours rerenders/refocus instead of flickering layout state.');
 assert.ok(runtime.includes("addEventListener('resize', syncNeighborEntryViewport)"), 'Software-keyboard visual viewport resize updates the scoped height input.');
 assert.ok(!runtime.includes('scrollTo(') && !runtime.includes('scrollIntoView('), 'The keyboard fix does not use imperative scroll positioning.');
