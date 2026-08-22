@@ -3,7 +3,8 @@ import { getMapContinentConfigForScope } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
 import { NEIGHBOR_GUESS_COUNTRY_IDS } from './data/neighbors/index.js';
 import { domainDisplayName } from './domain/display.js';
-import type { StudyScope } from './domain/models.js';
+import type { LearningDomain, StudyScope } from './domain/models.js';
+import type { ProgressLedgers } from './domain/progress-summary.js';
 import type { MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
@@ -13,7 +14,6 @@ import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
 import { dismissInstallPrompt, isInstallPromptDismissed } from './infrastructure/install-prompt-storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
-  atlasRouteForScope,
   isLearningDomain,
   normalizeAvailableRoute,
   parentRoute,
@@ -21,7 +21,6 @@ import {
   routeForScopeId,
   routeTitle,
   routesEqual,
-  scopeForId,
   scopeForQuickPlay,
   serializeRoutePath,
   stableRoute,
@@ -42,9 +41,8 @@ import { icon } from './ui/components/icons.js';
 import { escapeHtml } from './ui/format.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderFocusIntent } from './ui/focus.js';
-import { renderDomainHome } from './ui/views/domain.js';
+import { renderDomainIndex } from './ui/views/domain.js';
 import { renderFlagsStudy } from './ui/views/flags-study.js';
-import { renderContinent } from './ui/views/atlas.js';
 import { renderHome } from './ui/views/home.js';
 import { renderMapHome } from './ui/views/map-home.js';
 import { renderMapQuiz } from './ui/views/map-quiz.js';
@@ -389,9 +387,6 @@ function applyRoute(requestedRoute: AppRoute): void {
     case 'progress':
       store.navigate({ name: 'progress' });
       break;
-    case 'atlas':
-      store.navigate({ name: 'atlas-continent', scope: route.scope });
-      break;
     case 'learning':
       if (isFlagsStudyRoute(route)) {
         store.navigate({ name: 'flags-study', scope: route.scope ?? { kind: 'world', label: 'World' } });
@@ -441,7 +436,14 @@ router.subscribe((route) => {
     revealedFlagIds.clear();
     revealAllFlagNames = false;
   }
-  applyRoute(route ?? { name: 'home' });
+  // An unparseable hash — a typo, or a link to the retired scope-first
+  // /atlas/* surface — renders Home *and* corrects the URL, so the address bar
+  // never keeps claiming a screen that no longer exists.
+  if (!route) {
+    router.navigate({ name: 'home' }, { replace: true });
+    return;
+  }
+  applyRoute(route);
 });
 
 function discardActiveRound(): void {
@@ -491,6 +493,26 @@ function currentRouteKey(): string {
   return route;
 }
 
+function currentLedgers(): ProgressLedgers {
+  return {
+    flags: store.progress,
+    locations: store.locationProgress,
+    outlines: store.outlineProgress,
+    neighbors: store.neighborProgress,
+  };
+}
+
+function allLedgersPersisting(): boolean {
+  return store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting;
+}
+
+function domainPersisting(domain: LearningDomain): boolean {
+  if (domain === 'locations') return store.mapPersisting;
+  if (domain === 'outlines') return store.outlinePersisting;
+  if (domain === 'neighbors') return store.neighborPersisting;
+  return store.persisting;
+}
+
 function restoreFocus(previousSelector: string | null): void {
   if (previousSelector) {
     const previous = root.querySelector<HTMLElement>(previousSelector);
@@ -509,26 +531,15 @@ function render(previousSelector: string | null = null): void {
 
   switch (store.view.name) {
     case 'home':
-      root.innerHTML = renderHome(
-        store.progress,
-        store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting,
-      );
-      break;
-    case 'atlas-continent':
-      // The continent surface shows region cards with a launch shortcut for
-      // all four domains at once (like Home, one level up), so its storage
-      // notice must reflect all four ledgers, not just Flags'.
-      root.innerHTML = renderContinent(
-        store.progress,
-        store.view.scope,
-        store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting,
-      );
+      // Home summarises every domain at once, so its storage notice has to
+      // reflect all four ledgers rather than Flags' alone.
+      root.innerHTML = renderHome(currentLedgers(), allLedgersPersisting());
       break;
     case 'domain':
-      root.innerHTML = renderDomainHome(
+      root.innerHTML = renderDomainIndex(
         store.view.domain,
-        store.progress,
-        store.persisting,
+        currentLedgers(),
+        domainPersisting(store.view.domain),
       );
       break;
     case 'scope':
@@ -539,12 +550,7 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'progress':
       root.innerHTML = renderProgress(
-        {
-          flags: store.progress,
-          locations: store.locationProgress,
-          outlines: store.outlineProgress,
-          neighbors: store.neighborProgress,
-        },
+        currentLedgers(),
         store.achievements,
         resetArmed,
         store.persisting,
@@ -626,14 +632,6 @@ function exitActiveRound(): void {
 function openDomain(id: string | undefined): void {
   if (!isLearningDomain(id)) return;
   navigateStable({ name: 'learning', domain: id });
-}
-
-function openAtlas(id: string | undefined): void {
-  if (!id) return;
-  const scope = scopeForId(id);
-  if (!scope) return;
-  const route = atlasRouteForScope(scope);
-  if (route) navigateStable(route);
 }
 
 function openScope(domainValue: string | undefined, id: string | undefined): void {
@@ -720,10 +718,6 @@ root.addEventListener('click', (event) => {
   }
   if (action === 'quick-play') {
     quickPlay(element.dataset.domain, id, element);
-    return;
-  }
-  if (action === 'open-atlas') {
-    openAtlas(id);
     return;
   }
   if (action === 'open-domain') {

@@ -88,9 +88,24 @@ assert.equal(serializeRoutePath(outlinesLearn), '/outlines/africa/west-africa/le
 assert.equal(serializeRoutePath(neighborsWest), '/neighbors/africa/west-africa');
 assert.equal(serializeRoutePath(neighborsTest), '/neighbors/africa/west-africa/test');
 
-assert.equal(serializeRoutePath(normalizeAvailableRoute(locations)), '/locations/africa', 'Bare Locations canonicalises to its Africa launcher.');
-assert.equal(serializeRoutePath(normalizeAvailableRoute(outlines)), '/outlines/africa', 'Bare Outlines canonicalises to its Africa launcher.');
-assert.equal(serializeRoutePath(normalizeAvailableRoute(neighbors)), '/neighbors/africa', 'Bare Neighbours canonicalises to its Africa launcher.');
+// A bare domain route is now a real screen — that domain's continent index —
+// so it must survive normalisation instead of being redirected into Africa.
+assert.equal(serializeRoutePath(normalizeAvailableRoute(locations)), '/locations', 'Bare Locations is its own continent index.');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(outlines)), '/outlines', 'Bare Outlines is its own continent index.');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(neighbors)), '/neighbors', 'Bare Neighbours is its own continent index.');
+assert.equal(serializeRoutePath(normalizeAvailableRoute(locationsAfrica)), '/locations/africa', 'A shipped continent survives normalisation.');
+// Unshipped curriculum falls back to the domain index, which states the
+// coverage honestly, rather than silently substituting a different continent.
+assert.equal(
+  serializeRoutePath(normalizeAvailableRoute(route('/locations/asia'))),
+  '/locations',
+  'An unshipped continent falls back to the domain index rather than a substituted scope.',
+);
+assert.equal(
+  serializeRoutePath(normalizeAvailableRoute(route('/neighbors/europe/western-europe'))),
+  '/neighbors',
+  'An unshipped region falls back to the domain index too.',
+);
 
 const africaScope = { kind: 'continent', id: 'africa', label: 'Africa' };
 for (const [domain, expectedScope] of [
@@ -125,51 +140,40 @@ for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
   }
 }
 
-// Scope-first Back chain: a domain launcher was entered from its atlas scope,
-// so Back returns there rather than jumping to Home. There is no region-only
-// atlas screen, so a region-scoped launcher's Back returns to its continent.
-assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/atlas/africa');
-assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/atlas/africa');
+// Mode-first Back chain: Home picks a domain, the domain route lists that
+// domain's continents, and a scoped launcher is one of those continents. A
+// selected region is the same continent screen, so it shares that parent —
+// clearing the region is the launcher's own All-continent control, not Back.
+assert.equal(serializeRoutePath(parentRoute(flagsWest)), '/flags');
+assert.equal(serializeRoutePath(parentRoute(flagsAfrica)), '/flags');
 assert.equal(serializeRoutePath(parentRoute(flags)), '/');
 assert.equal(serializeRoutePath(parentRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(stableRoute(locationsTest)), '/locations/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(outlinesLearn)), '/outlines/africa/west-africa');
 assert.equal(serializeRoutePath(parentRoute(neighborsTest)), '/neighbors/africa/west-africa');
 for (const [launcherRoute, expectedParent] of [
-  [locationsAfrica, '/atlas/africa'],
-  [locationsWest, '/atlas/africa'],
-  [outlinesAfrica, '/atlas/africa'],
-  [outlinesWest, '/atlas/africa'],
-  [neighborsAfrica, '/atlas/africa'],
-  [neighborsWest, '/atlas/africa'],
+  [locationsAfrica, '/locations'],
+  [locationsWest, '/locations'],
+  [outlinesAfrica, '/outlines'],
+  [outlinesWest, '/outlines'],
+  [neighborsAfrica, '/neighbors'],
+  [neighborsWest, '/neighbors'],
 ]) {
   assert.equal(
     serializeRoutePath(parentRoute(launcherRoute)),
     expectedParent,
-    `${serializeRoutePath(launcherRoute)} launcher Back must return to the scope it was opened from.`,
+    `${serializeRoutePath(launcherRoute)} launcher Back must return to its domain's continent index.`,
   );
 }
 
-// The atlas surface itself round-trips at the continent level; the retired
-// region-only "select a mode" screen no longer exists, so the legacy
-// three-segment /atlas/{continent}/{region} URL collapses onto its continent.
-const atlasAfrica = parseRoutePath('/atlas/africa');
-assert.equal(serializeRoutePath(atlasAfrica), '/atlas/africa', 'Continent surface round-trips.');
-assert.equal(serializeRoutePath(parentRoute(atlasAfrica)), '/', 'Continent Back returns to the world.');
-assert.equal(routeTitle(atlasAfrica), 'Africa · Atlas');
-assert.equal(parseRoutePath('/atlas'), null, 'The atlas prefix alone is not a screen.');
-assert.equal(parseRoutePath('/atlas/nowhere'), null, 'Unknown continent must be rejected.');
-assert.equal(parseRoutePath('/atlas/africa/east-asia'), null, 'A region must belong to its atlas continent.');
-assert.deepEqual(
-  parseRoutePath('/atlas/africa/west-africa'),
-  atlasAfrica,
-  'The legacy region atlas URL resolves to its continent surface.',
-);
-assert.equal(
-  serializeRoutePath(parseRoutePath('/atlas/europe/western-europe')),
-  '/atlas/europe',
-  'Continents without full domain data are still navigable as shells.',
-);
+// The scope-first /atlas/* surface is retired. Its links no longer parse, so
+// the application replaces them with Home rather than rendering a dead screen.
+for (const retired of ['/atlas', '/atlas/africa', '/atlas/africa/west-africa', '/atlas/europe']) {
+  assert.equal(parseRoutePath(retired), null, `The retired ${retired} surface must not parse.`);
+}
+assert.equal(routeTitle(flags), 'Flags · Atlas', 'A domain index is titled by its domain.');
+assert.equal(routeTitle(locations), 'Locations · Atlas');
+assert.equal(routeTitle(neighbors), 'Neighbours · Atlas', 'The domain index uses learner-facing British English.');
 
 assert.equal(routeTitle(flagsWest), 'West Africa flags · Atlas');
 assert.equal(routeTitle(locationsTest), 'Play West Africa locations · Atlas');
@@ -180,10 +184,12 @@ assert.equal(serializeRoutePath(neighborsTest), '/neighbors/africa/west-africa/t
 
 assert.equal(parseRoutePath('/flags/asia/west-africa'), null, 'Region must belong to its route continent.');
 assert.equal(parseRoutePath('/locations/africa/not-a-region'), null, 'Unknown region must be rejected.');
-assert.equal(parseRoutePath('/locations/asia'), null, 'Location scopes are limited to the Africa curriculum.');
-assert.equal(parseRoutePath('/locations/africa/east-asia'), null, 'Location regions must belong to the Africa scope.');
-assert.equal(parseRoutePath('/neighbors/europe'), null, 'Neighbour scopes are limited to the Africa curriculum.');
-assert.equal(parseRoutePath('/outlines/asia'), null, 'Outline scopes are limited to the Africa curriculum.');
+assert.equal(parseRoutePath('/locations/nowhere'), null, 'Unknown continent must be rejected.');
+assert.equal(parseRoutePath('/locations/africa/east-asia'), null, 'A region must belong to its route continent.');
+// Availability is no longer a parse error: an unshipped continent is a valid
+// URL that normalisation resolves, so the parser stays a pure grammar.
+assert.ok(parseRoutePath('/locations/asia'), 'An unshipped but well-formed scope parses.');
+assert.ok(parseRoutePath('/outlines/asia'), 'An unshipped but well-formed scope parses for every domain.');
 assert.equal(parseRoutePath('/flags/africa/west-africa/unknown'), null, 'Unknown activity must be rejected.');
 assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not addressable for locations.');
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');
@@ -255,22 +261,20 @@ assert.ok(navigationGestures.includes('getParentRoute() !== null'), 'Back swipe 
 assert.ok(navigationGestures.includes('[data-map-viewport'), 'Back swipe yields to map pan and pinch gestures.');
 
 const home = await readFile('dist/ui/views/home.js', 'utf8');
-assert.ok(home.includes('data-action="open-atlas"'), 'Home selects a continent through the scope-first atlas action.');
+assert.ok(home.includes('data-action="open-domain"'), 'Home selects a learning domain first.');
 assert.equal(
   (home.match(/data-action="quick-play"/g) ?? []).length,
   0,
-  'Home starts no round before a continent and region scope are chosen.',
+  'Home starts no round before a domain and a geographic scope are chosen.',
 );
-assert.equal(home.includes('Learning domains'), false, 'Home no longer needs a heading that restates its four-row index.');
-assert.equal(home.includes('4 available'), false, 'Home no longer carries the deleted availability summary.');
-assert.equal(home.includes('Choose a skill'), false, 'Home no longer explains the choice that the rows already make clear.');
+assert.equal(home.includes('data-action="open-atlas"'), false, 'The retired scope-first atlas action must not return.');
+assert.equal(home.includes('data-action="open-scope"'), false, 'Home does not select geography directly.');
 
-const atlasViews = await readFile('dist/ui/views/atlas.js', 'utf8');
-assert.ok(atlasViews.includes('data-action="route-parent"'), 'The continent surface exposes the shared Back contract.');
-assert.ok(atlasViews.includes('data-action="quick-play"'), 'Region cards launch a domain directly, without an intermediate screen.');
-assert.equal(atlasViews.includes('data-action="open-atlas"'), false, 'Region cards no longer link into a retired region-detail screen.');
-assert.equal(atlasViews.includes('data-action="open-scope"'), false, 'The retired region "select a mode" screen must not return.');
-assert.ok(atlasViews.includes('domain-launch--absent'), 'Unsupported domains render as inert shells, not launchers.');
+const domainIndex = await readFile('dist/ui/views/domain.js', 'utf8');
+assert.ok(domainIndex.includes('data-action="route-parent"'), 'The domain index exposes the shared Back contract.');
+assert.ok(domainIndex.includes('data-action="open-scope"'), 'The domain index opens a continent within its own domain.');
+assert.ok(domainIndex.includes('data-action="quick-play"'), 'A continent can be played straight from the domain index.');
+assert.ok(domainIndex.includes('continent-row--shell'), 'Unshipped continents render as inert shells, not launchers.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
 const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');

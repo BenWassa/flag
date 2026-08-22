@@ -83,7 +83,6 @@ import { createCountryEvidenceQualification } from './achievement-evidence-adapt
 
 export type ViewState =
   | { name: 'home' }
-  | { name: 'atlas-continent'; scope: StudyScope }
   | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
   | { name: 'flags-study'; scope: StudyScope }

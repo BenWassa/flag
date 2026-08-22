@@ -31,7 +31,7 @@ The durable geographic hierarchy is:
 
 **World → Continent → Region**
 
-The region is the first meaningful cross-domain learning unit, so it must always surface its four domains together — as direct domain-launch shortcuts on the region's card in the continent surface, not through a separate region-detail screen.
+The region remains the first meaningful mastery unit, but it is reached inside one learning domain rather than across all four at once: navigation is mode-first, so the domain is chosen before the geography. The cross-domain reading of a region — all four domains as one competency set — belongs to Progress.
 
 Country remains the canonical data identity and the atomic evidence unit underneath the learning engines, but country is not a learner-facing prestige tier.
 
@@ -225,18 +225,24 @@ Issue #32 records the implemented visual-system rollout. Achievement art directi
 
 The interface should reveal only the next meaningful decision.
 
+Navigation is **mode-first**. The learner chooses what they are practising, then where:
+
+1. **Home** — the four learning modes, each showing the coverage it currently teaches and the progress earned in it.
+2. **Continent index** — that mode's six continents, with direct Play. Continents the mode has not shipped appear as honest, inert shells.
+3. **Continent launcher** — Play the whole continent, or any of its regions, plus Learn.
+
 Core navigation principles:
 
 - mobile-first;
 - no horizontal scrolling for primary selection;
-- geography and learning scope remain obvious;
-- the region card is the cross-domain competency surface — no separate region-detail screen sits between it and Play;
+- the learning mode is chosen first; geography is chosen within it;
+- coverage is stated honestly at every level, and unshipped curriculum never looks playable;
 - Learn and Play remain direct;
 - Back/Forward and direct links remain first-class;
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.
 
-Issue #35 records the implemented region × domain cross-domain competency, surfaced directly on the continent surface's region cards.
+Issue #35's region × domain cross-domain competency is now read on Progress rather than on a region card's launch row, which mode-first ordering made redundant.
 
 ## Persistence and compatibility
 

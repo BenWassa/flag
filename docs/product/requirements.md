@@ -326,7 +326,7 @@ See `colour-system.md`.
 
 The palette, semantic hierarchy and gamification rules are locked.
 
-The final visual style is Tactile Atlas and is implemented. `DESIGN.md` defines its personality, radius system, depth and press physics, typography, scope-first navigation, routine iconography and motion system.
+The final visual style is Tactile Atlas and is implemented. `DESIGN.md` defines its personality, radius system, depth and press physics, typography, mode-first navigation, routine iconography and motion system.
 
 Issue #34 separately owns achievement persistence and the exact mastery-shield, continent-crest and world-Crown art direction.
 

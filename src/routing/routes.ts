@@ -12,19 +12,7 @@ import { scopeSupportsDomain } from '../domain/scope-support.js';
 export type AppRoute =
   | { name: 'home' }
   | { name: 'progress' }
-  | AtlasRoute
   | LearningRoute;
-
-/**
- * Scope-first navigation: the continent surface that sits above the domain
- * launchers. `/atlas/africa` lists regions, each with direct domain-launch
- * shortcuts; there is no separate region-only screen. Legacy
- * `/atlas/{continent}/{region}` links collapse onto the continent surface.
- */
-export interface AtlasRoute {
-  name: 'atlas';
-  scope: StudyScope;
-}
 
 export interface LearningRoute {
   name: 'learning';
@@ -81,49 +69,36 @@ export function scopeForQuickPlay(
   return scopeSupportsDomain(scope, domain) ? scope : null;
 }
 
-export function atlasRouteForScope(scope: StudyScope): AtlasRoute | null {
-  if (scope.kind === 'continent' && scope.id) return { name: 'atlas', scope };
-  if (scope.kind === 'region' && scope.id) {
-    const region = REGIONS.find((item) => item.id === scope.id);
-    const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
-    if (continent) return { name: 'atlas', scope: { kind: 'continent', id: continent.id, label: continent.name } };
-  }
-  return null;
-}
-
 export function stableRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning' || route.activity === undefined) return route;
   return { name: 'learning', domain: route.domain, scope: route.scope };
 }
 
+/**
+ * A syntactically valid scope can still name curriculum a domain has not
+ * shipped (Locations outside Africa, say). Rather than 404, the learner is
+ * dropped back on that domain's continent index, which states the coverage
+ * honestly instead of silently substituting a different continent.
+ */
 export function normalizeAvailableRoute(route: AppRoute): AppRoute {
-  if (route.name !== 'learning' || route.domain === 'flags') return route;
-
-  if (route.scope && scopeSupportsDomain(route.scope, route.domain)) return route;
-
-  return {
-    name: 'learning',
-    domain: route.domain,
-    scope: AFRICA_MAP_SCOPE,
-  };
+  if (route.name !== 'learning' || !route.scope) return route;
+  if (scopeSupportsDomain(route.scope, route.domain)) return route;
+  return { name: 'learning', domain: route.domain };
 }
 
 export function parentRoute(route: AppRoute): AppRoute | null {
   if (route.name === 'home') return null;
   if (route.name === 'progress') return { name: 'home' };
 
-  if (route.name === 'atlas') return { name: 'home' };
-
   if (route.activity !== undefined) return stableRoute(route);
+
+  // Mode-first hierarchy: Home picks the domain, the domain route lists
+  // continents, and a scoped launcher is one continent of that domain. A
+  // selected region is still that same continent screen, so its parent is the
+  // continent index rather than the deselected launcher — clearing a region is
+  // the launcher's own All-continent control, which is not Back.
   if (!route.scope) return { name: 'home' };
-
-  // A domain launcher is entered from the scope-first atlas surfaces, so Back
-  // returns to the region or continent the learner selected it from.
-  return atlasRouteForScope(route.scope) ?? { name: 'home' };
-}
-
-function acceptsDomainScope(domain: LearningDomain, scope: StudyScope): boolean {
-  return scopeSupportsDomain(scope, domain);
+  return { name: 'learning', domain: route.domain };
 }
 
 export function parseRoutePath(input: string): AppRoute | null {
@@ -133,29 +108,6 @@ export function parseRoutePath(input: string): AppRoute | null {
   if (segments.length === 1 && segments[0] === 'progress') return { name: 'progress' };
 
   const [domainSegment, scopeSegment, regionOrActivitySegment, activitySegment] = segments;
-
-  if (domainSegment === 'atlas') {
-    if (segments.length < 2 || segments.length > 3) return null;
-    const continent = CONTINENTS.find((item) => item.id === scopeSegment);
-    if (!continent) return null;
-    if (segments.length === 2) {
-      return {
-        name: 'atlas',
-        scope: { kind: 'continent', id: continent.id, label: continent.name },
-      };
-    }
-    const region = REGIONS.find(
-      (item) => item.id === regionOrActivitySegment && item.continentId === continent.id,
-    );
-    if (!region) return null;
-    // The region-only "select a mode" screen was retired in favour of the
-    // direct domain-launch shortcuts on the continent surface; legacy
-    // /atlas/{continent}/{region} links collapse onto their continent.
-    return {
-      name: 'atlas',
-      scope: { kind: 'continent', id: continent.id, label: continent.name },
-    };
-  }
 
   if (!isLearningDomain(domainSegment)) return null;
   const domain = domainSegment;
@@ -169,7 +121,6 @@ export function parseRoutePath(input: string): AppRoute | null {
   const continent = CONTINENTS.find((item) => item.id === scopeSegment);
   if (!continent) return null;
   const continentScope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
-  if (!acceptsDomainScope(domain, continentScope)) return null;
   if (segments.length === 2) return { name: 'learning', domain, scope: continentScope };
 
   if (isLearningActivity(regionOrActivitySegment)) {
@@ -182,7 +133,6 @@ export function parseRoutePath(input: string): AppRoute | null {
   );
   if (!region) return null;
   const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
-  if (!acceptsDomainScope(domain, regionScope)) return null;
   if (segments.length === 3) return { name: 'learning', domain, scope: regionScope };
 
   if (!isLearningActivity(activitySegment) || segments.length !== 4) return null;
@@ -192,13 +142,6 @@ export function parseRoutePath(input: string): AppRoute | null {
 export function serializeRoutePath(route: AppRoute): string {
   if (route.name === 'home') return '/';
   if (route.name === 'progress') return '/progress';
-
-  if (route.name === 'atlas') {
-    if (route.scope.kind !== 'continent' || !route.scope.id) {
-      throw new Error(`Unknown atlas route scope: ${route.scope.id ?? route.scope.kind}`);
-    }
-    return `/atlas/${route.scope.id}`;
-  }
 
   const segments: string[] = [route.domain];
   if (route.scope?.kind === 'continent' && route.scope.id) {
@@ -220,7 +163,6 @@ export function routesEqual(left: AppRoute | null, right: AppRoute | null): bool
 export function routeTitle(route: AppRoute): string {
   if (route.name === 'home') return 'Atlas';
   if (route.name === 'progress') return 'Progress · Atlas';
-  if (route.name === 'atlas') return `${route.scope.label} · Atlas`;
 
   const domain = domainDisplayName(route.domain);
   const scope = route.scope?.label ?? (route.domain === 'flags' ? 'World' : undefined);

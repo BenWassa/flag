@@ -11,7 +11,8 @@ This directory mirrors active product/engineering work that benefits from a dura
 - live country evidence vs earned regional mastery;
 - scarcity-based gamification hierarchy;
 - Africa-first complete proving ground;
-- region × domain cross-domain competency, surfaced on the continent surface's region cards rather than a separate region-detail screen.
+- mode-first navigation: Home chooses a learning mode, each mode owns its continent index, and the launcher owns continent/region scope;
+- region × domain cross-domain competency, read on Progress rather than repeated on every region row.
 
 ### 2. Learning / achievement architecture
 
@@ -40,16 +41,23 @@ spun off a focused follow-up issue below.
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it.
-- [#75 — fix silent round-drop on refresh](https://github.com/BenWassa/flag/issues/75).
-  UX gap found and root-caused during #72's audit, deliberately carved out as
-  its own issue. See the "Root cause" and "Phase 2" sections of
-  [`closed/issue-72-legacy-code-css-audit.md`](../closed/issue-72-legacy-code-css-audit.md).
-- [#76 — add full-continent Play entry to continent surface](https://github.com/BenWassa/flag/issues/76).
-  Delivery follow-up to #74's completed evaluation. Full IA decision, risk
-  assessment and implementation notes are in
-  [`closed/issue-74-full-continent-play.md`](../closed/issue-74-full-continent-play.md).
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
+
+#75 (silent round-drop on refresh) and #76 (full-continent Play) are complete
+and closed. #76's continent-wide Play survives the mode-first IA change: it now
+lives on each domain's continent index and inside the launcher, rather than on
+the retired scope-first continent surface.
+
+**Mode-first IA change (no issue number).** Navigation was inverted from
+scope-first to mode-first: Home lists the four learning modes with their
+progress, `/{domain}` lists that mode's continents, and `/{domain}/{continent}`
+is the launcher. The `/atlas/*` routes, `src/ui/views/atlas.ts` and the region
+card's four-domain launch row are retired. Normative descriptions live in
+`PRODUCT.md`, `DESIGN.md` and
+[`../architecture/routing.md`](../architecture/routing.md); the closed records of
+#35 and #74 describe the superseded scope-first design and should be read as
+history.
 
 ### 5. Geography expansion
 

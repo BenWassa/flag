@@ -92,7 +92,8 @@ body { letter-spacing: -.006em; }
 }
 
 .screen-title h1,
-.overview-heading h1 {
+.overview-heading h1,
+.overview-heading h2 {
   font-size: clamp(1.9rem, 8vw, 2.25rem);
   font-weight: 800;
   line-height: 1.02;
@@ -182,8 +183,13 @@ body { letter-spacing: -.006em; }
   padding: 17px 14px 15px 16px;
 }
 
+/* Placed explicitly rather than auto-flowed: the shared continent-row rules
+   pin progress and score to their own row/column below 640px, and a tile that
+   inherited that placement would drop the silhouette underneath the strip. */
 .page--tile-index .continent-row__identity {
   align-self: start;
+  grid-column: 1;
+  grid-row: 1;
   gap: 3px;
 }
 
@@ -198,10 +204,84 @@ body { letter-spacing: -.006em; }
   line-height: 1.35;
 }
 
+/* Geography stays the loudest thing on the tile (DESIGN.md): the silhouette
+   fills the slack row between the continent's name and its evidence strip,
+   held back to a tint so it reads as the tile's subject rather than as a
+   control competing with the Play button beside it. */
+.page--tile-index .continent-row__mark {
+  align-self: center;
+  justify-self: center;
+  grid-column: 1;
+  grid-row: 2;
+  display: grid;
+  place-items: center;
+  min-height: 0;
+  color: var(--line-strong);
+  pointer-events: none;
+}
+
+.page--tile-index .continent-row__mark .continent-icon {
+  width: 54px;
+  height: 54px;
+  max-height: 100%;
+}
+
 .page--tile-index .continent-row__progress {
   align-self: end;
+  grid-column: 1;
+  grid-row: 3;
   width: 100%;
 }
+
+/* A continent this domain has not shipped: inert, no Play column, dashed to
+   match the unavailable treatment Progress already uses. Never a failure
+   colour — the curriculum is simply not here yet.
+
+   Deliberately shorter than a shipped tile. An Africa-only domain lists one
+   continent it can teach and five it cannot, and at equal height the five
+   would own the screen; halving them keeps the list honest without letting
+   absent curriculum outweigh the continent the learner came to play. */
+.page--tile-index .continent-row--shell {
+  /* Without this the grid row stretches the shell back to the height of the
+     shipped tile beside it, undoing the demotion above. */
+  align-self: start;
+  grid-template-columns: minmax(0, 1fr);
+  border-style: dashed;
+  box-shadow: none;
+  background: transparent;
+}
+
+.page--tile-index .continent-row--shell .continent-row__open {
+  min-height: 0;
+  grid-template-rows: auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: default;
+}
+
+.page--tile-index .continent-row--shell .continent-row__identity strong {
+  font-size: 15px;
+  color: var(--text-muted);
+}
+
+.page--tile-index .continent-row--shell .continent-row__mark {
+  grid-column: 2;
+  grid-row: 1;
+  color: var(--line-strong);
+}
+
+.page--tile-index .continent-row--shell .continent-row__mark .continent-icon {
+  width: 28px;
+  height: 28px;
+}
+
+.page--tile-index .continent-row--shell:hover {
+  border-color: var(--line);
+  box-shadow: none;
+}
+
+.page--tile-index .continent-row--shell:active { transform: none; }
 
 .page--tile-index .continent-row__progress .status-strip {
   height: 7px;
@@ -612,30 +692,22 @@ body { letter-spacing: -.006em; }
 }
 
 /* ==========================================================================
-   Scope-first Atlas surfaces (Home / continent / region)
+   Mode-first Atlas surfaces (Home)
 
-   These three screens carry the arcade tier of the depth system: a 2px ink
-   border plus a hard 2px offset shadow that collapses diagonally under the
-   press. Ordinary chrome elsewhere keeps the soft --depth-tile treatment.
+   Home carries the arcade tier of the depth system: a 2px ink border plus a
+   hard 2px offset shadow that collapses diagonally under the press. Ordinary
+   chrome elsewhere keeps the soft --depth-tile treatment.
    ========================================================================== */
 
 .page--atlas { width: min(100%, 560px); }
 
 .topbar--atlas { margin-bottom: 20px; }
 .topbar--atlas.topbar--detail { justify-content: space-between; }
-.topbar__balance { width: 44px; flex: 0 0 auto; }
 
 .page--atlas .brand-name {
   font-size: clamp(26px, 8vw, 32px);
   font-weight: 900;
   letter-spacing: -.035em;
-}
-
-.atlas-title {
-  font-size: clamp(21px, 6vw, 26px);
-  font-weight: 900;
-  letter-spacing: -.035em;
-  text-align: center;
 }
 
 .atlas-eyebrow {
@@ -649,55 +721,37 @@ body { letter-spacing: -.006em; }
 
 .atlas-card-list { display: flex; flex-direction: column; gap: 14px; }
 
-.atlas-card,
-.domain-launch__mark {
-  border: 2px solid var(--text);
-  box-shadow: var(--depth-arcade);
-  background: var(--surface);
-  transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
-}
-
-.atlas-card { color: var(--text); }
-
-.atlas-card:active,
-.domain-launch:active .domain-launch__mark {
-  transform: translate(2px, 2px);
-  box-shadow: 0 0 0 var(--text);
-}
-
-/* Scope cards and launchers had press physics but no hover state at all, so a
-   pointer user got no confirmation a card was live until they committed to a
-   click. Hover lifts the ink shadow rather than recolouring the surface, which
-   keeps it in the same physical vocabulary as the press that follows it. */
-@media (hover: hover) and (pointer: fine) {
-  .atlas-card:hover,
-  .domain-launch:hover .domain-launch__mark {
-    transform: translate(-1px, -1px);
-    box-shadow: 3px 3px 0 var(--text);
-  }
-
-  .atlas-card--region:hover { transform: none; box-shadow: var(--depth-arcade); }
-  .domain-launch:hover .domain-launch__mark { background: var(--action-soft); }
-  .domain-launch:hover .domain-launch__label { color: var(--text); }
-}
-
-/* The region card is a container, not a single control: its identity button
-   and its four domain-launch buttons press independently, so the outer
-   wrapper itself never shows an active state. */
-.atlas-card--region:active { transform: none; box-shadow: var(--depth-arcade); }
-
-/* --- Continent / region cards ------------------------------------------- */
-
 .atlas-card {
   display: flex;
   align-items: center;
   gap: 14px;
   width: 100%;
   padding: 12px;
+  border: 2px solid var(--text);
   border-radius: 28px;
+  background: var(--surface);
+  box-shadow: var(--depth-arcade);
+  color: var(--text);
   text-align: left;
   cursor: pointer;
   position: relative;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
+}
+
+.atlas-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--text);
+}
+
+/* Mode cards had press physics but no hover state at all, so a pointer user
+   got no confirmation a card was live until they committed to a click. Hover
+   lifts the ink shadow rather than recolouring the surface, which keeps it in
+   the same physical vocabulary as the press that follows it. */
+@media (hover: hover) and (pointer: fine) {
+  .atlas-card:hover {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--text);
+  }
 }
 
 .atlas-card__mark {
@@ -712,24 +766,17 @@ body { letter-spacing: -.006em; }
   color: var(--on-action);
 }
 
-.atlas-card--shell .atlas-card__mark {
-  background: var(--canvas);
-  color: var(--line-strong);
-}
-
 .atlas-card__mark .ui-icon { width: 32px; height: 32px; }
 
-.atlas-card__mark .continent-icon {
-  width: 46px;
-  height: 46px;
-  transform-origin: center;
+/* The mode card stacks identity over its evidence strip, so the two share one
+   flex column between the domain mark and the chevron. */
+.atlas-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-width: 0;
 }
-
-.atlas-card__mark .continent-icon[data-continent="asia"] { transform: scale(1.2); }
-.atlas-card__mark .continent-icon[data-continent="europe"] { transform: scale(1.12); }
-.atlas-card__mark .continent-icon[data-continent="north-america"] { transform: scale(1.16); }
-.atlas-card__mark .continent-icon[data-continent="south-america"] { transform: translateX(1px); }
-.atlas-card__mark .continent-icon[data-continent="oceania"] { transform: translate(1px, 1px) scale(1.04); }
 
 .atlas-card__identity { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
 
@@ -740,8 +787,7 @@ body { letter-spacing: -.006em; }
   line-height: 1;
 }
 
-.atlas-card__identity small,
-.atlas-card__head small {
+.atlas-card__identity small {
   font-size: 11px;
   font-weight: 800;
   text-transform: uppercase;
@@ -749,122 +795,18 @@ body { letter-spacing: -.006em; }
   color: var(--text-muted);
 }
 
-.atlas-card__shell-note {
-  margin-left: auto;
-  font-size: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .08em;
-  color: var(--text-muted);
-  white-space: nowrap;
+.atlas-card__body .status-strip {
+  height: 7px;
+  border-radius: 999px;
 }
 
-/* Region cards are a container, not a single control: no display:flex/cursor
-   of their own — the identity button and domain-launch row each behave like
-   ordinary tile content stacked inside the arcade-bordered wrapper. */
-.atlas-card--region {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 14px;
-  width: 100%;
-  padding: 16px;
-  border-radius: 28px;
-  position: relative;
-}
-
-/* The continent-wide Play entry (#76): same chassis and domain-launch row as
-   a region card, deliberately heavier so it never reads as a sixth region.
-   Atlas Blue only — gold and purple stay reserved for scarce prestige and
-   earned mastery (docs/product/colour-system.md). */
-.atlas-card--continent {
-  border-width: 3px;
-  border-color: var(--action);
-  background: var(--action-soft);
-  padding: 18px 16px;
-}
-
-.atlas-card--continent .atlas-card__head strong {
-  font-size: clamp(21px, 5.8vw, 25px);
-}
-
-.atlas-card__head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
-
-.atlas-card__head strong {
-  font-size: clamp(19px, 5.4vw, 23px);
-  font-weight: 900;
-  letter-spacing: -.03em;
-  line-height: 1;
-}
-
-/* --- Domain launch row: each icon starts that domain's game directly ----- */
-
-/* Four equal columns rather than a flex run: each launcher owns a quarter of
-   the card, so its label has a predictable width to sit in and the row stays
-   aligned across every region card in the list. */
-.domain-launch-row {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  align-items: start;
-  /* Fills the card on a phone, but stops spreading on a wide one: past about
-     340px the four launchers stop reading as one cluster under the region
-     name and start looking like four unrelated marks. */
-  max-width: 340px;
-  gap: 4px;
-}
-
-.domain-launch,
-.domain-launch--absent {
-  display: grid;
-  justify-items: center;
-  gap: 6px;
-  min-width: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-
-.domain-launch { cursor: pointer; }
-
-.domain-launch__mark {
-  width: 48px;
-  height: 48px;
+.atlas-card__chevron {
+  flex: 0 0 auto;
   display: grid;
   place-items: center;
-  border-radius: 50%;
-  /* Atlas Blue: starting a round is the ordinary primary action, and these are
-     the most-used instances of it in the product. Ink-on-white read as chrome. */
-  color: var(--action);
-}
-
-.domain-launch__mark .ui-icon { width: 22px; height: 22px; }
-
-.domain-launch__label {
-  /* Clamped so "Neighbours" still fits a quarter of a 320px-wide card without
-     wrapping mid-word, and reaches a comfortable 11px from 375px up. */
-  font-size: clamp(10px, 2.9vw, 11px);
-  font-weight: 700;
-  line-height: 1.15;
-  letter-spacing: -.005em;
-  color: var(--text-muted);
-  text-align: center;
-}
-
-/* Unavailable, not failed: a dashed mark with no standing depth, matching the
-   dashed treatment Progress already uses for unsupported domain badges. */
-.domain-launch--absent .domain-launch__mark {
-  border: 2px dashed var(--line-strong);
-  box-shadow: none;
-  color: var(--line-strong);
-  background: var(--canvas);
-}
-
-/* The dashed mark carries the unavailable state on its own. The label stays at
-   ordinary metadata contrast, because which domain is still coming is real
-   information the learner needs to be able to read. */
-.domain-launch--absent .domain-launch__label {
   color: var(--text-muted);
 }
+
 
 /* --- Short landscape ------------------------------------------------------ */
 
@@ -874,15 +816,12 @@ body { letter-spacing: -.006em; }
   .atlas-card { padding: 10px; border-radius: 24px; }
   .atlas-card__mark { width: 48px; height: 48px; border-radius: 16px; }
   .atlas-card__mark .ui-icon { width: 26px; height: 26px; }
-  .atlas-card__mark .continent-icon { width: 38px; height: 38px; }
   .topbar--atlas { margin-bottom: 14px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .atlas-card:active,
-  .atlas-card:hover,
-  .domain-launch:active .domain-launch__mark,
-  .domain-launch:hover .domain-launch__mark {
+  .atlas-card:hover {
     transform: none;
   }
 }
@@ -975,13 +914,15 @@ body { letter-spacing: -.006em; }
    so nothing reflows; only the mark reads as occupied. */
 .is-launching { cursor: progress; }
 
-.domain-launch.is-launching .domain-launch__mark,
+.continent-row__play.is-launching,
+.region-row__play.is-launching,
 .button.is-launching {
   background: var(--action-soft);
   color: var(--action);
 }
 
-.domain-launch.is-launching .domain-launch__mark {
+.continent-row__play.is-launching,
+.region-row__play.is-launching {
   animation: launch-pulse 900ms ease-in-out infinite;
 }
 
@@ -1000,7 +941,8 @@ body { letter-spacing: -.006em; }
 
 @media (prefers-reduced-motion: reduce) {
   .app-notice:not([hidden]) { animation: none; }
-  .domain-launch.is-launching .domain-launch__mark { animation: none; opacity: .7; }
+  .continent-row__play.is-launching,
+  .region-row__play.is-launching { animation: none; opacity: .7; }
   .button--primary.is-launching { transform: none; }
 }
 

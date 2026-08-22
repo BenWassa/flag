@@ -48,5 +48,16 @@ export function exitRoundLabel(domain: LearningDomain): string {
   return `Back to ${domainDisplayName(domain)}`;
 }
 
+/**
+ * What a domain currently teaches, not what it will eventually teach. Home and
+ * the domain's own continent index share this wording so the learner reads the
+ * same coverage claim on both screens instead of re-deriving it.
+ */
+export function coverageLabel(continentNames: readonly string[], allContinentCount: number): string {
+  if (continentNames.length === 0) return 'Coming soon';
+  if (continentNames.length === allContinentCount) return 'World';
+  return continentNames.length <= 2 ? continentNames.join(' & ') : `${continentNames.length} continents`;
+}
+
 export const EVIDENCE_RULE =
   'Clean retrieval builds strong evidence. Play can calibrate known material faster; misses stay in the learning record.';

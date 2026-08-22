@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
+import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
 import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../dist/domain/progress.js';
 import { balancedPositions, buildQuiz, createSeededRandom } from '../dist/domain/quiz.js';
 
@@ -94,7 +95,7 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // launcher actions, focus landing points, and evidence-language boundaries.
 
 const { renderHome } = await import('../dist/ui/views/home.js');
-const { renderContinent } = await import('../dist/ui/views/atlas.js');
+const { renderDomainIndex } = await import('../dist/ui/views/domain.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
 const { renderProgress } = await import('../dist/ui/views/progress.js');
 const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
@@ -124,9 +125,16 @@ assert.equal(
 const fresh = createInitialProgress(COUNTRIES);
 const africaScopeFixture = { kind: 'continent', id: 'africa', label: 'Africa' };
 const westAfricaScopeFixture = { kind: 'region', id: 'west-africa', label: 'West Africa' };
+const ledgers = {
+  flags: fresh,
+  locations: { version: 2, records: {} },
+  outlines: { version: 2, records: {} },
+  neighbors: { version: 2, records: {} },
+};
 const screens = {
-  home: renderHome(fresh),
-  atlasContinent: renderContinent(fresh, africaScopeFixture),
+  home: renderHome(ledgers),
+  flagsIndex: renderDomainIndex('flags', ledgers),
+  locationsIndex: renderDomainIndex('locations', ledgers),
   scope: renderScope(fresh, africaScopeFixture),
   region: renderScope(fresh, westAfricaScopeFixture),
   progress: renderProgressView(fresh),
@@ -142,32 +150,51 @@ for (const [name, html] of Object.entries(screens)) {
   assert.ok(!html.includes('NaN'), `${name} must not render NaN values.`);
 }
 
-// Home is scope-first: it selects a continent rather than a learning domain.
-// The four domains are reached from a region, one level deeper.
+// Home is mode-first: it selects a learning domain, and geography is chosen
+// one level deeper on that domain's own continent index.
 assert.equal(
-  (screens.home.match(/data-action="open-atlas"/g) ?? []).length,
-  CONTINENTS.length,
-  'Home exposes every continent.',
+  (screens.home.match(/data-action="open-domain"/g) ?? []).length,
+  LEARNING_DOMAIN_IDS.length,
+  'Home exposes every learning domain.',
 );
-// Continents own Home scope selection; World Flags does not compete with the
-// six continent cards as a footer action.
 assert.equal(
   (screens.home.match(/data-action="quick-play"/g) ?? []).length,
   0,
-  'Home does not expose a direct World Flags footer action.',
+  'Home commits to choosing a mode; it does not start a round behind the learner\'s back.',
 );
-assert.equal(screens.home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
-// Region cards no longer link to a separate region-detail screen; each one
-// carries a direct domain-launch shortcut per supported domain instead.
-assert.equal((screens.atlasContinent.match(/data-action="open-atlas"/g) ?? []).length, 0);
 assert.equal(
-  (screens.atlasContinent.match(/data-action="quick-play"/g) ?? []).length,
-  (REGIONS.filter((region) => region.continentId === 'africa').length + 1) * 4,
-  'The continent surface gives each of its regions, plus the continent-wide entry, all four domain-launch shortcuts.',
+  screens.home.includes('data-action="open-scope"'),
+  false,
+  'Home no longer selects geography directly.',
+);
+// The domain index is the continent list for exactly one domain.
+assert.equal(
+  (screens.flagsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  CONTINENTS.length,
+  'Flags reaches every continent from its own index.',
+);
+assert.equal(
+  (screens.locationsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  1,
+  'Locations opens only the continent it has actually shipped.',
+);
+assert.equal(
+  (screens.locationsIndex.match(/continent-row--shell/g) ?? []).length,
+  CONTINENTS.length - 1,
+  'Every continent Locations has not shipped is still listed, as an honest shell.',
 );
 assert.ok(
-  renderContinent(fresh, { kind: 'continent', id: 'europe', label: 'Europe' }).includes('domain-launch--absent'),
-  'A continent without generated geometry shows honest unsupported domains on its region cards.',
+  screens.locationsIndex.includes('Coming soon'),
+  'An unshipped continent names the gap rather than looking playable.',
+);
+assert.equal(
+  screens.locationsIndex.includes('data-action="start-test"'),
+  false,
+  'Only Flags offers a world round, because only Flags teaches the world.',
+);
+assert.ok(
+  screens.flagsIndex.includes('data-action="start-test"'),
+  'The Flags index keeps its world round.',
 );
 assert.ok(screens.scope.includes('Play Africa') && screens.scope.includes('Learn Africa'), 'The continent launcher exposes its two round choices.');
 assert.ok(!screens.scope.includes('All Africa'), 'The continent launcher does not offer a redundant all-continent selector.');
@@ -331,10 +358,10 @@ const staleMissed = renderResults({
 });
 assert.ok(staleMissed.includes('Answered incorrectly'), 'A mistake against an unknown option still renders a review row.');
 
-assert.ok(renderHome(fresh, false).includes('storage-notice'), 'A browser that blocks storage is told so on the atlas.');
-assert.ok(!renderHome(fresh, true).includes('storage-notice'), 'The storage notice stays out of the way when storage works.');
+assert.ok(renderHome(ledgers, false).includes('storage-notice'), 'A browser that blocks storage is told so on the atlas.');
+assert.ok(!renderHome(ledgers, true).includes('storage-notice'), 'The storage notice stays out of the way when storage works.');
 assert.ok(
-  !renderHome(fresh, false).includes('role="status"') && !renderHome(fresh, false).includes('aria-live'),
+  !renderHome(ledgers, false).includes('role="status"') && !renderHome(ledgers, false).includes('aria-live'),
   'The storage notice is static copy, not another live region inside the replaced #app.',
 );
 assert.ok(
