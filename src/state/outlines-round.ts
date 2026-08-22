@@ -26,7 +26,7 @@ export interface OutlinesRound {
 }
 
 export function createOutlinesRound(context: RoundContext): OutlinesRound {
-  const { store, router, announce, finishInteraction, getCurrentRoute, cancelAllPending } = context;
+  const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
   let pendingOutlineAdvance: number | null = null;
 
@@ -58,17 +58,17 @@ export function createOutlinesRound(context: RoundContext): OutlinesRound {
     try {
       asset = await loadOutlineAsset(scope.id ?? 'africa');
     } catch {
-      if (isCurrentRoundLaunch(request)) announce(`${scope.label} silhouettes could not be loaded.`);
+      if (isCurrentRoundLaunch(request)) notify(`${scope.label} silhouettes could not be loaded. Check your connection and try again.`);
       return;
     }
     if (!isCurrentRoundLaunch(request)) return;
     if (!asset) {
-      announce(`${scope.label} silhouettes could not be loaded.`);
+      notify(`${scope.label} silhouettes could not be loaded. Check your connection and try again.`);
       return;
     }
     const size = targetCountryIds ? Math.max(1, Math.min(10, targetCountryIds.length)) : 10;
     if (!store.startOutlineSession(asset, mode, size, targetCountryIds)) {
-      announce('No country outlines are available for this round.');
+      notify('No country outlines are available for this round.');
       return;
     }
 

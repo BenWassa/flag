@@ -11,6 +11,13 @@ function backButton(label: string): string {
   return `<button class="icon-button" type="button" data-action="route-parent" aria-label="${escapeHtml(label)}">${icon('back')}</button>`;
 }
 
+/**
+ * The four launchers are the highest-frequency action in the product, so each
+ * one names its domain in visible text rather than relying on the glyph alone.
+ * DESIGN.md's own icon rationale assumes this: `Intersect` was accepted for
+ * Neighbours because it is read "paired with the visible Neighbours label",
+ * and Polygon/Intersect are genuinely ambiguous at 22px without one.
+ */
 function domainLaunchRow(scope: StudyScope): string {
   const label = escapeHtml(scope.label);
   const buttons = LEARNING_DOMAIN_IDS.map((domain) => {
@@ -20,7 +27,9 @@ function domainLaunchRow(scope: StudyScope): string {
     if (!supported) {
       return `
         <span class="domain-launch domain-launch--absent" title="${name} not available yet">
-          ${domainIcon(domain)}<span class="visually-hidden">${name} not available yet</span>
+          <span class="domain-launch__mark" aria-hidden="true">${domainIcon(domain)}</span>
+          <span class="domain-launch__label">${name}</span>
+          <span class="visually-hidden">not available yet</span>
         </span>
       `;
     }
@@ -33,7 +42,10 @@ function domainLaunchRow(scope: StudyScope): string {
         data-domain="${domain}"
         data-id="${escapeHtml(scope.id ?? '')}"
         aria-label="Play ${label} ${name.toLowerCase()}"
-      >${domainIcon(domain)}</button>
+      >
+        <span class="domain-launch__mark" aria-hidden="true">${domainIcon(domain)}</span>
+        <span class="domain-launch__label" aria-hidden="true">${name}</span>
+      </button>
     `;
   }).join('');
   return `<span class="domain-launch-row">${buttons}</span>`;

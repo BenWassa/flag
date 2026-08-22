@@ -3,10 +3,7 @@ import { getMapContinentConfigForScope } from './data/map-scopes.js';
 import { loadMapAsset } from './data/maps/index.js';
 import { NEIGHBOR_GUESS_COUNTRY_IDS } from './data/neighbors/index.js';
 import { domainDisplayName } from './domain/display.js';
-import type {
-  LearningStatus,
-  StudyScope,
-} from './domain/models.js';
+import type { StudyScope } from './domain/models.js';
 import type { MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
 import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
@@ -39,6 +36,8 @@ import { invalidatePendingRoundLaunch } from './state/round-launch-guard.js';
 import type { RoundContext } from './state/round-context.js';
 import { AppStore } from './state/store.js';
 import { markFailedFlags } from './ui/components/flag.js';
+import { icon } from './ui/components/icons.js';
+import { escapeHtml } from './ui/format.js';
 import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderFocusIntent } from './ui/focus.js';
 import { renderDomainHome } from './ui/views/domain.js';
@@ -64,11 +63,16 @@ if (!(appRoot instanceof HTMLDivElement)) throw new Error('App root not found.')
 const root: HTMLDivElement = appRoot;
 const liveStatus = document.querySelector<HTMLElement>('#live-status');
 
+const appNotice = document.querySelector<HTMLElement>('#app-notice');
+
 const store = new AppStore();
 const router = createHashRouter(window);
 const allowedNeighborCountryIds = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 let currentRoute: AppRoute = { name: 'home' };
-let progressFilter: LearningStatus | 'all' = 'all';
+// Progress filter tokens are compound: 'all', 'domain:<domain>', or
+// 'domain:<domain>|<evidence>'. renderProgress parses them; they are not
+// LearningStatus values, so they are not typed as one.
+let progressFilter = 'all';
 let resetArmed = false;
 let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
@@ -90,6 +94,71 @@ function announce(message: string): void {
     pendingAnnouncement = null;
     liveStatus.textContent = message;
   }, 60);
+}
+
+const NOTICE_DURATION_MS = 7000;
+let noticeTimer: number | null = null;
+
+function dismissNotice(): void {
+  if (!appNotice) return;
+  if (noticeTimer !== null) window.clearTimeout(noticeTimer);
+  noticeTimer = null;
+  appNotice.textContent = '';
+  appNotice.hidden = true;
+}
+
+/**
+ * A message the learner has to actually see. `announce` writes into a
+ * visually-hidden live region, which is right for routine progress talk but
+ * wrong for "that action did not happen": before this existed, a round whose
+ * geometry failed to load, or an unrecognised country name in the Neighbours
+ * field, produced a completely silent dead tap for anyone not using a screen
+ * reader. #app-notice is itself a live region, so this is seen and announced
+ * once rather than duplicated through `announce`.
+ */
+function notify(message: string): void {
+  if (!appNotice || !message) return;
+  if (noticeTimer !== null) window.clearTimeout(noticeTimer);
+  appNotice.hidden = false;
+  appNotice.innerHTML = `
+    <span class="app-notice__body">
+      <span class="app-notice__icon" aria-hidden="true">${icon('warning')}</span>
+      <span class="app-notice__message">${escapeHtml(message)}</span>
+    </span>
+    <button class="app-notice__dismiss" type="button" data-notice-dismiss aria-label="Dismiss message">${icon('close')}</button>
+  `;
+  noticeTimer = window.setTimeout(dismissNotice, NOTICE_DURATION_MS);
+}
+
+appNotice?.addEventListener('click', (event) => {
+  if (event.target instanceof Element && event.target.closest('[data-notice-dismiss]')) dismissNotice();
+});
+
+/**
+ * Locations, Outlines and Neighbours all start a round behind a dynamic
+ * import of generated geometry. On a cold cache that is a real wait, and the
+ * pressed control used to give no sign it had registered the tap at all.
+ * The control is marked busy for the duration, and released again if the
+ * launch fails — a successful launch replaces the DOM anyway.
+ */
+async function withLaunchFeedback(
+  element: HTMLElement | null,
+  launch: () => Promise<void>,
+): Promise<void> {
+  if (!element) {
+    await launch();
+    return;
+  }
+  element.setAttribute('aria-busy', 'true');
+  element.classList.add('is-launching');
+  try {
+    await launch();
+  } finally {
+    if (element.isConnected) {
+      element.removeAttribute('aria-busy');
+      element.classList.remove('is-launching');
+    }
+  }
 }
 
 function finishInteraction(previousSelector: string | null): void {
@@ -114,6 +183,7 @@ const roundContext: RoundContext = {
   store,
   router,
   announce,
+  notify,
   finishInteraction,
   getCurrentRoute: () => currentRoute,
   cancelAllPending,
@@ -277,6 +347,7 @@ router.subscribe((route) => {
   // waiting for geometry. The winning start increments this token itself.
   invalidatePendingRoundLaunch();
   cancelAllPending();
+  dismissNotice();
   resetArmed = false;
   if (!route || !isFlagsStudyRoute(route)) {
     revealedFlagIds.clear();
@@ -484,7 +555,11 @@ function openScope(domainValue: string | undefined, id: string | undefined): voi
   if (route) navigateStable(route);
 }
 
-function quickPlay(domainValue: string | undefined, id: string | undefined): void {
+function quickPlay(
+  domainValue: string | undefined,
+  id: string | undefined,
+  element: HTMLElement | null = null,
+): void {
   if (!isLearningDomain(domainValue)) return;
   const scope = scopeForQuickPlay(domainValue, id);
   if (!scope) return;
@@ -492,9 +567,9 @@ function quickPlay(domainValue: string | undefined, id: string | undefined): voi
   if (domainValue === 'flags') {
     flagsRound.begin(scope, 'test');
   } else if (domainValue === 'locations') {
-    void locationsRound.begin('test', undefined, scope);
+    void withLaunchFeedback(element, () => locationsRound.begin('test', undefined, scope));
   } else if (domainValue === 'outlines') {
-    void outlinesRound.begin('test', undefined, scope);
+    void withLaunchFeedback(element, () => outlinesRound.begin('test', undefined, scope));
   } else {
     neighborsRound.begin('test', undefined, scope);
   }
@@ -557,7 +632,7 @@ root.addEventListener('click', (event) => {
     return;
   }
   if (action === 'quick-play') {
-    quickPlay(element.dataset.domain, id);
+    quickPlay(element.dataset.domain, id, element);
     return;
   }
   if (action === 'open-atlas') {
@@ -596,11 +671,11 @@ root.addEventListener('click', (event) => {
     return;
   }
   if (action === 'start-map-learn' || action === 'start-map-test') {
-    void locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test');
+    void withLaunchFeedback(element, () => locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test'));
     return;
   }
   if (action === 'start-outline-learn' || action === 'start-outline-test') {
-    void outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test');
+    void withLaunchFeedback(element, () => outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test'));
     return;
   }
   if (action === 'start-neighbor-learn' || action === 'start-neighbor-test') {
@@ -650,7 +725,7 @@ root.addEventListener('click', (event) => {
       navigateStable({ name: 'progress' });
       return;
     case 'filter-progress':
-      progressFilter = (id as LearningStatus | 'all') ?? 'all';
+      progressFilter = id ?? 'all';
       break;
     case 'reset-request':
       resetArmed = true;
@@ -738,7 +813,7 @@ root.addEventListener('submit', (event) => {
   event.preventDefault();
   const country = resolveCountryGuess(COUNTRIES, allowedNeighborCountryIds, neighborsRound.getQuery());
   if (!country) {
-    announce('Choose a country from the suggestions or enter a complete supported country name.');
+    notify('Choose a country from the suggestions, or type a complete supported country name.');
     return;
   }
   neighborsRound.submitGuess(country.id);

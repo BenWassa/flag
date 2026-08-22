@@ -38,7 +38,7 @@ const PLAY_DWELL_CORRECT_MS = 620;
 const PLAY_DWELL_WRONG_MS = 1500;
 
 export function createFlagsRound(context: RoundContext): FlagsRound {
-  const { store, router, announce, finishInteraction, getCurrentRoute, cancelAllPending } = context;
+  const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
   let lastResultScope: StudyScope | null = null;
   let lastResultMode: StudyMode = 'learn';
@@ -73,7 +73,7 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
   ): void {
     cancelAllPending();
     if (!store.startSession(scope, mode, size, reviewIds)) {
-      announce(`${scope.label} has no flags to practise right now.`);
+      notify(`${scope.label} has no flags to practise right now.`);
       return;
     }
 

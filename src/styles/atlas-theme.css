@@ -105,9 +105,6 @@ body { letter-spacing: -.006em; }
   border-bottom: 0;
 }
 
-.page--home .world-overview { padding-top: 6px; }
-.page--home .overview-heading { margin-bottom: 0; }
-.page--home .atlas-section { margin-top: 22px; }
 
 .button {
   min-height: 52px;
@@ -232,77 +229,6 @@ body { letter-spacing: -.006em; }
   transform: translateY(1px);
 }
 
-/* Home is the highest-frequency game-entry surface, so it carries the
-   strongest neutral tactile treatment. Lower-level scope rows stay quieter. */
-.page--home .continent-list { gap: 14px; }
-
-.page--home .continent-row {
-  grid-template-columns: minmax(0, 1fr) 52px;
-  border: 2px solid var(--text);
-  border-radius: var(--radius-hero);
-  box-shadow: var(--depth-arcade);
-}
-
-.page--home .continent-row:hover {
-  border-color: var(--text);
-  box-shadow: var(--depth-arcade);
-}
-
-.page--home .continent-row:active,
-.page--home .continent-row:has(button:active) {
-  transform: translate(2px, 2px);
-  box-shadow: none;
-}
-
-.page--home .domain-tile__open {
-  min-height: 150px;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto auto 1fr auto;
-  align-content: stretch;
-  gap: 8px;
-  padding: 14px;
-}
-
-.page--home .domain-tile__icon {
-  width: 52px;
-  height: 52px;
-  display: grid;
-  place-items: center;
-  border: 2px solid var(--text);
-  border-radius: var(--radius-tile);
-  background: var(--action);
-  color: var(--on-action);
-}
-
-.page--home .domain-tile__icon .ui-icon {
-  width: 28px;
-  height: 28px;
-}
-
-.page--home .continent-row .continent-row__identity {
-  align-self: start;
-}
-
-.page--home .continent-row .continent-row__identity strong {
-  font-size: 20px;
-  font-weight: 820;
-}
-
-.page--home .continent-row .continent-row__identity small {
-  font-size: 11px;
-  font-weight: 650;
-  text-transform: uppercase;
-  letter-spacing: .055em;
-}
-
-.page--home .continent-row .continent-row__progress {
-  align-self: end;
-}
-
-.page--home .continent-row .continent-row__play {
-  width: 52px;
-  border-left: 2px solid var(--text);
-}
 
 .region-list {
   display: grid;
@@ -648,7 +574,6 @@ body { letter-spacing: -.006em; }
 @media (max-width: 374px) {
   .page--tile-index .continent-list { grid-template-columns: 1fr; }
   .page--tile-index .continent-row__open { min-height: 94px; }
-  .page--home .domain-tile__open { min-height: 118px; }
 }
 
 @media (min-width: 700px) {
@@ -679,7 +604,6 @@ body { letter-spacing: -.006em; }
   .button--primary:active,
   .answer-button:not(:disabled):active,
   .page--tile-index .continent-row:active,
-  .page--home .continent-row:has(button:active),
   .icon-button:active,
   .text-icon-button:active,
   .region-row__play:active,
@@ -727,18 +651,35 @@ body { letter-spacing: -.006em; }
 .atlas-card-list { display: flex; flex-direction: column; gap: 14px; }
 
 .atlas-card,
-.domain-launch {
+.domain-launch__mark {
   border: 2px solid var(--text);
   box-shadow: var(--depth-arcade);
   background: var(--surface);
-  color: var(--text);
   transition: transform 120ms ease, box-shadow 120ms ease, background-color 140ms ease;
 }
 
+.atlas-card { color: var(--text); }
+
 .atlas-card:active,
-.domain-launch:active {
+.domain-launch:active .domain-launch__mark {
   transform: translate(2px, 2px);
   box-shadow: 0 0 0 var(--text);
+}
+
+/* Scope cards and launchers had press physics but no hover state at all, so a
+   pointer user got no confirmation a card was live until they committed to a
+   click. Hover lifts the ink shadow rather than recolouring the surface, which
+   keeps it in the same physical vocabulary as the press that follows it. */
+@media (hover: hover) and (pointer: fine) {
+  .atlas-card:hover,
+  .domain-launch:hover .domain-launch__mark {
+    transform: translate(-1px, -1px);
+    box-shadow: 3px 3px 0 var(--text);
+  }
+
+  .atlas-card--region:hover { transform: none; box-shadow: var(--depth-arcade); }
+  .domain-launch:hover .domain-launch__mark { background: var(--action-soft); }
+  .domain-launch:hover .domain-launch__label { color: var(--text); }
 }
 
 /* The region card is a container, not a single control: its identity button
@@ -844,26 +785,72 @@ body { letter-spacing: -.006em; }
 
 /* --- Domain launch row: each icon starts that domain's game directly ----- */
 
-.domain-launch-row { display: flex; align-items: center; gap: 10px; }
+/* Four equal columns rather than a flex run: each launcher owns a quarter of
+   the card, so its label has a predictable width to sit in and the row stays
+   aligned across every region card in the list. */
+.domain-launch-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
+  /* Fills the card on a phone, but stops spreading on a wide one: past about
+     340px the four launchers stop reading as one cluster under the region
+     name and start looking like four unrelated marks. */
+  max-width: 340px;
+  gap: 4px;
+}
 
 .domain-launch,
 .domain-launch--absent {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.domain-launch { cursor: pointer; }
+
+.domain-launch__mark {
   width: 48px;
   height: 48px;
   display: grid;
   place-items: center;
   border-radius: 50%;
+  /* Atlas Blue: starting a round is the ordinary primary action, and these are
+     the most-used instances of it in the product. Ink-on-white read as chrome. */
+  color: var(--action);
 }
 
-.domain-launch { cursor: pointer; }
-.domain-launch .ui-icon { width: 22px; height: 22px; }
+.domain-launch__mark .ui-icon { width: 22px; height: 22px; }
 
-.domain-launch--absent {
-  border: 2px solid var(--line);
+.domain-launch__label {
+  /* Clamped so "Neighbours" still fits a quarter of a 320px-wide card without
+     wrapping mid-word, and reaches a comfortable 11px from 375px up. */
+  font-size: clamp(10px, 2.9vw, 11px);
+  font-weight: 700;
+  line-height: 1.15;
+  letter-spacing: -.005em;
+  color: var(--text-muted);
+  text-align: center;
+}
+
+/* Unavailable, not failed: a dashed mark with no standing depth, matching the
+   dashed treatment Progress already uses for unsupported domain badges. */
+.domain-launch--absent .domain-launch__mark {
+  border: 2px dashed var(--line-strong);
+  box-shadow: none;
   color: var(--line-strong);
   background: var(--canvas);
 }
-.domain-launch--absent .ui-icon { width: 22px; height: 22px; }
+
+/* The dashed mark carries the unavailable state on its own. The label stays at
+   ordinary metadata contrast, because which domain is still coming is real
+   information the learner needs to be able to read. */
+.domain-launch--absent .domain-launch__label {
+  color: var(--text-muted);
+}
 
 /* --- Short landscape ------------------------------------------------------ */
 
@@ -879,7 +866,131 @@ body { letter-spacing: -.006em; }
 
 @media (prefers-reduced-motion: reduce) {
   .atlas-card:active,
-  .domain-launch:active {
+  .atlas-card:hover,
+  .domain-launch:active .domain-launch__mark,
+  .domain-launch:hover .domain-launch__mark {
     transform: none;
   }
+}
+
+/* ==========================================================================
+   Visible action feedback
+
+   Two states that previously existed only for screen readers. A round that
+   fails to load its geometry, or a country name the Neighbours field cannot
+   resolve, used to write to the visually-hidden live region alone — a silent
+   dead tap for everyone else. The notice is a floating status strip rather
+   than a modal: it never blocks the surface it reports on.
+   ========================================================================== */
+
+.app-notice:not([hidden]) {
+  position: fixed;
+  left: 50%;
+  bottom: calc(14px + env(safe-area-inset-bottom));
+  z-index: 20;
+  transform: translateX(-50%);
+  width: min(calc(100% - 28px), 420px);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 10px 10px 14px;
+  border: 1px solid var(--wrong-line);
+  border-radius: var(--radius-md);
+  background: var(--wrong-soft);
+  box-shadow: var(--depth-tile-hover);
+  animation: app-notice-in 160ms cubic-bezier(.22, 1, .36, 1);
+}
+
+.app-notice__body {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.app-notice__icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  color: var(--wrong);
+}
+
+.app-notice__icon .ui-icon { width: 20px; height: 20px; }
+
+.app-notice__message {
+  min-width: 0;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.app-notice__dismiss {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.app-notice__dismiss .ui-icon { width: 16px; height: 16px; }
+.app-notice__dismiss:active { background: color-mix(in srgb, var(--wrong-line) 40%, transparent); }
+
+@media (hover: hover) and (pointer: fine) {
+  .app-notice__dismiss:hover {
+    background: color-mix(in srgb, var(--wrong-line) 34%, transparent);
+    color: var(--text);
+  }
+}
+
+@keyframes app-notice-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* A launcher waiting on its geometry. The control keeps its size and position
+   so nothing reflows; only the mark reads as occupied. */
+.is-launching { cursor: progress; }
+
+.domain-launch.is-launching .domain-launch__mark,
+.button.is-launching {
+  background: var(--action-soft);
+  color: var(--action);
+}
+
+.domain-launch.is-launching .domain-launch__mark {
+  animation: launch-pulse 900ms ease-in-out infinite;
+}
+
+.button--primary.is-launching {
+  border-color: var(--action-pressed);
+  background: var(--action-pressed);
+  color: var(--on-action-muted);
+  box-shadow: 0 1px 0 var(--action-pressed);
+  transform: translateY(3px);
+}
+
+@keyframes launch-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-notice:not([hidden]) { animation: none; }
+  .domain-launch.is-launching .domain-launch__mark { animation: none; opacity: .7; }
+  .button--primary.is-launching { transform: none; }
+}
+
+@media (forced-colors: active) {
+  .app-notice:not([hidden]) { border: 2px solid CanvasText; background: Canvas; }
+  .app-notice__icon { color: CanvasText; }
 }

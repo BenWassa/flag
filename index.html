@@ -28,6 +28,15 @@
     -->
     <div id="app"></div>
     <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
+    <!--
+      Visible counterpart to #live-status. Routine progress talk stays
+      screen-reader-only above; anything the learner must actually see when an
+      action does not complete (a round that could not load its geometry, an
+      unrecognised country name) is rendered here instead. It sits outside
+      #app so it survives the app's innerHTML re-render, and is its own live
+      region so a message is seen and announced exactly once.
+    -->
+    <div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
     <script type="module" src="./map-viewport.js"></script>
     <script type="module" src="./neighbor-map-runtime.js"></script>
     <script type="module" src="./app.js"></script>

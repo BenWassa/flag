@@ -58,6 +58,35 @@
   margin-top: 4px;
 }
 
+/* A key, not a toolbar: no borders or fills, so it reads as caption weight
+   against the continent list it explains. Wraps rather than scrolling. */
+.progress-mastery-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  margin: 0 0 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+}
+
+.progress-mastery-legend__item {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.progress-mastery-legend__mark {
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+}
+
+.progress-mastery-legend__mark .ui-icon {
+  width: 15px;
+  height: 15px;
+}
+
 .progress-continent-list {
   display: grid;
   gap: 10px;

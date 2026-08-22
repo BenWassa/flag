@@ -1,3 +1,5 @@
+// v24 ships visible action feedback (the #app-notice region and launcher busy
+// state) and labelled region-card domain launchers.
 // v23 ships the source-derived Atlas globe brand mark and its PWA icon set.
 // v22 replaces the Flags Learn quiz with a browse-and-reveal study gallery.
 // v21 ships the mastery-first Progress experience and its production stylesheet.
@@ -10,7 +12,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v23';
+const VERSION = 'flag-atlas-v24';
 const SHELL = [
   './',
   './index.html',

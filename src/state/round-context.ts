@@ -12,6 +12,13 @@ export interface RoundContext {
   store: AppStore;
   router: AppRouter;
   announce(message: string): void;
+  /**
+   * A message the learner must actually see, not just hear. `announce` writes
+   * to a visually-hidden live region, so it is the wrong channel for "the
+   * round did not start" — that used to be a silent dead tap for sighted
+   * learners. Use `notify` whenever an action fails to complete.
+   */
+  notify(message: string): void;
   /** Re-renders the DOM, optionally restoring focus to `previousSelector` afterwards. */
   finishInteraction(previousSelector: string | null): void;
   /** app.ts's own current-route mirror; several `currentXScope()` helpers fall back to it. */

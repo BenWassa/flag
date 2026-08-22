@@ -26,7 +26,7 @@ export interface LocationsRound {
 }
 
 export function createLocationsRound(context: RoundContext): LocationsRound {
-  const { store, router, announce, finishInteraction, getCurrentRoute, cancelAllPending } = context;
+  const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
   let pendingMapAdvance: number | null = null;
 
@@ -59,16 +59,16 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     try {
       asset = await loadMapAsset(scopeId);
     } catch {
-      if (isCurrentRoundLaunch(request)) announce(`${scope.label} map could not be loaded.`);
+      if (isCurrentRoundLaunch(request)) notify(`${scope.label} map could not be loaded. Check your connection and try again.`);
       return;
     }
     if (!isCurrentRoundLaunch(request)) return;
     if (!asset) {
-      announce(`${scope.label} map could not be loaded.`);
+      notify(`${scope.label} map could not be loaded. Check your connection and try again.`);
       return;
     }
     if (!store.startMapSession(asset, mode, targetCountryIds)) {
-      announce('No map locations are available for this round.');
+      notify('No map locations are available for this round.');
       return;
     }
 

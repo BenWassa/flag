@@ -17,6 +17,7 @@ const PHOSPHOR_BOLD_SOURCES = {
   'zoom-out': 'magnifying-glass-minus',
   star: 'star',
   check: 'check',
+  warning: 'warning',
 };
 
 function innerSvg(svg) {

@@ -28,7 +28,7 @@ export interface NeighborsRound {
 }
 
 export function createNeighborsRound(context: RoundContext): NeighborsRound {
-  const { store, router, announce, finishInteraction, getCurrentRoute, cancelAllPending } = context;
+  const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
   let neighborQuery = '';
 
@@ -61,7 +61,7 @@ export function createNeighborsRound(context: RoundContext): NeighborsRound {
     cancelAllPending();
     const size = targetCountryIds?.length ?? 10;
     if (!store.startNeighborSession(scope, mode, size, targetCountryIds)) {
-      announce(`${scope.label} has no land-neighbour targets to practise right now.`);
+      notify(`${scope.label} has no land-neighbour targets to practise right now.`);
       return;
     }
     resetQuery();

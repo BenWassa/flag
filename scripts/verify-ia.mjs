@@ -584,8 +584,16 @@ for (const [label, source, loaderCall] of [
   assert.ok(source.includes(loaderCall), `${label} launch awaits its lazy asset.`);
   assert.match(source, /try\s*\{[\s\S]*?catch\s*\{/, `${label} lazy load has an error boundary.`);
   assert.ok(
-    source.includes('if (isCurrentRoundLaunch(request)) announce('),
-    `${label} load failure only announces for the current request.`,
+    source.includes('if (isCurrentRoundLaunch(request)) notify('),
+    `${label} load failure only reports for the current request.`,
+  );
+  // A failed launch leaves the learner on the surface they tapped from, so
+  // the message has to be visible, not only announced into the hidden live
+  // region — otherwise the tap reads as doing nothing at all.
+  assert.equal(
+    /\bannounce\(`\$\{scope\.label\}[^`]*could not be loaded/.test(source),
+    false,
+    `${label} load failure is not reported through the screen-reader-only channel.`,
   );
   assert.ok(
     source.includes('if (!isCurrentRoundLaunch(request)) return;'),

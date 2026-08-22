@@ -196,6 +196,17 @@ Use three broad intensity levels:
 
 Constant celebration makes meaningful milestones cheaper.
 
+### Reporting that an action did not happen
+
+Atlas has two live regions, and the split between them is a design decision, not an implementation detail.
+
+- `#live-status` is visually hidden and carries routine progress narration: selection changes, answer outcomes, round transitions.
+- `#app-notice` is **visible**, and carries anything telling the learner an action did not complete: geometry that failed to load, a scope with nothing to practise, a country name the Neighbours field cannot resolve.
+
+Reporting a failure only through the hidden region is a silent dead tap for every learner not using a screen reader. The notice is a bottom-anchored status strip in the wrong-answer colour family, never a modal: it does not block the surface it is reporting on, it carries its meaning in words rather than colour, it can be dismissed, and it clears itself on navigation.
+
+Launching a round behind a lazy geometry import also shows a busy state on the control that was pressed, and releases it again if the launch fails.
+
 ## Layout foundations
 
 ### Mobile first
@@ -220,7 +231,9 @@ Continents and regions without generated geometry beyond Flags still appear — 
 
 ### Region cross-domain competency
 
-Region cards remain fast scope-selection/game-entry surfaces: region identity, country count, and one Atlas Blue domain-launch icon per learning domain start rounds directly. They do not need to become achievement dashboards.
+Region cards remain fast scope-selection/game-entry surfaces: region identity, country count, and one Atlas Blue domain launcher per learning domain start rounds directly. They do not need to become achievement dashboards.
+
+Each launcher is an Atlas Blue mark **plus its domain name in visible text**. The label is not optional decoration: it is the condition under which the routine icon set was accepted at all (see [Resolved by Tactile Atlas](#resolved-by-tactile-atlas), item 8), and Outlines and Neighbours are not identifiable from a 22px Polygon or Intersect mark alone. The four launchers sit in an equal four-column grid capped at 340px, so they fill a phone card and still read as one cluster on a wide one. An unsupported domain keeps its label at ordinary metadata contrast and marks its state with a dashed, depthless mark — the same dashed vocabulary Progress uses for unsupported domain badges — plus a "not available yet" accessible label.
 
 The dedicated Progress surface owns the expanded cross-domain achievement reading: each region shows the same four domain identities as one competency set, with neutral supported, purple earned and clearly unavailable states; complete regions receive the restrained gold treatment. This keeps the high-frequency navigation path fast while giving accumulated mastery one deliberate place to carry more visual weight.
 
@@ -297,7 +310,7 @@ Elevation is restrained and functional, not decorative:
 
 - **standing depth** — a soft two-layer shadow (`--depth-tile`) on interactive tiles and the launcher status card, distinguishing "this is a surface you can act on" from flat chrome;
 - **press depth** — the solid bottom-shadow-that-collapses model described under [Interaction character](#interaction-character), reserved for primary buttons and answer buttons;
-- **arcade depth** — a hard-edged exception (`--depth-arcade`: `2px solid` border plus `2px 2px 0` offset shadow, both in `--text`) used exclusively on Home's domain tiles, collapsing via diagonal translate rather than vertical drop; deliberately the one place this document's rejection of "thick black borders and hard offset shadows" does not apply, reserved for the product's single highest-frequency surface;
+- **arcade depth** — a hard-edged exception (`--depth-arcade`: `2px solid` border plus `2px 2px 0` offset shadow, both in `--text`) used exclusively on the scope-first Atlas surfaces, collapsing via diagonal translate rather than vertical drop; deliberately the one place this document's rejection of "thick black borders and hard offset shadows" does not apply, reserved for the product's single highest-frequency journey. On a region card's domain launchers the border and offset belong to the circular mark rather than the button, so the button can also carry its text label; hovering lifts the mark by 1px into a 3px offset before the press collapses it;
 - **flat** — rows, lists and ordinary chrome carry a hairline border and no shadow.
 
 Selected state (a region row) is a tint fill plus an inset accent bar, not elevation — selection and elevation answer different questions and should not be conflated.
@@ -385,7 +398,7 @@ The items this document previously deferred are resolved and shipped through the
 
 Selected and implemented in #40:
 
-8. **ordinary icon style** — Phosphor Bold is the routine family for navigation, controls, utilities and domain identity. `src/ui/components/icons.ts` remains Atlas's semantic adapter and vendors only the selected paths from pinned `@phosphor-icons/core` assets, so the production build does not ship the catalogue. The domain mapping is Flags → `Flag`, Locations → `MapPin`, Outlines → `Polygon`, and Neighbours → `Intersect`. At 24px, `FlagBannerFold` read as a ribbon, `MapPinArea` added unnecessary detail, `Island` depicted a tropical palm-tree scene, and `Intersection` reduced to an ambiguous ∩. `Intersect`, paired with the visible Neighbours label, communicates two geographic areas meeting clearly enough that no Atlas-specific modification is needed. Fill may express a real state change in future, but is not a second decorative style. Do not mix Phosphor with Lucide or a parallel custom routine set. Custom artwork remains reserved for the Atlas brand mark and prestige.
+8. **ordinary icon style** — Phosphor Bold is the routine family for navigation, controls, utilities and domain identity. `src/ui/components/icons.ts` remains Atlas's semantic adapter and vendors only the selected paths from pinned `@phosphor-icons/core` assets, so the production build does not ship the catalogue. The domain mapping is Flags → `Flag`, Locations → `MapPin`, Outlines → `Polygon`, and Neighbours → `Intersect`. At 24px, `FlagBannerFold` read as a ribbon, `MapPinArea` added unnecessary detail, `Island` depicted a tropical palm-tree scene, and `Intersection` reduced to an ambiguous ∩. `Intersect`, paired with the visible Neighbours label, communicates two geographic areas meeting clearly enough that no Atlas-specific modification is needed. That pairing is a requirement of the choice, not an incidental fact about one surface: any routine surface repeating the four domain glyphs owes the learner their names. Region cards label each launcher directly; the Progress mastery surface, which repeats the same four glyphs on every region, names them once in a legend above the list rather than labelling roughly a hundred badges. Fill may express a real state change in future, but is not a second decorative style. Do not mix Phosphor with Lucide or a parallel custom routine set. Custom artwork remains reserved for the Atlas brand mark and prestige.
 
 Implemented through #34 and #56:
 

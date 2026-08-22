@@ -186,6 +186,25 @@ function renderContinentMastery(achievements: EarnedAchievementState, continentI
   `;
 }
 
+/**
+ * Names the four domain glyphs once, at the top of the surface that then
+ * repeats them unlabelled on every region below. Outlines and Neighbours are
+ * not readable from a 19px Polygon or Intersect mark on their own, and a label
+ * on each of the ~96 badges would bury the mastery reading it exists to show.
+ */
+function renderMasteryLegend(): string {
+  return `
+    <p class="progress-mastery-legend">
+      ${DOMAIN_IDS.map((domain) => `
+        <span class="progress-mastery-legend__item">
+          <span class="progress-mastery-legend__mark" aria-hidden="true">${domainIcon(domain)}</span>
+          ${DOMAIN_LABELS[domain]}
+        </span>
+      `).join('')}
+    </p>
+  `;
+}
+
 function renderMastery(achievements: EarnedAchievementState): string {
   const world = getWorldAchievementReadModel(achievements);
   return `
@@ -194,6 +213,7 @@ function renderMastery(achievements: EarnedAchievementState): string {
         <h2 id="progress-mastery-heading">Mastery</h2>
         <p>Earned region by region across the four Atlas domains.</p>
       </div>
+      ${renderMasteryLegend()}
       <div class="progress-continent-list">
         ${CONTINENTS.map((continent) => renderContinentMastery(achievements, continent.id)).join('')}
       </div>

@@ -182,14 +182,21 @@
 .neighbor-suggestion:focus-visible { background: var(--action-soft); }
 .neighbor-suggestion small { color: var(--text-muted); }
 .neighbor-suggestions__empty { margin: 0; padding: var(--space-3); color: var(--text-muted); }
+/* Answer feedback is one thing across the product, so Neighbours uses the same
+   rule-above-the-copy shape as .answer-feedback in Flags, Locations and
+   Outlines. It previously carried a 3px coloured left stripe, which both
+   made this domain look like a different product and is the one card accent
+   the house style bans outright. */
 .neighbor-feedback {
   margin: 0;
-  padding: var(--space-2) var(--space-3);
-  border-left: 3px solid var(--line-strong);
-  background: var(--surface-subtle);
+  padding: var(--space-3) 0 0;
+  border-top: 1px solid var(--line-strong);
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 650;
 }
-.neighbor-feedback--correct { border-color: var(--mastered); background: var(--mastered-soft); }
-.neighbor-feedback--wrong { border-color: var(--wrong); background: var(--wrong-soft); }
+.neighbor-feedback--correct { border-top-color: var(--correct); }
+.neighbor-feedback--wrong { border-top-color: var(--wrong); }
 .neighbor-resolution {
   display: grid;
   gap: var(--space-3);
