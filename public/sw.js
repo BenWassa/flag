@@ -1,3 +1,5 @@
+// v25 ships the Issue #71 mobile interaction layer: layered navigation-gesture
+// ownership, control-free immersive maps, and PWA overscroll containment.
 // v24 ships visible action feedback (the #app-notice region and launcher busy
 // state) and labelled region-card domain launchers.
 // v23 ships the source-derived Atlas globe brand mark and its PWA icon set.
@@ -12,7 +14,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v24';
+const VERSION = 'flag-atlas-v25';
 const SHELL = [
   './',
   './index.html',

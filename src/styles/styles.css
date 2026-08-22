@@ -39,6 +39,11 @@ body {
   line-height: 1.45;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  /* Stops the installed PWA from bouncing into a browser pull-to-refresh at
+     the top of a quiz, where the gesture reads as "scroll the map" and a
+     reload would discard the in-progress round. Vertical only: horizontal
+     overscroll is left alone so platform edge-back still works. */
+  overscroll-behavior-y: contain;
 }
 button, input { font: inherit; }
 button { color: inherit; }
