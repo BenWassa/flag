@@ -21,10 +21,7 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 ### 3. Existing presentation bugs / cartography
 
-- [#19 — Neighbours mobile input: keep map anchored when keyboard opens](https://github.com/BenWassa/flag/issues/19)
-- [#20 — Improve map colour palette and water-feature contrast](https://github.com/BenWassa/flag/issues/20)
-
-Issue #19 is implemented through PR #51 and remains open for device QA. Focused usability bugs may ship independently where they remain reproducible. #54's completed river removal narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency. #20's retained ocean/lake/land/border contrast remains relevant.
+#19 and #20 are complete and closed. Their closeout records are [`issue-19-neighbours-mobile-keyboard.md`](../closed/issue-19-neighbours-mobile-keyboard.md) and [`issue-20-map-colour-contrast.md`](../closed/issue-20-map-colour-contrast.md). #54's completed river removal narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency.
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 

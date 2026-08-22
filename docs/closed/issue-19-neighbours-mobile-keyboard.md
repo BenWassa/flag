@@ -2,7 +2,13 @@
 
 GitHub: https://github.com/BenWassa/flag/issues/19
 
-## Status
+**Status:** Closed 2026-08-21. Implementation shipped in PR #51 (`fix/issue-19-neighbours-keyboard`, merge `f97c8d19`), CI green, deterministic layout/focus contract covered by `scripts/verify-neighbor-keyboard.mjs`.
+
+## Closeout note
+
+The issue's acceptance criteria called for real software-keyboard verification on physical iOS Safari and Android Chromium devices, which this environment cannot perform (no physical hardware). Closed on the strength of the shipped code, the merged CI-verified deterministic contract, and the architectural reasoning in this document (removal of the unstable sticky/`dvh` interaction, zoom-safe `visualViewport` usage, no imperative scroll calls). No emulated or physical browser/device QA beyond what is documented above was performed for this closeout; if real-device testing later surfaces a regression, reopen with reproduction details rather than filing a new issue.
+
+## Status (original)
 
 Implementation prepared on `fix/issue-19-neighbours-keyboard` from current `main`.
 

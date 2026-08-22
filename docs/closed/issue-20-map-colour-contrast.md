@@ -2,6 +2,12 @@
 
 GitHub: https://github.com/BenWassa/flag/issues/20
 
+**Status:** Closed 2026-08-21. Implementation shipped in PR #49, CI green, `scripts/verify-map-contrast.mjs` in the full `npm test` chain.
+
+## Closeout note
+
+A Chromium/Playwright session already inspected full Africa, West Africa, East Africa/Great Lakes and Southern Africa maps plus a Neighbours round at phone-viewport scale (390×844, DPR 2) in both normal colours and emulated forced-colours, finding no regression (see issue comments). That emulation is explicitly not a physical phone and not a real Windows High Contrast run — no such hardware is available in this environment. Closed on the strength of the shipped/merged code, the automated contrast verifier, and that emulated-QA evidence. If real hardware later surfaces a regression, reopen with reproduction details.
+
 ## Goal
 
 Improve shared production cartography contrast so land, water, context geography and learning states remain legible on phone-scale maps.
