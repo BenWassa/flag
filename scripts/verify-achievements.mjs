@@ -14,6 +14,7 @@ import {
   regionHasCompleteCurriculum,
   worldHasCompleteCurriculum,
 } from '../dist/domain/achievements.js';
+import { CONTINENTS } from '../dist/data/continents.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
 import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
 import { createCountryEvidenceQualification } from '../dist/state/achievement-evidence-adapter.js';
@@ -104,9 +105,18 @@ const africaReadModel = getContinentAchievementReadModel(africaFull.state, 'afri
 assert.ok(africaReadModel);
 assert.equal(africaReadModel.crestEarned, true, 'Continent completion exposes the crest presentation contract.');
 
-for (const continentId of ['asia', 'europe', 'north-america', 'south-america', 'oceania']) {
-  assert.equal(continentHasCompleteCurriculum(continentId), false, `${continentId} is not complete curriculum today.`);
-  assert.equal(isContinentComplete(everywhereQualified.state, continentId), false, `${continentId} cannot accidentally complete from Flags-only evidence.`);
+assert.equal(continentHasCompleteCurriculum('south-america'), true, 'Issue #24 makes South America a complete four-domain curriculum.');
+assert.equal(
+  isContinentComplete(everywhereQualified.state, 'south-america'),
+  true,
+  'Universally qualifying evidence completes South America once all four domains are shipped.',
+);
+for (const continent of CONTINENTS) {
+  assert.equal(
+    isContinentComplete(everywhereQualified.state, continent.id),
+    continentHasCompleteCurriculum(continent.id),
+    `${continent.id} completion follows current curriculum support rather than a hard-coded continent allowlist.`,
+  );
 }
 assert.equal(worldHasCompleteCurriculum(), false, 'The current worldwide curriculum is incomplete.');
 assert.equal(everywhereQualified.state.worldCrown, false, 'Even universally qualifying current evidence cannot award the World Crown.');
