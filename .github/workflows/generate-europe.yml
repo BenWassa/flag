@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   generate:
-    if: ${{ !contains(github.event.head_commit.message, 'Generate Europe production geography') }}
+    if: ${{ !contains(github.event.head_commit.message, 'Generated Europe production geography') && !contains(github.event.head_commit.message, 'Record Europe generation failure') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -95,12 +95,28 @@ jobs:
           core = core.replace(old_physical, new_physical, 1)
           core_path.write_text(core)
           PY
-      - run: npm run maps:generate
+      - name: Generate canonical Europe geography
+        id: generate
+        shell: bash
+        run: |
+          set +e
+          npm run maps:generate 2>&1 | tee /tmp/europe-generation.log
+          status=${PIPESTATUS[0]}
+          if [ "$status" -ne 0 ]; then
+            cp /tmp/europe-generation.log docs/open/europe-generation-failure.log
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add docs/open/europe-generation-failure.log
+            git commit -m "Record Europe generation failure"
+            git push
+            exit "$status"
+          fi
       - run: npm run check
+      - run: npm run build
       - name: Inspect generated Europe contract
         run: |
-          node --input-type=module <<'NODE'
-          const map = await import('./src/data/maps/europe.ts');
+          node --input-type=module <<'NODE' | tee docs/open/europe-generation-inspection.txt
+          const map = await import('./dist/data/maps/europe.js');
           const geometry = map.EUROPE_GEOMETRY;
           const adjacency = map.EUROPE_LAND_ADJACENCY;
           const bounds = (path) => {
@@ -115,7 +131,7 @@ jobs:
           console.log('EUROPE_CONTEXT_PATHS', map.EUROPE_EXTRA_CONTEXT_PATHS.length);
           console.log('EUROPE_LAKES', map.EUROPE_WATER.lakes.map((lake) => lake.name).join(','));
           console.log('EUROPE_FOCUS', JSON.stringify(map.EUROPE_SCOPE_FOCUS));
-          for (const id of ['RUS','AND','LIE','LUX','MCO','SMR','VAT','MLT']) {
+          for (const id of ['RUS','FRA','NOR','PRT','ESP','AND','LIE','LUX','MCO','SMR','VAT','MLT']) {
             const item = geometry[id];
             console.log(`EUROPE_GEOMETRY_${id}`, JSON.stringify({ bounds: bounds(item?.path ?? item?.outlinePath), locator: item?.locator ?? null, callout: item?.callout ?? null }));
           }
@@ -128,6 +144,6 @@ jobs:
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/map-continent-configs.mjs scripts/map-generation-core.mjs src/data/maps src/data/neighbors docs/architecture .github/workflows/generate-europe.yml
-          git commit -m "Generate Europe production geography"
+          git add scripts/map-continent-configs.mjs scripts/map-generation-core.mjs src/data/maps src/data/neighbors docs/architecture docs/open/europe-generation-inspection.txt .github/workflows/generate-europe.yml
+          git commit -m "Generated Europe production geography"
           git push
