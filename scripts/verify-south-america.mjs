@@ -57,6 +57,7 @@ assert.equal('rivers' in asset.water, false, 'South America preserves the river-
 
 for (const country of asset.countries) {
   assert.equal(country.locator, undefined, `${country.countryId} has no unapproved locator assistance.`);
+  assert.equal(country.hitAssist, undefined, `${country.countryId} has no unapproved hit assistance.`);
   assert.equal(country.callout, undefined, `${country.countryId} has no unapproved callout assistance.`);
 }
 
