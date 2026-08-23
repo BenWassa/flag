@@ -1,0 +1,143 @@
+name: Issue 77 production QA
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  production-qa:
+    if: github.event.pull_request.number == 80
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install project dependencies
+        run: npm install
+
+      - name: Build and verify production artifact
+        run: npm test
+
+      - name: Install Chromium QA dependency
+        run: |
+          npm install --no-save --package-lock=false playwright@1.55.0
+          npx playwright install --with-deps chromium
+
+      - name: Inspect exact dist artifact
+        run: |
+          mkdir -p /tmp/issue-77-qa
+          python3 -m http.server 4173 --directory dist >/tmp/issue-77-http.log 2>&1 &
+          HTTP_PID=$!
+          trap 'kill $HTTP_PID || true' EXIT
+          node --input-type=module <<'NODE'
+          import { chromium } from 'playwright';
+          import fs from 'node:fs/promises';
+
+          const browser = await chromium.launch({ headless: true });
+          const report = [];
+
+          async function inspect(name, viewport, route, selector, options = {}) {
+            const context = await browser.newContext({ viewport });
+            const page = await context.newPage();
+            await page.goto(`http://127.0.0.1:4173/#${route}`, { waitUntil: 'networkidle' });
+            await page.waitForSelector(selector);
+
+            if (options.pageScaleFactor) {
+              const cdp = await context.newCDPSession(page);
+              await cdp.send('Emulation.setPageScaleFactor', { pageScaleFactor: options.pageScaleFactor });
+            }
+
+            const metrics = await page.evaluate(({ selector, expectedRows, expectRegionProgress }) => {
+              const host = document.querySelector(selector);
+              if (!(host instanceof HTMLElement)) throw new Error(`Missing ${selector}`);
+              const rows = [...host.children].filter((node) => node instanceof HTMLElement);
+              const hostBox = host.getBoundingClientRect();
+              const boxes = rows.map((row) => row.getBoundingClientRect());
+              return {
+                route: location.hash,
+                rowCount: rows.length,
+                expectedRows,
+                hostWidth: hostBox.width,
+                rowWidths: boxes.map((box) => box.width),
+                fullWidth: boxes.every((box) => Math.abs(box.width - hostBox.width) <= 1.5),
+                verticalStack: boxes.every((box, index) => index === 0 || box.top > boxes[index - 1].top + 1),
+                noHorizontalOverflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+                quickPlay: document.querySelectorAll('[data-action="quick-play"]').length,
+                regionProgress: document.querySelectorAll('.region-row__progress').length,
+                expectRegionProgress,
+                modeCards: document.querySelectorAll('[data-action="open-domain"]').length,
+                selectedText: document.body.innerText.includes('Selected'),
+                playWestAfrica: document.body.innerText.includes('Play West Africa'),
+                learnWestAfrica: document.body.innerText.includes('Learn West Africa'),
+              };
+            }, { selector, expectedRows: options.expectedRows ?? null, expectRegionProgress: options.expectRegionProgress ?? null });
+
+            if (metrics.expectedRows !== null && metrics.rowCount !== metrics.expectedRows) {
+              throw new Error(`${name}: expected ${metrics.expectedRows} rows, got ${metrics.rowCount}`);
+            }
+            if (!metrics.fullWidth) throw new Error(`${name}: rows are not full width`);
+            if (!metrics.verticalStack) throw new Error(`${name}: rows are not a vertical stack`);
+            if (!metrics.noHorizontalOverflow) throw new Error(`${name}: horizontal overflow detected`);
+            if (metrics.quickPlay !== 0) throw new Error(`${name}: Quick Play remains in DOM`);
+            if (metrics.expectRegionProgress !== null && metrics.regionProgress !== metrics.expectRegionProgress) {
+              throw new Error(`${name}: expected ${metrics.expectRegionProgress} region progress strips, got ${metrics.regionProgress}`);
+            }
+            if (options.expectModeCards && metrics.modeCards !== 4) throw new Error(`${name}: Home mode-card contract changed`);
+            if (options.expectSelected && !(metrics.selectedText && metrics.playWestAfrica && metrics.learnWestAfrica)) {
+              throw new Error(`${name}: selected-region launcher contract is incomplete`);
+            }
+
+            await page.screenshot({ path: `/tmp/issue-77-qa/${name}.png`, fullPage: true });
+            report.push({ name, viewport, pageScaleFactor: options.pageScaleFactor ?? 1, ...metrics });
+            await context.close();
+          }
+
+          await inspect('home-390x844', { width: 390, height: 844 }, '/', '.atlas-card-list', {
+            expectedRows: 4,
+            expectModeCards: true,
+          });
+          await inspect('flags-index-320x568', { width: 320, height: 568 }, '/flags', '.continent-list', {
+            expectedRows: 6,
+          });
+          await inspect('locations-index-390x844', { width: 390, height: 844 }, '/locations', '.continent-list', {
+            expectedRows: 6,
+          });
+          await inspect('locations-launcher-390x844', { width: 390, height: 844 }, '/locations/africa', '.region-list', {
+            expectedRows: 5,
+            expectRegionProgress: 5,
+          });
+          await inspect('locations-selected-390x844', { width: 390, height: 844 }, '/locations/africa/west-africa', '.region-list', {
+            expectedRows: 5,
+            expectRegionProgress: 5,
+            expectSelected: true,
+          });
+          await inspect('locations-launcher-768x1024', { width: 768, height: 1024 }, '/locations/africa', '.region-list', {
+            expectedRows: 5,
+            expectRegionProgress: 5,
+          });
+          await inspect('locations-launcher-844x390', { width: 844, height: 390 }, '/locations/africa', '.region-list', {
+            expectedRows: 5,
+            expectRegionProgress: 5,
+          });
+          await inspect('locations-index-390x844-scale2', { width: 390, height: 844 }, '/locations', '.continent-list', {
+            expectedRows: 6,
+            pageScaleFactor: 2,
+          });
+
+          await fs.writeFile('/tmp/issue-77-qa/report.json', JSON.stringify(report, null, 2));
+          console.log(JSON.stringify(report, null, 2));
+          await browser.close();
+          NODE
+
+      - name: Upload QA evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-77-production-qa
+          path: /tmp/issue-77-qa
+          if-no-files-found: error
