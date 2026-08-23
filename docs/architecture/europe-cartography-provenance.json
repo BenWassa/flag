@@ -52,9 +52,9 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.00087469954667484,
+    "weightThreshold": 0.0020722654680643366,
     "coordinateCountBefore": 125770,
-    "coordinateCountAfter": 90558
+    "coordinateCountAfter": 90637
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
@@ -62,7 +62,10 @@
   },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
-    "russia": "one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so eastern geometry may crop at the canvas edge",
+    "russia": "one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so the SVG viewport can crop eastern geometry without shrinking Europe",
+    "france": "one canonical whole-country FRA geometry including French Guiana; excluded from Europe fit/focus so overseas geometry does not distort Europe",
+    "norway": "one canonical whole-country NOR geometry; remote multipart source geometry is excluded from Europe fit/focus",
+    "microstates": "AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical polygon geometry is retained",
     "turkiyeCyprusCaucasus": "TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum",
     "kosovo": "non-scoring source context; no Atlas application-country target",
     "gibraltar": "non-scoring British Overseas Territory context; no Atlas application-country target",
@@ -80,6 +83,15 @@
     "physicalTolerance": {
       "ocean": 0.4,
       "lakes": 0.15
-    }
+    },
+    "precisionSensitiveCountryIds": [
+      "AND",
+      "LIE",
+      "LUX",
+      "MCO",
+      "SMR",
+      "VAT",
+      "MLT"
+    ]
   }
 }
