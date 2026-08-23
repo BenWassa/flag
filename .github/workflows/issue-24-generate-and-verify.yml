@@ -1,0 +1,49 @@
+name: Issue 24 South America generation and verification
+
+on:
+  push:
+    branches: [issue-24-south-america-expansion-v2]
+
+permissions:
+  contents: write
+
+jobs:
+  generate-and-verify:
+    if: ${{ !contains(github.event.head_commit.message, 'Commit generated South America geography') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Generate canonical geography
+        run: npm run maps:generate
+      - name: Full Node 22 test suite
+        run: npm test
+      - name: Inspect generated production files
+        run: |
+          echo '--- generated files ---'
+          ls -lh src/data/maps/south-america.ts src/data/neighbors/south-america.ts docs/architecture/south-america-cartography-provenance.json
+          echo '--- production module sizes ---'
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const zlib = require('node:zlib');
+          for (const path of ['src/data/maps/south-america.ts', 'dist/data/maps/south-america.js']) {
+            const bytes = fs.readFileSync(path);
+            console.log(`${path}: raw=${bytes.length} gzip=${zlib.gzipSync(bytes, { level: 9 }).length}`);
+          }
+          NODE
+          echo '--- working tree ---'
+          git status --short
+      - name: Commit generated geography
+        run: |
+          rm .github/workflows/issue-24-generate-and-verify.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/data/maps src/data/neighbors docs/architecture scripts/map-sources .github/workflows/issue-24-generate-and-verify.yml
+          git commit -m "Commit generated South America geography"
+          git push
