@@ -77,7 +77,7 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   islandLocatorIds: Object.freeze(['BHR', 'MDV', 'SGP']),
   callouts: Object.freeze({}),
   lakes: Object.freeze([
-    Object.freeze({ name: 'Caspian Sea', pattern: 'caspian', flags: 'i', required: true }),
+    Object.freeze({ name: 'Caspian Sea', pattern: 'caspian', flags: 'i', required: false }),
     Object.freeze({ name: 'Lake Baikal', pattern: 'baikal', flags: 'i', required: true }),
     Object.freeze({ name: 'Aral Sea', pattern: 'aral', flags: 'i', required: false }),
   ]),
@@ -105,6 +105,7 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     indianOceanTerritories: 'non-scoring Natural Earth territory context; no separate Atlas country identity',
     scarboroughReef: 'non-scoring Natural Earth disputed-feature context; no separate Atlas country identity',
     kashmir: 'pinned Natural Earth default de-facto boundary view; no handwritten override or additional scoring identity',
+    physicalWater: 'linear rivers excluded; Caspian requested only if present in the pinned lakes layer; Lake Baikal required',
     unRole: 'policy/dispute/disclaimer audit reference, not runtime redistribution source',
   }),
 });
