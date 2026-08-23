@@ -76,6 +76,7 @@ export const SOUTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
   localContextBounds: Object.freeze({ minLon: -83, maxLon: -47, minLat: -58, maxLat: 14 }),
   allowedContextPatterns: Object.freeze([
     Object.freeze({ pattern: '(falkland|malvinas)', flags: 'i' }),
+    Object.freeze({ pattern: 'southern patagonian ice field', flags: 'i' }),
   ]),
   adjacencyMode: 'global',
   policy: 'standard-v1',
@@ -83,6 +84,7 @@ export const SOUTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
     naturalEarthView: 'default de-facto',
     frenchGuiana: 'non-scoring sovereign FRA context; local display geometry clipped to French Guiana',
     falklands: 'non-scoring disputed context; no separate Atlas target',
+    southernPatagonianIceField: 'non-scoring undemarcated Argentina-Chile boundary context; no separate Atlas target and no reassignment',
     trinidadAndTobago: 'remains canonical North America / Caribbean; not a South America scoring target',
     crossContinentAdjacency: 'global application-country topology preserves COL-PAN and sovereign overseas land borders',
   }),
