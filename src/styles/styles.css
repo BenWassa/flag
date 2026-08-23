@@ -198,6 +198,10 @@ button:focus-visible,
   align-items: center;
   text-align: left;
   cursor: pointer;
+  /* WebKit otherwise paints its own rectangular blue tap overlay across the
+     full-width scope button. Keyboard users retain the shared :focus-visible
+     ring above. */
+  -webkit-tap-highlight-color: transparent;
   transition: background-color 160ms ease, color 160ms ease;
 }
 .continent-row__open {

@@ -15,6 +15,7 @@ import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 const app = await readFile('src/app.ts', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
 const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
+const launcherStyles = await readFile('dist/styles.css', 'utf8');
 const roundContext = await readFile('src/state/round-context.ts', 'utf8');
 
 /** Text a sighted learner actually reads: hidden helper spans do not count. */
@@ -153,6 +154,11 @@ assert.match(
 );
 assert.equal(atlasTheme.includes('.continent-row__play'), false, 'No dead continent Play-cell styling remains.');
 assert.equal(atlasTheme.includes('.region-row__play'), false, 'No dead region Play-cell styling remains.');
+assert.match(
+  launcherStyles,
+  /\.continent-row__open,\s*\.region-row__open\s*\{[^}]*-webkit-tap-highlight-color:\s*transparent/,
+  'Full-width continent and region selectors suppress WebKit’s rectangular tap highlight.',
+);
 
 /* --- Hover, and the banned side-stripe ----------------------------------- */
 
