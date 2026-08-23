@@ -44,6 +44,15 @@ spun off a focused follow-up issue below.
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
 
+#87 (gamification connective-tissue defects: due-state reporting, Play
+feedback parity, Progress evidence coverage) is complete and closed. Its
+closeout record is
+[`issue-87-gamification-connective-tissue.md`](../closed/issue-87-gamification-connective-tissue.md).
+The same 2026-08-23 review that surfaced #87 also identified a larger
+achievement-milestone delivery/ceremony feature and full Locations/Neighbours
+retention-scheduler unification; both were deliberately excluded from #87 and
+need their own issues if pursued.
+
 #77 (full-width continent/region navigation, Quick Play removal) and #78
 (explicit Locations Play feedback) shipped in v0.7.0; their closeout records are
 [`issue-77-full-width-navigation.md`](../closed/issue-77-full-width-navigation.md)
