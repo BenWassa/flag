@@ -164,6 +164,77 @@ export const SOUTH_AMERICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   contextCountryIds: ['PAN', 'FRA'],
 };
 
+export const NORTHERN_EUROPE_MAP_COUNTRY_IDS = [
+  'DNK', 'EST', 'FIN', 'ISL', 'IRL', 'LVA', 'LTU', 'NOR', 'SWE', 'GBR',
+] as const;
+
+export const WESTERN_EUROPE_MAP_COUNTRY_IDS = [
+  'AUT', 'BEL', 'FRA', 'DEU', 'LIE', 'LUX', 'MCO', 'NLD', 'CHE',
+] as const;
+
+export const EASTERN_EUROPE_MAP_COUNTRY_IDS = [
+  'BLR', 'BGR', 'CZE', 'HUN', 'MDA', 'POL', 'ROU', 'RUS', 'SVK', 'UKR',
+] as const;
+
+export const SOUTHERN_EUROPE_MAP_COUNTRY_IDS = [
+  'ALB', 'AND', 'BIH', 'HRV', 'GRC', 'ITA', 'MLT', 'MNE', 'MKD', 'PRT',
+  'SMR', 'SRB', 'SVN', 'ESP', 'VAT',
+] as const;
+
+export const EUROPE_MAP_COUNTRY_IDS = [
+  ...NORTHERN_EUROPE_MAP_COUNTRY_IDS,
+  ...WESTERN_EUROPE_MAP_COUNTRY_IDS,
+  ...EASTERN_EUROPE_MAP_COUNTRY_IDS,
+  ...SOUTHERN_EUROPE_MAP_COUNTRY_IDS,
+] as const;
+
+export const EUROPE_MAP_SCOPE: StudyScope = {
+  kind: 'continent',
+  id: 'europe',
+  label: 'Europe',
+};
+
+export const EUROPE_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
+  {
+    scope: { kind: 'region', id: 'northern-europe', label: 'Northern Europe' },
+    continentId: 'europe',
+    countryIds: NORTHERN_EUROPE_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 34, top: 21 },
+  },
+  {
+    scope: { kind: 'region', id: 'western-europe', label: 'Western Europe' },
+    continentId: 'europe',
+    countryIds: WESTERN_EUROPE_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 35, top: 49 },
+  },
+  {
+    scope: { kind: 'region', id: 'eastern-europe', label: 'Eastern Europe' },
+    continentId: 'europe',
+    countryIds: EASTERN_EUROPE_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 66, top: 44 },
+  },
+  {
+    scope: { kind: 'region', id: 'southern-europe', label: 'Southern Europe' },
+    continentId: 'europe',
+    countryIds: SOUTHERN_EUROPE_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 44, top: 74 },
+  },
+];
+
+export const EUROPE_MAP_CONFIG: MapScopeConfig = {
+  scope: EUROPE_MAP_SCOPE,
+  continentId: 'europe',
+  countryIds: EUROPE_MAP_COUNTRY_IDS,
+};
+
+export const EUROPE_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'europe',
+  scope: EUROPE_MAP_SCOPE,
+  countryIds: EUROPE_MAP_COUNTRY_IDS,
+  regions: EUROPE_MAP_REGION_CONFIGS,
+  contextCountryIds: ['TUR', 'CYP', 'ARM', 'AZE', 'GEO'],
+};
+
 /**
  * Generated geography coverage is registered by continent. New continent work
  * extends this registry rather than adding parallel lookup functions.
@@ -171,6 +242,7 @@ export const SOUTH_AMERICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
 export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freeze([
   AFRICA_MAP_CONTINENT_CONFIG,
   SOUTH_AMERICA_MAP_CONTINENT_CONFIG,
+  EUROPE_MAP_CONTINENT_CONFIG,
 ]);
 
 const MAP_CONTINENT_BY_ID = new Map(

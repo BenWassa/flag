@@ -50,6 +50,18 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       scopeFocus: data.SOUTH_AMERICA_SCOPE_FOCUS,
     };
   },
+  europe: async () => {
+    const data = await import('./europe.js');
+    return {
+      viewBox: data.EUROPE_VIEWBOX,
+      geometry: data.EUROPE_GEOMETRY,
+      contextPaths: data.EUROPE_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.EUROPE_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.EUROPE_COASTLINE_PATHS,
+      water: data.EUROPE_WATER,
+      scopeFocus: data.EUROPE_SCOPE_FOCUS,
+    };
+  },
 };
 
 const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();

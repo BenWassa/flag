@@ -33,13 +33,13 @@ function replaceLiteral(source, name, value) {
   return `${source.slice(0, parsed.equalsIndex + 1)}${replacement}${source.slice(parsed.endIndex)}`;
 }
 
-function formatNumber(value) {
-  const rounded = Number(value.toFixed(PATH_DIGITS));
+function formatNumber(value, digits = PATH_DIGITS) {
+  const rounded = Number(value.toFixed(digits));
   return Object.is(rounded, -0) ? '0' : String(rounded);
 }
 
-function roundSvgPath(path) {
-  return path.replace(/-?\d+(?:\.\d+)?/g, (value) => formatNumber(Number(value)));
+function roundSvgPath(path, digits = PATH_DIGITS) {
+  return path.replace(/-?\d+(?:\.\d+)?/g, (value) => formatNumber(Number(value), digits));
 }
 
 function distanceToSegment(point, start, end) {
@@ -149,9 +149,11 @@ async function optimizeContinent(config) {
   const coastlinePaths = extractLiteral(source, `${prefix}_COASTLINE_PATHS`).value;
   const water = extractLiteral(source, `${prefix}_WATER`).value;
 
-  for (const item of Object.values(geometry)) {
-    if (item.path) item.path = roundSvgPath(item.path);
-    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath);
+  const precisionSensitiveIds = new Set(config.precisionSensitiveCountryIds ?? []);
+  for (const [countryId, item] of Object.entries(geometry)) {
+    const digits = precisionSensitiveIds.has(countryId) ? 2 : PATH_DIGITS;
+    if (item.path) item.path = roundSvgPath(item.path, digits);
+    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath, digits);
   }
   for (let index = 0; index < contextPaths.length; index += 1) contextPaths[index] = roundSvgPath(contextPaths[index]);
   for (let index = 0; index < sharedBoundaryPaths.length; index += 1) sharedBoundaryPaths[index] = roundSvgPath(sharedBoundaryPaths[index]);
@@ -165,6 +167,7 @@ async function optimizeContinent(config) {
     method: 'projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context',
     canvasUnits: `${config.displayName} ${835}x${723} projected canvas units`,
     physicalTolerance: { ...PHYSICAL_TOLERANCE },
+    precisionSensitiveCountryIds: [...precisionSensitiveIds],
   };
 
   source = replaceLiteral(source, `${prefix}_CARTOGRAPHY_PROVENANCE`, provenance);

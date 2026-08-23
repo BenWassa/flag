@@ -52,30 +52,46 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.002080013417159028,
-    "coordinateCountBefore": 56682,
-    "coordinateCountAfter": 40775
+    "weightThreshold": 0.0020722654680643366,
+    "coordinateCountBefore": 125770,
+    "coordinateCountAfter": 90637
   },
   "adjacency": {
-    "source": "continent-local canonical topology",
+    "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
-    "somaliland": "dissolved into canonical SOM scoring geometry; no separate target",
-    "westernSahara": "non-scoring context; not merged into MAR",
-    "birTawil": "non-scoring context; not merged into EGY or SDN",
-    "unRole": "policy/dispute/disclaimer audit reference, not runtime redistribution source",
-    "scoredCountries": 54
+    "russia": "one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so the SVG viewport can crop eastern geometry without shrinking Europe",
+    "france": "one canonical whole-country FRA geometry including French Guiana; excluded from Europe fit/focus so overseas geometry does not distort Europe",
+    "norway": "one canonical whole-country NOR geometry; remote multipart source geometry is excluded from Europe fit/focus",
+    "microstates": "AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical polygon geometry is retained",
+    "turkiyeCyprusCaucasus": "TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum",
+    "kosovo": "non-scoring source context; no Atlas application-country target",
+    "gibraltar": "non-scoring British Overseas Territory context; no Atlas application-country target",
+    "crownDependencies": "Jersey, Guernsey and Isle of Man are non-scoring Crown Dependency context; no Atlas application-country targets",
+    "aland": "non-scoring autonomous Finnish territory context; no Atlas application-country target",
+    "faroeIslands": "non-scoring autonomous Danish territory context; no Atlas application-country target",
+    "overseasAndDependencies": "other source features remain non-scoring context unless reconciled to a canonical Atlas country",
+    "crossContinentAdjacency": "global application-country topology preserves complete RUS and other cross-continent land borders",
+    "scoredCountries": 44
   },
   "runtimeOptimization": {
     "pathDigits": 1,
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
-    "canvasUnits": "Africa 835x723 projected canvas units",
+    "canvasUnits": "Europe 835x723 projected canvas units",
     "physicalTolerance": {
       "ocean": 0.4,
       "lakes": 0.15
     },
-    "precisionSensitiveCountryIds": []
+    "precisionSensitiveCountryIds": [
+      "AND",
+      "LIE",
+      "LUX",
+      "MCO",
+      "SMR",
+      "VAT",
+      "MLT"
+    ]
   }
 }
