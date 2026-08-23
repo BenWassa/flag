@@ -18,7 +18,10 @@ const sizes = await verifyContinentContract({
   runtimeModulePath: 'dist/data/maps/africa.js',
 });
 
-assert.equal(MAP_CONTINENT_CONFIGS.length, 1, 'Foundation refactor does not make a second continent playable.');
+assert.ok(
+  MAP_CONTINENT_CONFIGS.some((config) => config.continentId === 'africa'),
+  'Africa remains registered as the expansion regression fixture.',
+);
 
 const generatorEntry = await readFile('scripts/generate-maps.mjs', 'utf8');
 const generatorCore = await readFile('scripts/map-generation-core.mjs', 'utf8');
