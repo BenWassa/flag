@@ -2,8 +2,10 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import type { OutlineAsset } from '../../domain/outline.js';
 import type { ProgressState, QuizSession } from '../../domain/models.js';
 import { getRecord } from '../../domain/progress.js';
+import { answerFeedback } from '../../domain/round-feedback.js';
 import { icon } from '../components/icons.js';
 import { outlineSilhouette } from '../components/outline.js';
+import { answerFeedbackPanel } from '../components/round-feedback.js';
 import { escapeHtml, statusLabel } from '../format.js';
 
 export function renderOutlineQuiz(
@@ -23,7 +25,8 @@ export function renderOutlineQuiz(
   if (options.length !== 4 || !options.some((country) => country.id === target.id)) return unavailable();
 
   const isAnswered = answeredCountryId !== null;
-  const isLearnFeedback = isAnswered && session.mode === 'learn';
+  const isPlay = session.mode === 'test';
+  const isLearnFeedback = isAnswered && !isPlay;
   const currentRecord = getRecord(progress, target.id);
   const pct = ((session.currentIndex + (isAnswered ? 1 : 0)) / session.questions.length) * 100;
   const isLastQuestion = session.currentIndex === session.questions.length - 1;
@@ -57,11 +60,9 @@ export function renderOutlineQuiz(
           const correct = country.id === target.id;
           const continueFromCorrect = isLearnFeedback && selected && correct;
           let stateClass = '';
-          if (isLearnFeedback) {
+          if (isAnswered) {
             if (correct) stateClass = 'answer-button--correct';
             else if (selected) stateClass = 'answer-button--wrong';
-          } else if (selected) {
-            stateClass = 'answer-button--selected';
           }
 
           const action = continueFromCorrect ? 'next-outline-question' : 'outline-answer';
@@ -90,7 +91,9 @@ function feedback(
   evidenceLabel: string,
   correct: boolean,
 ): string {
-  if (session.mode === 'test') return '<div class="test-advance">Answer recorded</div>';
+  if (session.mode === 'test') {
+    return answerFeedbackPanel(answerFeedback(correct, countryName));
+  }
   return `
     <div class="answer-feedback answer-feedback--${correct ? 'correct' : 'wrong'}">
       <div class="feedback-copy">
