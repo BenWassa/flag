@@ -8,10 +8,8 @@ import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
-import { renderProgress } from '../dist/ui/views/progress.js';
 import { CONTINENTS } from '../dist/data/continents.js';
 import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
 
 const app = await readFile('src/app.ts', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
@@ -166,30 +164,11 @@ assert.match(
 // A thick coloured border on one edge of a card is the house style's flatly
 // banned accent. Selection still uses the documented inset box-shadow bar,
 // which is a different property and stays allowed.
-for (const file of ['styles.css', 'atlas-theme.css', 'map.css', 'neighbors.css', 'outline.css', 'progress.css', 'map-cartography.css']) {
+for (const file of ['styles.css', 'atlas-theme.css', 'map.css', 'neighbors.css', 'outline.css', 'map-cartography.css']) {
   const css = await readFile(`dist/${file}`, 'utf8');
   const stripes = [...css.matchAll(/border-(left|right):\s*(\d+)px\s+solid/g)]
     .filter(([, , width]) => Number(width) > 1);
   assert.deepEqual(stripes.map(([match]) => match), [], `${file} has no side-stripe accent border.`);
-}
-
-/* --- Progress names its glyphs once -------------------------------------- */
-
-const progress = renderProgress(
-  {
-    flags: createInitialProgress(COUNTRIES),
-    locations: createInitialProgress(COUNTRIES),
-    outlines: createInitialProgress(COUNTRIES),
-    neighbors: createInitialProgress(COUNTRIES),
-  },
-  createInitialAchievementState(),
-);
-assert.ok(progress.includes('progress-mastery-legend'), 'The mastery surface keys its four repeated glyphs.');
-for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
-  assert.ok(
-    seenText(progress).includes(label),
-    `The mastery legend names ${label}.`,
-  );
 }
 
 /* --- Reduced motion covers the new motion -------------------------------- */
@@ -204,4 +183,4 @@ assert.ok(
   'Mode-card hover travel is removed under reduced motion.',
 );
 
-console.log('Action-feedback verification passed: visible failure notices, deliberate launcher busy state, labelled mode and continent selection, no side-stripe accents, mastery legend, and reduced-motion coverage.');
+console.log('Action-feedback verification passed: visible failure notices, deliberate launcher busy state, labelled mode and continent selection, no side-stripe accents, and reduced-motion coverage.');

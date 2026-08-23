@@ -31,9 +31,3 @@ export function appendOutlineAttempt(attempt: QuizAttempt): void {
 export function flushOutlineAttempts(): void {
   attempts.flush();
 }
-
-export function resetOutlineProgressStorage(): void {
-  attempts.reset();
-  guard.removeRaw(PROGRESS_KEY);
-  guard.removeRaw(ATTEMPTS_KEY);
-}

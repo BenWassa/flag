@@ -90,7 +90,6 @@ await cp('index.html', `${staging}/index.html`);
 for (const file of [
   'styles.css',
   'atlas-theme.css',
-  'progress.css',
   'map.css',
   'map-cartography.css',
   'outline.css',

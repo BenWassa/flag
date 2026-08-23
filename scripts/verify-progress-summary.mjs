@@ -1,7 +1,5 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import { COUNTRIES } from '../dist/data/countries.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { getAfricaNeighborScopeConfig } from '../dist/data/neighbors/index.js';
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
@@ -12,7 +10,6 @@ import {
   buildScopeProgressSummaries,
   evidenceForCountry,
 } from '../dist/domain/progress-summary.js';
-import { renderProgress } from '../dist/ui/views/progress.js';
 
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 const unsupportedContinent = { kind: 'continent', id: 'oceania', label: 'Oceania' };
@@ -87,58 +84,5 @@ assert.equal(locationSummary.learning, 1, 'Location-specific records map into sh
 neighbors.records.GHA.status = 'mastered';
 const neighborEvidence = evidenceForCountry(ledgers, 'neighbors', 'GHA', now);
 assert.equal(neighborEvidence.status, 'strong', 'Internal mastered status is presented as Strong evidence.');
-
-// Issue #56 presentation contract: earned geography is primary while live evidence remains independently actionable.
-const earned = createInitialAchievementState();
-earned.regionDomainMasteries = ['west-africa:flags'];
-const rendered = renderProgress(ledgers, earned, false, true);
-assert.match(rendered, /<h2 id="progress-mastery-heading">Mastery<\/h2>/, 'Progress leads with the mastery geography.');
-assert.match(rendered, /data-continent="africa"/, 'Progress reuses source-derived continent geography.');
-assert.match(rendered, /West Africa/, 'Progress renders the earned region/domain read model.');
-assert.match(rendered, /progress-mastery-badge--earned/, 'Earned region/domain Mastery receives the dedicated purple badge treatment.');
-assert.match(rendered, /progress-mastery-badge--unavailable/, 'Unsupported non-Africa competencies are distinct from unearned supported competencies.');
-assert.doesNotMatch(rendered, /Crest locked|Crown locked|Earned achievements/, 'Locked prestige objects are not used as routine decoration.');
-assert.doesNotMatch(rendered, /toward mastery/, 'Progress does not leak scheduler thresholds.');
-assert.doesNotMatch(rendered, /Practise next|progress-evidence-disclosure/, 'The operational Practise next recommendation and per-country evidence drill-down were cut as low-value duplicates of Mastery.');
-
-const complete = createInitialAchievementState();
-complete.completeRegions = ['west-africa'];
-complete.completeContinents = ['africa'];
-complete.worldCrown = true;
-const completedRendered = renderProgress(ledgers, complete, false, true);
-assert.match(completedRendered, /progress-region-mastery--complete/, 'Canonical complete-region state receives the restrained prestige treatment.');
-assert.match(completedRendered, /progress-continent-mark--crest/, 'A continent crest renders only for an earned continent completion state.');
-assert.match(completedRendered, /progress-world-crown/, 'The singular World Crown renders when canonical world completion is earned.');
-
-const resetRendered = renderProgress(ledgers, earned, true, true);
-assert.match(resetRendered, /Erase all learning evidence and earned achievements/, 'Reset continues to cover live evidence and earned achievements together.');
-
-const nonAfricaFlags = createInitialProgress(COUNTRIES);
-nonAfricaFlags.records.JPN.status = 'learning';
-const nonAfricaLedgers = {
-  flags: nonAfricaFlags,
-  locations: createInitialLocationProgress([]),
-  outlines: createInitialProgress([]),
-  neighbors: createInitialNeighborProgress([]),
-};
-const nonAfricaRendered = renderProgress(nonAfricaLedgers, createInitialAchievementState(), false, true);
-assert.doesNotMatch(
-  nonAfricaRendered,
-  /Not practised yet/,
-  'Progress detects learning history when the only evidence is outside Africa.',
-);
-assert.match(
-  nonAfricaRendered,
-  /data-action="reset-request"/,
-  'Progress keeps the reset/history footer when practice exists only outside Africa.',
-);
-
-const shellHtml = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
-const progressCss = readFileSync(new URL('../dist/progress.css', import.meta.url), 'utf8');
-const serviceWorker = readFileSync(new URL('../dist/sw.js', import.meta.url), 'utf8');
-assert.match(shellHtml, /href="\.\/progress\.css"/, 'The production shell loads the dedicated Progress stylesheet.');
-assert.match(progressCss, /\.progress-continent-mark--crest/, 'The built stylesheet contains the continent-crest treatment.');
-assert.match(progressCss, /\.progress-mastery-badge--unavailable/, 'The built stylesheet contains a non-colour unsupported competency treatment.');
-assert.match(serviceWorker, /'\.\/progress\.css'/, 'The PWA shell caches the Progress stylesheet for offline use.');
 
 console.log('Progress summary verification passed.');

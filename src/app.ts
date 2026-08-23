@@ -7,10 +7,10 @@ import type { LearningDomain, StudyScope } from './domain/models.js';
 import type { ProgressLedgers } from './domain/progress-summary.js';
 import type { MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
-import { flushMapAttempts, resetMapProgressStorage } from './infrastructure/map-storage.js';
-import { flushNeighborAttempts, resetNeighborProgressStorage } from './infrastructure/neighbor-storage.js';
-import { flushOutlineAttempts, resetOutlineProgressStorage } from './infrastructure/outline-storage.js';
-import { flushAttempts, resetAllProgress } from './infrastructure/storage.js';
+import { flushMapAttempts } from './infrastructure/map-storage.js';
+import { flushNeighborAttempts } from './infrastructure/neighbor-storage.js';
+import { flushOutlineAttempts } from './infrastructure/outline-storage.js';
+import { flushAttempts } from './infrastructure/storage.js';
 import { dismissInstallPrompt, isInstallPromptDismissed } from './infrastructure/install-prompt-storage.js';
 import { createHashRouter } from './routing/router.js';
 import {
@@ -52,7 +52,6 @@ import { renderNeighborResults } from './ui/views/neighbor-results.js';
 import { renderOutlineHome } from './ui/views/outline-home.js';
 import { renderOutlineQuiz } from './ui/views/outline-quiz.js';
 import { renderOutlineResults } from './ui/views/outline-results.js';
-import { renderProgress } from './ui/views/progress.js';
 import { renderQuiz } from './ui/views/quiz.js';
 import { renderResults } from './ui/views/results.js';
 import { renderScope } from './ui/views/scope.js';
@@ -68,7 +67,6 @@ const store = new AppStore();
 const router = createHashRouter(window);
 const allowedNeighborCountryIds = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 let currentRoute: AppRoute = { name: 'home' };
-let resetArmed = false;
 let lastRenderedRouteKey: string | null = null;
 let launcherMapAsset: MapRegionAsset | null = null;
 let launcherMapScopeId: string | null = null;
@@ -383,9 +381,6 @@ function applyRoute(requestedRoute: AppRoute): void {
     case 'home':
       store.navigate({ name: 'home' });
       break;
-    case 'progress':
-      store.navigate({ name: 'progress' });
-      break;
     case 'learning':
       if (isFlagsStudyRoute(route)) {
         store.navigate({ name: 'flags-study', scope: route.scope ?? { kind: 'world', label: 'World' } });
@@ -430,7 +425,6 @@ router.subscribe((route) => {
   invalidatePendingRoundLaunch();
   cancelAllPending();
   dismissNotice();
-  resetArmed = false;
   if (!route || !isFlagsStudyRoute(route)) {
     revealedFlagIds.clear();
     revealAllFlagNames = false;
@@ -546,14 +540,6 @@ function render(previousSelector: string | null = null): void {
       break;
     case 'flags-study':
       root.innerHTML = renderFlagsStudy(store.view.scope, revealedFlagIds, revealAllFlagNames);
-      break;
-    case 'progress':
-      root.innerHTML = renderProgress(
-        currentLedgers(),
-        store.achievements,
-        resetArmed,
-        store.persisting,
-      );
       break;
     case 'quiz':
       if (!store.session) return;
@@ -771,35 +757,10 @@ root.addEventListener('click', (event) => {
     return;
   }
 
-  if (action !== 'reset-request' && action !== 'reset-confirm') resetArmed = false;
-
   switch (action) {
     case 'home':
       navigateStable({ name: 'home' });
       return;
-    case 'open-progress':
-      navigateStable({ name: 'progress' });
-      return;
-    case 'reset-request':
-      resetArmed = true;
-      break;
-    case 'reset-cancel':
-      resetArmed = false;
-      break;
-    case 'reset-confirm':
-      resetAllProgress();
-      resetMapProgressStorage();
-      resetOutlineProgressStorage();
-      resetNeighborProgressStorage();
-      store.resetProgress();
-      store.resetMapProgress();
-      store.resetOutlineProgress();
-      store.resetNeighborProgress();
-      setActiveRoundRoute(null);
-      neighborsRound.resetQuery();
-      resetArmed = false;
-      announce('All flag, location, outline, and neighbour progress erased.');
-      break;
     case 'start-learn':
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
         router.navigate(routeForScope('flags', flagsRound.currentScope(), 'learn'));

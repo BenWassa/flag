@@ -76,9 +76,3 @@ export function appendMapAttempt(attempt: MapAttempt): void {
 export function flushMapAttempts(): void {
   attempts.flush();
 }
-
-export function resetMapProgressStorage(): void {
-  attempts.reset();
-  guard.removeRaw(PROGRESS_KEY);
-  guard.removeRaw(ATTEMPTS_KEY);
-}

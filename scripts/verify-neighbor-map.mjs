@@ -226,7 +226,7 @@ assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography st
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Issue #77 shell changes own the v27 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Issue #77 shell changes own the v28 PWA cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas remains cached with the neighbour map shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime is cached in the app shell.');
 const css = await readFile('dist/neighbors.css', 'utf8');

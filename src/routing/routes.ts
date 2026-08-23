@@ -15,7 +15,6 @@ import { scopeSupportsDomain } from '../domain/scope-support.js';
 
 export type AppRoute =
   | { name: 'home' }
-  | { name: 'progress' }
   | LearningRoute;
 
 export interface LearningRoute {
@@ -71,7 +70,6 @@ export function normalizeAvailableRoute(route: AppRoute): AppRoute {
 
 export function parentRoute(route: AppRoute): AppRoute | null {
   if (route.name === 'home') return null;
-  if (route.name === 'progress') return { name: 'home' };
 
   if (route.activity !== undefined) return stableRoute(route);
 
@@ -83,7 +81,6 @@ export function parseRoutePath(input: string): AppRoute | null {
   const segments = pathSegments(input);
   if (!segments) return null;
   if (segments.length === 0) return { name: 'home' };
-  if (segments.length === 1 && segments[0] === 'progress') return { name: 'progress' };
 
   const [domainSegment, scopeSegment, regionOrActivitySegment, activitySegment] = segments;
 
@@ -124,7 +121,6 @@ export function parseRoutePath(input: string): AppRoute | null {
 
 export function serializeRoutePath(route: AppRoute): string {
   if (route.name === 'home') return '/';
-  if (route.name === 'progress') return '/progress';
 
   const segments: string[] = [route.domain];
   if (route.scope?.kind === 'continent' && route.scope.id) {
@@ -145,7 +141,6 @@ export function routesEqual(left: AppRoute | null, right: AppRoute | null): bool
 
 export function routeTitle(route: AppRoute): string {
   if (route.name === 'home') return 'Atlas';
-  if (route.name === 'progress') return 'Progress · Atlas';
 
   const domain = domainDisplayName(route.domain);
   const scope = route.scope?.label ?? (route.domain === 'flags' ? 'World' : undefined);

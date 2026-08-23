@@ -1,3 +1,6 @@
+// v28 removes the dedicated Progress screen and its stylesheet: mastery
+// presentation and the reset-all-progress control had no other home and are
+// retired with it.
 // v27 restores full-width post-mode continent and region navigation for Issue #77,
 // retires learner-facing row-level Quick Play shortcuts, and ships #78's explicit
 // Locations Play feedback and outcome-aware dwell.
@@ -22,13 +25,12 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v27';
+const VERSION = 'flag-atlas-v28';
 const SHELL = [
   './',
   './index.html',
   './styles.css',
   './atlas-theme.css',
-  './progress.css',
   './map.css',
   './map-cartography.css',
   './outline.css',

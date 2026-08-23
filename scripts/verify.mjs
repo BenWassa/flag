@@ -98,19 +98,10 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 const { renderHome } = await import('../dist/ui/views/home.js');
 const { renderDomainIndex } = await import('../dist/ui/views/domain.js');
 const { renderScope } = await import('../dist/ui/views/scope.js');
-const { renderProgress } = await import('../dist/ui/views/progress.js');
-const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
 const { renderQuiz } = await import('../dist/ui/views/quiz.js');
 const { renderResults } = await import('../dist/ui/views/results.js');
 const { renderFocusIntent } = await import('../dist/ui/focus.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
-
-const renderProgressView = (state, resetArmed = false, persisting = true) => renderProgress(
-  { flags: state, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
-  createInitialAchievementState(),
-  resetArmed,
-  persisting,
-);
 
 assert.equal(
   renderFocusIntent(false),
@@ -138,7 +129,6 @@ const screens = {
   locationsIndex: renderDomainIndex('locations', ledgers),
   scope: renderScope(fresh, africaScopeFixture),
   region: renderScope(fresh, westAfricaScopeFixture),
-  progress: renderProgressView(fresh),
 };
 
 for (const [name, html] of Object.entries(screens)) {
@@ -208,26 +198,6 @@ assert.ok(screens.region.includes('All Africa') && screens.region.includes('Sele
 for (const [name, html] of Object.entries({ scope: screens.scope, region: screens.region })) {
   assert.ok(!html.includes('mini-ledger') && !html.includes('stat-legend'), `${name} launcher stays free of the deleted pre-round ledger and legend.`);
 }
-
-assert.ok(
-  !renderProgressView(fresh).includes('data-action="reset-request"'),
-  'Reset must stay hidden until there is progress worth erasing.',
-);
-assert.ok(
-  renderProgressView(learningState).includes('data-action="reset-request"'),
-  'Reset must be reachable once flags have been studied.',
-);
-assert.ok(
-  renderProgressView(learningState, true).includes('data-action="reset-confirm"'),
-  'Reset must require a second, explicit confirmation.',
-);
-
-const lapsedProgress = { ...lapsed };
-const lapsedProgressHtml = renderProgressView(lapsedProgress);
-assert.ok(
-  !lapsedProgressHtml.includes('0/2 toward mastery'),
-  'Routine progress UI must not expose the internal post-lapse scheduler threshold.',
-);
 
 const quizSession = {
   id: 'render-session',
@@ -314,19 +284,19 @@ const repairedState = {
     MLI: sanitizeRecord('MLI', { status: 'mastered', lifetimeCorrect: '9', lapseCount: null }),
   },
 };
-const repairedHtml = renderProgressView(repairedState);
-assert.ok(!repairedHtml.includes('NaN'), 'A repaired ledger cannot render NaN into the progress screen.');
-assert.ok(!repairedHtml.includes('undefined'), 'A repaired ledger cannot render undefined into the progress screen.');
-assert.ok(
-  !renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' }).includes('NaN'),
-  'A repaired progress state cannot render NaN into a region launcher.',
-);
+const repairedScopeHtml = renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+assert.ok(!repairedScopeHtml.includes('NaN'), 'A repaired progress state cannot render NaN into a region launcher.');
+assert.ok(!repairedScopeHtml.includes('undefined'), 'A repaired progress state cannot render undefined into a region launcher.');
 
 // A record the ledger never had at all: `getRecord` must supply the default
 // rather than let the view index into undefined.
 const missingRecords = { version: 2, records: {} };
-assert.doesNotThrow(() => renderProgressView(missingRecords), 'A ledger missing every record still renders.');
-assert.ok(!renderProgressView(missingRecords).includes('undefined'), 'Missing records fall back to Unseen.');
+const missingRecordsHtml = renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+assert.doesNotThrow(
+  () => renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' }),
+  'A ledger missing every record still renders.',
+);
+assert.ok(!missingRecordsHtml.includes('undefined'), 'Missing records fall back to Unseen.');
 
 const emptyScopeQuiz = build({
   countries: COUNTRIES,
@@ -368,10 +338,6 @@ assert.ok(!renderHome(ledgers, true).includes('storage-notice'), 'The storage no
 assert.ok(
   !renderHome(ledgers, false).includes('role="status"') && !renderHome(ledgers, false).includes('aria-live'),
   'The storage notice is static copy, not another live region inside the replaced #app.',
-);
-assert.ok(
-  renderProgressView(learningState, false, false).includes('not allowing storage'),
-  'The ledger does not claim to be saved on a device that refuses to save it.',
 );
 
 // --- Studying without storage --------------------------------------------

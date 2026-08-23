@@ -63,9 +63,6 @@ export function renderHome(ledgers: ProgressLedgers, persisting = true): string 
         <div class="brand-block">
           <h1 class="brand-name" tabindex="-1" data-autofocus>Atlas</h1>
         </div>
-        <button class="icon-button" type="button" data-action="open-progress" aria-label="Open progress">
-          ${icon('ledger')}
-        </button>
       </header>
 
       ${persisting ? '' : `

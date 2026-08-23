@@ -39,7 +39,6 @@ The router serialises a typed route to a path first. The hash transport is the o
 | State | URL |
 |---|---|
 | Product Home — mode index | `/#/` |
-| Progress | `/#/progress` |
 | Flags continent index | `/#/flags` |
 | Flags → Africa launcher | `/#/flags/africa` |
 | Flags → West Africa | `/#/flags/africa/west-africa` |
@@ -76,14 +75,13 @@ Every domain uses the identical three-level shape. Home carries no Play control 
 
 One routed launcher represents `(domain, continentScope, selectedRegion | null)`. A region URL does not identify a second screen: `/#/locations/africa/west-africa` is the Africa Locations launcher with West Africa selected. Region rows are selection controls with their existing progress visible; they do not contain a second Play action. The launcher's Play and Learn actions both name and target West Africa, while an explicit All Africa control clears the selection. The region list is always present; an Africa map may progressively enhance Locations, Outlines, and Neighbours without blocking the launcher or becoming a second selection model.
 
-The launcher contains decision-relevant status only. Country ledgers live in Progress, and pre-round learning-state legends, feedback keys, and rules prose do not belong on this route.
+The launcher contains decision-relevant status only. Country ledgers live in the domain-specific persisted progress state, not on this route; pre-round learning-state legends, feedback keys, and rules prose do not belong here either.
 
 ## Typed route contract
 
-`AppRoute` has only three stable top-level shapes:
+`AppRoute` has only two stable top-level shapes:
 
 - Home;
-- Progress;
 - Learning route: `{ domain, scope?, activity? }`.
 
 A learning route with no scope is that domain's continent index — the second level of the hierarchy, not an incomplete route.
@@ -133,7 +131,7 @@ Clean paths may become preferable on Firebase Hosting or another host with expli
 
 - learning domain;
 - continent/region scope;
-- stable screens such as Home and Progress;
+- Home as a stable screen;
 - activity identity (`learn`, `test`, `review`) while a round is active.
 
 ### Session/application state owns round internals

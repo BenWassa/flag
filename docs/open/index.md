@@ -11,8 +11,9 @@ This directory mirrors active product/engineering work that benefits from a dura
 - live country evidence vs earned regional mastery;
 - scarcity-based gamification hierarchy;
 - Africa-first complete proving ground;
-- mode-first navigation: Home chooses a learning mode, each mode owns its continent index, and the launcher owns continent/region scope;
-- region × domain cross-domain competency, read on Progress rather than repeated on every region row.
+- mode-first navigation: Home chooses a learning mode, each mode owns its continent index, and the launcher owns continent/region scope.
+
+**2026-08-23: the dedicated Progress screen (and its Home button) was removed entirely**, along with its Reset-all-progress control, `progress.css`, and the domain-layer UI presenters (`achievement-art.ts`) it alone used. Region × domain cross-domain competency and continent/world completion state (#34/#56) keep being tracked and persisted (`AppStore.achievements`), but no current surface reads or resets them. Reintroducing a way to see or reset earned mastery is future work with no open issue yet.
 
 ### 2. Learning / achievement architecture
 

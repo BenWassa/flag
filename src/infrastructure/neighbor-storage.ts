@@ -79,9 +79,3 @@ export function appendNeighborAttempt(attempt: NeighborAttempt): void {
 export function flushNeighborAttempts(): void {
   attempts.flush();
 }
-
-export function resetNeighborProgressStorage(): void {
-  attempts.reset();
-  guard.removeRaw(PROGRESS_KEY);
-  guard.removeRaw(ATTEMPTS_KEY);
-}

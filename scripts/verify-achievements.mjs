@@ -189,13 +189,6 @@ assert.equal(migrated.worldCrown, false);
 
 resetAchievementStorage();
 assert.deepEqual(loadAchievementState(), empty, 'Explicit achievement reset returns to deterministic empty state.');
-
-const { AppStore } = await import('../dist/state/store.js');
-const store = new AppStore();
-store.achievements = africaFull.state;
-saveAchievementState(store.achievements);
-store.resetProgress();
-assert.deepEqual(store.achievements, empty, 'The existing Reset all progress store path explicitly resets earned achievements.');
-assert.equal(memory.has(ACHIEVEMENT_STORAGE_KEY), false, 'The reset path removes the durable achievement key.');
+assert.equal(memory.has(ACHIEVEMENT_STORAGE_KEY), false, 'Explicit achievement reset removes the durable achievement key.');
 
 console.log('Achievement verification passed: monotonic region/domain mastery, guarded region/continent/world completion, canonical evidence seam, versioned persistence and explicit reset semantics.');

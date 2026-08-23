@@ -15,7 +15,6 @@ assert.equal(manifest.short_name, 'Atlas', 'Installed PWA short name uses Atlas.
 
 const titleCases = [
   ['/', 'Atlas'],
-  ['/progress', 'Progress · Atlas'],
   ['/flags', 'Flags · Atlas'],
   ['/neighbors', 'Neighbours · Atlas'],
   ['/flags/africa', 'Africa flags · Atlas'],
@@ -38,7 +37,7 @@ assert.equal(
   'All four result-state document-title branches use the Atlas suffix.',
 );
 
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'The current app-shell cache version is asserted explicitly.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'The current app-shell cache version is asserted explicitly.');
 assert.ok(serviceWorker.includes("'./manifest.webmanifest'"), 'Updated install metadata remains in the offline shell.');
 
 const storageSources = await Promise.all([

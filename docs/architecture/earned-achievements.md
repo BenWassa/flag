@@ -78,15 +78,13 @@ Neighbours continues to use its canonical supported target set, including the ex
 - performs a backfill award pass for existing learners;
 - re-runs the award pass after an evidence-changing answer in any domain;
 - persists only when new milestones are earned;
-- exposes the earned state plus pure region, continent and world read models for later UI/Progress consumption.
+- exposes the earned state plus pure region, continent and world read models (`getRegionAchievementReadModel`, `getContinentAchievementReadModel`, `getWorldAchievementReadModel` in `src/domain/achievements.ts`) for future UI consumption; no current screen renders them, since the Progress screen that did has been retired.
 
 The four domain ledgers remain independent and retain their existing storage namespaces.
 
 ## Reset semantics
 
-The existing learner action is **Reset all progress**. That full reset also erases earned achievements.
-
-`AppStore.resetProgress()` calls the explicit `resetAchievements()` path, which clears both the in-memory achievement state and `flag-atlas:earned-achievements:v1`. Domain-specific learning ledgers remain separately reset by the existing application orchestration.
+There is no learner-facing reset action. **Reset all progress** lived only on the Progress screen; when that screen was retired with no replacement UI, its store path (`AppStore.resetProgress()` and the sibling per-domain reset methods) and the infrastructure `reset*ProgressStorage()` functions were removed as dead code. `resetAchievementStorage()` remains as a tested infrastructure primitive (clears `flag-atlas:earned-achievements:v1`), but nothing in the shipped app currently calls it.
 
 If Atlas later introduces a domain-only reset, it must not silently reuse this global reset path without a product decision about earned milestones.
 

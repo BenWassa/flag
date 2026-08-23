@@ -57,7 +57,6 @@ import { buildQuiz } from '../domain/quiz.js';
 import {
   achievementStorageIsWritable,
   loadAchievementState,
-  resetAchievementStorage,
   saveAchievementState,
 } from '../infrastructure/achievement-storage.js';
 import {
@@ -86,7 +85,6 @@ export type ViewState =
   | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
   | { name: 'flags-study'; scope: StudyScope }
-  | { name: 'progress' }
   | { name: 'quiz' }
   | { name: 'results'; result: SessionResult }
   | { name: 'map-home'; scope: StudyScope }
@@ -229,35 +227,6 @@ export class AppStore {
       this.achievementPersisting = false;
     }
     return result.newlyEarned;
-  }
-
-  /** The current UI's Reset all progress action intentionally erases earned state too. */
-  resetAchievements(): void {
-    this.achievements = createInitialAchievementState();
-    resetAchievementStorage();
-  }
-
-  resetProgress(): void {
-    this.progress = createInitialProgress(COUNTRIES);
-    this.resetAchievements();
-    this.abandonSession();
-  }
-
-  resetMapProgress(): void {
-    this.locationProgress = createInitialLocationProgress(supportedMapCountryIds());
-    this.abandonMapSession();
-    this.mapAsset = null;
-  }
-
-  resetOutlineProgress(): void {
-    this.outlineProgress = createInitialProgress(supportedMapCountries());
-    this.abandonOutlineSession();
-    this.outlineAsset = null;
-  }
-
-  resetNeighborProgress(): void {
-    this.neighborProgress = createInitialNeighborProgress(supportedNeighborCountryIds());
-    this.abandonNeighborSession();
   }
 
   abandonSession(): void {

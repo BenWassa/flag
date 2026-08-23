@@ -80,9 +80,3 @@ export function appendAttempt(attempt: QuizAttempt): void {
 export function flushAttempts(): void {
   attempts.flush();
 }
-
-export function resetAllProgress(): void {
-  attempts.reset();
-  guard.removeRaw(PROGRESS_KEY);
-  guard.removeRaw(ATTEMPTS_KEY);
-}

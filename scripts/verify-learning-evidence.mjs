@@ -27,7 +27,6 @@ import { buildQuiz } from '../dist/domain/quiz.js';
 import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
 import { sanitizeNeighborRecord } from '../dist/infrastructure/neighbor-storage.js';
 import { sanitizeRecord } from '../dist/infrastructure/storage.js';
-import { renderProgress } from '../dist/ui/views/progress.js';
 import { renderQuiz } from '../dist/ui/views/quiz.js';
 import { renderResults } from '../dist/ui/views/results.js';
 
@@ -263,14 +262,6 @@ const independentNeighbors = createInitialNeighborProgress([gha]);
 assert.equal(getRecord(independentFlags, gha).masteryStreak, 2);
 assert.equal(getLocationRecord(independentLocations, gha).status, 'unseen');
 assert.equal(getNeighborRecord(independentNeighbors, gha).status, 'unseen');
-
-// Routine UI no longer exposes scheduler x/y punch cards or individual-country Mastered achievements.
-const progressHtml = renderProgress(
-  { flags: recovering.state, locations: { version: 2, records: {} }, outlines: { version: 2, records: {} }, neighbors: { version: 2, records: {} } },
-  { version: 1, regionDomainMasteries: [], completeRegions: [], completeContinents: [], worldCrown: false },
-);
-assert.ok(!/\b\d+\/\d+ toward mastery\b/i.test(progressHtml));
-assert.ok(!/>Mastered</.test(progressHtml));
 
 const fresh = createInitialProgress(COUNTRIES);
 const questions = buildQuiz({

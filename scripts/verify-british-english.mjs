@@ -22,7 +22,6 @@ import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderNeighborQuiz } from '../dist/ui/views/neighbor-quiz.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
 import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
-import { renderProgress } from '../dist/ui/views/progress.js';
 import { renderQuiz } from '../dist/ui/views/quiz.js';
 import { renderScope } from '../dist/ui/views/scope.js';
 
@@ -57,10 +56,6 @@ const flagsLauncherHtml = renderScope(flagProgress, africaScope);
 const locationsLauncherHtml = renderMapHome(locationProgress, africaScope);
 const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope);
 const neighborsLauncherHtml = renderNeighborHome(neighborProgress, westAfricaScope);
-const progressHtml = renderProgress(
-  { flags: flagProgress, locations: locationProgress, outlines: outlineProgress, neighbors: neighborProgress },
-  { version: 1, regionDomainMasteries: [], completeRegions: [], completeContinents: [], worldCrown: false },
-);
 
 const flagQuestions = buildQuiz({
   countries: COUNTRIES,
@@ -128,7 +123,6 @@ const renderedSurfaces = [
   ['Locations launcher', locationsLauncherHtml],
   ['Outlines launcher', outlinesLauncherHtml],
   ['Neighbours launcher', neighborsLauncherHtml],
-  ['Progress', progressHtml],
   ['Flags Play quiz', flagPlayHtml],
   ['Locations Play quiz', mapPlayHtml],
   ['Outlines Play quiz', outlinePlayHtml],
@@ -140,8 +134,6 @@ assert.ok(flagsLauncherHtml.includes('Play Africa'));
 assert.ok(locationsLauncherHtml.includes('Play Africa'));
 assert.ok(outlinesLauncherHtml.includes('Play Africa'));
 assert.ok(neighborsLauncherHtml.includes('Play West Africa'));
-assert.equal(progressHtml.includes('Never tested'), false, 'Progress does not expose obsolete assessment-centric history copy.');
-assert.ok(progressHtml.includes('Not practised yet'), 'Fresh progress uses British learner-facing practice copy.');
 for (const [name, html] of [
   ['Flags', flagPlayHtml],
   ['Locations', mapPlayHtml],
@@ -247,8 +239,8 @@ assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbo
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas styling remains part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Technical stylesheet filename remains stable.');
 
-console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v27 Atlas cache contract.');
+console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v28 Atlas cache contract.');

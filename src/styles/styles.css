@@ -683,19 +683,6 @@ button:focus-visible,
 .empty-state strong { font-size: 16px; }
 .empty-state span { color: var(--text-muted); font-size: 14px; }
 
-.ledger-footer {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: var(--space-3);
-  margin-top: var(--space-10);
-  padding-top: var(--space-5);
-  border-top: 1px solid var(--line);
-}
-.ledger-footer p { margin: 0; flex: 1 1 220px; color: var(--text-muted); font-size: 13px; }
-.ledger-footer .button { min-height: 44px; padding: 10px 16px; font-size: 14px; }
-.button--danger { background: transparent; border-color: var(--wrong-line); color: var(--wrong); }
-
 @media (hover: hover) and (pointer: fine) {
   .icon-button:hover,
   .text-icon-button:hover,
@@ -705,7 +692,6 @@ button:focus-visible,
   .button--secondary:hover,
   .answer-button:not(:disabled):hover { border-color: var(--line-strong); background: var(--surface-subtle); }
   .button--tertiary:hover { color: var(--text); background: var(--surface-subtle); }
-  .button--danger:hover { background: var(--wrong-soft); border-color: var(--wrong); }
   .filter-tab:hover { color: var(--text); }
   .launcher-map-region:hover .launcher-map-country__shape,
   .launcher-map-region:hover .launcher-map-country__locator { fill: var(--surface); }
