@@ -132,7 +132,6 @@ jobs:
           outline_path = Path('src/domain/outline.ts')
           outline = outline_path.read_text()
           outline = outline.replace('  const source = geometry.path ?? geometry.outlinePath;', '  const source = geometry.outlinePath ?? geometry.path;', 1)
-          outline = outline.replace(' * Directly rendered map countries use `path`; tiny island countries use\n * the generator-retained `outlinePath` while Locations keeps its tap locator.', ' * Outlines prefer generator-retained `outlinePath` when a whole-country\n * silhouette differs from viewport-clipped Locations geometry; otherwise they\n * use the canonical map `path`. Tiny island countries use the same seam while\n * Locations keeps its tap locator.', 1)
           outline_path.write_text(outline)
           PY
       - name: Regenerate and inspect
