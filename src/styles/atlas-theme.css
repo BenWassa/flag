@@ -4,7 +4,11 @@
   --surface-subtle: #eef3fb;
   --track: #e3e9f2;
   --text: #101318;
-  --text-muted: #667085;
+  /* Darkened from #667085, which cleared 4.5:1 on the canvas (4.68) but not on
+     the --action-soft background a selected continent/region row uses (4.36),
+     failing WCAG 2.2 SC 1.4.3 for the evidence line. This value clears both
+     (5.58 on canvas, 5.20 on --action-soft) and stays clearly secondary. */
+  --text-muted: #5b6478;
   --line: #d9e0ea;
   --line-strong: #b7c2d1;
   --action: #2563eb;
