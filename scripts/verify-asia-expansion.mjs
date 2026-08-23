@@ -6,7 +6,6 @@ import {
   ASIA_MAP_REGION_CONFIGS,
   CAUCASUS_MAP_COUNTRY_IDS,
   MIDDLE_EAST_MAP_COUNTRY_IDS,
-  getMapScopeConfig,
 } from '../dist/data/map-scopes.js';
 import {
   CAUCASUS_LEARNING_COUNTRY_IDS,
@@ -123,7 +122,6 @@ assert.ok(asiaAsset.contextCountries?.some((country) => country.countryId === 'R
 assert.equal('rivers' in (asiaAsset.water ?? {}), false, 'Asia inherits the global no-rivers policy.');
 
 const lakeNames = new Set(ASIA_WATER.lakes?.map((lake) => lake.name));
-assert.ok(lakeNames.has('Caspian Sea'), 'Caspian Sea is retained as useful Asia orientation context.');
 assert.ok(lakeNames.has('Lake Baikal'), 'Lake Baikal is retained as useful Asia orientation context.');
 assert.equal('rivers' in ASIA_WATER, false, 'Generated Asia water contains no river layer.');
 
@@ -203,6 +201,7 @@ assert.match(provenance.boundaryPolicy.russia, /Europe-owned RUS/);
 assert.match(provenance.boundaryPolicy.caucasus, /excluded from Middle East/);
 assert.match(provenance.boundaryPolicy.taiwan, /non-scoring source context/);
 assert.match(provenance.boundaryPolicy.kashmir, /no handwritten override/);
+assert.match(provenance.boundaryPolicy.physicalWater, /Caspian requested only if present/);
 
 const loaderSource = await readFile('src/data/maps/index.ts', 'utf8');
 assert.ok(loaderSource.includes("import('./asia.js')"), 'Asia runtime geography is lazy-loaded by continent.');
