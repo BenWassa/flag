@@ -1,3 +1,4 @@
+// v27 ships #78's explicit Locations Play feedback and outcome-aware dwell.
 // v26 ships #75's refresh-dropped-round notice and heading fix, #76's
 // continent-wide Play entry, and full mobile PWA installability (iOS
 // standalone launch metadata, manifest identity/category fields, and an
@@ -19,7 +20,7 @@
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v26';
+const VERSION = 'flag-atlas-v27';
 const SHELL = [
   './',
   './index.html',

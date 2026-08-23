@@ -208,9 +208,9 @@
 }
 .map-country--revealed .map-country__callout-line { stroke: var(--wrong); }
 
-/* Answer feedback is deliberately much stronger than stored round evidence.
-   Learn: green only for first-try correct; later correct answers go straight to
-   amber/orange. Play: blue means recorded, never correctness. */
+/* Immediate answer feedback is much stronger than stored Learn evidence.
+   Correct is a solid semantic-green state. A current wrong Play selection is
+   semantic red with a dashed stroke so the distinction survives without colour. */
 .map-country--current-correct .map-country__shape,
 .map-country--current-correct .map-country__locator,
 .map-country--current-correct .map-country__callout-target,
@@ -224,15 +224,23 @@
   animation: map-correct 480ms cubic-bezier(.2,.8,.2,1);
 }
 .map-country--current-correct .map-country__callout-line { stroke: var(--mastered); stroke-width: 2.5; }
-.map-country--recorded .map-country__shape,
-.map-country--recorded .map-country__locator,
-.map-country--recorded .map-country__callout-target,
-.map-country.map-country--recorded:focus-visible .map-country__shape,
-.map-country.map-country--recorded:focus-visible .map-country__locator,
-.map-country.map-country--recorded:focus-visible .map-country__callout-target {
-  animation: map-recorded 420ms ease-out forwards;
+.map-country--current-wrong .map-country__shape,
+.map-country--current-wrong .map-country__locator,
+.map-country--current-wrong .map-country__callout-target,
+.map-country.map-country--current-wrong:focus-visible .map-country__shape,
+.map-country.map-country--current-wrong:focus-visible .map-country__locator,
+.map-country.map-country--current-wrong:focus-visible .map-country__callout-target {
+  fill: var(--wrong-soft);
+  stroke: var(--wrong);
+  stroke-width: 3;
+  stroke-dasharray: 5 3;
+  opacity: 1;
 }
-.map-country--recorded .map-country__callout-line { animation: map-recorded-line 420ms ease-out forwards; }
+.map-country--current-wrong .map-country__callout-line {
+  stroke: var(--wrong);
+  stroke-width: 2.5;
+  stroke-dasharray: 5 3;
+}
 .map-country--wrong-pulse .map-country__shape,
 .map-country--wrong-pulse .map-country__locator,
 .map-country--wrong-pulse .map-country__callout-target,
@@ -250,14 +258,6 @@
   0% { opacity: .5; stroke-width: 4.2; }
   38% { opacity: 1; stroke-width: 3.5; }
   100% { opacity: 1; stroke-width: 3; }
-}
-@keyframes map-recorded {
-  0%, 42% { fill: var(--action-soft); stroke: var(--action); stroke-width: 3; opacity: 1; }
-  100% { fill: var(--map-active-land); stroke: var(--map-active-border); stroke-width: .78; opacity: 1; }
-}
-@keyframes map-recorded-line {
-  0%, 42% { stroke: var(--action); stroke-width: 2.5; }
-  100% { stroke: var(--map-active-border); stroke-width: 1.1; }
 }
 @keyframes map-wrong {
   0% { opacity: .55; stroke-width: 4; }
@@ -360,11 +360,7 @@
   .map-country--current-correct .map-country__shape,
   .map-country--current-correct .map-country__locator,
   .map-country--current-correct .map-country__callout-target,
-  .map-country--recorded .map-country__shape,
-  .map-country--recorded .map-country__locator,
-  .map-country--recorded .map-country__callout-target,
-  .map-country--wrong-pulse .map-country__callout-line,
-  .map-country--recorded .map-country__callout-line { animation: none; }
+  .map-country--wrong-pulse .map-country__callout-line { animation: none; }
 }
 
 @media (forced-colors: active) {
@@ -385,7 +381,7 @@
   .map-country--current-correct .map-country__shape,
   .map-country--current-correct .map-country__locator,
   .map-country--current-correct .map-country__callout-target,
-  .map-country--recorded .map-country__shape,
-  .map-country--recorded .map-country__locator,
-  .map-country--recorded .map-country__callout-target { stroke: Highlight; stroke-width: 3; }
+  .map-country--current-wrong .map-country__shape,
+  .map-country--current-wrong .map-country__locator,
+  .map-country--current-wrong .map-country__callout-target { stroke: Highlight; stroke-width: 3; }
 }

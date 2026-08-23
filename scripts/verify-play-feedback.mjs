@@ -1,6 +1,13 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
+import { loadMapAsset } from '../dist/data/maps/index.js';
+import {
+  applyMapGuess,
+  buildMapSession,
+  createInitialLocationProgress,
+} from '../dist/domain/map-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { buildQuiz } from '../dist/domain/quiz.js';
 import {
@@ -9,6 +16,7 @@ import {
   scoreAnnouncement,
   STREAK_DISPLAY_THRESHOLD,
 } from '../dist/domain/round-feedback.js';
+import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
 import { renderQuiz } from '../dist/ui/views/quiz.js';
 
 const AFRICA = { kind: 'continent', id: 'africa', label: 'Africa' };
@@ -81,7 +89,7 @@ assert.ok(
 );
 assert.equal(STREAK_DISPLAY_THRESHOLD, 2, 'Streaks surface from two consecutive correct answers.');
 
-/* --- Rendered Play surface --- */
+/* --- Rendered Flags Play surface --- */
 
 const session = playSession([{ correct: true }, { correct: true }], 2);
 const target = session.questions[2];
@@ -148,11 +156,43 @@ assert.ok(
   'Announcements stay in the persistent live region, not in re-rendered feedback nodes.',
 );
 
-/* --- Learn is deliberately left quiet --- */
+/* --- Locations reuses the same Play feedback contract --- */
+
+const westAsset = await loadMapAsset('west-africa');
+assert.ok(westAsset, 'West Africa asset loads for Locations feedback verification.');
+const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+
+let mapCorrectSession = buildMapSession(westAsset, 'test', 'locations-play-correct', ['GHA']);
+const mapBefore = renderMapQuiz(westAsset, mapCorrectSession, null);
+assert.ok(!mapBefore.includes('answer-feedback--correct') && !mapBefore.includes('answer-feedback--wrong'), 'Locations Play reveals no outcome before the tap.');
+const mapCorrect = applyMapGuess(mapCorrectSession, locationProgress, 'GHA', 400);
+mapCorrectSession = mapCorrect.session;
+const mapCorrectHtml = renderMapQuiz(westAsset, mapCorrectSession, null);
+assert.ok(mapCorrectHtml.includes('answer-feedback--correct'), 'Locations correct feedback uses the shared panel.');
+assert.ok(mapCorrectHtml.includes('Correct'), 'Locations correct feedback is explicit in text.');
+assert.ok(mapCorrectHtml.includes('map-country--current-correct'), 'Locations correct feedback is also visible on the geography.');
+
+let mapWrongSession = buildMapSession(westAsset, 'test', 'locations-play-wrong', ['GHA']);
+const mapWrong = applyMapGuess(mapWrongSession, locationProgress, 'MLI', 400);
+mapWrongSession = mapWrong.session;
+const mapWrongHtml = renderMapQuiz(westAsset, mapWrongSession, null);
+assert.ok(mapWrongHtml.includes('answer-feedback--wrong'), 'Locations wrong feedback uses the shared panel.');
+assert.ok(mapWrongHtml.includes('Not quite'), 'Locations wrong feedback is explicit in text.');
+assert.ok(mapWrongHtml.includes('Answer: Ghana'), 'Locations wrong feedback names the correct country.');
+assert.ok(mapWrongHtml.includes('map-country--wrong-pulse'), 'Locations marks the wrong selection on the map.');
+assert.ok(mapWrongHtml.includes('map-country--current-correct'), 'Locations simultaneously indicates the actual target after a miss.');
+assert.ok(!mapWrongHtml.includes('Answer recorded'), 'Locations no longer renders the ambiguous recorded state.');
+assert.equal((mapWrongHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Locations locks further answer taps during the resolved feedback dwell.');
+
+/* --- Learn is deliberately left quiet / unchanged --- */
 
 const learnSession = { ...playSession([{ correct: true }, { correct: true }], 2), mode: 'learn' };
 const learnHtml = renderQuiz(learnSession, progress, null);
-assert.ok(!learnHtml.includes('round-score'), 'Learn stays low-pressure and carries no live score.');
+assert.ok(!learnHtml.includes('round-score'), 'Flags Learn stays low-pressure and carries no live score.');
+const mapLearn = buildMapSession(westAsset, 'learn', 'locations-learn-unchanged', ['GHA']);
+const mapLearnHtml = renderMapQuiz(westAsset, mapLearn, null);
+assert.ok(mapLearnHtml.includes('Tap the country'), 'Locations Learn retains its existing guided instruction.');
+assert.ok(!mapLearnHtml.includes('answer-feedback'), 'Locations Learn does not inherit the Play feedback panel.');
 
 /* --- Presentation and motion contracts --- */
 
@@ -177,14 +217,23 @@ assert.ok(
 
 /* --- Round timing keeps rapid play viable --- */
 
-const roundSource = readFileSync(new URL('../dist/state/flags-round.js', import.meta.url), 'utf8');
-const dwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(roundSource)?.[1]);
-const dwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(roundSource)?.[1]);
-assert.ok(dwellCorrect >= 400, 'A correct answer stays visible long enough to register.');
-assert.ok(dwellCorrect <= 900, 'A correct answer does not stall rapid play.');
-assert.ok(dwellWrong > dwellCorrect, 'A missed answer gets longer to read than a correct one.');
-assert.ok(roundSource.includes('advanceNow'), 'The Play dwell can be skipped from the keyboard.');
+const flagsRoundSource = readFileSync(new URL('../dist/state/flags-round.js', import.meta.url), 'utf8');
+const flagsDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
+const flagsDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
+assert.ok(flagsDwellCorrect >= 400, 'A Flags correct answer stays visible long enough to register.');
+assert.ok(flagsDwellCorrect <= 900, 'A Flags correct answer does not stall rapid play.');
+assert.ok(flagsDwellWrong > flagsDwellCorrect, 'A Flags missed answer gets longer to read than a correct one.');
+assert.ok(flagsRoundSource.includes('advanceNow'), 'The Flags Play dwell can be skipped from the keyboard.');
+
+const locationsRoundSource = readFileSync(new URL('../dist/state/locations-round.js', import.meta.url), 'utf8');
+const mapDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
+const mapDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
+assert.ok(mapDwellCorrect >= 400 && mapDwellCorrect <= 900, 'Locations correct feedback has a readable but quick dwell.');
+assert.ok(mapDwellWrong > mapDwellCorrect, 'Locations wrong feedback stays longer for corrective reading.');
+assert.ok(mapDwellWrong >= 1200, 'Locations wrong feedback has enough dwell for the answer identity and map correction.');
+assert.ok(!locationsRoundSource.includes('Location recorded.'), 'Locations removed the neutral spoken acknowledgement.');
+assert.ok(locationsRoundSource.includes('answerFeedback') && locationsRoundSource.includes('scoreAnnouncement'), 'Locations announcements reuse the shared #60 feedback and score contract.');
 
 console.log(
-  'Play feedback verification passed: live score model, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and skippable Play dwell.',
+  'Play feedback verification passed: shared Flags/Locations outcome model, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',
 );

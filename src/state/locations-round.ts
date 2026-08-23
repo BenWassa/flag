@@ -3,10 +3,14 @@ import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { loadMapAsset } from '../data/maps/index.js';
 import type { LearningActivity, StudyScope } from '../domain/models.js';
 import type { MapMode, MapRegionAsset } from '../domain/map-models.js';
+import { answerFeedback, roundScore, scoreAnnouncement } from '../domain/round-feedback.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
 import { beginRoundLaunch, isCurrentRoundLaunch } from './round-launch-guard.js';
 import type { RoundContext } from './round-context.js';
+
+const PLAY_DWELL_CORRECT_MS = 620;
+const PLAY_DWELL_WRONG_MS = 1500;
 
 export interface LocationsRound {
   currentScope(): StudyScope;
@@ -82,7 +86,12 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     const outcome = store.mapLastOutcome;
     const session = store.mapSession;
     if (!outcome || !session) return '';
-    if (session.mode === 'test') return 'Location recorded.';
+    if (session.mode === 'test') {
+      const target = COUNTRY_BY_ID.get(outcome.targetCountryId);
+      const feedback = answerFeedback(outcome.correct, target?.name ?? 'Country');
+      const score = scoreAnnouncement(roundScore(session.attempts, session.countryIds.length));
+      return `${feedback.title}. ${feedback.detail}. ${score}`;
+    }
     if (outcome.correct) {
       if (outcome.misses === 0) return 'Correct on the first try.';
       return `Correct after ${outcome.misses} ${outcome.misses === 1 ? 'miss' : 'misses'}.`;
@@ -108,7 +117,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
 
     const outcome = store.answerMap(countryId);
     const advanceDelay = store.mapSession.mode === 'test'
-      ? 180
+      ? outcome.correct ? PLAY_DWELL_CORRECT_MS : PLAY_DWELL_WRONG_MS
       : outcome.revealed
         ? 1400
         : outcome.misses >= 2

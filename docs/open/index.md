@@ -41,6 +41,12 @@ spun off a focused follow-up issue below.
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it.
+- [#78 — Locations Play feedback and initial map framing](https://github.com/BenWassa/flag/issues/78).
+  Implemented on PR #81 and intentionally left unmerged. Locations Play now
+  uses the shared #60/#64 correct/wrong feedback contract with outcome-aware
+  dwell; the scope-framing audit found no justified cartography change. Full
+  implementation and verification evidence is in
+  [`issue-78-locations-play-feedback.md`](issue-78-locations-play-feedback.md).
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
 
