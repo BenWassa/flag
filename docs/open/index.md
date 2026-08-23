@@ -41,23 +41,33 @@ spun off a focused follow-up issue below.
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it.
+- [#77 — full-width continent/region navigation and Quick Play removal](https://github.com/BenWassa/flag/issues/77).
+  Implementation is complete on `issue-77-full-width-navigation` / PR #80 and
+  intentionally unmerged for review. It preserves the mode-first Home, restores
+  full-width post-mode continent and region selection, exposes existing
+  per-region progress, removes learner-facing row-level Quick Play, and keeps
+  deliberate launcher Play/Learn. See
+  [`issue-77-full-width-navigation.md`](issue-77-full-width-navigation.md) for the
+  full implementation, correction and verification record.
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
 
 #75 (silent round-drop on refresh) and #76 (full-continent Play) are complete
-and closed. #76's continent-wide Play survives the mode-first IA change: it now
-lives on each domain's continent index and inside the launcher, rather than on
-the retired scope-first continent surface.
+and closed. #76 remains the historical record for the direct-play experiment,
+but #77 supersedes its learner-facing row-level Quick Play direction. Whole-
+continent Play still exists as a normal deliberate launcher action; it is no
+longer exposed as a trailing shortcut on continent or region selection rows.
 
-**Mode-first IA change (no issue number).** Navigation was inverted from
-scope-first to mode-first: Home lists the four learning modes with their
-progress, `/{domain}` lists that mode's continents, and `/{domain}/{continent}`
-is the launcher. The `/atlas/*` routes, `src/ui/views/atlas.ts` and the region
-card's four-domain launch row are retired. Normative descriptions live in
-`PRODUCT.md`, `DESIGN.md` and
+**Mode-first IA change.** Navigation remains mode-first: Home lists the four
+learning modes with their progress, `/{domain}` lists that mode's continents,
+and `/{domain}/{continent}` is the launcher. Issue #77 refines the post-Home
+presentation so continents and regions are full-width selection rows and the
+active launcher owns Play/Learn. The `/atlas/*` routes, `src/ui/views/atlas.ts`
+and the region card's four-domain launch row remain retired. Normative
+descriptions live in `PRODUCT.md`, `DESIGN.md` and
 [`../architecture/routing.md`](../architecture/routing.md); the closed records of
-#35 and #74 describe the superseded scope-first design and should be read as
-history.
+#35, #74 and #76 describe superseded historical presentation/shortcut decisions
+and should be read as history.
 
 ### 5. Geography expansion
 
