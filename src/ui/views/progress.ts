@@ -1,4 +1,8 @@
-import { CONTINENTS, REGIONS } from '../../data/continents.js';
+import { CONTINENTS } from '../../data/continents.js';
+import {
+  getLearningScopeDefinition,
+  regionLearningScopes,
+} from '../../data/learning-scopes.js';
 import {
   getContinentAchievementReadModel,
   getRegionAchievementReadModel,
@@ -21,8 +25,7 @@ const DOMAIN_LABELS: Record<LearningDomain, string> = {
   neighbors: 'Neighbours',
 };
 
-function regionCountryCount(regionId: string, regionName: string): number {
-  const scope: StudyScope = { kind: 'region', id: regionId, label: regionName };
+function regionCountryCount(scope: StudyScope): number {
   return countryIdsForSupportedScope(scope, 'flags').length;
 }
 
@@ -43,11 +46,12 @@ function renderMasteryBadge(
 }
 
 function renderRegionMastery(achievements: EarnedAchievementState, regionId: string): string {
-  const region = REGIONS.find((item) => item.id === regionId);
+  const definition = getLearningScopeDefinition(regionId);
   const model = getRegionAchievementReadModel(achievements, regionId);
-  if (!region || !model) return '';
+  if (!definition || definition.scope.kind !== 'region' || !model) return '';
 
-  const countryCount = regionCountryCount(region.id, region.name);
+  const region = definition.scope;
+  const countryCount = regionCountryCount(region);
   const supportedCount = model.supportedDomains.length;
   const detail = model.complete
     ? `${countryCount} countries · Complete region`
@@ -56,12 +60,12 @@ function renderRegionMastery(achievements: EarnedAchievementState, regionId: str
       : `${countryCount} countries · ${supportedCount === 1 ? 'Flags available' : `${supportedCount} domains available`}`;
 
   return `
-    <div class="progress-region-mastery ${model.complete ? 'progress-region-mastery--complete' : ''}" aria-label="${escapeHtml(region.name)}${model.complete ? ', complete region' : ''}">
+    <div class="progress-region-mastery ${model.complete ? 'progress-region-mastery--complete' : ''}" aria-label="${escapeHtml(region.label)}${model.complete ? ', complete region' : ''}">
       <span class="progress-region-mastery__identity">
-        <strong>${escapeHtml(region.name)}</strong>
+        <strong>${escapeHtml(region.label)}</strong>
         <small>${escapeHtml(detail)}</small>
       </span>
-      <span class="progress-region-mastery__domains" aria-label="${escapeHtml(region.name)} domain mastery">
+      <span class="progress-region-mastery__domains" aria-label="${escapeHtml(region.label)} domain mastery">
         ${DOMAIN_IDS.map((domain) => renderMasteryBadge(
           domain,
           model.supportedDomains.includes(domain),
@@ -77,7 +81,7 @@ function renderContinentMastery(achievements: EarnedAchievementState, continentI
   const model = getContinentAchievementReadModel(achievements, continentId);
   if (!continent || !model) return '';
 
-  const regions = REGIONS.filter((region) => region.continentId === continentId);
+  const regions = regionLearningScopes(continentId);
   const status = model.crestEarned
     ? 'Continent complete · Crest earned'
     : model.completeCurriculum
@@ -95,18 +99,14 @@ function renderContinentMastery(achievements: EarnedAchievementState, continentI
         <span class="progress-continent__chevron">${icon('chevron')}</span>
       </summary>
       <div class="progress-continent__regions">
-        ${regions.map((region) => renderRegionMastery(achievements, region.id)).join('')}
+        ${regions.map((definition) => definition.scope.id
+          ? renderRegionMastery(achievements, definition.scope.id)
+          : '').join('')}
       </div>
     </details>
   `;
 }
 
-/**
- * Names the four domain glyphs once, at the top of the surface that then
- * repeats them unlabelled on every region below. Outlines and Neighbours are
- * not readable from a 19px Polygon or Intersect mark on their own, and a label
- * on each of the ~96 badges would bury the mastery reading it exists to show.
- */
 function renderMasteryLegend(): string {
   return `
     <p class="progress-mastery-legend">
@@ -179,7 +179,7 @@ export function renderProgress(
       ${studiedCount === 0 && !hasAchievements ? `
         <div class="progress-first-use" role="status">
           <strong>Your Atlas starts here</strong>
-          <span>Not practised yet. Practise any Africa domain to begin building regional mastery.</span>
+          <span>Not practised yet. Practise any available domain to begin building regional mastery.</span>
         </div>
       ` : ''}
 
