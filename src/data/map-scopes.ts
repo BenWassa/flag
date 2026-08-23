@@ -11,8 +11,12 @@ export interface MapScopeConfig {
 export interface MapContinentConfig {
   continentId: ContinentId;
   scope: StudyScope;
+  /** Canonical scored countries owned by the continent. */
   countryIds: readonly string[];
+  /** Learner-facing map scopes. These may cross canonical continent boundaries. */
   regions: readonly MapScopeConfig[];
+  /** Keyed canonical countries rendered as non-scoring context in the parent asset. */
+  contextCountryIds?: readonly string[];
 }
 
 export const NORTH_AFRICA_MAP_COUNTRY_IDS = [
@@ -100,6 +104,109 @@ export const AFRICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   scope: AFRICA_MAP_SCOPE,
   countryIds: AFRICA_MAP_COUNTRY_IDS,
   regions: AFRICA_MAP_REGION_CONFIGS,
+  contextCountryIds: [],
+};
+
+export const CENTRAL_ASIA_MAP_COUNTRY_IDS = [
+  'KAZ', 'KGZ', 'TJK', 'TKM', 'UZB',
+] as const;
+
+export const EAST_ASIA_MAP_COUNTRY_IDS = [
+  'CHN', 'JPN', 'MNG', 'PRK', 'KOR',
+] as const;
+
+export const SOUTHEAST_ASIA_MAP_COUNTRY_IDS = [
+  'BRN', 'KHM', 'IDN', 'LAO', 'MYS', 'MMR', 'PHL', 'SGP', 'THA', 'TLS', 'VNM',
+] as const;
+
+export const SOUTH_ASIA_MAP_COUNTRY_IDS = [
+  'AFG', 'BGD', 'BTN', 'IND', 'MDV', 'NPL', 'PAK', 'LKA',
+] as const;
+
+export const MIDDLE_EAST_MAP_COUNTRY_IDS = [
+  'BHR', 'CYP', 'EGY', 'IRN', 'IRQ', 'ISR', 'JOR', 'KWT', 'LBN',
+  'OMN', 'PSE', 'QAT', 'SAU', 'SYR', 'TUR', 'ARE', 'YEM',
+] as const;
+
+export const CAUCASUS_MAP_COUNTRY_IDS = ['ARM', 'AZE', 'GEO'] as const;
+
+const CANONICAL_WEST_ASIA_MAP_COUNTRY_IDS = [
+  'ARM', 'AZE', 'BHR', 'CYP', 'GEO', 'IRN', 'IRQ', 'ISR', 'JOR', 'KWT',
+  'LBN', 'OMN', 'PSE', 'QAT', 'SAU', 'SYR', 'TUR', 'ARE', 'YEM',
+] as const;
+
+export const ASIA_MAP_COUNTRY_IDS = [
+  ...CENTRAL_ASIA_MAP_COUNTRY_IDS,
+  ...EAST_ASIA_MAP_COUNTRY_IDS,
+  ...SOUTHEAST_ASIA_MAP_COUNTRY_IDS,
+  ...SOUTH_ASIA_MAP_COUNTRY_IDS,
+  ...CANONICAL_WEST_ASIA_MAP_COUNTRY_IDS,
+] as const;
+
+export const ASIA_MAP_SCOPE: StudyScope = {
+  kind: 'continent',
+  id: 'asia',
+  label: 'Asia',
+};
+
+export const ASIA_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
+  {
+    scope: { kind: 'region', id: 'central-asia', label: 'Central Asia' },
+    continentId: 'asia',
+    countryIds: CENTRAL_ASIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 43, top: 36 },
+  },
+  {
+    scope: { kind: 'region', id: 'east-asia', label: 'East Asia' },
+    continentId: 'asia',
+    countryIds: EAST_ASIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 75, top: 38 },
+  },
+  {
+    scope: { kind: 'region', id: 'southeast-asia', label: 'Southeast Asia' },
+    continentId: 'asia',
+    countryIds: SOUTHEAST_ASIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 73, top: 72 },
+  },
+  {
+    scope: { kind: 'region', id: 'south-asia', label: 'South Asia' },
+    continentId: 'asia',
+    countryIds: SOUTH_ASIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 51, top: 64 },
+  },
+  {
+    scope: { kind: 'region', id: 'middle-east', label: 'Middle East' },
+    continentId: 'asia',
+    countryIds: MIDDLE_EAST_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 22, top: 57 },
+  },
+  {
+    scope: { kind: 'region', id: 'caucasus', label: 'Caucasus' },
+    continentId: 'asia',
+    countryIds: CAUCASUS_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 28, top: 36 },
+  },
+];
+
+export const ASIA_MAP_CONFIG: MapScopeConfig = {
+  scope: ASIA_MAP_SCOPE,
+  continentId: 'asia',
+  countryIds: ASIA_MAP_COUNTRY_IDS,
+};
+
+export const ASIA_MAP_SCOPE_CONFIGS: readonly MapScopeConfig[] = [
+  ASIA_MAP_CONFIG,
+  ...ASIA_MAP_REGION_CONFIGS,
+];
+
+export const ASIA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'asia',
+  scope: ASIA_MAP_SCOPE,
+  countryIds: ASIA_MAP_COUNTRY_IDS,
+  regions: ASIA_MAP_REGION_CONFIGS,
+  // EGY is scored only when Middle East is active; RUS is orientation and
+  // complete-neighbour context. Neither changes canonical continent ownership.
+  contextCountryIds: ['EGY', 'RUS'],
 };
 
 /**
@@ -108,6 +215,7 @@ export const AFRICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
  */
 export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freeze([
   AFRICA_MAP_CONTINENT_CONFIG,
+  ASIA_MAP_CONTINENT_CONFIG,
 ]);
 
 const MAP_CONTINENT_BY_ID = new Map(
@@ -138,7 +246,10 @@ export function getMapContinentConfigForScope(scopeId: string): MapContinentConf
 }
 
 export function generatedMapCountryIds(): readonly string[] {
-  return MAP_CONTINENT_CONFIGS.flatMap((continent) => [...continent.countryIds]);
+  return [...new Set(MAP_CONTINENT_CONFIGS.flatMap((continent) => [
+    ...continent.countryIds,
+    ...continent.regions.flatMap((region) => region.countryIds),
+  ]))];
 }
 
 /** Compatibility seam for Africa-specific verification while callers migrate. */
