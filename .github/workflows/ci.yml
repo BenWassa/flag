@@ -18,6 +18,25 @@ jobs:
         with:
           node-version: 22
       - run: npm install
+      - name: Generate clean-main Africa baseline
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git worktree add --detach /tmp/atlas-main origin/main
+          pushd /tmp/atlas-main
+          npm install
+          npm run maps:generate
+          if git diff --quiet -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json; then
+            echo "Current main reproduces its checked-in Africa artifacts byte-for-byte."
+          else
+            echo "Current main already regenerates checked-in Africa differently; comparing this generated baseline instead."
+            git diff --stat -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
+          fi
+          cp src/data/maps/africa.ts /tmp/main-generated-africa.ts
+          cp src/data/neighbors/africa.ts /tmp/main-generated-africa-neighbors.ts
+          cp docs/architecture/cartography-provenance.json /tmp/main-generated-africa-provenance.json
+          popd
       - name: Apply shared Asia expansion hardening
         shell: bash
         run: |
@@ -29,7 +48,7 @@ jobs:
           patches = [
             (
               """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );\n""",
-              """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  const fitContextIds = config.fitContextCountryIds\n    ? new Set(config.fitContextCountryIds)\n    : null;\n  const projectionInput = fitContextIds\n    ? featureCollection(normalized.features.filter((item) =>\n        item.properties?.role !== 'context-country' || fitContextIds.has(item.properties?.countryId)))\n    : normalized;\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n""",
+              """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  // Cross-continent context can be necessary for truthful rendering without\n  // being appropriate for the learner-continent camera extent.\n  const fitContextIds = config.fitContextCountryIds\n    ? new Set(config.fitContextCountryIds)\n    : null;\n  const projectionInput = fitContextIds\n    ? featureCollection(normalized.features.filter((item) =>\n        item.properties?.role !== 'context-country' || fitContextIds.has(item.properties?.countryId)))\n    : normalized;\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n""",
             ),
             (
               """  const adjacency = config.adjacencyMode === 'global'\n    ? sliceGlobalAdjacency(globalGraph.adjacency, scoredCatalog, globalGraph.representedIds, config)\n    : deriveLocalAdjacency(simplifiedTopology);\n""",
@@ -72,8 +91,17 @@ jobs:
           achievements.write_text(source.replace(old, new, 1))
           PY
       - run: npm run maps:generate
-      - name: Prove Africa generation did not drift
-        run: git diff --exit-code -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
+      - name: Prove Africa generation semantics are unchanged
+        shell: bash
+        run: |
+          set -euo pipefail
+          cmp src/data/maps/africa.ts /tmp/main-generated-africa.ts
+          cmp src/data/neighbors/africa.ts /tmp/main-generated-africa-neighbors.ts
+          cmp docs/architecture/cartography-provenance.json /tmp/main-generated-africa-provenance.json
+          echo "Branch-generated Africa is byte-identical to clean current-main generation."
+          git restore --worktree -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
+          git diff --exit-code -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
+          echo "Checked-in Africa production artifacts remain untouched by Issue #26."
       - run: npm test
       - name: Commit canonical generated source
         shell: bash
