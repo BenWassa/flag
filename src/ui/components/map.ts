@@ -158,8 +158,8 @@ export function renderMapSvg(
                 && !currentPlayAttempt?.correct
                 && geometry.countryId === currentPlayAttempt?.selectedCountryId;
               const strongCorrect = learnCurrentCorrect || playCorrectTarget;
-              const strongWrong = wrongId === geometry.countryId || playWrongSelection;
-              const classes = `map-country${resolutionClass(state, showFeedback)}${strongCorrect ? ' map-country--current-correct' : ''}${strongWrong ? ' map-country--wrong-pulse' : ''}`;
+              const learnWrong = wrongId === geometry.countryId;
+              const classes = `map-country${resolutionClass(state, showFeedback)}${strongCorrect ? ' map-country--current-correct' : ''}${playWrongSelection ? ' map-country--current-wrong' : ''}${learnWrong ? ' map-country--wrong-pulse' : ''}`;
               const selectable = interactive && !currentTargetResolved && !state?.resolved;
               const action = selectable ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
               return `
