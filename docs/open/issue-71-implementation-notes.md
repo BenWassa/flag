@@ -163,3 +163,33 @@ keyed to a `[data-map-surface]` attribute that does not exist). It should be
 deleted rather than merged. `origin/docs/issue-71-mobile-interaction-spec` and
 `origin/issue-72-legacy-code-css-audit-fix` are both fully merged into `main` and
 can also be deleted.
+
+---
+
+## Re-verification on the v0.7.0 integration (2026-08-23)
+
+Re-run after South America, Europe and Asia shipped, `#77` restored full-width
+continent/region navigation and `#78` made Locations Play feedback explicit —
+all of which change the surfaces the gesture layer shares ownership with.
+Chromium (Playwright 1.62.1), Pixel 7 profile 412×915 with touch, CDP touch
+events against the production `dist/` build:
+
+| check | evidence |
+|---|---|
+| edge swipe navigates back from a nested route | `#/locations/europe/western-europe` → `#/locations` |
+| swipe at Home does not exit the app | `#/` → `#/` |
+| mid-screen swipe does not navigate | route unchanged |
+| no persistent map zoom/reset controls | 0 found on the Asia launcher |
+| no horizontal overflow at 320 px | 12 routes clean, including the new Europe/Asia/South America surfaces and `/locations/asia/middle-east` |
+| no row-level Quick Play remains | 0 across all four domain indexes |
+| launcher geography renders per continent | Africa 70, Europe 61, Asia 70, South America 23 SVG paths |
+| Play rounds are tappable in the new continents | Western Europe 9, Middle East 17, Andean 5 countries |
+| explicit Play feedback reaches the new continents | `map-country--current-wrong map-country--wrong-pulse` on a wrong tap |
+| no console or page errors | clean across the run |
+
+The gesture layer did not regress under the merged navigation and feedback
+changes.
+
+**Still not verified.** No physical device was used. The acceptance criteria
+requiring physical Pixel/Android Chrome, iPhone/iOS Safari and installed-PWA
+validation remain genuinely open, and are the only reason #71 stays open.
