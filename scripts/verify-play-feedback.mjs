@@ -3,11 +3,13 @@ import { readFileSync } from 'node:fs';
 import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
+import { loadOutlineAsset } from '../dist/data/outlines.js';
 import {
   applyMapGuess,
   buildMapSession,
   createInitialLocationProgress,
 } from '../dist/domain/map-game.js';
+import { buildOutlineQuiz } from '../dist/domain/outline.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { buildQuiz } from '../dist/domain/quiz.js';
 import {
@@ -17,9 +19,11 @@ import {
   STREAK_DISPLAY_THRESHOLD,
 } from '../dist/domain/round-feedback.js';
 import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
+import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
 import { renderQuiz } from '../dist/ui/views/quiz.js';
 
 const AFRICA = { kind: 'continent', id: 'africa', label: 'Africa' };
+const WEST_AFRICA = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 const progress = createInitialProgress(COUNTRIES);
 
 function playSession(attempts = [], currentIndex = attempts.length) {
@@ -156,6 +160,53 @@ assert.ok(
   'Announcements stay in the persistent live region, not in re-rendered feedback nodes.',
 );
 
+/* --- Outlines reuses the same Play feedback contract --- */
+
+const westOutlineAsset = await loadOutlineAsset('west-africa');
+assert.ok(westOutlineAsset, 'West Africa asset loads for Outlines feedback verification.');
+const outlineQuestions = buildOutlineQuiz({
+  countries: COUNTRIES,
+  progress,
+  scope: WEST_AFRICA,
+  mode: 'test',
+  size: 1,
+  sessionId: 'outlines-play-feedback',
+  asset: westOutlineAsset,
+});
+assert.equal(outlineQuestions.length, 1, 'Outlines builds a Play question for feedback verification.');
+const outlineSession = {
+  id: 'outlines-play-feedback',
+  mode: 'test',
+  scope: WEST_AFRICA,
+  startedAt: new Date().toISOString(),
+  questions: outlineQuestions,
+  currentIndex: 0,
+  attempts: [],
+};
+const outlineTarget = outlineQuestions[0];
+const outlineTargetName = COUNTRY_BY_ID.get(outlineTarget.countryId).name;
+const outlineDistractor = outlineTarget.optionCountryIds.find((id) => id !== outlineTarget.countryId);
+
+const outlineBefore = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, null);
+assert.ok(
+  !outlineBefore.includes('answer-feedback--correct') && !outlineBefore.includes('answer-feedback--wrong'),
+  'Outlines Play reveals no outcome before the answer.',
+);
+const outlineCorrect = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, outlineTarget.countryId);
+assert.ok(outlineCorrect.includes('answer-feedback--correct'), 'Outlines correct feedback uses the shared panel.');
+assert.ok(outlineCorrect.includes('answer-button--correct'), 'Outlines marks the correct option during Play feedback.');
+assert.ok(!outlineCorrect.includes('Answer recorded'), 'Outlines no longer renders the neutral recorded state.');
+
+const outlineWrong = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, outlineDistractor);
+assert.ok(outlineWrong.includes('answer-feedback--wrong'), 'Outlines wrong feedback uses the shared panel.');
+assert.ok(outlineWrong.includes('Not quite'), 'Outlines wrong feedback is explicit in text.');
+assert.ok(outlineWrong.includes(`Answer: ${outlineTargetName}`), 'Outlines wrong feedback names the correct country.');
+assert.ok(
+  outlineWrong.includes('answer-button--correct') && outlineWrong.includes('answer-button--wrong'),
+  'Outlines marks both the chosen option and the correct option after a miss.',
+);
+assert.ok(!outlineWrong.includes('Answer recorded'), 'Outlines Play never falls back to the ambiguous recorded state.');
+
 /* --- Locations reuses the same Play feedback contract --- */
 
 const westAsset = await loadMapAsset('west-africa');
@@ -165,12 +216,22 @@ const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 let mapCorrectSession = buildMapSession(westAsset, 'test', 'locations-play-correct', ['GHA']);
 const mapBefore = renderMapQuiz(westAsset, mapCorrectSession, null);
 assert.ok(!mapBefore.includes('answer-feedback--correct') && !mapBefore.includes('answer-feedback--wrong'), 'Locations Play reveals no outcome before the tap.');
+assert.deepEqual(
+  [...mapBefore.matchAll(/round-score__value">([^<]*)</g)].map(([, value]) => value),
+  ['0', '1'],
+  'Locations Play renders the same visible correct/left score contract as Flags.',
+);
 const mapCorrect = applyMapGuess(mapCorrectSession, locationProgress, 'GHA', 400);
 mapCorrectSession = mapCorrect.session;
 const mapCorrectHtml = renderMapQuiz(westAsset, mapCorrectSession, null);
 assert.ok(mapCorrectHtml.includes('answer-feedback--correct'), 'Locations correct feedback uses the shared panel.');
 assert.ok(mapCorrectHtml.includes('Correct'), 'Locations correct feedback is explicit in text.');
 assert.ok(mapCorrectHtml.includes('map-country--current-correct'), 'Locations correct feedback is also visible on the geography.');
+assert.deepEqual(
+  [...mapCorrectHtml.matchAll(/round-score__value">([^<]*)</g)].map(([, value]) => value),
+  ['1', '0'],
+  'Locations updates the visible score during the resolved Play dwell.',
+);
 
 let mapWrongSession = buildMapSession(westAsset, 'test', 'locations-play-wrong', ['GHA']);
 const mapWrong = applyMapGuess(mapWrongSession, locationProgress, 'MLI', 400);
@@ -184,6 +245,14 @@ assert.ok(mapWrongHtml.includes('map-country--current-correct'), 'Locations simu
 assert.ok(!mapWrongHtml.includes('Answer recorded'), 'Locations no longer renders the ambiguous recorded state.');
 assert.equal((mapWrongHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Locations locks further answer taps during the resolved feedback dwell.');
 
+const andeanAsset = await loadMapAsset('andean');
+assert.ok(andeanAsset, 'Andean asset loads for continent-specific Locations copy verification.');
+const andeanSession = buildMapSession(andeanAsset, 'test', 'locations-south-america-copy', ['PER']);
+const andeanHtml = renderMapQuiz(andeanAsset, andeanSession, null);
+assert.ok(andeanHtml.includes('pan South America'), 'Locations Play names the active continent in pan guidance.');
+assert.ok(andeanHtml.includes('South America map with Andean active'), 'Locations map aria copy names the active continent.');
+assert.ok(!andeanHtml.includes('pan Africa'), 'Non-Africa Locations rounds no longer leak Africa-specific guidance.');
+
 /* --- Learn is deliberately left quiet / unchanged --- */
 
 const learnSession = { ...playSession([{ correct: true }, { correct: true }], 2), mode: 'learn' };
@@ -192,6 +261,7 @@ assert.ok(!learnHtml.includes('round-score'), 'Flags Learn stays low-pressure an
 const mapLearn = buildMapSession(westAsset, 'learn', 'locations-learn-unchanged', ['GHA']);
 const mapLearnHtml = renderMapQuiz(westAsset, mapLearn, null);
 assert.ok(mapLearnHtml.includes('Tap the country'), 'Locations Learn retains its existing guided instruction.');
+assert.ok(!mapLearnHtml.includes('round-score'), 'Locations Learn stays low-pressure and carries no live score.');
 assert.ok(!mapLearnHtml.includes('answer-feedback'), 'Locations Learn does not inherit the Play feedback panel.');
 
 /* --- Presentation and motion contracts --- */
@@ -235,5 +305,5 @@ assert.ok(!locationsRoundSource.includes('Location recorded.'), 'Locations remov
 assert.ok(locationsRoundSource.includes('answerFeedback') && locationsRoundSource.includes('scoreAnnouncement'), 'Locations announcements reuse the shared #60 feedback and score contract.');
 
 console.log(
-  'Play feedback verification passed: shared Flags/Locations outcome model, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',
+  'Play feedback verification passed: shared Flags/Outlines/Locations outcome model, visible Play scores, scope-correct map guidance, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',
 );
