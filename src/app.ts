@@ -21,7 +21,6 @@ import {
   routeForScopeId,
   routeTitle,
   routesEqual,
-  scopeForQuickPlay,
   serializeRoutePath,
   stableRoute,
   type AppRoute,
@@ -640,26 +639,6 @@ function openScope(domainValue: string | undefined, id: string | undefined): voi
   if (route) navigateStable(route);
 }
 
-function quickPlay(
-  domainValue: string | undefined,
-  id: string | undefined,
-  element: HTMLElement | null = null,
-): void {
-  if (!isLearningDomain(domainValue)) return;
-  const scope = scopeForQuickPlay(domainValue, id);
-  if (!scope) return;
-
-  if (domainValue === 'flags') {
-    flagsRound.begin(scope, 'test');
-  } else if (domainValue === 'locations') {
-    void withLaunchFeedback(element, () => locationsRound.begin('test', undefined, scope));
-  } else if (domainValue === 'outlines') {
-    void withLaunchFeedback(element, () => outlinesRound.begin('test', undefined, scope));
-  } else {
-    neighborsRound.begin('test', undefined, scope);
-  }
-}
-
 function replaceLauncherScope(
   domainValue: string | undefined,
   id: string | undefined,
@@ -714,10 +693,6 @@ root.addEventListener('click', (event) => {
     revealedFlagIds.clear();
     announce(revealAllFlagNames ? 'All country names revealed.' : 'Country names hidden.');
     finishInteraction(selector);
-    return;
-  }
-  if (action === 'quick-play') {
-    quickPlay(element.dataset.domain, id, element);
     return;
   }
   if (action === 'open-domain') {

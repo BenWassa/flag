@@ -1,5 +1,4 @@
 import { CONTINENTS, REGIONS } from '../data/continents.js';
-import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { domainDisplayName } from '../domain/display.js';
 import {
   LEARNING_DOMAIN_IDS,
@@ -7,7 +6,6 @@ import {
   type LearningDomain,
   type StudyScope,
 } from '../domain/models.js';
-import { scopeSupportsDomain } from '../domain/scope-support.js';
 
 export type AppRoute =
   | { name: 'home' }
@@ -52,21 +50,6 @@ export function routeForScope(
 export function routeForScopeId(domain: LearningDomain, id: string): LearningRoute | null {
   const scope = scopeForId(id);
   return scope ? routeForScope(domain, scope) : null;
-}
-
-export function scopeForQuickPlay(
-  domain: LearningDomain,
-  id: string | undefined,
-): StudyScope | null {
-  if (id === domain) {
-    return domain === 'flags'
-      ? { kind: 'world', label: 'World' }
-      : AFRICA_MAP_SCOPE;
-  }
-  if (!id) return null;
-  const scope = routeForScopeId(domain, id)?.scope;
-  if (!scope) return null;
-  return scopeSupportsDomain(scope, domain) ? scope : null;
 }
 
 export function stableRoute(route: AppRoute): AppRoute {
