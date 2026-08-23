@@ -77,7 +77,7 @@ function renderRegionRow(
         </span>
         ${selected ? '<span class="region-row__status">Selected</span>' : ''}
         ${region.stats.due > 0 ? `<span class="region-row__evidence">${region.stats.due} due</span>` : ''}
-        <span class="region-row__progress">${progressStrip(region.stats)}</span>
+        <span class="region-row__badge" aria-hidden="true"></span>
         ${icon('chevron')}
       </button>
     </div>
