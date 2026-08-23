@@ -1,4 +1,8 @@
-import { CONTINENTS, REGIONS } from '../data/continents.js';
+import { CONTINENTS } from '../data/continents.js';
+import {
+  getLearningScopeDefinition,
+  parentContinentIdForLearningScope,
+} from '../data/learning-scopes.js';
 import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { domainDisplayName } from '../domain/display.js';
 import {
@@ -32,12 +36,7 @@ export function isLearningActivity(value: string | undefined): value is Learning
 }
 
 export function scopeForId(id: string): StudyScope | null {
-  const continent = CONTINENTS.find((item) => item.id === id);
-  if (continent) return { kind: 'continent', id: continent.id, label: continent.name };
-
-  const region = REGIONS.find((item) => item.id === id);
-  if (region) return { kind: 'region', id: region.id, label: region.name };
-  return null;
+  return getLearningScopeDefinition(id)?.scope ?? null;
 }
 
 export function routeForScope(
@@ -76,9 +75,8 @@ export function stableRoute(route: AppRoute): AppRoute {
 
 /**
  * A syntactically valid scope can still name curriculum a domain has not
- * shipped (Locations outside Africa, say). Rather than 404, the learner is
- * dropped back on that domain's continent index, which states the coverage
- * honestly instead of silently substituting a different continent.
+ * shipped. Rather than 404, the learner is dropped back on that domain's
+ * continent index, which states the coverage honestly.
  */
 export function normalizeAvailableRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning' || !route.scope) return route;
@@ -92,11 +90,6 @@ export function parentRoute(route: AppRoute): AppRoute | null {
 
   if (route.activity !== undefined) return stableRoute(route);
 
-  // Mode-first hierarchy: Home picks the domain, the domain route lists
-  // continents, and a scoped launcher is one continent of that domain. A
-  // selected region is still that same continent screen, so its parent is the
-  // continent index rather than the deselected launcher — clearing a region is
-  // the launcher's own All-continent control, which is not Back.
   if (!route.scope) return { name: 'home' };
   return { name: 'learning', domain: route.domain };
 }
@@ -128,11 +121,16 @@ export function parseRoutePath(input: string): AppRoute | null {
     return { name: 'learning', domain, scope: continentScope, activity: regionOrActivitySegment };
   }
 
-  const region = REGIONS.find(
-    (item) => item.id === regionOrActivitySegment && item.continentId === continent.id,
-  );
-  if (!region) return null;
-  const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
+  const definition = regionOrActivitySegment
+    ? getLearningScopeDefinition(regionOrActivitySegment)
+    : undefined;
+  if (
+    !definition
+    || definition.scope.kind !== 'region'
+    || definition.parentContinentId !== continent.id
+  ) return null;
+
+  const regionScope = definition.scope;
   if (segments.length === 3) return { name: 'learning', domain, scope: regionScope };
 
   if (!isLearningActivity(activitySegment) || segments.length !== 4) return null;
@@ -147,9 +145,9 @@ export function serializeRoutePath(route: AppRoute): string {
   if (route.scope?.kind === 'continent' && route.scope.id) {
     segments.push(route.scope.id);
   } else if (route.scope?.kind === 'region' && route.scope.id) {
-    const region = REGIONS.find((item) => item.id === route.scope?.id);
-    if (!region) throw new Error(`Unknown region route scope: ${route.scope.id}`);
-    segments.push(region.continentId, region.id);
+    const parentContinentId = parentContinentIdForLearningScope(route.scope);
+    if (!parentContinentId) throw new Error(`Unknown region route scope: ${route.scope.id}`);
+    segments.push(parentContinentId, route.scope.id);
   }
   if (route.activity) segments.push(route.activity);
   return `/${segments.join('/')}`;
