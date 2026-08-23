@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [main, issue-25-europe-expansion]
+    branches: [main]
   pull_request:
 
 permissions:
@@ -10,10 +10,13 @@ permissions:
 
 jobs:
   regenerate-europe:
-    if: github.ref == 'refs/heads/issue-25-europe-expansion'
+    if: github.event_name == 'pull_request' && github.head_ref == 'issue-25-europe-expansion'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-25-europe-expansion
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -63,15 +66,15 @@ jobs:
           NODE
       - name: Commit deterministic generated output and restore CI
         run: |
-          git show HEAD^:.github/workflows/ci.yml > .github/workflows/ci.yml
+          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add .github/workflows/ci.yml src/data/maps src/data/neighbors docs/architecture docs/open/europe-generation-inspection.txt
           git commit -m "Regenerate Europe geography after QA hardening"
-          git push
+          git push origin HEAD:issue-25-europe-expansion
 
   verify:
-    if: github.ref != 'refs/heads/issue-25-europe-expansion'
+    if: github.event_name != 'pull_request' || github.head_ref != 'issue-25-europe-expansion'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
