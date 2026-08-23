@@ -176,6 +176,13 @@ body { letter-spacing: -.006em; }
   box-shadow: var(--depth-tile-hover);
 }
 
+/* Every region in this continent has earned its gold region-complete
+   outline — the continent crest indicator. Restrained gold border only. */
+.page--tile-index .continent-row--complete {
+  border-color: color-mix(in srgb, var(--prestige) 58%, var(--line));
+  box-shadow: inset 3px 0 0 var(--prestige), var(--depth-tile);
+}
+
 .page--tile-index .continent-row:active { transform: translateY(1px); }
 
 .page--tile-index .continent-row__open {
@@ -241,11 +248,6 @@ body { letter-spacing: -.006em; }
   grid-column: 1;
   grid-row: 3;
   width: 100%;
-}
-
-.page--tile-index .continent-row__progress .status-strip {
-  height: 7px;
-  border-radius: 999px;
 }
 
 .page--tile-index .continent-row__open > .ui-icon {
@@ -328,6 +330,14 @@ body { letter-spacing: -.006em; }
   box-shadow: inset 3px 0 0 var(--action), var(--depth-tile);
 }
 
+/* Every supported domain in this region has earned its perfect-run mastery —
+   the region itself is complete. Restrained gold border only, never a fill,
+   per the gold-usage rule (reserved for completeness, not ordinary state). */
+.region-row--complete {
+  border-color: color-mix(in srgb, var(--prestige) 58%, var(--line));
+  box-shadow: inset 3px 0 0 var(--prestige), var(--depth-tile);
+}
+
 .region-row__open {
   width: 100%;
   min-height: 92px;
@@ -349,6 +359,14 @@ body { letter-spacing: -.006em; }
   font-weight: 780;
   letter-spacing: -.02em;
 }
+
+.region-row__mastery {
+  display: inline-flex;
+  vertical-align: middle;
+  margin-left: 5px;
+  color: var(--mastery);
+}
+.region-row__mastery .ui-icon { width: 14px; height: 14px; }
 
 .region-row__status {
   grid-column: 2;
@@ -373,11 +391,6 @@ body { letter-spacing: -.006em; }
   grid-column: 1 / -1;
   grid-row: 3;
   min-width: 0;
-}
-
-.region-row__progress .status-strip {
-  height: 7px;
-  border-radius: 999px;
 }
 
 .region-row__open > .ui-icon {
@@ -412,22 +425,6 @@ body { letter-spacing: -.006em; }
   box-shadow: var(--depth-tile);
 }
 
-.launcher__status .status-strip {
-  height: 8px;
-  border-radius: 999px;
-  background: var(--track);
-}
-
-/* The strip is the primary at-a-glance signal here; the adjacent numeric
-   line stays present for screen readers/precise counts but reads quieter
-   so it doesn't compete with it. */
-.launcher__status .scope-status-line strong {
-  font-size: 13px;
-  font-weight: 650;
-}
-
-.launcher__status .scope-status-line span { font-size: 12px; }
-
 .launcher__play {
   min-height: 58px;
   margin-top: 15px;
@@ -461,11 +458,9 @@ body { letter-spacing: -.006em; }
   font-weight: 760;
 }
 
-/* These selectors still describe country-level scheduler evidence in the
-   current implementation. Keep them ordinary Atlas Blue until #29/#34
-   separates earned region/domain Mastery from live evidence. */
-.status-strip__mastered { background: var(--action); }
-.status-strip__learning { background: var(--learning); }
+/* Ordinary progress is always Atlas Blue — purple/gold are reserved for
+   earned region/domain Mastery and region/continent/world completion. */
+.status-strip__cleared { background: var(--action); }
 .status-text--mastered { color: var(--action); }
 
 .quiz-shell { width: min(100%, 860px); }
@@ -589,6 +584,25 @@ body { letter-spacing: -.006em; }
 .result-score > strong {
   font-size: clamp(3rem, 14vw, 4.25rem);
   font-weight: 820;
+}
+
+/* Every question in this Play round was correct — a one-off session
+   celebration, distinct from the persistent region×domain mastery streak. */
+.result-score--perfect {
+  border-color: color-mix(in srgb, var(--prestige) 58%, var(--line));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--prestige) 40%, transparent), var(--depth-tile);
+}
+
+.result-score__badge {
+  display: inline-flex;
+  align-items: center;
+  margin-top: 6px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: var(--prestige-soft);
+  color: color-mix(in srgb, var(--prestige) 70%, var(--text));
+  font-size: 12px;
+  font-weight: 760;
 }
 
 .result-statline {
@@ -818,11 +832,6 @@ body { letter-spacing: -.006em; }
   text-transform: uppercase;
   letter-spacing: .09em;
   color: var(--text-muted);
-}
-
-.atlas-card__body .status-strip {
-  height: 7px;
-  border-radius: 999px;
 }
 
 .atlas-card__chevron {

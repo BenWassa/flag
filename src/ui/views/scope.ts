@@ -4,6 +4,11 @@ import {
   parentContinentIdForLearningScope,
   regionLearningScopes,
 } from '../../data/learning-scopes.js';
+import {
+  isRegionComplete,
+  isRegionDomainMasteryEarned,
+  type EarnedAchievementState,
+} from '../../domain/achievements.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { renderLauncher } from './launcher.js';
@@ -20,6 +25,7 @@ function continentFor(scope: StudyScope): StudyScope | null {
 export function renderScope(
   progress: ProgressState,
   scope: StudyScope,
+  achievements: EarnedAchievementState,
   persisting = true,
 ): string {
   const continentScope = continentFor(scope);
@@ -32,6 +38,10 @@ export function renderScope(
     .map((definition) => ({
       scope: definition.scope,
       stats: getScopeStats(COUNTRIES, progress, definition.scope),
+      domainMastered: definition.scope.id
+        ? isRegionDomainMasteryEarned(achievements, definition.scope.id, 'flags')
+        : false,
+      complete: definition.scope.id ? isRegionComplete(achievements, definition.scope.id) : false,
     }));
 
   return renderLauncher({

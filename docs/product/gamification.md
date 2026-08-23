@@ -8,18 +8,20 @@ The interface may feel tactile and playful, but prestige signals must remain sca
 
 ## Colour hierarchy
 
-- Atlas Blue — ordinary navigation and action;
+- Atlas Blue — ordinary progress and navigation;
 - Green / Red — transient answer feedback;
 - Purple — durable region × domain mastery;
 - Gold — completeness / prestige;
 - Continent crest — major continent achievement;
 - Crown — world completion only.
 
+Ordinary progress (the bar on continent/region rows) is a single Atlas Blue fill against a neutral track. It never segments into a second colour for partially-seen material, never prints a raw evidence taxonomy (strong/learning/unseen counts), and never borrows purple or gold. A country's share of that fill counts the moment it has been answered correctly once — the scheduler may keep asking for more evidence underneath for its own review purposes, but the visible bar answers "how much of this have I cleared", not "how many countries currently satisfy the scheduler's strong-evidence threshold".
+
 ## Achievement hierarchy
 
 ### Country
 
-Do not present an individual country as “mastered”.
+Do not present an individual country as “mastered”. A country's only visible state is whether it has contributed to the region's blue "cleared" progress (see above) — there is no per-country purple, gold, or numeric evidence badge.
 
 Country-level records remain the underlying live learning evidence used by the scheduler.
 
@@ -32,11 +34,9 @@ The first meaningful mastery unit is one domain learned across a complete region
 - Outlines;
 - Neighbours.
 
-In region lists, use four compact domain icons. Incomplete icons remain neutral; mastered competencies turn purple.
+Mastery is earned by **two consecutive 100%-correct full-region Play rounds** in that domain, not by accumulating per-country scheduler evidence. A single perfect round earns a one-off "Perfect round" result-screen ceremony (restrained gold accent, not the permanent purple mark); it takes a second perfect round in a row to earn the durable region × domain mastery mark. A non-perfect round in between resets that domain's streak.
 
-In a dedicated/expanded region context, a mastered competency may use a fuller icon-on-shield treatment.
-
-Avoid shield-within-shield designs and excessive heraldry.
+Today this ships as a small purple mark beside the region's name on its existing region row, scoped to whichever single domain that launcher is already showing (there is no cross-domain region card yet — see #35/Progress). A unified region card showing all four compact domain icons side by side, or a fuller icon-on-shield treatment in an expanded context, remains open future work; avoid shield-within-shield designs and excessive heraldry when it is built.
 
 ### Region complete
 

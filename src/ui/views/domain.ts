@@ -1,5 +1,6 @@
 import { CONTINENTS } from '../../data/continents.js';
 import { regionLearningScopes } from '../../data/learning-scopes.js';
+import { getContinentAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
 import { domainDisplayName } from '../../domain/display.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import {
@@ -22,6 +23,7 @@ function statsFor(summary: ProgressSummary): ScopeStats {
     learning: summary.learning,
     mastered: summary.strong,
     due: summary.due,
+    cleared: summary.cleared,
   };
 }
 
@@ -43,6 +45,7 @@ function continentCard(
   domain: LearningDomain,
   continent: (typeof CONTINENTS)[number],
   ledgers: ProgressLedgers,
+  achievements: EarnedAchievementState,
 ): string {
   const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
   if (!scopeSupportsDomain(scope, domain)) return shellCard(continent);
@@ -53,10 +56,10 @@ function continentCard(
   const stats = statsFor(summary);
   const regions = regionLearningScopes(continent.id).length;
   const name = escapeHtml(continent.name);
-  const dueCopy = summary.due > 0 ? ` · ${summary.due} due` : '';
+  const crestEarned = getContinentAchievementReadModel(achievements, continent.id)?.crestEarned ?? false;
 
   return `
-    <div class="continent-row">
+    <div class="continent-row${crestEarned ? ' continent-row--complete' : ''}">
       <button
         class="continent-row__open"
         type="button"
@@ -69,7 +72,7 @@ function continentCard(
           <small>${summary.total} countries · ${regions} regions</small>
         </span>
         <span class="continent-row__mark" aria-hidden="true">${continentIcon(continent.id)}</span>
-        <span class="continent-row__evidence">${summary.strong} strong · ${summary.learning} learning${dueCopy}</span>
+        ${summary.due > 0 ? `<span class="continent-row__evidence">${summary.due} due</span>` : ''}
         <span class="continent-row__progress">${progressStrip(stats)}</span>
         ${icon('chevron')}
       </button>
@@ -89,9 +92,9 @@ function worldSection(ledgers: ProgressLedgers): string {
           <h2 id="world-heading">World</h2>
           <p>Every flag at once, or pick a continent below.</p>
         </div>
-        <div class="mastery-total" aria-label="${summary.strong} of ${summary.total} flags have strong evidence">
-          <strong>${summary.strong}</strong><span>/ ${summary.total}</span>
-          <small>strong</small>
+        <div class="mastery-total" aria-label="${summary.cleared} of ${summary.total} flags cleared">
+          <strong>${summary.cleared}</strong><span>/ ${summary.total}</span>
+          <small>cleared</small>
         </div>
       </div>
       ${progressStrip(stats)}
@@ -106,6 +109,7 @@ function worldSection(ledgers: ProgressLedgers): string {
 export function renderDomainIndex(
   domain: LearningDomain,
   ledgers: ProgressLedgers,
+  achievements: EarnedAchievementState,
   persisting = true,
 ): string {
   const title = escapeHtml(domainDisplayName(domain));
@@ -137,7 +141,7 @@ export function renderDomainIndex(
           <span>${CONTINENTS.length}</span>
         </div>
         <div class="continent-list">
-          ${CONTINENTS.map((continent) => continentCard(domain, continent, ledgers)).join('')}
+          ${CONTINENTS.map((continent) => continentCard(domain, continent, ledgers, achievements)).join('')}
         </div>
       </section>
     </main>

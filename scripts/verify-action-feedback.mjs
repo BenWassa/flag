@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
@@ -99,7 +100,7 @@ const ledgers = {
   neighbors: createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
 };
 const home = renderHome(ledgers);
-const locationsIndex = renderDomainIndex('locations', ledgers);
+const locationsIndex = renderDomainIndex('locations', ledgers, createInitialAchievementState());
 
 // Polygon and Intersect are not legible at 32px on their own; DESIGN.md accepts
 // them only "paired with the visible ... label", so the label has to be real

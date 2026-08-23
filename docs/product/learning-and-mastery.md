@@ -159,13 +159,20 @@ The evidence layer exposes:
 
 ```ts
 qualifiesForRegionMastery(record)
+hasSuccessfulRetrieval(record)
 ```
 
-This selector answers one UI-independent question:
+`qualifiesForRegionMastery` answers a UI-independent question about one country's accumulated evidence:
 
-> Does this country's current evidence qualify toward region × domain mastery?
+> Does this country's current evidence qualify as strong (the compatibility scheduler's multi-exposure threshold)?
 
-The current implementation delegates to the compatibility strong-evidence state. A future scheduler can change its internal representation or weighting behind this selector without requiring #34 to change its achievement logic.
+It continues to drive per-country scheduling/review (`due-for-review`) and the `strong` bucket of `countryEvidenceState`. It is **not** the region × domain mastery gate (see below).
+
+`hasSuccessfulRetrieval` answers a cheaper, presentation-only question:
+
+> Has this country ever been retrieved correctly at least once?
+
+This is what the ordinary progress bar shows as **cleared** (a single blue fill, no brown/segmented "learning" state, no visible strong/learning/unseen counts). One correct answer is enough to count as cleared; the country's richer evidence state keeps accumulating underneath for scheduling purposes only.
 
 ## Region × domain mastery
 
@@ -178,7 +185,18 @@ Examples:
 - West Africa — Locations mastered;
 - West Africa — Neighbours mastered.
 
-Achievement aggregation belongs to #34 and should consume the qualification selector above rather than duplicate country rules.
+**Mastery is not gated on per-country evidence.** It is earned by **two consecutive 100%-correct full-region Play rounds** in that domain — a single perfect round is not enough, and any non-perfect full-region Play round resets that region × domain's streak to zero. This is deliberately a session-level signal rather than an aggregation of `qualifiesForRegionMastery` across every country in the region: a learner can get one perfect Play round largely through luck/short-term recall, but two in a row is a meaningfully stronger claim, and it gives the achievement a legible, game-like trigger ("West Africa — 17/17. Perfect.") rather than a hidden accumulation of scheduler credit.
+
+`src/domain/achievements.ts` implements this as:
+
+```ts
+recordRegionDomainPlayResult(streakState, regionId, domain, wasPerfect)
+createRegionDomainPerfectRunQualification(streakState)
+```
+
+`recordRegionDomainPlayResult` is called once per finished full-region-scope Play round (never for Learn, and never for a continent/world/custom-scope round) from `src/state/store.ts`'s four session-finish points. The resulting `PerfectRunStreakState` is persisted independently of `EarnedAchievementState` under `flag-atlas:region-domain-perfect-run-streaks:v1` (`src/infrastructure/achievement-storage.ts`), following the same versioned-migration pattern as earned achievements. `awardEligibleAchievements` (below) keeps its existing region-domain → complete-region → continent-crest → world-crown cascade; only the region × domain leaf's qualification source changed.
+
+Per-country evidence (`qualifiesForRegionMastery`) is still collected and still useful — it drives scheduling, review, lapses, and the ordinary "cleared" progress display — it simply no longer gates this achievement.
 
 ## Earned state vs live state
 
@@ -205,9 +223,11 @@ The achievement hierarchy is:
 
 Unsupported curriculum must never count as automatically complete.
 
-Africa is currently the first continent capable of reaching the full four-domain model once #34 ships.
+Africa is currently the first continent capable of reaching the full four-domain model. Region × domain mastery and region completion now have a first learner-facing surface (a purple mark on the mastered region row, a restrained gold outline on a complete region row) attached to the existing region/continent launcher rows; exact continent-crest and world-Crown artwork remains open under #34.
 
 ## Persistence and migration
+
+Region × domain mastery's perfect-run streaks are a separate persisted concern from earned achievements, versioned and migrated the same way under `flag-atlas:region-domain-perfect-run-streaks:v1` (`src/infrastructure/achievement-storage.ts`). See "Region × domain mastery" above.
 
 Issue #29 changes all four persisted country ledgers to payload schema `version: 2` while deliberately retaining the existing storage-key namespaces:
 

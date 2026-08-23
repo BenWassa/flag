@@ -5,9 +5,7 @@ import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderOutlineResults(result: SessionResult): string {
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
-  const strongEvidence = result.newlyMastered
-    .map((id) => COUNTRY_BY_ID.get(id))
-    .filter((country) => country !== undefined);
+  const perfect = result.session.mode === 'test' && result.missed.length === 0;
   const missed = result.missed.flatMap((attempt) => {
     const correct = COUNTRY_BY_ID.get(attempt.countryId);
     if (!correct) return [];
@@ -24,24 +22,11 @@ export function renderOutlineResults(result: SessionResult): string {
         </div>
       </header>
 
-      <section class="result-score" aria-label="${result.correct} of ${result.total} correct, ${accuracy} percent">
+      <section class="result-score${perfect ? ' result-score--perfect' : ''}" aria-label="${result.correct} of ${result.total} correct, ${accuracy} percent">
         <strong>${result.correct}<span>/${result.total}</span></strong>
         <p>${accuracy}% correct</p>
+        ${perfect ? '<span class="result-score__badge">Perfect round</span>' : ''}
       </section>
-
-      <div class="result-statline" aria-label="Learning changes">
-        <span><strong>${result.newlyMastered.length}</strong> newly strong</span>
-        <span><strong>${result.missed.length}</strong> to review</span>
-      </div>
-
-      ${strongEvidence.length ? `
-        <section class="result-section" aria-labelledby="outline-strong-heading">
-          <div class="list-heading"><h2 id="outline-strong-heading">Strong evidence this round</h2><span>${strongEvidence.length}</span></div>
-          <div class="mini-ledger">
-            ${strongEvidence.map((country) => `<div class="mini-ledger__row"><strong>${escapeHtml(country.name)}</strong><span class="status-text status-text--mastered">Strong</span></div>`).join('')}
-          </div>
-        </section>
-      ` : ''}
 
       ${missed.length ? `
         <section class="result-section" aria-labelledby="outline-review-heading">
@@ -55,7 +40,7 @@ export function renderOutlineResults(result: SessionResult): string {
             `).join('')}
           </div>
         </section>
-      ` : '<p class="clean-round"><strong>Clean round.</strong> No missed outlines.</p>'}
+      ` : perfect ? '' : '<p class="clean-round"><strong>Clean round.</strong> No missed outlines.</p>'}
 
       <div class="result-actions">
         ${missed.length ? '<button class="button button--primary" data-action="review-outline-mistakes">Review mistakes</button>' : ''}

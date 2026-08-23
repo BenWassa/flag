@@ -102,6 +102,8 @@ const { renderQuiz } = await import('../dist/ui/views/quiz.js');
 const { renderResults } = await import('../dist/ui/views/results.js');
 const { renderFocusIntent } = await import('../dist/ui/focus.js');
 const { buildQuiz: build } = await import('../dist/domain/quiz.js');
+const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
+const achievements = createInitialAchievementState();
 
 assert.equal(
   renderFocusIntent(false),
@@ -125,10 +127,10 @@ const ledgers = {
 };
 const screens = {
   home: renderHome(ledgers),
-  flagsIndex: renderDomainIndex('flags', ledgers),
-  locationsIndex: renderDomainIndex('locations', ledgers),
-  scope: renderScope(fresh, africaScopeFixture),
-  region: renderScope(fresh, westAfricaScopeFixture),
+  flagsIndex: renderDomainIndex('flags', ledgers, achievements),
+  locationsIndex: renderDomainIndex('locations', ledgers, achievements),
+  scope: renderScope(fresh, africaScopeFixture, achievements),
+  region: renderScope(fresh, westAfricaScopeFixture, achievements),
 };
 
 for (const [name, html] of Object.entries(screens)) {
@@ -253,7 +255,7 @@ assert.equal(
 );
 assert.equal(escapeHtml(`a"b'c<d>e&f`), 'a&quot;b&#39;c&lt;d&gt;e&amp;f', 'Every attribute-breaking character is escaped.');
 
-const hostileHtml = renderScope(fresh, { kind: 'region', id: 'west-africa', label: '"><b>x</b>' });
+const hostileHtml = renderScope(fresh, { kind: 'region', id: 'west-africa', label: '"><b>x</b>' }, achievements);
 assert.ok(!hostileHtml.includes('<script>'), 'A scope label cannot inject markup.');
 assert.ok(!hostileHtml.includes('"><b>'), 'A scope label cannot break out of an attribute.');
 
@@ -284,16 +286,16 @@ const repairedState = {
     MLI: sanitizeRecord('MLI', { status: 'mastered', lifetimeCorrect: '9', lapseCount: null }),
   },
 };
-const repairedScopeHtml = renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+const repairedScopeHtml = renderScope(repairedState, { kind: 'region', id: 'west-africa', label: 'West Africa' }, achievements);
 assert.ok(!repairedScopeHtml.includes('NaN'), 'A repaired progress state cannot render NaN into a region launcher.');
 assert.ok(!repairedScopeHtml.includes('undefined'), 'A repaired progress state cannot render undefined into a region launcher.');
 
 // A record the ledger never had at all: `getRecord` must supply the default
 // rather than let the view index into undefined.
 const missingRecords = { version: 2, records: {} };
-const missingRecordsHtml = renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' });
+const missingRecordsHtml = renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' }, achievements);
 assert.doesNotThrow(
-  () => renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' }),
+  () => renderScope(missingRecords, { kind: 'region', id: 'west-africa', label: 'West Africa' }, achievements),
   'A ledger missing every record still renders.',
 );
 assert.ok(!missingRecordsHtml.includes('undefined'), 'Missing records fall back to Unseen.');

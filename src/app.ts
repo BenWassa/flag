@@ -532,11 +532,12 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderDomainIndex(
         store.view.domain,
         currentLedgers(),
+        store.achievements,
         domainPersisting(store.view.domain),
       );
       break;
     case 'scope':
-      root.innerHTML = renderScope(store.progress, store.view.scope, store.persisting);
+      root.innerHTML = renderScope(store.progress, store.view.scope, store.achievements, store.persisting);
       break;
     case 'flags-study':
       root.innerHTML = renderFlagsStudy(store.view.scope, revealedFlagIds, revealAllFlagNames);
@@ -553,6 +554,7 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderMapHome(
         store.locationProgress,
         store.view.scope,
+        store.achievements,
         store.mapPersisting,
         launcherMapAsset,
       );
@@ -569,6 +571,7 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderOutlineHome(
         store.outlineProgress,
         store.view.scope,
+        store.achievements,
         store.outlinePersisting,
         launcherMapAsset,
       );
@@ -584,6 +587,7 @@ function render(previousSelector: string | null = null): void {
       root.innerHTML = renderNeighborHome(
         store.neighborProgress,
         store.view.scope,
+        store.achievements,
         store.neighborPersisting,
         launcherMapAsset,
       );

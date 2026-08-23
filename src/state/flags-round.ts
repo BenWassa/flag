@@ -108,9 +108,9 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
 
   function announceResult(): void {
     if (store.view.name !== 'results') return;
-    const { correct, total, newlyMastered } = store.view.result;
-    const mastery = newlyMastered.length ? ` ${newlyMastered.length} newly mastered.` : '';
-    announce(`Round complete. ${correct} of ${total} correct.${mastery}`);
+    const { correct, total, missed, session } = store.view.result;
+    const perfect = session.mode === 'test' && missed.length === 0 ? ' Perfect round.' : '';
+    announce(`Round complete. ${correct} of ${total} correct.${perfect}`);
   }
 
   function submitAnswer(countryId: string): void {

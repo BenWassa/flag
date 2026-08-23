@@ -12,6 +12,7 @@ import {
   applyCountryEvidence,
   createEvidenceSummary,
   evidenceStrengthGoal,
+  hasSuccessfulRetrieval,
 } from './evidence.js';
 
 const RETENTION_DAYS = [2, 7, 21, 60, 180];
@@ -210,10 +211,11 @@ export function getScopeStats(
       const record = getRecord(state, country.id);
       stats[record.status] += 1;
       if (isDue(record, now)) stats.due += 1;
+      if (hasSuccessfulRetrieval(record)) stats.cleared += 1;
       stats.total += 1;
       return stats;
     },
-    { total: 0, unseen: 0, learning: 0, mastered: 0, due: 0 },
+    { total: 0, unseen: 0, learning: 0, mastered: 0, due: 0, cleared: 0 },
   );
 }
 

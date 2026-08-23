@@ -8,8 +8,12 @@ import {
 import {
   awardEligibleAchievements,
   createInitialAchievementState,
+  createInitialPerfectRunStreakState,
+  createRegionDomainPerfectRunQualification,
+  recordRegionDomainPlayResult,
   type EarnedAchievementState,
   type NewlyEarnedAchievement,
+  type PerfectRunStreakState,
 } from '../domain/achievements.js';
 import { activityForMode } from '../domain/evidence.js';
 import {
@@ -57,7 +61,10 @@ import { buildQuiz } from '../domain/quiz.js';
 import {
   achievementStorageIsWritable,
   loadAchievementState,
+  loadPerfectRunStreakState,
+  perfectRunStreakStorageIsWritable,
   saveAchievementState,
+  savePerfectRunStreakState,
 } from '../infrastructure/achievement-storage.js';
 import {
   appendMapAttempt,
@@ -78,7 +85,6 @@ import {
   saveOutlineProgress,
 } from '../infrastructure/outline-storage.js';
 import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '../infrastructure/storage.js';
-import { createCountryEvidenceQualification } from './achievement-evidence-adapter.js';
 
 export type ViewState =
   | { name: 'home' }
@@ -123,6 +129,7 @@ export class AppStore {
   outlineProgress: ProgressState;
   neighborProgress: NeighborProgressState;
   achievements: EarnedAchievementState;
+  perfectRunStreaks: PerfectRunStreakState;
   view: ViewState = { name: 'home' };
   session: QuizSession | null = null;
   sessionResult: SessionResult | null = null;
@@ -148,6 +155,7 @@ export class AppStore {
   outlinePersisting = true;
   neighborPersisting = true;
   achievementPersisting = true;
+  perfectRunStreakPersisting = true;
 
   constructor() {
     const persisted = loadProgress();
@@ -199,11 +207,13 @@ export class AppStore {
     }
 
     this.achievements = loadAchievementState();
+    this.perfectRunStreaks = loadPerfectRunStreakState();
     this.persisting = storageIsWritable();
     this.mapPersisting = mapStorageIsWritable();
     this.outlinePersisting = outlineStorageIsWritable();
     this.neighborPersisting = neighborStorageIsWritable();
     this.achievementPersisting = achievementStorageIsWritable();
+    this.perfectRunStreakPersisting = perfectRunStreakStorageIsWritable();
     this.refreshAchievements();
   }
 
@@ -211,22 +221,30 @@ export class AppStore {
     this.view = view;
   }
 
-  /** Re-evaluate only unearned milestones against the current evidence contract. */
+  /** Re-evaluate only unearned milestones against the current perfect-run streaks. */
   refreshAchievements(): NewlyEarnedAchievement[] {
     const result = awardEligibleAchievements(
       this.achievements,
-      createCountryEvidenceQualification({
-        flags: this.progress,
-        locations: this.locationProgress,
-        outlines: this.outlineProgress,
-        neighbors: this.neighborProgress,
-      }),
+      createRegionDomainPerfectRunQualification(this.perfectRunStreaks),
     );
     this.achievements = result.state;
     if (result.newlyEarned.length > 0 && !saveAchievementState(this.achievements)) {
       this.achievementPersisting = false;
     }
     return result.newlyEarned;
+  }
+
+  /**
+   * Records one full-region Play result toward that region×domain's perfect-
+   * run streak, then re-runs the award pass. A single perfect run is not
+   * enough — two consecutive perfect runs are required, and any non-perfect
+   * full-region Play run resets the streak to zero.
+   */
+  private recordRegionDomainPlayResult(scope: StudyScope, domain: LearningDomain, wasPerfect: boolean): void {
+    if (scope.kind !== 'region' || !scope.id) return;
+    this.perfectRunStreaks = recordRegionDomainPlayResult(this.perfectRunStreaks, scope.id, domain, wasPerfect);
+    if (!savePerfectRunStreakState(this.perfectRunStreaks)) this.perfectRunStreakPersisting = false;
+    this.refreshAchievements();
   }
 
   abandonSession(): void {
@@ -325,8 +343,12 @@ export class AppStore {
       return null;
     }
 
+    const { mode, scope } = this.session;
     const result = this.finishSession();
     this.sessionResult = result;
+    if (mode === 'test') {
+      this.recordRegionDomainPlayResult(scope, 'flags', result.missed.length === 0);
+    }
     this.view = { name: 'results', result };
     return result;
   }
@@ -380,8 +402,12 @@ export class AppStore {
     if (!this.mapSession) return null;
     const completed = mapSessionIsComplete(this.mapSession);
     if (completed) {
+      const { mode, scope } = this.mapSession;
       const result = finishMapSession(this.mapSession);
       this.mapSessionResult = result;
+      if (mode === 'test') {
+        this.recordRegionDomainPlayResult(scope, 'locations', result.missedCountryIds.length === 0);
+      }
       this.view = { name: 'map-results', result };
       return result;
     }
@@ -465,8 +491,12 @@ export class AppStore {
       return null;
     }
 
+    const { mode, scope } = this.outlineSession;
     const result = finishQuizSession(this.outlineSession);
     this.outlineSessionResult = result;
+    if (mode === 'test') {
+      this.recordRegionDomainPlayResult(scope, 'outlines', result.missed.length === 0);
+    }
     this.view = { name: 'outline-results', result };
     return result;
   }
@@ -523,8 +553,12 @@ export class AppStore {
   advanceNeighbor(): NeighborSessionResult | null {
     if (!this.neighborSession) return null;
     if (neighborSessionIsComplete(this.neighborSession)) {
+      const { mode, scope } = this.neighborSession;
       const result = finishNeighborSession(this.neighborSession);
       this.neighborSessionResult = result;
+      if (mode === 'test') {
+        this.recordRegionDomainPlayResult(scope, 'neighbors', result.missedCountryIds.length === 0);
+      }
       this.view = { name: 'neighbor-results', result };
       return result;
     }

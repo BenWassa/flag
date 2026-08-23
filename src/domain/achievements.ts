@@ -32,10 +32,51 @@ export interface EarnedAchievementState {
 }
 
 /**
- * Issue #29 owns the implementation of this predicate. Achievement aggregation
- * only asks whether one country's current evidence qualifies for one domain.
+ * Achievement aggregation only asks whether one region×domain has already
+ * earned its perfect-run streak; it never inspects per-country evidence.
  */
-export type CountryEvidenceQualification = (domain: LearningDomain, countryId: string) => boolean;
+export type RegionDomainPerfectRunQualification = (regionId: string, domain: LearningDomain) => boolean;
+
+export const PERFECT_RUN_STREAK_SCHEMA_VERSION = 1 as const;
+
+/** A region×domain needs two consecutive 100%-correct full-region Play runs. */
+export const PERFECT_RUN_STREAK_GOAL = 2;
+
+/**
+ * Historical streak state only, keyed the same way as earned mastery. A non-
+ * perfect full-region Play run resets a key's streak to zero; once a
+ * region×domain is earned its streak no longer matters.
+ */
+export interface PerfectRunStreakState {
+  version: typeof PERFECT_RUN_STREAK_SCHEMA_VERSION;
+  streaks: Partial<Record<RegionDomainMasteryKey, number>>;
+}
+
+export function createInitialPerfectRunStreakState(): PerfectRunStreakState {
+  return { version: PERFECT_RUN_STREAK_SCHEMA_VERSION, streaks: {} };
+}
+
+/** Records one full-region Play result. `wasPerfect` means every question in that run was correct. */
+export function recordRegionDomainPlayResult(
+  state: PerfectRunStreakState,
+  regionId: string,
+  domain: LearningDomain,
+  wasPerfect: boolean,
+): PerfectRunStreakState {
+  const key = regionDomainMasteryKey(regionId, domain);
+  const nextStreak = wasPerfect ? (state.streaks[key] ?? 0) + 1 : 0;
+  return {
+    version: PERFECT_RUN_STREAK_SCHEMA_VERSION,
+    streaks: { ...state.streaks, [key]: nextStreak },
+  };
+}
+
+export function createRegionDomainPerfectRunQualification(
+  streakState: PerfectRunStreakState,
+): RegionDomainPerfectRunQualification {
+  return (regionId, domain) =>
+    (streakState.streaks[regionDomainMasteryKey(regionId, domain)] ?? 0) >= PERFECT_RUN_STREAK_GOAL;
+}
 
 export type NewlyEarnedAchievement =
   | { kind: 'region-domain'; regionId: string; domain: LearningDomain }
@@ -122,16 +163,16 @@ function continentRegions(continentId: ContinentId) {
   return regionLearningScopes(continentId);
 }
 
-/** Current evidence eligibility for a single region × domain mastery. */
+/** Current perfect-run-streak eligibility for a single region × domain mastery. */
 export function regionDomainQualifies(
   regionId: string,
   domain: LearningDomain,
-  qualifiesCountryEvidence: CountryEvidenceQualification,
+  qualifiesRegionDomainPerfectRun: RegionDomainPerfectRunQualification,
 ): boolean {
   const scope = regionScope(regionId);
   if (!scope) return false;
   const countryIds = countryIdsForSupportedScope(scope, domain);
-  return countryIds.length > 0 && countryIds.every((countryId) => qualifiesCountryEvidence(domain, countryId));
+  return countryIds.length > 0 && qualifiesRegionDomainPerfectRun(regionId, domain);
 }
 
 /**
@@ -197,7 +238,7 @@ export function worldCompletionEligible(state: EarnedAchievementState): boolean 
  */
 export function awardEligibleAchievements(
   state: EarnedAchievementState,
-  qualifiesCountryEvidence: CountryEvidenceQualification,
+  qualifiesRegionDomainPerfectRun: RegionDomainPerfectRunQualification,
 ): AchievementAwardResult {
   const regionDomainMasteries = new Set(state.regionDomainMasteries);
   const completeRegions = new Set(state.completeRegions);
@@ -211,7 +252,7 @@ export function awardEligibleAchievements(
     for (const domain of LEARNING_DOMAIN_IDS) {
       const key = regionDomainMasteryKey(regionId, domain);
       if (regionDomainMasteries.has(key)) continue;
-      if (!regionDomainQualifies(regionId, domain, qualifiesCountryEvidence)) continue;
+      if (!regionDomainQualifies(regionId, domain, qualifiesRegionDomainPerfectRun)) continue;
       regionDomainMasteries.add(key);
       newlyEarned.push({ kind: 'region-domain', regionId, domain });
     }

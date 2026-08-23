@@ -9,6 +9,7 @@ import {
   WEST_AFRICA_MAP_COUNTRY_IDS,
 } from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import {
   advanceMapSession,
   applyMapGuess,
@@ -208,7 +209,8 @@ assert.ok(
 
 // The map launcher keeps one stable hierarchy while its geography loads lazily.
 const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
-const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE);
+const mapAchievements = createInitialAchievementState();
+const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements);
 assert.ok(africaHomeHtml.includes('Play Africa') && africaHomeHtml.includes('Learn Africa'), 'Africa map launcher exposes both round choices.');
 assert.ok(africaHomeHtml.includes('id="launcher-regions-heading"'), 'Africa map launcher lists regional drills.');
 assert.ok(africaHomeHtml.includes('data-launcher-map-slot'), 'The stable first render reserves the lazy map slot.');
@@ -216,7 +218,7 @@ assert.equal(africaHomeHtml.includes('class="launcher-map"'), false, 'The first 
 for (const config of AFRICA_MAP_REGION_CONFIGS) {
   assert.ok(africaHomeHtml.includes(`data-id="${config.scope.id}"`), `${config.scope.label} is navigable from Africa locations.`);
 }
-const africaHomeWithMap = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, true, africaAsset);
+const africaHomeWithMap = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements, true, africaAsset);
 assert.ok(africaHomeWithMap.includes('class="launcher-map"'), 'The resolved Africa asset fills the existing launcher map slot.');
 const launcherRegionTags = [...africaHomeWithMap.matchAll(/<g\b[^>]*class="[^"]*\blauncher-map-region\b[^"]*"[^>]*>/g)].map((match) => match[0]);
 const launcherLabelTags = [...africaHomeWithMap.matchAll(/<span\b[^>]*class="[^"]*\blauncher-map__label\b[^"]*"[^>]*>[\s\S]*?<\/span>/g)].map((match) => match[0]);
@@ -234,7 +236,7 @@ for (const config of AFRICA_MAP_REGION_CONFIGS) {
   assert.ok(labelTag?.includes(`>${config.scope.label}</span>`), `${config.scope.label} is directly labelled by the HTML map overlay.`);
 }
 assert.equal(africaHomeWithMap.includes('launcher-map-region__label'), false, 'Launcher labels no longer shrink inside the SVG coordinate system.');
-const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, true, africaAsset);
+const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, mapAchievements, true, africaAsset);
 assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
 assert.ok(westHomeHtml.includes('Play West Africa') && westHomeHtml.includes('Learn West Africa'), 'Selecting West Africa retargets both launcher actions.');
 assert.ok(westHomeHtml.includes('All Africa') && westHomeHtml.includes('Selected'), 'West Africa can be cleared without leaving the launcher.');

@@ -4,55 +4,96 @@ import {
   awardEligibleAchievements,
   continentHasCompleteCurriculum,
   createInitialAchievementState,
+  createInitialPerfectRunStreakState,
+  createRegionDomainPerfectRunQualification,
   getContinentAchievementReadModel,
   getRegionAchievementReadModel,
   getWorldAchievementReadModel,
   isContinentComplete,
   isRegionComplete,
   isRegionDomainMasteryEarned,
+  PERFECT_RUN_STREAK_GOAL,
+  recordRegionDomainPlayResult,
   regionDomainQualifies,
   regionHasCompleteCurriculum,
   worldHasCompleteCurriculum,
 } from '../dist/domain/achievements.js';
 import { CONTINENTS } from '../dist/data/continents.js';
+import { regionLearningScopes } from '../dist/data/learning-scopes.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
-import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
-import { createCountryEvidenceQualification } from '../dist/state/achievement-evidence-adapter.js';
 
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 // Melanesia is learner-facing but Flags-only: Oceania ships no generated
-// geography yet. West Asia is no longer usable here, because Issue #26 retired
-// it as a learner-facing scope in favour of Middle East and Caucasus.
+// geography yet.
 const flagsOnlyRegion = { kind: 'region', id: 'melanesia', label: 'Melanesia' };
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 
-function qualificationForScope(scope) {
-  const supported = new Map(
-    LEARNING_DOMAIN_IDS.map((domain) => [domain, new Set(countryIdsForSupportedScope(scope, domain))]),
-  );
-  return (domain, countryId) => supported.get(domain)?.has(countryId) ?? false;
-}
+assert.equal(PERFECT_RUN_STREAK_GOAL, 2, 'Two consecutive perfect full-region Play runs are required, not one.');
 
-const empty = createInitialAchievementState();
-const westQualification = qualificationForScope(westAfrica);
-const westFlagIds = countryIdsForSupportedScope(westAfrica, 'flags');
-assert.ok(westFlagIds.length > 1);
+let streaks = createInitialPerfectRunStreakState();
 assert.equal(
-  regionDomainQualifies(
-    'west-africa',
-    'flags',
-    (domain, countryId) => westQualification(domain, countryId) && countryId !== westFlagIds[0],
-  ),
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(streaks)),
   false,
-  'An incomplete region does not qualify for domain mastery.',
+  'A region with no recorded perfect runs does not qualify for domain mastery.',
 );
 
-const westFull = awardEligibleAchievements(empty, westQualification);
+streaks = recordRegionDomainPlayResult(streaks, 'west-africa', 'flags', true);
+assert.equal(
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(streaks)),
+  false,
+  'A single perfect full-region Play run does not by itself earn mastery.',
+);
+
+streaks = recordRegionDomainPlayResult(streaks, 'west-africa', 'flags', true);
+assert.equal(
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(streaks)),
+  true,
+  'Two consecutive perfect full-region Play runs earn mastery.',
+);
+
+let resetStreaks = recordRegionDomainPlayResult(createInitialPerfectRunStreakState(), 'west-africa', 'flags', true);
+resetStreaks = recordRegionDomainPlayResult(resetStreaks, 'west-africa', 'flags', false);
+assert.equal(
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(resetStreaks)),
+  false,
+  'A non-perfect full-region Play run resets the streak to zero.',
+);
+resetStreaks = recordRegionDomainPlayResult(resetStreaks, 'west-africa', 'flags', true);
+assert.equal(
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(resetStreaks)),
+  false,
+  'After a reset, one more perfect run alone is still not enough — the streak restarts from zero.',
+);
+resetStreaks = recordRegionDomainPlayResult(resetStreaks, 'west-africa', 'flags', true);
+assert.equal(
+  regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(resetStreaks)),
+  true,
+  'Two consecutive perfect runs after a reset earn mastery.',
+);
+
+const empty = createInitialAchievementState();
+
+function fullQualification(scope, domains = LEARNING_DOMAIN_IDS) {
+  const regionIds = scope.kind === 'continent'
+    ? regionLearningScopes(scope.id).map((definition) => definition.scope.id).filter(Boolean)
+    : [scope.id];
+  let state = createInitialPerfectRunStreakState();
+  for (const regionId of regionIds) {
+    for (const domain of domains) {
+      for (let run = 0; run < PERFECT_RUN_STREAK_GOAL; run += 1) {
+        state = recordRegionDomainPlayResult(state, regionId, domain, true);
+      }
+    }
+  }
+  return createRegionDomainPerfectRunQualification(state);
+}
+
+const westFull = awardEligibleAchievements(empty, fullQualification(westAfrica));
 for (const domain of LEARNING_DOMAIN_IDS) {
   assert.equal(
     isRegionDomainMasteryEarned(westFull.state, 'west-africa', domain),
     true,
-    `Full qualifying West Africa evidence earns ${domain} mastery.`,
+    `Two perfect West Africa Play runs per domain earn ${domain} mastery.`,
   );
 }
 assert.equal(isRegionComplete(westFull.state, 'west-africa'), true, 'A fully qualified four-domain region earns complete-region prestige.');
@@ -62,26 +103,22 @@ assert.equal(
   'Each West Africa domain mastery is awarded exactly once on the first qualifying pass.',
 );
 
-const westAgain = awardEligibleAchievements(westFull.state, westQualification);
+const westAgain = awardEligibleAchievements(westFull.state, fullQualification(westAfrica));
 assert.deepEqual(westAgain.state, westFull.state, 'Awarding is idempotent.');
 assert.equal(westAgain.newlyEarned.length, 0, 'An idempotent award pass emits no duplicate earning events.');
 
-const afterLapse = awardEligibleAchievements(westFull.state, () => false);
-assert.deepEqual(afterLapse.state, westFull.state, 'Later live-evidence lapse does not revoke earned regional or domain achievement state.');
+const afterStreakLoss = awardEligibleAchievements(westFull.state, createRegionDomainPerfectRunQualification(createInitialPerfectRunStreakState()));
+assert.deepEqual(afterStreakLoss.state, westFull.state, 'A later empty streak state does not revoke earned regional or domain achievement state.');
 
-const westNeighborIds = countryIdsForSupportedScope(westAfrica, 'neighbors');
-assert.ok(westNeighborIds.length > 0);
-const westMissingNeighbor = awardEligibleAchievements(
-  empty,
-  (domain, countryId) => westQualification(domain, countryId)
-    && !(domain === 'neighbors' && countryId === westNeighborIds[0]),
-);
+const westMissingNeighbor = awardEligibleAchievements(empty, fullQualification(westAfrica, ['flags', 'locations', 'outlines']));
 assert.equal(isRegionDomainMasteryEarned(westMissingNeighbor.state, 'west-africa', 'neighbors'), false);
 assert.equal(isRegionComplete(westMissingNeighbor.state, 'west-africa'), false, 'Complete region waits for every required four-domain mastery.');
 
 assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose the complete four-domain proving-ground curriculum.');
 assert.equal(regionHasCompleteCurriculum('melanesia'), false, 'A Flags-only region is not complete curriculum.');
-const everywhereQualified = awardEligibleAchievements(empty, () => true);
+
+const everywhereQualification = () => true;
+const everywhereQualified = awardEligibleAchievements(empty, everywhereQualification);
 assert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'melanesia', 'flags'), true, 'A supported individual domain can still earn mastery outside Africa.');
 assert.equal(isRegionComplete(everywhereQualified.state, 'melanesia'), false, 'Unsupported domain absence never counts as complete-region progress.');
 
@@ -91,17 +128,11 @@ assert.deepEqual(flagsOnlyReadModel.supportedDomains, ['flags']);
 assert.equal(flagsOnlyReadModel.completeCurriculum, false);
 assert.equal(flagsOnlyReadModel.complete, false);
 
-const africaQualification = qualificationForScope(africa);
-const missingAfricaNeighbor = westNeighborIds[0];
-const africaIncomplete = awardEligibleAchievements(
-  empty,
-  (domain, countryId) => africaQualification(domain, countryId)
-    && !(domain === 'neighbors' && countryId === missingAfricaNeighbor),
-);
+const africaIncomplete = awardEligibleAchievements(empty, fullQualification(africa, ['flags', 'locations', 'outlines']));
 assert.equal(isRegionComplete(africaIncomplete.state, 'west-africa'), false);
 assert.equal(isContinentComplete(africaIncomplete.state, 'africa'), false, 'Continent completion waits for every required region/domain mastery.');
 
-const africaFull = awardEligibleAchievements(empty, africaQualification);
+const africaFull = awardEligibleAchievements(empty, fullQualification(africa));
 assert.equal(continentHasCompleteCurriculum('africa'), true);
 assert.equal(isContinentComplete(africaFull.state, 'africa'), true, 'Full Africa completion earns the continent state.');
 const africaReadModel = getContinentAchievementReadModel(africaFull.state, 'africa');
@@ -128,28 +159,10 @@ assert.deepEqual(
   { kind: 'world', completeCurriculum: false, crownEarned: false },
 );
 
-const fakeLedgers = {
-  flags: { records: { AAA: { status: 'mastered' } } },
-  locations: { records: { AAA: { status: 'learning' } } },
-  outlines: { records: { AAA: { status: 'unseen' } } },
-  neighbors: { records: { AAA: { status: 'mastered' } } },
-};
-const evidenceQualification = createCountryEvidenceQualification(fakeLedgers);
-assert.equal(evidenceQualification('flags', 'AAA'), true);
-assert.equal(evidenceQualification('locations', 'AAA'), false);
-assert.equal(evidenceQualification('outlines', 'AAA'), false);
-assert.equal(evidenceQualification('neighbors', 'AAA'), true);
-fakeLedgers.locations.records.AAA.status = 'mastered';
-assert.equal(evidenceQualification('locations', 'AAA'), true, 'Locations evidence can change independently.');
-assert.equal(evidenceQualification('outlines', 'AAA'), false, 'Changing one ledger does not contaminate another domain.');
-
 const achievementEngine = await readFile('dist/domain/achievements.js', 'utf8');
 for (const forbidden of ['masteryStreak', 'nextReviewAt', "status === 'mastered'", 'lifetimeCorrect']) {
   assert.equal(achievementEngine.includes(forbidden), false, `Achievement domain does not encode the legacy evidence rule ${forbidden}.`);
 }
-const evidenceAdapter = await readFile('dist/state/achievement-evidence-adapter.js', 'utf8');
-assert.ok(evidenceAdapter.includes('qualifiesForRegionMastery'), 'Achievement state delegates country qualification to Issue #29.');
-assert.equal(evidenceAdapter.includes("status === 'mastered'"), false, 'Achievement adapter does not hard-code the compatibility scheduler status.');
 
 const memory = new Map();
 Object.defineProperty(globalThis, 'localStorage', {
@@ -166,6 +179,11 @@ const {
   migrateAchievementState,
   resetAchievementStorage,
   saveAchievementState,
+  PERFECT_RUN_STREAK_STORAGE_KEY,
+  loadPerfectRunStreakState,
+  migratePerfectRunStreakState,
+  resetPerfectRunStreakStorage,
+  savePerfectRunStreakState,
 } = await import('../dist/infrastructure/achievement-storage.js');
 
 memory.clear();
@@ -191,4 +209,23 @@ resetAchievementStorage();
 assert.deepEqual(loadAchievementState(), empty, 'Explicit achievement reset returns to deterministic empty state.');
 assert.equal(memory.has(ACHIEVEMENT_STORAGE_KEY), false, 'Explicit achievement reset removes the durable achievement key.');
 
-console.log('Achievement verification passed: monotonic region/domain mastery, guarded region/continent/world completion, canonical evidence seam, versioned persistence and explicit reset semantics.');
+memory.clear();
+const initialStreaks = createInitialPerfectRunStreakState();
+const oneStreak = recordRegionDomainPlayResult(initialStreaks, 'west-africa', 'flags', true);
+assert.equal(savePerfectRunStreakState(oneStreak), true);
+assert.deepEqual(loadPerfectRunStreakState(), oneStreak, 'Persistence reload preserves in-progress perfect-run streaks.');
+assert.deepEqual([...memory.keys()], [PERFECT_RUN_STREAK_STORAGE_KEY], 'Streak persistence does not write into the achievement key or any domain learning ledger namespace.');
+
+assert.deepEqual(migratePerfectRunStreakState(null), initialStreaks, 'Missing streak storage defaults safely.');
+assert.deepEqual(migratePerfectRunStreakState({ version: 99, streaks: {} }), initialStreaks, 'Unknown streak schema versions default safely rather than guessing.');
+const migratedStreaks = migratePerfectRunStreakState({
+  version: 1,
+  streaks: { 'west-africa:flags': 1, 'bogus:flags': 3, 'west-africa:locations': -4, 'west-africa:outlines': 1.9, 'west-africa:neighbors': 'two' },
+});
+assert.deepEqual(migratedStreaks.streaks, { 'west-africa:flags': 1, 'west-africa:locations': 0, 'west-africa:outlines': 1 });
+
+resetPerfectRunStreakStorage();
+assert.deepEqual(loadPerfectRunStreakState(), initialStreaks, 'Explicit streak reset returns to deterministic empty state.');
+assert.equal(memory.has(PERFECT_RUN_STREAK_STORAGE_KEY), false, 'Explicit streak reset removes the durable streak key.');
+
+console.log('Achievement verification passed: two-consecutive-perfect-run region/domain mastery, guarded region/continent/world completion, and versioned persistence for both earned achievements and in-progress streaks.');

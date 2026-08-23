@@ -161,4 +161,5 @@ export interface LocationScopeStats {
   unseen: number;
   learning: number;
   mastered: number;
+  cleared: number;
 }

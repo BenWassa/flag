@@ -5,6 +5,7 @@ import { icon } from '../components/icons.js';
 import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderNeighborResults(result: NeighborSessionResult): string {
+  const perfect = result.session.mode === 'test' && result.missedCountryIds.length === 0;
   const missedNames = result.missedCountryIds
     .map((countryId) => COUNTRY_BY_ID.get(countryId)?.name ?? countryId)
     .map(escapeHtml);
@@ -19,14 +20,15 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
         </div>
       </header>
 
-      <section class="scope-overview neighbor-results-summary">
+      <section class="scope-overview neighbor-results-summary${perfect ? ' result-score--perfect' : ''}">
         <div class="overview-heading">
           <div>
             <h1>${result.cleanCompletions}/${result.total} clean</h1>
             <p>${result.completed} completed · ${result.exhausted} exhausted</p>
           </div>
         </div>
-        <p>A clean completion means every neighbour was found with no wrong guesses. Clean completions can make countries newly strong.</p>
+        <p>A clean completion means every neighbour was found with no wrong guesses.</p>
+        ${perfect ? '<span class="result-score__badge">Perfect round</span>' : ''}
       </section>
 
       ${missedNames.length ? `

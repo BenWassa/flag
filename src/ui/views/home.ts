@@ -27,6 +27,7 @@ function statsFor(summary: DomainProgressSummary): ScopeStats {
     learning: summary.learning,
     mastered: summary.strong,
     due: summary.due,
+    cleared: summary.cleared,
   };
 }
 

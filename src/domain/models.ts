@@ -151,4 +151,6 @@ export interface ScopeStats {
   /** Internal compatibility bucket: learner-facing copy calls this Strong evidence. */
   mastered: number;
   due: number;
+  /** Answered correctly at least once — drives the ordinary progress bar fill. */
+  cleared: number;
 }

@@ -150,6 +150,23 @@ export function qualifiesForRegionMastery(record: EvidenceBackedRecord): boolean
   return record.status === 'mastered';
 }
 
+/**
+ * Presentation-only signal for the ordinary progress bar: has this country
+ * ever been retrieved correctly, regardless of the multi-exposure strong-
+ * evidence threshold above. `status === 'learning'` alone is not enough — it
+ * is also set on assisted retrievals and contradictions with no correct
+ * answer, so this reads the clean-retrieval counters directly.
+ */
+export function hasSuccessfulRetrieval(record: EvidenceBackedRecord): boolean {
+  const summary = record.evidence;
+  return (
+    summary.cleanLearnRetrievals > 0
+    || summary.cleanPlayRetrievals > 0
+    || summary.cleanReviewRetrievals > 0
+    || summary.legacyScoredRetrievals > 0
+  );
+}
+
 export function countryEvidenceState(
   record: EvidenceBackedRecord,
   dueForReview = false,

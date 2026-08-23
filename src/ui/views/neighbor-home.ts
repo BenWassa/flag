@@ -5,6 +5,11 @@ import {
   getNeighborScopeConfig,
   landAdjacencyForScope,
 } from '../../data/neighbors/index.js';
+import {
+  isRegionComplete,
+  isRegionDomainMasteryEarned,
+  type EarnedAchievementState,
+} from '../../domain/achievements.js';
 import { getNeighborScopeStats } from '../../domain/neighbor-game.js';
 import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import type { MapRegionAsset } from '../../domain/map-models.js';
@@ -23,6 +28,7 @@ function neighborStats(
 export function renderNeighborHome(
   progress: NeighborProgressState,
   scope: StudyScope,
+  achievements: EarnedAchievementState,
   persisting = true,
   mapAsset?: MapRegionAsset | null,
 ): string {
@@ -43,6 +49,8 @@ export function renderNeighborHome(
       return {
         scope: region.scope,
         stats: neighborStats(progress, neighborConfig?.countryIds ?? [], regionId),
+        domainMastered: regionId ? isRegionDomainMasteryEarned(achievements, regionId, 'neighbors') : false,
+        complete: regionId ? isRegionComplete(achievements, regionId) : false,
       };
     }),
     unitLabel: 'targets',

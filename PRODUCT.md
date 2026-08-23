@@ -31,7 +31,7 @@ The durable geographic hierarchy is:
 
 **World → Continent → Region**
 
-The region remains the first meaningful mastery unit, but it is reached inside one learning domain rather than across all four at once: navigation is mode-first, so the domain is chosen before the geography. Earned region × domain mastery persists in the background (see [`docs/product/learning-and-mastery.md`](docs/product/learning-and-mastery.md)); the dedicated Progress screen that read it as one cross-domain competency set has been retired, with no replacement surface.
+The region remains the first meaningful mastery unit, but it is reached inside one learning domain rather than across all four at once: navigation is mode-first, so the domain is chosen before the geography. Earned region × domain mastery is earned by two consecutive perfect full-region Play rounds in that domain and persists thereafter (see [`docs/product/learning-and-mastery.md`](docs/product/learning-and-mastery.md)); the dedicated Progress screen that read it as one cross-domain competency set has been retired, with no replacement — but the mastery mark and complete-region/continent gold outline are readable again directly on the existing region/continent launcher rows.
 
 Country remains the canonical data identity and the atomic evidence unit underneath the learning engines, but country is not a learner-facing prestige tier.
 
@@ -242,7 +242,7 @@ Core navigation principles:
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.
 
-Issue #35's region × domain cross-domain competency read was retired from a region card's launch row in favour of a dedicated Progress screen, and that Progress screen has since been retired in turn with no replacement surface; the underlying earned achievement state keeps persisting regardless.
+Issue #35's region × domain cross-domain competency read was retired from a region card's launch row in favour of a dedicated Progress screen, and that Progress screen has since been retired in turn; the underlying earned achievement state keeps persisting, and now surfaces again directly on the region/continent launcher rows (a single-domain purple mastery mark, a gold complete-region/continent outline) rather than through either prior surface.
 
 ## Persistence and compatibility
 

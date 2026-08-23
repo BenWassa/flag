@@ -6,7 +6,7 @@
 
 The design exploration that this document previously deferred to has happened. Shape language, radius scale, elevation, press physics, typography, navigation composition and motion are now decided and shipped in `atlas-theme.css`, which layers over the existing hand-authored sheets rather than replacing them.
 
-The earned-achievement model is also implemented, though currently unreadable. #34 supplies persistent region × domain Mastery, complete-region, continent-completion and World Crown state, still tracked and persisted. #56's learner-facing Progress composition for those states — the shared domain glyph with purple + a check cue when earned, restrained gold treatment for complete regions, purple/gold crest continent silhouettes, and the custom Atlas Crown for world completion — was retired along with the Progress screen and has no replacement surface. Concrete one-time milestone ceremony remains optional future polish; giving the earned state a UI again is a separate, currently unscheduled decision.
+The earned-achievement model is also implemented and now has a first, lighter-weight learner-facing surface (a small purple mark and a restrained gold row outline attached directly to the existing region/continent launcher rows), rather than a revived Progress screen. #34 supplies persistent region × domain Mastery, complete-region, continent-completion and World Crown state, still tracked and persisted — but mastery is now earned by two consecutive 100%-correct full-region Play rounds in a domain, not by accumulated per-country evidence (see `docs/architecture/earned-achievements.md`). #56's fuller learner-facing Progress composition for these states — the shared four-domain glyph competency row per region, purple/gold crest continent silhouettes, and the custom Atlas Crown for world completion — remains retired along with the Progress screen and has no replacement; a one-off "Perfect round" result-screen ceremony ships instead for a single clean Play round. Concrete continent-crest/world-Crown artwork and any richer milestone ceremony remain optional future polish.
 
 The previously shipped flat “atlas index” aesthetic is superseded.
 
@@ -131,7 +131,7 @@ Use a compact domain icon:
 
 Incomplete supported competency is neutral. Unsupported curriculum is a separate unavailable state and must not look like failed learner progress.
 
-Earned competency becomes purple. Where this state is shown, it uses the shared domain glyph in a compact purple badge with a check cue so the state does not rely on colour alone. Avoid shield-within-shield designs and unnecessary heraldic complexity. (No current surface renders this state — the Progress screen that did has been retired — so this remains a design rule for if/when the earned state gets a UI again, not a description of shipped behaviour.)
+Earned competency becomes purple. The shipped surface is a small purple mark beside the region's name on its existing region row, scoped to whichever single domain that launcher is currently showing, rather than the fuller shared-glyph competency badge described above — that fuller composition (all four domain glyphs together, with a check cue so the state does not rely on colour alone, avoiding shield-within-shield designs and unnecessary heraldic complexity) remains a design rule for if/when a cross-domain region surface exists again, not a description of shipped behaviour.
 
 ### Complete region
 
@@ -143,11 +143,13 @@ Keep useful scope information such as country count.
 
 Do not show `100%` or `x/x` merely to restate completion.
 
+This ships today as a restrained gold left-edge accent and border tint on the region's existing row (`.region-row--complete`), reusing the same treatment pattern as the row-selected state rather than a separate emblem.
+
 ### Complete continent
 
 Award a **continent crest** based on the source-derived continent silhouette.
 
-The retired Progress implementation reused the generated Natural Earth silhouette and promoted it into a mastery-purple field with restrained prestige-gold framing only when canonical `crestEarned` was true. Incomplete continents retain neutral geographic identity rather than showing decorative locked crests. This treatment currently has no live surface.
+The retired Progress implementation reused the generated Natural Earth silhouette and promoted it into a mastery-purple field with restrained prestige-gold framing only when canonical `crestEarned` was true. That richer silhouette-crest artwork still has no live surface; today, a complete continent instead gets the same restrained gold row-accent treatment as a complete region, applied to its continent row (`.continent-row--complete`), pending the dedicated crest artwork under #34's remaining scope.
 
 Continents do not need completion quantities.
 
@@ -237,11 +239,11 @@ A continent a mode has not shipped still appears — as an honest shell: dashed 
 
 ### Region cross-domain competency
 
-Region cards are full-width scope-selection surfaces inside one mode's launcher: region identity, country count, live evidence summary and progress strip, plus an explicit selected state. They do not start a round themselves and do not need to become achievement dashboards; the launcher's normal Play/Learn actions operate on whichever scope is selected.
+Region cards are full-width scope-selection surfaces inside one mode's launcher: region identity, country count, a single-colour progress strip, a purple mark once that region's mastery in the launcher's current domain is earned, and an explicit selected state. They do not start a round themselves and do not need to become achievement dashboards; the launcher's normal Play/Learn actions operate on whichever scope is selected. The strip is a plain Atlas Blue fill against a neutral track — no segmented brown "learning" state, no printed strong/learning/unseen counts; a country counts toward the fill the moment it has been answered correctly once.
 
 The four-domain launch row that region cards carried under scope-first navigation is retired. The later row-level Quick Play experiment is also retired: once a mode is chosen, continent and region rows answer only the geographic-selection question, while deliberate Play/Learn remains on the active launcher. This keeps each surface responsible for one decision and avoids tiny trailing action cells. The routine icon set's labelling requirement (see [Resolved by Tactile Atlas](#resolved-by-tactile-atlas), item 8) is unchanged and still binding: Home names all four modes in visible text beside their glyphs.
 
-The dedicated Progress surface that used to own the expanded cross-domain achievement reading — each region's four domain identities as one competency set, with neutral supported, purple earned and clearly unavailable states, plus the restrained gold treatment for complete regions — has been retired with no replacement. Accumulated mastery currently has no dedicated place to be read at all.
+The dedicated Progress surface that used to own the expanded cross-domain achievement reading — each region's four domain identities as one competency set, with neutral supported, purple earned and clearly unavailable states — has been retired with no replacement; a region card only ever shows its own launcher's single domain, not all four side by side. What the region row now shows instead: a purple mark for that one domain's earned mastery, and a restrained gold row outline once the region is complete across every domain it supports (read via the existing achievement state, not a new domain concept).
 
 ### Learning surfaces
 
@@ -258,7 +260,9 @@ Answer controls should remain easily reachable, especially on mobile.
 
 Treat analytics as compact, readable information surfaces.
 
-The dedicated Progress screen (mastery-first: geographic earned state as the whole surface, with reset/storage utilities last) has been retired entirely, including its reset-all-progress control. There is currently no dedicated learner-facing surface for earned mastery; the active launcher's normal Play/Learn actions remain the way to start a session. Live country evidence remains distinct from persistent earned achievement, including the earned-but-now-due case.
+The dedicated Progress screen (mastery-first: geographic earned state as the whole surface, with reset/storage utilities last) has been retired entirely, including its reset-all-progress control. There is no dedicated learner-facing surface for earned mastery as its own screen; the active launcher's normal Play/Learn actions remain the way to start a session, and earned mastery is instead read directly off the region/continent rows it already lists. Live country evidence remains distinct from persistent earned achievement, including the earned-but-now-due case.
+
+A single 100%-correct Play round also earns a one-off "Perfect round" result-screen ceremony — a restrained gold accent on the score card, not the permanent purple/gold row treatment above. It takes a second consecutive perfect round in the same region × domain to earn that durable mark; see `docs/architecture/earned-achievements.md`.
 
 Prefer stacked/grouped information over spreadsheet-like tables.
 
@@ -406,13 +410,20 @@ Selected and implemented in #40:
 
 8. **ordinary icon style** — Phosphor Bold is the routine family for navigation, controls, utilities and domain identity. `src/ui/components/icons.ts` remains Atlas's semantic adapter and vendors only the selected paths from pinned `@phosphor-icons/core` assets, so the production build does not ship the catalogue. The domain mapping is Flags → `Flag`, Locations → `MapPin`, Outlines → `Polygon`, and Neighbours → `Intersect`. At 24px, `FlagBannerFold` read as a ribbon, `MapPinArea` added unnecessary detail, `Island` depicted a tropical palm-tree scene, and `Intersection` reduced to an ambiguous ∩. `Intersect`, paired with the visible Neighbours label, communicates two geographic areas meeting clearly enough that no Atlas-specific modification is needed. That pairing is a requirement of the choice, not an incidental fact about one surface: any routine surface repeating the four domain glyphs owes the learner their names. Home labels each mode card directly; the retired Progress mastery surface, which repeated the same four glyphs on every region, named them once in a legend above the list rather than labelling roughly a hundred badges — the same rule should apply to any future surface with the same repetition. Fill may express a real state change in future, but is not a second decorative style. Do not mix Phosphor with Lucide or a parallel custom routine set. Custom artwork remains reserved for the Atlas brand mark and prestige.
 
-Implemented through #34 and #56:
+Implemented through #34 and #56, then retired along with the Progress screen (historical record of that composition, not current behaviour):
 
 9. **region mastery treatment** — the shared domain glyph is neutral when supported/unearned, purple with a check cue when earned, and clearly unavailable when curriculum is unsupported;
 10. **complete-region prestige** — restrained gold framing only, with no region emblem or crown;
 11. **continent crest** — source-derived continent silhouette promoted into a rare purple/gold treatment only for canonical continent completion;
 12. **World Crown** — custom Atlas Crown artwork rendered only when canonical world completion is earned; no locked-Crown decoration.
 
+What actually ships today, on the existing region/continent launcher rows rather than a dedicated Progress screen:
+
+13. **region mastery mark** — a small purple mark beside the region's name, scoped to the launcher's one active domain, once that region × domain has earned two consecutive perfect full-region Play rounds (not per-country evidence accumulation);
+14. **complete-region / complete-continent prestige** — the same restrained gold row-outline treatment (`.region-row--complete` / `.continent-row--complete`) for both tiers; no separate crest artwork yet;
+15. **Perfect round ceremony** — a single 100%-correct Play round (any scope) earns a one-off restrained gold accent plus a "Perfect round" label on that round's results screen, independent of the durable mastery mark above.
+
 Still open by choice rather than missing semantics:
 
-13. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but Atlas does not yet persist a presentation-only “seen” state for one-time mastery/crest/Crown reveals. Static earned-state presentation is the production baseline until a focused ceremony issue demonstrates value without reward spam.
+16. **milestone ceremony** — the three-tier feedback-intensity model in [Feedback intensity](#feedback-intensity) is decided, but Atlas does not yet persist a presentation-only “seen” state for one-time mastery/crest/Crown reveals. Static earned-state presentation is the production baseline until a focused ceremony issue demonstrates value without reward spam.
+17. **continent crest / World Crown artwork** — the source-derived silhouette-crest and custom Atlas Crown treatments described in 11–12 have no live surface; item 14's flat gold outline is the current stand-in.

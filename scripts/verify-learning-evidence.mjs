@@ -302,7 +302,20 @@ const resultHtml = renderResults({
   newlyMastered: [targetId],
   missed: [],
 });
-assert.ok(resultHtml.includes('Strong evidence this round'));
+assert.ok(!resultHtml.includes('Strong evidence'), 'Results no longer expose the scheduler-flavoured "strong evidence" taxonomy.');
+assert.ok(!resultHtml.includes('newly strong'), 'Results no longer expose a "newly strong" count.');
+assert.ok(resultHtml.includes('Clean round'), 'A clean Learn round still reports a plain clean-round message.');
+assert.ok(!resultHtml.includes('Perfect round'), 'Only a clean Play round earns the Perfect round ceremony, not Learn.');
 assert.ok(!/>Mastered</.test(resultHtml));
+
+const perfectPlayResultHtml = renderResults({
+  session: { ...quizSession, mode: 'test' },
+  correct: 1,
+  total: 1,
+  newlyMastered: [targetId],
+  missed: [],
+});
+assert.ok(perfectPlayResultHtml.includes('Perfect round'), 'A clean Play round earns the Perfect round ceremony.');
+assert.ok(!perfectPlayResultHtml.includes('Clean round'), 'The Perfect round badge replaces the plain clean-round message.');
 
 console.log('Learning evidence verification passed: passive, assisted, clean Learn/Play, retention, lapse, migration, domain independence, qualification and UI semantics.');

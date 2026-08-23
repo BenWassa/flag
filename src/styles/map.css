@@ -279,6 +279,11 @@
   letter-spacing: -.035em;
 }
 .map-result-summary > p { margin: 6px 0 0; color: var(--text-muted); font-size: 14px; }
+/* Every location was correct on the first try in a Play round — a one-off
+   session celebration, distinct from the persistent region×domain mastery
+   streak. */
+.map-result-summary--perfect { border-bottom-color: color-mix(in srgb, var(--prestige) 58%, var(--line)); }
+.map-result-summary--perfect .result-score__badge { margin-top: 8px; }
 .map-result-breakdown {
   display: flex;
   flex-wrap: wrap;

@@ -5,6 +5,7 @@ import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
 import { loadOutlineAsset } from '../dist/data/outlines.js';
 import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { domainDisplayName } from '../dist/domain/display.js';
 import { buildMapSession, createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { buildNeighborSession, createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
@@ -49,13 +50,14 @@ const britishLedgers = {
   outlines: outlineProgress,
   neighbors: neighborProgress,
 };
+const achievements = createInitialAchievementState();
 const homeHtml = renderHome(britishLedgers);
-const flagsDomainHtml = renderDomainIndex('flags', britishLedgers);
-const neighborsDomainHtml = renderDomainIndex('neighbors', britishLedgers);
-const flagsLauncherHtml = renderScope(flagProgress, africaScope);
-const locationsLauncherHtml = renderMapHome(locationProgress, africaScope);
-const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope);
-const neighborsLauncherHtml = renderNeighborHome(neighborProgress, westAfricaScope);
+const flagsDomainHtml = renderDomainIndex('flags', britishLedgers, achievements);
+const neighborsDomainHtml = renderDomainIndex('neighbors', britishLedgers, achievements);
+const flagsLauncherHtml = renderScope(flagProgress, africaScope, achievements);
+const locationsLauncherHtml = renderMapHome(locationProgress, africaScope, achievements);
+const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope, achievements);
+const neighborsLauncherHtml = renderNeighborHome(neighborProgress, westAfricaScope, achievements);
 
 const flagQuestions = buildQuiz({
   countries: COUNTRIES,

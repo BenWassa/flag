@@ -9,6 +9,7 @@ import {
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   getAfricaNeighborScopeConfig,
 } from '../dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
@@ -69,12 +70,13 @@ for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home names ${label} by its canonical display name.`);
 }
 
-const flagsIndexHtml = renderDomainIndex('flags', ledgers);
+const achievements = createInitialAchievementState();
+const flagsIndexHtml = renderDomainIndex('flags', ledgers, achievements);
 assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
 assert.equal((flagsIndexHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
 assert.equal((flagsIndexHtml.match(/data-action="quick-play"/g) ?? []).length, 0, 'Flags continent rows do not bypass their launchers.');
 for (const domain of ['locations', 'outlines', 'neighbors']) {
-  const indexHtml2 = renderDomainIndex(domain, ledgers);
+  const indexHtml2 = renderDomainIndex(domain, ledgers, achievements);
   const shippedContinents = CONTINENTS.filter((continent) => scopeSupportsDomain(
     { kind: 'continent', id: continent.id, label: continent.name },
     domain,
@@ -96,9 +98,9 @@ for (const domain of ['locations', 'outlines', 'neighbors']) {
 }
 
 const launchers = [
-  ['Locations', renderMapHome(locationProgress, AFRICA_MAP_SCOPE)],
-  ['Outlines', renderOutlineHome(outlineProgress, AFRICA_MAP_SCOPE)],
-  ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE)],
+  ['Locations', renderMapHome(locationProgress, AFRICA_MAP_SCOPE, achievements)],
+  ['Outlines', renderOutlineHome(outlineProgress, AFRICA_MAP_SCOPE, achievements)],
+  ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE, achievements)],
 ];
 for (const [name, html] of launchers) {
   assert.ok(html.includes('Play Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);

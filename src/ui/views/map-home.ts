@@ -2,6 +2,11 @@ import {
   getMapContinentConfig,
   getMapScopeConfig,
 } from '../../data/map-scopes.js';
+import {
+  isRegionComplete,
+  isRegionDomainMasteryEarned,
+  type EarnedAchievementState,
+} from '../../domain/achievements.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
 import type { LocationProgressState, MapRegionAsset } from '../../domain/map-models.js';
 import type { ScopeStats, StudyScope } from '../../domain/models.js';
@@ -14,6 +19,7 @@ function locationStats(progress: LocationProgressState, countryIds: readonly str
 export function renderMapHome(
   progress: LocationProgressState,
   scope: StudyScope,
+  achievements: EarnedAchievementState,
   persisting = true,
   mapAsset?: MapRegionAsset | null,
 ): string {
@@ -31,6 +37,10 @@ export function renderMapHome(
     regions: continent.regions.map((region) => ({
       scope: region.scope,
       stats: locationStats(progress, region.countryIds),
+      domainMastered: region.scope.id
+        ? isRegionDomainMasteryEarned(achievements, region.scope.id, 'locations')
+        : false,
+      complete: region.scope.id ? isRegionComplete(achievements, region.scope.id) : false,
     })),
     unitLabel: 'countries',
     persisting,

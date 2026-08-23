@@ -13,7 +13,9 @@ This directory mirrors active product/engineering work that benefits from a dura
 - Africa-first complete proving ground;
 - mode-first navigation: Home chooses a learning mode, each mode owns its continent index, and the launcher owns continent/region scope.
 
-**2026-08-23: the dedicated Progress screen (and its Home button) was removed entirely**, along with its Reset-all-progress control, `progress.css`, and the domain-layer UI presenters (`achievement-art.ts`) it alone used. Region × domain cross-domain competency and continent/world completion state (#34/#56) keep being tracked and persisted (`AppStore.achievements`), but no current surface reads or resets them. Reintroducing a way to see or reset earned mastery is future work with no open issue yet.
+**2026-08-23: the dedicated Progress screen (and its Home button) was removed entirely**, along with its Reset-all-progress control, `progress.css`, and the domain-layer UI presenters (`achievement-art.ts`) it alone used. Region × domain cross-domain competency and continent/world completion state (#34/#56) keep being tracked and persisted (`AppStore.achievements`).
+
+**2026-08-23 (same day, follow-up): region × domain mastery gained a first, lighter-weight surface again** — a purple mark and a restrained gold row outline attached directly to the existing region/continent launcher rows (`src/ui/views/scope.ts`, `map-home.ts`, `outline-home.ts`, `neighbor-home.ts`, `domain.ts`), not a revived Progress screen. The mastery trigger itself also changed: it's now earned by two consecutive 100%-correct full-region Play rounds in a domain (`PerfectRunStreakState` in `src/domain/achievements.ts`, persisted under `flag-atlas:region-domain-perfect-run-streaks:v1`), not by accumulating per-country evidence. The ordinary per-country/region progress bar also simplified to a single Atlas Blue "cleared" fill (answered correctly at least once) with no visible strong/learning/unseen taxonomy. See `docs/architecture/earned-achievements.md`, `docs/product/learning-and-mastery.md` and `docs/product/gamification.md`. Resetting earned mastery/streaks remains future work with no open issue yet.
 
 ### 2. Learning / achievement architecture
 
@@ -28,6 +30,12 @@ This directory mirrors active product/engineering work that benefits from a dura
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
 ### 4. Platform quality and IA
+
+- [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
+  This is a tracking epic for an incremental presentation/build-layer port,
+  with the existing domain, geography, evidence, persistence and typed routing
+  contracts preserved. See
+  [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md).
 
 #72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
 complete and closed. Their closeout records are

@@ -9,6 +9,10 @@ import { escapeHtml } from '../format.js';
 export interface LauncherRegion {
   scope: StudyScope;
   stats: ScopeStats;
+  /** This region has earned mastery in the launcher's current domain. */
+  domainMastered?: boolean;
+  /** Every supported domain in this region is mastered. */
+  complete?: boolean;
 }
 
 export interface LauncherModel {
@@ -51,10 +55,14 @@ function renderRegionRow(
   const selected = region.scope.id === selectedRegionId;
   const label = escapeHtml(region.scope.label);
   const id = escapeHtml(region.scope.id ?? '');
-  const dueCopy = region.stats.due > 0 ? ` · ${region.stats.due} due` : '';
+  const rowClass = [
+    'region-row',
+    selected ? 'region-row--selected' : '',
+    region.complete ? 'region-row--complete' : '',
+  ].filter(Boolean).join(' ');
 
   return `
-    <div class="region-row${selected ? ' region-row--selected' : ''}">
+    <div class="${rowClass}">
       <button
         class="region-row__open"
         type="button"
@@ -64,11 +72,11 @@ function renderRegionRow(
         aria-pressed="${selected}"
       >
         <span class="region-row__identity">
-          <strong>${label}</strong>
+          <strong>${label}${region.domainMastered ? `<span class="region-row__mastery" aria-label="Mastered">${icon('star')}</span>` : ''}</strong>
           <small>${region.stats.total} ${escapeHtml(unitLabel)}</small>
         </span>
         ${selected ? '<span class="region-row__status">Selected</span>' : ''}
-        <span class="region-row__evidence">${region.stats.mastered} strong · ${region.stats.learning} learning · ${region.stats.unseen} unseen${dueCopy}</span>
+        ${region.stats.due > 0 ? `<span class="region-row__evidence">${region.stats.due} due</span>` : ''}
         <span class="region-row__progress">${progressStrip(region.stats)}</span>
         ${icon('chevron')}
       </button>
@@ -104,10 +112,6 @@ export function renderLauncher(model: LauncherModel): string {
 
       <section class="launcher" aria-label="${continentLabel} ${domainName} launcher">
         <div class="launcher__status">
-          <div class="scope-status-line">
-            <strong>${model.stats.mastered} strong evidence</strong>
-            <span>${model.stats.learning} learning · ${model.stats.unseen} unseen</span>
-          </div>
           ${model.selectedRegion ? `
             <button
               class="launcher__all-scope"

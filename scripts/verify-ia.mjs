@@ -8,6 +8,7 @@ import {
 } from '../dist/data/map-scopes.js';
 import { loadMapAsset } from '../dist/data/maps/index.js';
 import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
@@ -150,7 +151,7 @@ assert.ok(
 // Every domain now has a continent index; a domain that ships one continent
 // still lists the other five, as inert shells that name the gap.
 for (const domain of LEARNING_DOMAIN_IDS) {
-  const index = renderDomainIndex(domain, ledgers, false);
+  const index = renderDomainIndex(domain, ledgers, createInitialAchievementState(), false);
   assertCommonSurface(`${domain} continent index`, index);
   assertPreRoundContentRemoved(`${domain} continent index`, index);
   assertNoLegacyInteractiveRow(`${domain} continent index`, index, 'continent-row');
@@ -191,11 +192,11 @@ for (const domain of LEARNING_DOMAIN_IDS) {
 
 // Only Flags teaches the world, so only Flags offers a world round above its
 // continent list. The other three must not imply coverage they do not have.
-const flagsDomain = renderDomainIndex('flags', ledgers, false);
+const flagsDomain = renderDomainIndex('flags', ledgers, createInitialAchievementState(), false);
 assert.ok(flagsDomain.includes('data-action="start-test">Play world</button>'), 'World assessment is labelled Play.');
 assert.ok(flagsDomain.includes('data-action="start-learn">Learn world</button>'), 'World study is labelled Learn.');
 for (const domain of ['locations', 'outlines', 'neighbors']) {
-  const index = renderDomainIndex(domain, ledgers, false);
+  const index = renderDomainIndex(domain, ledgers, createInitialAchievementState(), false);
   assert.equal(index.includes('start-test'), false, `${domain} must not offer a world round it cannot teach.`);
   assert.equal(visibleText(index).includes('World'), false, `${domain} must not claim world coverage.`);
   assert.ok(visibleText(index).includes('Coming soon'), `${domain} names its unshipped continents honestly.`);
@@ -208,7 +209,7 @@ const launcherCases = [
     playAction: 'start-test',
     learnAction: 'start-learn',
     hasMap: false,
-    render: (scope, persisting, _asset) => renderScope(flagProgress, scope, persisting),
+    render: (scope, persisting, _asset) => renderScope(flagProgress, scope, createInitialAchievementState(), persisting),
   },
   {
     domain: 'locations',
@@ -216,7 +217,7 @@ const launcherCases = [
     playAction: 'start-map-test',
     learnAction: 'start-map-learn',
     hasMap: true,
-    render: (scope, persisting, asset) => renderMapHome(locationProgress, scope, persisting, asset),
+    render: (scope, persisting, asset) => renderMapHome(locationProgress, scope, createInitialAchievementState(), persisting, asset),
   },
   {
     domain: 'outlines',
@@ -224,7 +225,7 @@ const launcherCases = [
     playAction: 'start-outline-test',
     learnAction: 'start-outline-learn',
     hasMap: true,
-    render: (scope, persisting, asset) => renderOutlineHome(outlineProgress, scope, persisting, asset),
+    render: (scope, persisting, asset) => renderOutlineHome(outlineProgress, scope, createInitialAchievementState(), persisting, asset),
   },
   {
     domain: 'neighbors',
@@ -232,7 +233,7 @@ const launcherCases = [
     playAction: 'start-neighbor-test',
     learnAction: 'start-neighbor-learn',
     hasMap: true,
-    render: (scope, persisting, asset) => renderNeighborHome(neighborProgress, scope, persisting, asset),
+    render: (scope, persisting, asset) => renderNeighborHome(neighborProgress, scope, createInitialAchievementState(), persisting, asset),
   },
 ];
 
@@ -255,8 +256,8 @@ for (const launcherCase of launcherCases) {
       `${scope.label} ${launcherCase.domainLabel} launcher`,
       `${name} focus landing point names the active scope and domain.`,
     );
-    assert.ok(html.includes('scope-status-line'), `${name} retains textual status.`);
     assert.ok(html.includes('class="status-strip"'), `${name} retains the progress strip.`);
+    assert.ok(!html.includes('strong evidence'), `${name} does not expose the scheduler-flavoured strong-evidence count.`);
     assert.ok(html.includes('storage-notice'), `${name} retains its storage-degraded state.`);
     assert.equal(html.includes('Quick Play'), false, `${name} always names the active scope.`);
     assertNoLegacyInteractiveRow(name, html, 'region-row');

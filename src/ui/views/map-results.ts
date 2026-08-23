@@ -5,6 +5,7 @@ import { escapeHtml, exitRoundLabel, repeatRoundLabel } from '../format.js';
 
 export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult): string {
   const mode = result.session.mode;
+  const perfect = mode === 'test' && result.missedCountryIds.length === 0;
   const states = result.session.countryIds.map((countryId) => result.session.targets[countryId]);
   const oneMiss = states.filter((state) => state?.resolution === 'one-miss').length;
   const twoMiss = states.filter((state) => state?.resolution === 'two-miss').length;
@@ -21,9 +22,10 @@ export function renderMapResults(asset: MapRegionAsset, result: MapSessionResult
         </div>
       </header>
 
-      <section class="map-result-summary" aria-labelledby="map-result-heading">
+      <section class="map-result-summary${perfect ? ' map-result-summary--perfect' : ''}" aria-labelledby="map-result-heading">
         <h1>${result.firstTryCorrect} of ${result.total} first try</h1>
         <p>${result.missedCountryIds.length === 0 ? 'Clean round. Every location was right immediately.' : `${result.missedCountryIds.length} ${result.missedCountryIds.length === 1 ? 'location needs' : 'locations need'} another pass.`}</p>
+        ${perfect ? '<span class="result-score__badge">Perfect round</span>' : ''}
         ${mode === 'learn'
           ? `<div class="map-result-breakdown" aria-label="Learn round breakdown">
               <span><i class="map-swatch map-swatch--first" aria-hidden="true"></i><strong>${result.firstTryCorrect}</strong> first try</span>

@@ -4,6 +4,7 @@ import {
   applyCountryEvidence,
   createEvidenceSummary,
   evidenceStrengthGoal,
+  hasSuccessfulRetrieval,
 } from './evidence.js';
 import type {
   NeighborAttempt,
@@ -86,8 +87,9 @@ export function getNeighborScopeStats(
     const record = getNeighborRecord(state, countryId);
     stats.total += 1;
     stats[record.status] += 1;
+    if (hasSuccessfulRetrieval(record)) stats.cleared += 1;
     return stats;
-  }, { total: 0, unseen: 0, learning: 0, mastered: 0 });
+  }, { total: 0, unseen: 0, learning: 0, mastered: 0, cleared: 0 });
 }
 
 function seedFromString(value: string): number {

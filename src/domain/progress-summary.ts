@@ -1,6 +1,6 @@
 import { CONTINENTS } from '../data/continents.js';
 import { COUNTRIES } from '../data/countries.js';
-import { countryEvidenceState, type EvidenceBackedRecord, type CountryEvidenceState } from './evidence.js';
+import { countryEvidenceState, hasSuccessfulRetrieval, type EvidenceBackedRecord, type CountryEvidenceState } from './evidence.js';
 import type { LocationProgressState } from './map-models.js';
 import type { LearningDomain, ProgressState, StudyScope } from './models.js';
 import type { NeighborProgressState } from './neighbor-models.js';
@@ -26,6 +26,7 @@ export interface ProgressSummary {
   learning: number;
   strong: number;
   due: number;
+  cleared: number;
   action: RecommendedProgressAction | null;
   countryIds: string[];
 }
@@ -90,6 +91,7 @@ export function buildProgressSummary(
       learning: 0,
       strong: 0,
       due: 0,
+      cleared: 0,
       action: null,
       countryIds: [],
     };
@@ -99,12 +101,15 @@ export function buildProgressSummary(
   let learning = 0;
   let strong = 0;
   let due = 0;
+  let cleared = 0;
   for (const countryId of countryIds) {
     const evidence = evidenceForCountry(ledgers, domain, countryId, now);
     if (evidence.status === 'unseen') unseen += 1;
     else if (evidence.status === 'learning') learning += 1;
     else if (evidence.status === 'strong') strong += 1;
     if (evidence.due) due += 1;
+    const record = recordForCountry(ledgers, domain, countryId);
+    if (record && hasSuccessfulRetrieval(record)) cleared += 1;
   }
 
   const action: RecommendedProgressAction = due > 0
@@ -123,6 +128,7 @@ export function buildProgressSummary(
     learning,
     strong,
     due,
+    cleared,
     action,
     countryIds,
   };
@@ -145,6 +151,7 @@ export interface DomainProgressSummary {
   learning: number;
   strong: number;
   due: number;
+  cleared: number;
   supportedContinentIds: string[];
 }
 
@@ -167,6 +174,7 @@ export function buildDomainProgressSummary(
     learning: 0,
     strong: 0,
     due: 0,
+    cleared: 0,
     supportedContinentIds: [],
   };
 
@@ -180,6 +188,7 @@ export function buildDomainProgressSummary(
     summary.learning += continentSummary.learning;
     summary.strong += continentSummary.strong;
     summary.due += continentSummary.due;
+    summary.cleared += continentSummary.cleared;
   }
 
   return summary;

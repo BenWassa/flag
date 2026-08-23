@@ -105,4 +105,5 @@ export interface NeighborScopeStats {
   unseen: number;
   learning: number;
   mastered: number;
+  cleared: number;
 }
