@@ -13,6 +13,8 @@ export interface MapContinentConfig {
   scope: StudyScope;
   countryIds: readonly string[];
   regions: readonly MapScopeConfig[];
+  /** Keyed canonical countries rendered as non-scoring context in this continent asset. */
+  contextCountryIds?: readonly string[];
 }
 
 export const NORTH_AFRICA_MAP_COUNTRY_IDS = [
@@ -100,6 +102,66 @@ export const AFRICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   scope: AFRICA_MAP_SCOPE,
   countryIds: AFRICA_MAP_COUNTRY_IDS,
   regions: AFRICA_MAP_REGION_CONFIGS,
+  contextCountryIds: [],
+};
+
+export const ANDEAN_MAP_COUNTRY_IDS = [
+  'BOL', 'COL', 'ECU', 'PER', 'VEN',
+] as const;
+
+export const ATLANTIC_SOUTH_AMERICA_MAP_COUNTRY_IDS = [
+  'BRA', 'GUY', 'SUR',
+] as const;
+
+export const SOUTHERN_CONE_MAP_COUNTRY_IDS = [
+  'ARG', 'CHL', 'PRY', 'URY',
+] as const;
+
+export const SOUTH_AMERICA_MAP_COUNTRY_IDS = [
+  ...ANDEAN_MAP_COUNTRY_IDS,
+  ...ATLANTIC_SOUTH_AMERICA_MAP_COUNTRY_IDS,
+  ...SOUTHERN_CONE_MAP_COUNTRY_IDS,
+] as const;
+
+export const SOUTH_AMERICA_MAP_SCOPE: StudyScope = {
+  kind: 'continent',
+  id: 'south-america',
+  label: 'South America',
+};
+
+export const SOUTH_AMERICA_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
+  {
+    scope: { kind: 'region', id: 'andean', label: 'Andean' },
+    continentId: 'south-america',
+    countryIds: ANDEAN_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 28, top: 39 },
+  },
+  {
+    scope: { kind: 'region', id: 'atlantic-south-america', label: 'Atlantic' },
+    continentId: 'south-america',
+    countryIds: ATLANTIC_SOUTH_AMERICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 63, top: 38 },
+  },
+  {
+    scope: { kind: 'region', id: 'southern-cone', label: 'Southern Cone' },
+    continentId: 'south-america',
+    countryIds: SOUTHERN_CONE_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 43, top: 76 },
+  },
+];
+
+export const SOUTH_AMERICA_MAP_CONFIG: MapScopeConfig = {
+  scope: SOUTH_AMERICA_MAP_SCOPE,
+  continentId: 'south-america',
+  countryIds: SOUTH_AMERICA_MAP_COUNTRY_IDS,
+};
+
+export const SOUTH_AMERICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'south-america',
+  scope: SOUTH_AMERICA_MAP_SCOPE,
+  countryIds: SOUTH_AMERICA_MAP_COUNTRY_IDS,
+  regions: SOUTH_AMERICA_MAP_REGION_CONFIGS,
+  contextCountryIds: ['PAN', 'FRA'],
 };
 
 /**
@@ -108,6 +170,7 @@ export const AFRICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
  */
 export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freeze([
   AFRICA_MAP_CONTINENT_CONFIG,
+  SOUTH_AMERICA_MAP_CONTINENT_CONFIG,
 ]);
 
 const MAP_CONTINENT_BY_ID = new Map(

@@ -38,6 +38,18 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       scopeFocus: data.AFRICA_SCOPE_FOCUS,
     };
   },
+  'south-america': async () => {
+    const data = await import('./south-america.js');
+    return {
+      viewBox: data.SOUTH_AMERICA_VIEWBOX,
+      geometry: data.SOUTH_AMERICA_GEOMETRY,
+      contextPaths: data.SOUTH_AMERICA_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.SOUTH_AMERICA_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.SOUTH_AMERICA_COASTLINE_PATHS,
+      water: data.SOUTH_AMERICA_WATER,
+      scopeFocus: data.SOUTH_AMERICA_SCOPE_FOCUS,
+    };
+  },
 };
 
 const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();
@@ -93,7 +105,11 @@ export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | nu
 
   const activeIds = new Set(config.countryIds);
   const countries = config.countryIds.map((countryId) => cloneGeometry(data, countryId, config.continentId));
-  const contextCountries = continent.countryIds
+  const contextIds = [
+    ...continent.countryIds.filter((countryId) => !activeIds.has(countryId)),
+    ...(continent.contextCountryIds ?? []),
+  ];
+  const contextCountries = [...new Set(contextIds)]
     .filter((countryId) => !activeIds.has(countryId))
     .map((countryId) => cloneGeometry(data, countryId, config.continentId));
 
