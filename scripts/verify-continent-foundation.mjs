@@ -40,7 +40,14 @@ assert.ok(generatorEntry.includes('generateConfiguredMaps'), 'Map generation del
 assert.ok(generatorCore.includes('deriveGlobalAdjacency'), 'Shared generation derives application-country adjacency globally before continent slicing.');
 assert.ok(generatorCore.includes('GLOBAL_ADJACENCY_PATH'), 'Shared generation emits a reusable global adjacency fixture.');
 assert.ok(generatorCore.includes('localContextCountryIds'), 'Shared generation supports keyed non-scoring cross-continent context countries.');
-assert.equal(/river/i.test(generatorConfigs), false, 'Continent generation configuration has no river abstraction.');
+// The runtime contract is that no river layer is ever generated. Continent
+// policy prose may still *document* that exclusion, so this asserts the
+// absence of a river configuration key or source rather than the word itself.
+assert.equal(
+  /\brivers?\s*:/i.test(generatorConfigs) || /ne_\d+m_rivers/i.test(generatorConfigs),
+  false,
+  'Continent generation configuration has no river layer or abstraction.',
+);
 assert.ok(learningScopes.includes('OVERLAPPING_LEARNING_SCOPES'), 'Learner scopes expose an explicit overlapping-scope extension seam.');
 assert.ok(neighborIndex.includes('getNeighborContinentData'), 'Neighbours resolve through the shared continent-data registry.');
 assert.ok(neighborIndex.includes('NEIGHBOR_GUESS_COUNTRY_IDS'), 'Neighbour entry can recognise cross-continent canonical countries.');

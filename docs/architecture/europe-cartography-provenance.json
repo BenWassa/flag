@@ -81,8 +81,9 @@
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
     "canvasUnits": "Europe 835x723 projected canvas units",
     "physicalTolerance": {
-      "ocean": 0.4,
-      "lakes": 0.15
+      "ocean": 0.6,
+      "lakes": 0.25,
+      "coastline": 0.5
     },
     "precisionSensitiveCountryIds": [
       "AND",

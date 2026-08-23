@@ -20,18 +20,17 @@ function sorted(values) {
   return [...values].sort();
 }
 
-// Europe's canonical whole-country RUS/NOR geometry makes its lazy chunk the
-// largest in the catalogue. The budget is deliberately higher than the shared
-// default and is gated here so the payload cannot grow silently. Issue #79
-// tracks clipping context layers to the Europe viewport.
+// Europe's canonical whole-country RUS/NOR geometry keeps its lazy chunk above
+// the Africa-calibrated shared default even after physical-context tuning.
+// The budget is gated here so the payload cannot grow back silently.
 const sizes = await verifyContinentContract({
   continentId: 'europe',
   expectedCountryIds: EXPECTED_COUNTRY_IDS,
   expectedRegionIds: Object.keys(EXPECTED_REGIONS),
   expectedNeighborCountryIds: EXPECTED_COUNTRY_IDS,
   runtimeModulePath: 'dist/data/maps/europe.js',
-  maxRawBytes: 2_500_000,
-  maxGzipBytes: 620_000,
+  maxRawBytes: 1_750_000,
+  maxGzipBytes: 450_000,
 });
 
 const mapScopes = await import('../dist/data/map-scopes.js');

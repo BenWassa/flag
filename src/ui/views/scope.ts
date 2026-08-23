@@ -1,13 +1,17 @@
-import { CONTINENTS, REGIONS } from '../../data/continents.js';
+import { CONTINENTS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
+import {
+  parentContinentIdForLearningScope,
+  regionLearningScopes,
+} from '../../data/learning-scopes.js';
 import type { ProgressState, StudyScope } from '../../domain/models.js';
 import { getScopeStats } from '../../domain/progress.js';
 import { renderLauncher } from './launcher.js';
 
 function continentFor(scope: StudyScope): StudyScope | null {
   if (scope.kind === 'continent') return scope;
-  const region = REGIONS.find((item) => item.id === scope.id);
-  const continent = region ? CONTINENTS.find((item) => item.id === region.continentId) : undefined;
+  const continentId = parentContinentIdForLearningScope(scope);
+  const continent = CONTINENTS.find((item) => item.id === continentId);
   return continent
     ? { kind: 'continent', id: continent.id, label: continent.name }
     : null;
@@ -24,12 +28,11 @@ export function renderScope(
   }
 
   const selectedRegion = scope.kind === 'region' ? scope : undefined;
-  const regions = REGIONS
-    .filter((region) => region.continentId === continentScope.id)
-    .map((region) => {
-      const regionScope: StudyScope = { kind: 'region', id: region.id, label: region.name };
-      return { scope: regionScope, stats: getScopeStats(COUNTRIES, progress, regionScope) };
-    });
+  const regions = regionLearningScopes(continentScope.id as (typeof CONTINENTS)[number]['id'])
+    .map((definition) => ({
+      scope: definition.scope,
+      stats: getScopeStats(COUNTRIES, progress, definition.scope),
+    }));
 
   return renderLauncher({
     domain: 'flags',

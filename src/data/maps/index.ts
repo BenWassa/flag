@@ -62,6 +62,18 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       scopeFocus: data.EUROPE_SCOPE_FOCUS,
     };
   },
+  asia: async () => {
+    const data = await import('./asia.js');
+    return {
+      viewBox: data.ASIA_VIEWBOX,
+      geometry: data.ASIA_GEOMETRY,
+      contextPaths: data.ASIA_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.ASIA_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.ASIA_COASTLINE_PATHS,
+      water: data.ASIA_WATER,
+      scopeFocus: data.ASIA_SCOPE_FOCUS,
+    };
+  },
 };
 
 const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();
@@ -109,8 +121,6 @@ export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | nu
   const continent = getMapContinentConfig(config.continentId);
   if (!continent) return null;
 
-  // Continent geometry is intentionally loaded only when a supported map scope
-  // is opened. Each emitted ES module is then cached by the service worker.
   const dataPromise = loadContinentData(config.continentId);
   if (!dataPromise) return null;
   const data = await dataPromise;

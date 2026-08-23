@@ -20,7 +20,10 @@ import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
 import { createCountryEvidenceQualification } from '../dist/state/achievement-evidence-adapter.js';
 
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
-const westAsia = { kind: 'region', id: 'west-asia', label: 'West Asia' };
+// Melanesia is learner-facing but Flags-only: Oceania ships no generated
+// geography yet. West Asia is no longer usable here, because Issue #26 retired
+// it as a learner-facing scope in favour of Middle East and Caucasus.
+const flagsOnlyRegion = { kind: 'region', id: 'melanesia', label: 'Melanesia' };
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 
 function qualificationForScope(scope) {
@@ -77,16 +80,16 @@ assert.equal(isRegionDomainMasteryEarned(westMissingNeighbor.state, 'west-africa
 assert.equal(isRegionComplete(westMissingNeighbor.state, 'west-africa'), false, 'Complete region waits for every required four-domain mastery.');
 
 assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose the complete four-domain proving-ground curriculum.');
-assert.equal(regionHasCompleteCurriculum('west-asia'), false, 'A Flags-only region is not complete curriculum.');
+assert.equal(regionHasCompleteCurriculum('melanesia'), false, 'A Flags-only region is not complete curriculum.');
 const everywhereQualified = awardEligibleAchievements(empty, () => true);
-assert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'west-asia', 'flags'), true, 'A supported individual domain can still earn mastery outside Africa.');
-assert.equal(isRegionComplete(everywhereQualified.state, 'west-asia'), false, 'Unsupported domain absence never counts as complete-region progress.');
+assert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'melanesia', 'flags'), true, 'A supported individual domain can still earn mastery outside Africa.');
+assert.equal(isRegionComplete(everywhereQualified.state, 'melanesia'), false, 'Unsupported domain absence never counts as complete-region progress.');
 
-const westAsiaReadModel = getRegionAchievementReadModel(everywhereQualified.state, westAsia.id);
-assert.ok(westAsiaReadModel);
-assert.deepEqual(westAsiaReadModel.supportedDomains, ['flags']);
-assert.equal(westAsiaReadModel.completeCurriculum, false);
-assert.equal(westAsiaReadModel.complete, false);
+const flagsOnlyReadModel = getRegionAchievementReadModel(everywhereQualified.state, flagsOnlyRegion.id);
+assert.ok(flagsOnlyReadModel);
+assert.deepEqual(flagsOnlyReadModel.supportedDomains, ['flags']);
+assert.equal(flagsOnlyReadModel.completeCurriculum, false);
+assert.equal(flagsOnlyReadModel.complete, false);
 
 const africaQualification = qualificationForScope(africa);
 const missingAfricaNeighbor = westNeighborIds[0];

@@ -1,6 +1,216 @@
 # Issue #26 — Asia full four-domain expansion
 
-**Status:** scoped on the shared global expansion foundation and still dependent on Issue #28's exact Middle East scope model.
+**Status:** implementation in progress on `issue-26-asia-middle-east-expansion`; PR #82 is open and intentionally unmerged. The shared expansion prerequisites are present on `main`. Issue #28's locked Middle East policy is being consumed inside this issue rather than implemented as a parallel subsystem. Canonical Asia generation now succeeds, but the full Node 22 verification suite is not yet green and final production/browser QA has not been claimed.
+
+## Implementation worklog — 2026-08-22/23
+
+This section records the actual implementation sequence, decisions, failures and verification evidence from the current branch. It is deliberately explicit so later work does not have to reconstruct the reasoning from chat or CI logs.
+
+### Branch / PR / sequencing
+
+- Started from the then-current `main` after checking the expansion foundation and current issue state rather than relying on earlier chat context.
+- Confirmed the shared continent expansion prerequisites (#57 and #58) were already completed on `main` before beginning Asia-specific work.
+- Created/used the dedicated branch `issue-26-asia-middle-east-expansion`.
+- Opened focused PR #82, **Add Asia and Middle East across all learning domains**.
+- PR #82 remains open and unmerged.
+- Chose Issue #26 as the owning implementation unit for Asia and deliberately consumed Issue #28 inside it. Middle East is therefore not being built on a separate branch with separate geography, routing, progress or mastery semantics.
+- The sequencing rule for this branch is: establish shared scope/taxonomy semantics first; wire the four learning domains and progress/achievement consumers to that contract; extend the canonical generator only where the shared architecture is insufficient; then generate geography; then harden verifiers; then run the final production/visual gate.
+
+### Learner-scope and compatibility model implemented
+
+The branch establishes six learner-facing Asia regional scopes:
+
+- Central Asia;
+- East Asia;
+- Southeast Asia;
+- South Asia;
+- Middle East;
+- Caucasus.
+
+The important distinction is that canonical country ownership and learner-facing scope membership are no longer treated as the same concept.
+
+- Asia retains exactly 48 canonical Atlas countries.
+- Middle East is the locked 17-country #28 scope and includes Egypt (`EGY`).
+- Egypt remains canonically African and remains part of North Africa. No second Egypt country record, progress record or geometry identity was created.
+- Caucasus is exactly Armenia (`ARM`), Azerbaijan (`AZE`) and Georgia (`GEO`). These countries are not silently classified as Middle Eastern.
+- The old `west-asia` identifier is retained only as a hidden compatibility/formal scope where existing routes or persisted achievement data require it. It is not retained as an ordinary learner-facing near-duplicate region.
+- Previously persisted `west-asia` mastery can remain readable, while hidden legacy West Asia is not intended to earn new completion/mastery awards.
+- Middle East is the proving case that regional learning scopes may overlap canonical continent ownership rather than form a strict partition.
+
+### Four-domain integration performed
+
+The Asia/Middle East scope model has been wired through the shared curriculum/runtime path rather than hard-coded independently per game.
+
+Work performed includes:
+
+- Asia support registration for Flags, Locations, Outlines and Neighbours;
+- shared learner-scope membership consumption by all four domains;
+- Asia and its six learner-facing regions becoming routable domain scopes;
+- Flags using the same Middle East/Caucasus scope definitions as the geography domains;
+- Locations/Outlines/Neighbours consuming the generated Asia geography through the existing continent runtime/lazy-loading architecture;
+- progress and achievement/read-model logic updated so overlapping scopes can be evaluated from canonical country evidence;
+- Asia treated as a complete four-domain curriculum for achievement aggregation once its six learner scopes are supported;
+- legacy `west-asia` persistence kept readable without making it a new learner-facing completion unit.
+
+No scoring threshold, country-evidence model, mastery storage namespace or canonical country identity was intentionally duplicated for Asia.
+
+### Generator architecture changes
+
+Asia exposed several assumptions in the Africa-first generator that needed to become generic architecture rather than Asia-only exceptions.
+
+The branch extends the shared generation core to support:
+
+1. **Cross-continent render context without corrupting fitted extent**
+   - Some context countries are required for truthful geography but should not dominate the learner-continent camera.
+   - The generator now supports a configurable fit-context policy so a huge non-scoring context country such as Russia can be rendered where required without forcing the whole Asia projection to fit Russia's full cross-continent extent.
+
+2. **Extra countries needed for complete adjacency**
+   - Global topology-derived adjacency may need a canonical country that is outside the continent's 48-country ownership set.
+   - The generator can include explicitly configured additional adjacency countries without turning them into ordinary Asia-scored countries.
+   - This is required for cross-continent relationships and for the Middle East overlap model.
+
+3. **Explicit learning-scope focus geometry**
+   - Region focus bounds are no longer required to be inferred only from each country's formal `region` field.
+   - Configured learning scopes can produce their own focus bounds from exact scope membership.
+   - This is required for Middle East because it contains African-owned Egypt, and for any future overlapping conventional learning scope.
+
+4. **Projection consistency**
+   - The same projection input policy is used for output generation and source comparison so context exclusions do not introduce inconsistent geometry checks.
+
+These are shared generator capabilities. No second Middle East topology source or handwritten geometry system was introduced.
+
+### Geography generation and source-policy audit
+
+The canonical Natural Earth generation workflow is now able to generate Asia successfully from the pinned source data.
+
+During implementation the unresolved-source-feature guard correctly stopped generation until several Natural Earth features inside the Asia extent were explicitly classified. The audit included the already anticipated Taiwan/Northern Cyprus/Kashmir cases and additionally surfaced:
+
+- Cyprus No Mans Area;
+- Indian Ocean Territories;
+- Scarborough Reef.
+
+These were not silently promoted to learner countries. They were explicitly treated according to the non-scoring/source-context policy so the canonical 195-country application catalogue remains the scoring identity source.
+
+The generator also exposed a physical-context assumption around the Caspian: the pinned Natural Earth lakes source did not expose it under the initially expected lake name/layer path. The implementation did not bypass the source contract or add handwritten water geometry. The generated Asia artifact currently reports two selected lakes/reservoirs, and linear river context remains intentionally excluded.
+
+Observed generation evidence from the Node 22 CI run:
+
+- Asia projected coordinates retained: `114766 / 157545`;
+- generated Asia source/runtime asset optimisation: `4,810,463` bytes to `2,842,709` bytes (`59%` of the pre-optimised source size);
+- lightweight Asia neighbour fixture: 49 ISO3 entries because the generated support set includes the 48 canonical Asia countries plus the required overlapping/cross-scope country support;
+- global adjacency was derived from 202 canonical Natural Earth source features;
+- Natural Earth source commit remained `ca96624a56bd078437bca8184e78163e5039ad19`;
+- rivers remain excluded.
+
+These generation byte counts are **not** a substitute for the final built production chunk/gzip budget. Exact production bundle/lazy-load size still has to be recorded from the final green build.
+
+### Africa no-regression investigation
+
+The initial regression gate compared regenerated Africa directly with the checked-in Africa production artifacts and failed. Investigation showed this was not sufficient evidence that Asia had changed Africa: clean current `main` itself already regenerates its checked-in Africa map/provenance differently.
+
+The gate was therefore hardened rather than removed:
+
+1. CI checks out clean current `main` in a separate worktree.
+2. It runs the canonical map generator there and captures the resulting Africa map, neighbours and provenance outputs.
+3. The Asia branch applies the shared generator extensions and runs generation again.
+4. The branch-generated Africa outputs are compared byte-for-byte with the **clean-current-main regenerated** Africa outputs.
+5. Those outputs are byte-identical.
+6. The branch then restores the checked-in Africa production files so Issue #26 does not include unrelated Africa artifact churn.
+
+Result: the shared Asia generator changes have been proven not to alter Africa generation semantics relative to the same current-main generator baseline, while the branch leaves the checked-in Africa production artifacts untouched.
+
+Separate repository finding: current `main` does not presently reproduce all of its checked-in Africa map/provenance bytes when `npm run maps:generate` is run. That pre-existing reproducibility drift should not be falsely attributed to Issue #26.
+
+### Verifier hardening performed
+
+Asia also surfaced old verifier assumptions that encoded the Africa-first product state instead of testing architecture.
+
+Work already performed/identified includes:
+
+- routing verification updated so `/locations/asia` is expected to survive availability normalisation now that Asia Locations is shipped on this branch;
+- achievement verification updated so Asia can be a complete four-domain continent;
+- hidden legacy `west-asia` no longer receives new mastery awards while previously stored mastery remains readable;
+- an Asia-specific expansion verifier was added/registered to cover the high-risk contracts, including exact membership, Middle East/Caucasus separation, Egypt ownership, representative global adjacency, zero-land-neighbour islands, river exclusion, lazy-loading and provenance expectations;
+- generator tests now cover overlapping scopes rather than assuming every learner region is a strict partition of a continent.
+
+### Current CI / test state
+
+The canonical generation step succeeds and the strengthened Africa semantic no-regression gate succeeds.
+
+The current full `npm test` run on Node `22.23.2` proceeds through:
+
+- TypeScript `check` successfully;
+- production `build` successfully;
+- then enters the verifier suite.
+
+It currently stops in the pre-existing general `scripts/verify.mjs` UI assertion:
+
+```text
+AssertionError [ERR_ASSERTION]: Locations opens only the continent it has actually shipped.
+
+2 !== 1
+```
+
+That assertion hard-codes the old Africa-only product state by requiring exactly one playable Locations continent. On this branch there are correctly two: Africa and Asia. This verifier must be changed to assert the supported-continent contract rather than the historical literal count. Additional stale Africa-only assumptions, if any, can only be discovered after this gate is corrected.
+
+Because `npm test` is not yet fully green:
+
+- generated Asia artifacts have not been declared final;
+- the branch is not merge-ready;
+- CI is not claimed green;
+- final production artifact inspection is not claimed complete;
+- browser/device QA is not claimed complete.
+
+### Temporary CI instrumentation
+
+To execute and inspect the expensive canonical generation transaction on the repository's Node 22 runner, the branch temporarily instrumented the PR CI workflow to:
+
+- install dependencies;
+- create a clean-main Africa generation baseline;
+- apply the shared generator/verifier hardening used by the branch;
+- run canonical map generation;
+- prove Africa semantic no-regression;
+- run the full `npm test` gate;
+- only commit/push generated canonical Asia source after all gates succeed;
+- restore the normal CI workflow before the generated-source commit.
+
+The current test failure occurs before that final commit step, so the temporary CI transaction has not been represented as final repository CI. The normal workflow must be restored and rerun green before merge readiness is claimed.
+
+### Remaining work before this issue can be called complete
+
+1. Replace the stale hard-coded Africa-only playable-continent assertion in `scripts/verify.mjs` with the correct supported-continent contract.
+2. Continue the full Node 22 suite and fix any further stale assumptions exposed behind that assertion without weakening the new Asia contracts.
+3. Commit the canonical generated Asia map/neighbour/provenance outputs and the generic generator changes only after the generation/test gates pass.
+4. Restore the repository's normal CI workflow if temporary generation instrumentation is still present.
+5. Sync the then-current `main` into this branch and resolve conflicts semantically.
+6. Rerun the **complete** `npm test` suite on Node 22 after the sync.
+7. Inspect the exact final `dist` production artifact and record actual Asia lazy-load/chunk raw+gzip size rather than relying on generator source byte counts.
+8. Perform the required production visual QA for full Asia and all six regional scopes, including phone portrait and short landscape, Middle East framing, Caucasus, small Gulf/island targets, Southeast Asian archipelagos and representative Outlines/Neighbours cases.
+9. Record any minimum locator/callout/hit-assist decisions from that actual production-scale inspection. Do not invent a blanket small-country callout policy.
+10. Confirm direct routes and browser Back/Forward behaviour in the actual built app.
+11. Confirm final PR CI is green.
+12. Leave PR #82 unmerged for review unless a separate explicit merge instruction is given.
+
+### Verification claims boundary
+
+What has actually been demonstrated so far:
+
+- canonical Asia generation executes successfully on Node 22;
+- the exact 48-country canonical Asia model and six-region learner-scope architecture are implemented in the branch;
+- the Middle East/Caucasus/legacy-West-Asia compatibility model is represented in shared scope logic;
+- the canonical generator can handle overlapping learning scopes and required cross-continent context/adjacency;
+- source-policy guards were exercised rather than bypassed;
+- branch generator changes produce Africa outputs byte-identical to clean-current-main generation;
+- TypeScript checking and production build reach success in the instrumented CI run before the verifier failure.
+
+What has **not** yet been demonstrated and must not be claimed:
+
+- full `npm test` green;
+- normal final PR CI green;
+- final built Asia gzip/runtime budget;
+- completed visual/browser/device QA;
+- final locator/callout inventory;
+- merge readiness.
 
 ## Goal
 

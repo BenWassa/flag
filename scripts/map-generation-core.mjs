@@ -505,11 +505,16 @@ function deriveLocalAdjacency(simplifiedTopology) {
 
 function sliceGlobalAdjacency(globalAdjacency, scoredCatalog, representedIds, config) {
   const output = {};
-  for (const row of scoredCatalog) {
-    if (!representedIds.has(row.id)) {
-      throw new Error(`Global Natural Earth adjacency topology does not represent ${row.id} for ${config.displayName}.`);
+  // Scored curriculum plus any canonical country this continent's module must
+  // teach through an overlapping learner scope (Issue #28 Egypt in Middle
+  // East). Extra members gain adjacency only; continent ownership, country
+  // records and progress stay canonical elsewhere.
+  const ids = [...scoredCatalog.map((row) => row.id), ...(config.adjacencyExtraCountryIds ?? [])];
+  for (const id of ids) {
+    if (!representedIds.has(id)) {
+      throw new Error(`Global Natural Earth adjacency topology does not represent ${id} for ${config.displayName}.`);
     }
-    output[row.id] = [...(globalAdjacency[row.id] ?? [])];
+    output[id] = [...(globalAdjacency[id] ?? [])];
   }
   return output;
 }
@@ -602,11 +607,31 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     regionIds.set(row.region, ids);
   }
   const focusExcludedIds = new Set(config.focusExcludeCountryIds ?? []);
-  for (const [region, ids] of [...regionIds.entries()].sort()) {
+  const focusForIds = (ids) => {
     const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
     const focusIds = preferredIds.length ? preferredIds : ids;
     const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);
-    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
+    return boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
+  };
+  // Canonical classification regions that Atlas deliberately does not expose to
+  // learners get no focus entry, so no navigation can resolve to them.
+  const hiddenFocusRegions = new Set(config.hiddenFocusRegionIds ?? []);
+  for (const [region, ids] of [...regionIds.entries()].sort()) {
+    if (hiddenFocusRegions.has(region)) continue;
+    scopeFocus[region] = focusForIds(ids);
+  }
+  // Learner-facing scopes may deliberately overlap the canonical region
+  // taxonomy (Issue #28 Middle East, and Caucasus). They own no country
+  // records; they only need deterministic framing derived from the same
+  // simplified geometry, including keyed cross-continent context members.
+  for (const [scopeId, ids] of Object.entries(config.derivedFocusScopes ?? {})) {
+    const missing = ids.filter((id) => !simplifiedById.has(id));
+    if (missing.length) {
+      throw new Error(
+        `${config.displayName} derived focus scope ${scopeId} is missing geometry for ${missing.join(', ')}.`,
+      );
+    }
+    scopeFocus[scopeId] = focusForIds([...ids]);
   }
 
   const sourceProjection = geoNaturalEarth1().fitExtent(

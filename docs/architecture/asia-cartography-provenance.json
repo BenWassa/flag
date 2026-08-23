@@ -52,30 +52,41 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.002080013417159028,
-    "coordinateCountBefore": 56682,
-    "coordinateCountAfter": 40775
+    "weightThreshold": 0.00035597811232459603,
+    "coordinateCountBefore": 157545,
+    "coordinateCountAfter": 114751
   },
   "adjacency": {
-    "source": "continent-local canonical topology",
+    "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
-    "somaliland": "dissolved into canonical SOM scoring geometry; no separate target",
-    "westernSahara": "non-scoring context; not merged into MAR",
-    "birTawil": "non-scoring context; not merged into EGY or SDN",
+    "egypt": "canonical Africa-owned EGY; scored only through the overlapping Middle East learning scope",
+    "turkey": "canonical Asia-owned TUR with whole-country geometry and complete cross-Europe adjacency",
+    "cyprus": "canonical Asia-owned CYP",
+    "kazakhstan": "canonical Asia-owned KAZ with whole-country geometry",
+    "russia": "canonical Europe-owned RUS rendered as non-scoring Asia context; complete adjacency remains global",
+    "caucasus": "ARM, AZE and GEO are learner-facing Caucasus and are excluded from Middle East",
+    "taiwan": "non-scoring source context under the current 195-country Atlas catalogue",
+    "palestineIsrael": "PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view",
+    "northernCyprus": "non-scoring source context; no separate Atlas country identity",
+    "cyprusNoMansArea": "non-scoring Natural Earth context inside Cyprus; no separate Atlas country identity",
+    "indianOceanTerritories": "non-scoring Natural Earth territory context; no separate Atlas country identity",
+    "scarboroughReef": "non-scoring Natural Earth disputed-feature context; no separate Atlas country identity",
+    "kashmir": "pinned Natural Earth default de-facto boundary view; no handwritten override or additional scoring identity",
+    "physicalWater": "linear rivers excluded; Caspian requested only if present in the pinned lakes layer; Lake Baikal required",
     "unRole": "policy/dispute/disclaimer audit reference, not runtime redistribution source",
-    "scoredCountries": 54
+    "scoredCountries": 48
   },
   "runtimeOptimization": {
     "pathDigits": 1,
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
-    "canvasUnits": "Africa 835x723 projected canvas units",
+    "canvasUnits": "Asia 835x723 projected canvas units",
     "physicalTolerance": {
-      "ocean": 0.4,
-      "lakes": 0.15,
-      "coastline": 0
+      "ocean": 0.6,
+      "lakes": 0.25,
+      "coastline": 0.5
     },
     "precisionSensitiveCountryIds": []
   }
