@@ -6,19 +6,33 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
       - run: npm run check
       - run: npm test
+      - name: Persist exact generated Issue 24 sources
+        if: github.event_name == 'pull_request' && github.head_ref == 'issue-24-south-america-expansion-v2'
+        run: |
+          git add src/data/maps/south-america.ts src/data/neighbors/south-america.ts docs/architecture/south-america-cartography-provenance.json
+          if git diff --cached --quiet; then
+            echo 'Generated South America sources already match the branch.'
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "Commit generated South America geography"
+          git push origin HEAD:${{ github.head_ref }}
       - uses: actions/upload-artifact@v4
         with:
           name: flag-atlas-dist
