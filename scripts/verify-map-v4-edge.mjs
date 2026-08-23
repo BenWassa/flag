@@ -37,7 +37,7 @@ assert.ok(firstTarget && nextTarget && firstTarget !== nextTarget);
 const progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const before = renderMapQuiz(asset, session, null);
 assert.ok(!before.includes('answer-feedback--correct') && !before.includes('answer-feedback--wrong'), 'Unanswered Play does not leak correctness.');
-assert.ok(!before.includes('map-country--current-correct') && !before.includes('map-country--wrong-pulse'), 'Unanswered Play has no outcome map styling.');
+assert.ok(!before.includes('map-country--current-correct') && !before.includes('map-country--current-wrong'), 'Unanswered Play has no outcome map styling.');
 
 const wrong = applyMapGuess(session, progress, nextTarget, 500);
 session = wrong.session;
@@ -45,7 +45,7 @@ const immediateWrong = renderMapQuiz(asset, session, null);
 assert.ok(immediateWrong.includes('answer-feedback--wrong'), 'A wrong Play tap gets the shared semantic feedback panel immediately.');
 assert.ok(immediateWrong.includes('Not quite'), 'Wrong feedback is understandable without colour.');
 assert.ok(immediateWrong.includes('Answer:'), 'Wrong feedback identifies the actual answer.');
-assert.ok(immediateWrong.includes('map-country--wrong-pulse'), 'The selected wrong country gets the existing semantic wrong map state.');
+assert.ok(immediateWrong.includes('map-country--current-wrong'), 'The selected wrong country gets an explicit persistent wrong state.');
 assert.ok(immediateWrong.includes('map-country--current-correct'), 'The actual target is indicated after a wrong Play tap.');
 assert.ok(!immediateWrong.includes('Answer recorded'), 'The ambiguous recorded acknowledgement is gone.');
 assert.equal((immediateWrong.match(/data-action="map-answer"/g) ?? []).length, 0, 'Resolved Play locks map answers during the feedback dwell.');
@@ -53,7 +53,7 @@ assert.equal((immediateWrong.match(/data-action="map-answer"/g) ?? []).length, 0
 session = advanceMapSession(session);
 const nextQuestion = renderMapQuiz(asset, session, null);
 assert.ok(!nextQuestion.includes('map-country--current-correct'), 'A resolved target state never leaks into the next Play target.');
-assert.ok(!nextQuestion.includes('map-country--wrong-pulse'), 'A previous wrong selection never cues the next answer.');
+assert.ok(!nextQuestion.includes('map-country--current-wrong'), 'A previous wrong selection never cues the next answer.');
 
 let correctSession = buildMapSession(asset, 'test', 'explicit-play-correct', ['GHA']);
 const correct = applyMapGuess(correctSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'GHA', 500);
@@ -136,4 +136,10 @@ assert.match(
 assert.ok(viewportSource.includes('data-map-max-zoom') || viewportSource.includes('mapMaxZoom'), 'The production controller retains bounded zoom.');
 assert.ok(viewportSource.includes('pointermove') && viewportSource.includes('startDistance'), 'Pan and pinch remain in the production controller.');
 
-console.log('Locations edge verification passed: small-country targets, explicit Play feedback, target-independent scope framing, viewport matrix, and session pan/zoom persistence.');
+const mapCss = await readFile('dist/map.css', 'utf8');
+assert.ok(mapCss.includes('.map-country--current-wrong'), 'The production stylesheet contains the explicit wrong-country state.');
+assert.ok(mapCss.includes('stroke-dasharray: 5 3'), 'Wrong-country feedback has a non-colour dashed cue.');
+const serviceWorker = await readFile('dist/sw.js', 'utf8');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Issue #78 advances the shell cache for changed map presentation.');
+
+console.log('Locations edge verification passed: small-country targets, explicit Play feedback, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');
