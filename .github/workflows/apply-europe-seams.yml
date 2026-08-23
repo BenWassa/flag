@@ -1,3 +1,4 @@
+# branch-only one-shot workflow; removed by the job after applying the source seam
 name: Apply Europe cartography hardening source
 
 on:
