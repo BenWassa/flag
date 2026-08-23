@@ -1,0 +1,29 @@
+name: Issue 77 cache v27 correction
+
+on:
+  push:
+    branches: [issue-77-full-width-navigation]
+
+permissions:
+  contents: write
+
+jobs:
+  correct-cache-version:
+    if: ${{ !contains(github.event.head_commit.message, 'finalize cache v27') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Correct active service-worker version
+        run: python scripts/issue-77-cache-v27.py
+
+      - name: Commit correction and remove one-shot scaffolding
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm scripts/issue-77-cache-v27.py .github/workflows/issue-77-cache-v27.yml
+          git add -A
+          git commit -m "chore(#77): finalize cache v27"
+          git push origin HEAD:issue-77-full-width-navigation
