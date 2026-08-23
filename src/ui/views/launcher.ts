@@ -51,7 +51,7 @@ function renderRegionRow(
   const selected = region.scope.id === selectedRegionId;
   const label = escapeHtml(region.scope.label);
   const id = escapeHtml(region.scope.id ?? '');
-  const domainName = escapeHtml(domainLabel(domain));
+  const dueCopy = region.stats.due > 0 ? ` · ${region.stats.due} due` : '';
 
   return `
     <div class="region-row${selected ? ' region-row--selected' : ''}">
@@ -65,19 +65,13 @@ function renderRegionRow(
       >
         <span class="region-row__identity">
           <strong>${label}</strong>
-          <small>${region.stats.total} ${escapeHtml(unitLabel)} · ${region.stats.mastered} strong</small>
+          <small>${region.stats.total} ${escapeHtml(unitLabel)}</small>
         </span>
         ${selected ? '<span class="region-row__status">Selected</span>' : ''}
+        <span class="region-row__evidence">${region.stats.mastered} strong · ${region.stats.learning} learning · ${region.stats.unseen} unseen${dueCopy}</span>
+        <span class="region-row__progress">${progressStrip(region.stats)}</span>
         ${icon('chevron')}
       </button>
-      <button
-        class="region-row__play"
-        type="button"
-        data-action="quick-play"
-        data-domain="${domain}"
-        data-id="${id}"
-        aria-label="Play ${label} ${domainName}"
-      >${icon('play')}</button>
     </div>
   `;
 }
