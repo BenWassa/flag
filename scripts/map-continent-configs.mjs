@@ -86,7 +86,7 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   localContextBounds: null,
   extraAdjacencyCountryIds: Object.freeze(['EGY']),
   allowedContextPatterns: Object.freeze([
-    Object.freeze({ pattern: '(taiwan|n\\.?\\s*cyprus|northern cyprus|akrotiri|dhekelia|siachen|hong kong|macao|macau|spratly|paracel)', flags: 'i' }),
+    Object.freeze({ pattern: '(taiwan|n\\.?\\s*cyprus|northern cyprus|cyprus no mans area|akrotiri|dhekelia|siachen|hong kong|macao|macau|spratly|paracel|scarborough reef|indian ocean territories)', flags: 'i' }),
   ]),
   adjacencyMode: 'global',
   policy: 'standard-v1',
@@ -101,6 +101,9 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     taiwan: 'non-scoring source context under the current 195-country Atlas catalogue',
     palestineIsrael: 'PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view',
     northernCyprus: 'non-scoring source context; no separate Atlas country identity',
+    cyprusNoMansArea: 'non-scoring Natural Earth context inside Cyprus; no separate Atlas country identity',
+    indianOceanTerritories: 'non-scoring Natural Earth territory context; no separate Atlas country identity',
+    scarboroughReef: 'non-scoring Natural Earth disputed-feature context; no separate Atlas country identity',
     kashmir: 'pinned Natural Earth default de-facto boundary view; no handwritten override or additional scoring identity',
     unRole: 'policy/dispute/disclaimer audit reference, not runtime redistribution source',
   }),
