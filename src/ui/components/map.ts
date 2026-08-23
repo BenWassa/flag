@@ -115,11 +115,11 @@ export function renderMapSvg(
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
   const currentTargetResolved = currentTargetId ? Boolean(session.targets[currentTargetId]?.resolved) : false;
   const lastAttempt = session.attempts.at(-1);
-  const recordedCountryId = interactive
-    && !showFeedback
-    && lastAttempt
-    && (currentTargetResolved || lastAttempt.selectedCountryId !== currentTargetId)
-      ? lastAttempt.selectedCountryId
+  const currentPlayAttempt = interactive
+    && session.mode === 'test'
+    && currentTargetResolved
+    && lastAttempt?.targetCountryId === currentTargetId
+      ? lastAttempt
       : null;
   const focus = asset.initialFocus;
   const focusData = focus ? `${focus.x},${focus.y},${focus.width},${focus.height}` : '';
@@ -148,14 +148,19 @@ export function renderMapSvg(
           <g class="map-active-countries">
             ${asset.countries.map((geometry) => {
               const state = session.targets[geometry.countryId];
-              const currentCorrect = interactive
+              const learnCurrentCorrect = interactive
                 && showFeedback
                 && geometry.countryId === currentTargetId
                 && state?.resolved
                 && state.resolution === 'first-try';
-              const recorded = geometry.countryId === recordedCountryId;
-              const classes = `map-country${resolutionClass(state, showFeedback)}${currentCorrect ? ' map-country--current-correct' : ''}${recorded ? ' map-country--recorded' : ''}${wrongId === geometry.countryId ? ' map-country--wrong-pulse' : ''}`;
-              const selectable = interactive && !state?.resolved;
+              const playCorrectTarget = Boolean(currentPlayAttempt) && geometry.countryId === currentTargetId;
+              const playWrongSelection = Boolean(currentPlayAttempt)
+                && !currentPlayAttempt?.correct
+                && geometry.countryId === currentPlayAttempt?.selectedCountryId;
+              const strongCorrect = learnCurrentCorrect || playCorrectTarget;
+              const strongWrong = wrongId === geometry.countryId || playWrongSelection;
+              const classes = `map-country${resolutionClass(state, showFeedback)}${strongCorrect ? ' map-country--current-correct' : ''}${strongWrong ? ' map-country--wrong-pulse' : ''}`;
+              const selectable = interactive && !currentTargetResolved && !state?.resolved;
               const action = selectable ? ` data-action="map-answer" data-id="${geometry.countryId}" tabindex="0" role="button" aria-label="Selectable country area"` : '';
               return `
                 <g class="${classes}"${action}>
