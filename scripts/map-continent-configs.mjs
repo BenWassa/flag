@@ -51,6 +51,44 @@ export const AFRICA_MAP_GENERATION_CONFIG = Object.freeze({
   }),
 });
 
+export const SOUTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
+  id: 'south-america',
+  displayName: 'South America',
+  sourceContinent: 'South America',
+  exportPrefix: 'SOUTH_AMERICA',
+  outputFilename: 'south-america.ts',
+  provenanceFilename: 'south-america-cartography-provenance.json',
+  expectedCountryCount: 12,
+  regionIds: Object.freeze([
+    'andean',
+    'atlantic-south-america',
+    'southern-cone',
+  ]),
+  islandLocatorIds: Object.freeze([]),
+  callouts: Object.freeze({}),
+  lakes: Object.freeze([
+    Object.freeze({ name: 'Lake Titicaca', pattern: 'titicaca', flags: 'i', required: true }),
+  ]),
+  // PAN is needed as the complete cross-continent neighbour of COL. FRA is
+  // clipped to its local French Guiana geometry for sovereign context without
+  // pulling metropolitan France into the South America viewport.
+  localContextCountryIds: Object.freeze(['PAN', 'FRA']),
+  localContextBounds: Object.freeze({ minLon: -83, maxLon: -47, minLat: -58, maxLat: 14 }),
+  allowedContextPatterns: Object.freeze([
+    Object.freeze({ pattern: '(falkland|malvinas)', flags: 'i' }),
+  ]),
+  adjacencyMode: 'global',
+  policy: 'standard-v1',
+  boundaryPolicy: Object.freeze({
+    naturalEarthView: 'default de-facto',
+    frenchGuiana: 'non-scoring sovereign FRA context; local display geometry clipped to French Guiana',
+    falklands: 'non-scoring disputed context; no separate Atlas target',
+    trinidadAndTobago: 'remains canonical North America / Caribbean; not a South America scoring target',
+    crossContinentAdjacency: 'global application-country topology preserves COL-PAN and sovereign overseas land borders',
+  }),
+});
+
 export const MAP_GENERATION_CONFIGS = Object.freeze([
   AFRICA_MAP_GENERATION_CONFIG,
+  SOUTH_AMERICA_MAP_GENERATION_CONFIG,
 ]);
