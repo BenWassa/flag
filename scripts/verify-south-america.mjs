@@ -80,6 +80,7 @@ const provenance = JSON.parse(await readFile('docs/architecture/south-america-ca
 assert.equal(provenance.boundaryPolicy.scoredCountries, 12);
 assert.match(provenance.boundaryPolicy.frenchGuiana, /non-scoring sovereign FRA context/i);
 assert.match(provenance.boundaryPolicy.falklands, /non-scoring disputed context/i);
+assert.match(provenance.boundaryPolicy.southernPatagonianIceField, /non-scoring undemarcated Argentina-Chile boundary context/i);
 assert.match(provenance.boundaryPolicy.trinidadAndTobago, /not a South America scoring target/i);
 assert.match(provenance.boundaryPolicy.crossContinentAdjacency, /COL-PAN/i);
 
