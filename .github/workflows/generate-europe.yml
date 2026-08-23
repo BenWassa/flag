@@ -1,0 +1,133 @@
+name: Generate Europe production geography
+
+on:
+  push:
+    branches: [issue-25-europe-expansion]
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: ${{ !contains(github.event.head_commit.message, 'Generate Europe production geography') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Add Europe generator policy
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          config_path = Path('scripts/map-continent-configs.mjs')
+          source = config_path.read_text()
+          marker = "export const MAP_GENERATION_CONFIGS = Object.freeze([\n  AFRICA_MAP_GENERATION_CONFIG,\n]);"
+          if marker not in source:
+              raise SystemExit('map generation registry marker not found')
+          europe = r'''
+          export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
+            id: 'europe',
+            displayName: 'Europe',
+            sourceContinent: 'Europe',
+            exportPrefix: 'EUROPE',
+            outputFilename: 'europe.ts',
+            provenanceFilename: 'europe-cartography-provenance.json',
+            expectedCountryCount: 44,
+            regionIds: Object.freeze([
+              'northern-europe',
+              'western-europe',
+              'eastern-europe',
+              'southern-europe',
+            ]),
+            islandLocatorIds: Object.freeze(['MLT']),
+            callouts: Object.freeze({}),
+            lakes: Object.freeze([
+              Object.freeze({ name: 'Lake Ladoga', pattern: 'ladoga', flags: 'i', required: true }),
+              Object.freeze({ name: 'Lake Onega', pattern: 'onega', flags: 'i', required: false }),
+            ]),
+            localContextCountryIds: Object.freeze(['TUR', 'CYP', 'ARM', 'AZE', 'GEO']),
+            localContextBounds: Object.freeze({ minLon: -35, maxLon: 55, minLat: 28, maxLat: 74 }),
+            allowedContextPatterns: Object.freeze([
+              Object.freeze({ pattern: 'kosovo', flags: 'i' }),
+            ]),
+            // Russia remains one whole canonical geometry. It is excluded only
+            // from viewport fitting/focus calculations so far-eastern Russia can
+            // extend beyond the Europe canvas instead of shrinking the continent.
+            fitExcludeCountryIds: Object.freeze(['RUS']),
+            focusExcludeCountryIds: Object.freeze(['RUS']),
+            adjacencyMode: 'global',
+            policy: 'standard-v1',
+            boundaryPolicy: Object.freeze({
+              naturalEarthView: 'default de-facto',
+              russia: 'one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so eastern geometry may crop at the canvas edge',
+              turkiyeCyprusCaucasus: 'TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum',
+              kosovo: 'non-scoring source context; no Atlas application-country target',
+              overseasAndDependencies: 'source features remain non-scoring context unless reconciled to a canonical Atlas country',
+              crossContinentAdjacency: 'global application-country topology preserves complete RUS and other cross-continent land borders',
+            }),
+          });
+
+          '''
+          source = source.replace(marker, europe + "export const MAP_GENERATION_CONFIGS = Object.freeze([\n  AFRICA_MAP_GENERATION_CONFIG,\n  EUROPE_MAP_GENERATION_CONFIG,\n]);")
+          config_path.write_text(source)
+
+          core_path = Path('scripts/map-generation-core.mjs')
+          core = core_path.read_text()
+          old = """  const scoredCatalog = catalogForConfig(catalog, config);\n  const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);\n  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );"""
+          new = """  const scoredCatalog = catalogForConfig(catalog, config);\n  const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);\n  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n  const fitExcludedIds = new Set(config.fitExcludeCountryIds ?? []);\n  const fitCollection = featureCollection(normalized.features.filter((item) => {\n    const countryId = item.properties?.countryId;\n    return !countryId || !fitExcludedIds.has(countryId);\n  }));\n  if (!fitCollection.features.length) throw new Error(`${config.displayName} viewport-fit policy removed every feature.`);\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    fitCollection,\n  );"""
+          if old not in core:
+              raise SystemExit('projection fit marker not found')
+          core = core.replace(old, new, 1)
+
+          old_focus = """  for (const [region, ids] of [...regionIds.entries()].sort()) {\n    const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);\n    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n  }"""
+          new_focus = """  const focusExcludedIds = new Set(config.focusExcludeCountryIds ?? []);\n  for (const [region, ids] of [...regionIds.entries()].sort()) {\n    const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));\n    const focusIds = preferredIds.length ? preferredIds : ids;\n    const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);\n    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n  }"""
+          if old_focus not in core:
+              raise SystemExit('region focus marker not found')
+          core = core.replace(old_focus, new_focus, 1)
+
+          old_physical = """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );"""
+          new_physical = """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    fitCollection,\n  );"""
+          if old_physical not in core:
+              raise SystemExit('physical projection marker not found')
+          core = core.replace(old_physical, new_physical, 1)
+          core_path.write_text(core)
+          PY
+      - run: npm run maps:generate
+      - run: npm run check
+      - name: Inspect generated Europe contract
+        run: |
+          node --input-type=module <<'NODE'
+          const map = await import('./src/data/maps/europe.ts');
+          const geometry = map.EUROPE_GEOMETRY;
+          const adjacency = map.EUROPE_LAND_ADJACENCY;
+          const bounds = (path) => {
+            const points = [...String(path ?? '').matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)]
+              .map((m) => [Number(m[1]), Number(m[2])]);
+            if (!points.length) return null;
+            const xs = points.map((p) => p[0]);
+            const ys = points.map((p) => p[1]);
+            return { minX: Math.min(...xs), maxX: Math.max(...xs), minY: Math.min(...ys), maxY: Math.max(...ys), width: Math.max(...xs) - Math.min(...xs), height: Math.max(...ys) - Math.min(...ys) };
+          };
+          console.log('EUROPE_GEOMETRY_IDS', Object.keys(geometry).join(','));
+          console.log('EUROPE_CONTEXT_PATHS', map.EUROPE_EXTRA_CONTEXT_PATHS.length);
+          console.log('EUROPE_LAKES', map.EUROPE_WATER.lakes.map((lake) => lake.name).join(','));
+          console.log('EUROPE_FOCUS', JSON.stringify(map.EUROPE_SCOPE_FOCUS));
+          for (const id of ['RUS','AND','LIE','LUX','MCO','SMR','VAT','MLT']) {
+            const item = geometry[id];
+            console.log(`EUROPE_GEOMETRY_${id}`, JSON.stringify({ bounds: bounds(item?.path ?? item?.outlinePath), locator: item?.locator ?? null, callout: item?.callout ?? null }));
+          }
+          for (const id of ['RUS','DEU','FRA','ITA','ESP','LIE','SMR','VAT','ISL','MLT']) {
+            console.log(`EUROPE_ADJ_${id}`, JSON.stringify(adjacency[id]));
+          }
+          NODE
+      - run: git status --short
+      - run: rm .github/workflows/generate-europe.yml
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/map-continent-configs.mjs scripts/map-generation-core.mjs src/data/maps src/data/neighbors docs/architecture .github/workflows/generate-europe.yml
+          git commit -m "Generate Europe production geography"
+          git push
