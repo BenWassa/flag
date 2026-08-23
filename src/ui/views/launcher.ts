@@ -77,7 +77,7 @@ function renderRegionRow(
         </span>
         ${selected ? '<span class="region-row__status">Selected</span>' : ''}
         ${region.stats.due > 0 ? `<span class="region-row__evidence">${region.stats.due} due</span>` : ''}
-        <span class="region-row__badge" aria-hidden="true"></span>
+        <span class="region-row__progress">${progressStrip(region.stats)}</span>
         ${icon('chevron')}
       </button>
     </div>
@@ -105,7 +105,10 @@ export function renderLauncher(model: LauncherModel): string {
         <button class="icon-button" type="button" data-action="launcher-parent" aria-label="${parentLabel}">${icon('back')}</button>
         <span class="launcher-header__icon" aria-hidden="true">${domainIcon(model.domain)}</span>
         <div class="screen-title">
-          <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${scopeLabel}</h1>
+          <span class="screen-title__row">
+            <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${scopeLabel}</h1>
+            <span class="launcher-header__badge" aria-hidden="true"></span>
+          </span>
           <span>${domainTitle}</span>
         </div>
       </header>

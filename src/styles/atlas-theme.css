@@ -342,7 +342,7 @@ body { letter-spacing: -.006em; }
   width: 100%;
   min-height: 92px;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto 44px 20px;
+  grid-template-columns: minmax(0, 1fr) auto 20px;
   grid-template-rows: auto auto auto;
   align-items: center;
   gap: 6px 10px;
@@ -387,21 +387,14 @@ body { letter-spacing: -.006em; }
   overflow-wrap: anywhere;
 }
 
-/* Placeholder slot only — reserves size/position for the future region
-   badge (greyscale until earned, full colour on completion). No art yet. */
-.region-row__badge {
-  grid-column: 3;
-  grid-row: 1 / -1;
-  align-self: center;
-  justify-self: center;
-  width: 40px;
-  height: 40px;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius-sm);
+.region-row__progress {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-width: 0;
 }
 
 .region-row__open > .ui-icon {
-  grid-column: 4;
+  grid-column: 3;
   grid-row: 1;
   align-self: center;
   justify-self: end;
@@ -423,6 +416,22 @@ body { letter-spacing: -.006em; }
 }
 
 .launcher-header__icon .ui-icon { width: 22px; height: 22px; }
+
+.screen-title__row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Placeholder slot only — reserves size/position for the future continent
+   crest badge (greyscale until earned, full colour on completion). No art yet. */
+.launcher-header__badge {
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+  border: 1px dashed var(--line-strong);
+  border-radius: var(--radius-sm);
+}
 
 .launcher__status {
   padding: 16px;
