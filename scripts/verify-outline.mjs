@@ -161,8 +161,14 @@ assert.ok(unansweredHtml.includes('data-action="outline-answer"'), 'Outline quiz
 const learnedHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, wrongId);
 assert.ok(learnedHtml.includes(`Correct: ${escapeHtml(sampleTarget.name)}`), 'Learn mode must reveal the correct answer immediately after a miss.');
 const testedHtml = renderOutlineQuiz(westAsset, testSession, outlineProgress, wrongId);
-assert.equal(testedHtml.includes('Correct:'), false, 'Test mode must withhold correctness during the round.');
-assert.ok(testedHtml.includes('Answer recorded'), 'Test mode should acknowledge input without revealing correctness.');
+assert.ok(testedHtml.includes('answer-feedback--wrong'), 'Play mode must show immediate wrong-answer feedback.');
+assert.ok(testedHtml.includes('Not quite'), 'Play feedback must communicate the outcome without relying on colour.');
+assert.ok(testedHtml.includes(`Answer: ${escapeHtml(sampleTarget.name)}`), 'Play mode must reveal the correct answer after a miss.');
+assert.equal(testedHtml.includes('Answer recorded'), false, 'Play mode must not fall back to a neutral acknowledgement.');
+assert.ok(
+  testedHtml.includes('answer-button--correct') && testedHtml.includes('answer-button--wrong'),
+  'Play mode must mark both the selected wrong option and the correct option.',
+);
 
 const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, true);
 assert.ok(homeHtml.includes('Play Africa') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
@@ -198,4 +204,4 @@ const outlineCss = await readFile('dist/outline.css', 'utf8');
 assert.ok(outlineCss.includes('orientation: landscape') && outlineCss.includes('max-height: 600px'), 'Outline quiz must include a short-landscape layout contract.');
 assert.ok(outlineCss.includes('.outline-frame--stage'), 'Silhouette must dominate the question stage with a dedicated fixed frame.');
 
-console.log('Outline verification passed: canonical geometry, ISO3, multipart islands, normalized framing, distractors, Learn/Test, mastery isolation, routing, rendering, accessibility, and responsive layout.');
+console.log('Outline verification passed: canonical geometry, ISO3, multipart islands, normalized framing, distractors, Learn/Play feedback, mastery isolation, routing, rendering, accessibility, and responsive layout.');

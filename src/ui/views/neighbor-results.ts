@@ -26,7 +26,7 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
             <p>${result.completed} completed · ${result.exhausted} exhausted</p>
           </div>
         </div>
-        <p>A clean completion means every neighbour was found with no wrong guesses. That is the mastery-credit event for this domain.</p>
+        <p>A clean completion means every neighbour was found with no wrong guesses. Clean completions can make countries newly strong.</p>
       </section>
 
       ${missedNames.length ? `

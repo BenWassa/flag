@@ -67,6 +67,14 @@ assert.equal(dueFlags.strong, 0, 'Due evidence is presented as a distinct live s
 assert.equal(dueFlags.action, 'review', 'Due work takes priority over Learn and Play recommendations.');
 assert.equal(evidenceForCountry(ledgers, 'flags', 'GHA', now).status, 'due');
 
+outlines.records.GHA.status = 'mastered';
+outlines.records.GHA.nextReviewAt = '2026-08-20T12:00:00Z';
+const dueOutlines = buildProgressSummary(ledgers, africa, 'outlines', now);
+assert.equal(dueOutlines.due, 1, 'Outlines reports the same stored review timing as Flags.');
+assert.equal(dueOutlines.strong, 0, 'Due Outlines evidence is not double-counted as strong.');
+assert.equal(dueOutlines.action, 'review', 'Due Outlines work receives the shared review recommendation.');
+assert.equal(evidenceForCountry(ledgers, 'outlines', 'GHA', now).status, 'due');
+
 const unsupported = buildProgressSummary(ledgers, unsupportedContinent, 'locations', now);
 assert.equal(unsupported.supported, false, 'Unsupported continent/domain combinations remain explicitly unavailable.');
 assert.equal(unsupported.total, 0, 'Unsupported curriculum is excluded from totals.');
@@ -104,6 +112,26 @@ assert.match(completedRendered, /progress-world-crown/, 'The singular World Crow
 
 const resetRendered = renderProgress(ledgers, earned, true, true);
 assert.match(resetRendered, /Erase all learning evidence and earned achievements/, 'Reset continues to cover live evidence and earned achievements together.');
+
+const nonAfricaFlags = createInitialProgress(COUNTRIES);
+nonAfricaFlags.records.JPN.status = 'learning';
+const nonAfricaLedgers = {
+  flags: nonAfricaFlags,
+  locations: createInitialLocationProgress([]),
+  outlines: createInitialProgress([]),
+  neighbors: createInitialNeighborProgress([]),
+};
+const nonAfricaRendered = renderProgress(nonAfricaLedgers, createInitialAchievementState(), false, true);
+assert.doesNotMatch(
+  nonAfricaRendered,
+  /Not practised yet/,
+  'Progress detects learning history when the only evidence is outside Africa.',
+);
+assert.match(
+  nonAfricaRendered,
+  /data-action="reset-request"/,
+  'Progress keeps the reset/history footer when practice exists only outside Africa.',
+);
 
 const shellHtml = readFileSync(new URL('../dist/index.html', import.meta.url), 'utf8');
 const progressCss = readFileSync(new URL('../dist/progress.css', import.meta.url), 'utf8');

@@ -10,13 +10,12 @@ import {
   type EarnedAchievementState,
 } from '../../domain/achievements.js';
 import type { LearningDomain, StudyScope } from '../../domain/models.js';
-import { buildScopeProgressSummaries, type ProgressLedgers } from '../../domain/progress-summary.js';
+import { buildDomainProgressSummary, type ProgressLedgers } from '../../domain/progress-summary.js';
 import { countryIdsForSupportedScope } from '../../domain/scope-support.js';
 import { continentAchievementMark, worldCrownIcon } from '../components/achievement-art.js';
 import { domainIcon, icon } from '../components/icons.js';
 import { escapeHtml } from '../format.js';
 
-const AFRICA_SCOPE: StudyScope = { kind: 'continent', id: 'africa', label: 'Africa' };
 const DOMAIN_IDS: readonly LearningDomain[] = ['flags', 'locations', 'outlines', 'neighbors'];
 const DOMAIN_LABELS: Record<LearningDomain, string> = {
   flags: 'Flags',
@@ -150,7 +149,7 @@ export function renderProgress(
   persisting = true,
 ): string {
   const persistenceAvailable = persisting;
-  const summaries = buildScopeProgressSummaries(ledgers, AFRICA_SCOPE);
+  const summaries = DOMAIN_IDS.map((domain) => buildDomainProgressSummary(ledgers, domain));
 
   const studiedCount = summaries.reduce((sum, item) => sum + item.learning + item.strong + item.due, 0);
   const hasAchievements = achievements.regionDomainMasteries.length > 0

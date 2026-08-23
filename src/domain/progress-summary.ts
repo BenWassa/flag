@@ -51,8 +51,9 @@ function recordForCountry(ledgers: ProgressLedgers, domain: LearningDomain, coun
 }
 
 function isDue(ledgers: ProgressLedgers, domain: LearningDomain, countryId: string, now: Date): boolean {
-  if (domain !== 'flags') return false;
-  const value = ledgers.flags.records[countryId]?.nextReviewAt;
+  if (domain !== 'flags' && domain !== 'outlines') return false;
+  const ledger = domain === 'flags' ? ledgers.flags : ledgers.outlines;
+  const value = ledger.records[countryId]?.nextReviewAt;
   if (!value) return false;
   const timestamp = Date.parse(value);
   return Number.isFinite(timestamp) && timestamp <= now.getTime();
