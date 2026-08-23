@@ -1,0 +1,79 @@
+name: Generate Asia expansion cartography
+
+on:
+  push:
+    branches:
+      - issue-26-asia-middle-east-expansion
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install
+      - name: Extend shared generator for overlapping scopes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('scripts/map-generation-core.mjs')
+          source = path.read_text()
+
+          old = """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );\n"""
+          new = """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  // Some cross-continent context is required for truthful rendering but is too\n  // geographically large to define the learner-continent camera extent. When\n  // a config opts in, only the named context countries participate in fitting;\n  // all context still renders through the same clipped projection afterwards.\n  const fitContextIds = config.fitContextCountryIds\n    ? new Set(config.fitContextCountryIds)\n    : null;\n  const projectionInput = fitContextIds\n    ? featureCollection(normalized.features.filter((item) =>\n        item.properties?.role !== 'context-country' || fitContextIds.has(item.properties?.countryId)))\n    : normalized;\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n"""
+          if old not in source:
+              raise SystemExit('projection patch anchor not found')
+          source = source.replace(old, new, 1)
+
+          old = """  const adjacency = config.adjacencyMode === 'global'\n    ? sliceGlobalAdjacency(globalGraph.adjacency, scoredCatalog, globalGraph.representedIds, config)\n    : deriveLocalAdjacency(simplifiedTopology);\n"""
+          new = """  const adjacencyCatalog = [...scoredCatalog];\n  for (const countryId of config.extraAdjacencyCountryIds ?? []) {\n    const row = catalog.find((item) => item.id === countryId);\n    if (!row) throw new Error(`Unknown extra adjacency country ${countryId} for ${config.displayName}.`);\n    if (!adjacencyCatalog.some((item) => item.id === countryId)) adjacencyCatalog.push(row);\n  }\n  const adjacency = config.adjacencyMode === 'global'\n    ? sliceGlobalAdjacency(globalGraph.adjacency, adjacencyCatalog, globalGraph.representedIds, config)\n    : deriveLocalAdjacency(simplifiedTopology);\n"""
+          if old not in source:
+              raise SystemExit('adjacency patch anchor not found')
+          source = source.replace(old, new, 1)
+
+          old = """  const regionIds = new Map();\n  for (const row of scoredCatalog) {\n    const ids = regionIds.get(row.region) ?? [];\n    ids.push(row.id);\n    regionIds.set(row.region, ids);\n  }\n  for (const [region, ids] of [...regionIds.entries()].sort()) {\n    const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);\n    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n  }\n"""
+          new = """  if (config.learningScopes) {\n    for (const scope of config.learningScopes) {\n      const scopeFeatures = scope.countryIds.map((id) => simplifiedById.get(id)).filter(Boolean);\n      if (scopeFeatures.length !== scope.countryIds.length) {\n        const represented = new Set(scopeFeatures.map((item) => item.properties?.countryId));\n        const missing = scope.countryIds.filter((id) => !represented.has(id));\n        throw new Error(`${config.displayName} scope ${scope.id} is missing generated geometry: ${missing.join(', ')}`);\n      }\n      scopeFocus[scope.id] = boundsToFocus(planarPath.bounds(featureCollection(scopeFeatures)));\n    }\n  } else {\n    const regionIds = new Map();\n    for (const row of scoredCatalog) {\n      const ids = regionIds.get(row.region) ?? [];\n      ids.push(row.id);\n      regionIds.set(row.region, ids);\n    }\n    for (const [region, ids] of [...regionIds.entries()].sort()) {\n      const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);\n      scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n    }\n  }\n"""
+          if old not in source:
+              raise SystemExit('scope-focus patch anchor not found')
+          source = source.replace(old, new, 1)
+
+          old = """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );\n"""
+          new = """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n"""
+          if old not in source:
+              raise SystemExit('physical-projection patch anchor not found')
+          source = source.replace(old, new, 1)
+
+          path.write_text(source)
+          PY
+      - name: Generate canonical maps and neighbour fixtures
+        run: npm run maps:generate
+      - name: Prove Africa regression is unchanged
+        run: |
+          git diff --exit-code -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
+      - name: Commit generated Asia artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/generate-asia-expansion.yml
+          unexpected="$(git status --porcelain | awk '{print $2}' | grep -Ev '^(scripts/map-generation-core\.mjs|src/data/maps/asia\.ts|src/data/neighbors/asia\.ts|src/data/neighbors/global\.ts|docs/architecture/asia-cartography-provenance\.json|\.github/workflows/generate-asia-expansion\.yml)$' || true)"
+          if [ -n "$unexpected" ]; then
+            echo "Unexpected generated changes:"
+            echo "$unexpected"
+            exit 1
+          fi
+          git add scripts/map-generation-core.mjs src/data/maps/asia.ts src/data/neighbors/asia.ts src/data/neighbors/global.ts docs/architecture/asia-cartography-provenance.json
+          git commit -m "Generate canonical Asia geography"
+          git push origin HEAD:issue-26-asia-middle-east-expansion
