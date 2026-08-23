@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
+import { CONTINENTS } from '../dist/data/continents.js';
 import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
@@ -11,6 +12,7 @@ import {
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
+import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
@@ -71,14 +73,18 @@ assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Lear
 assert.equal((flagsIndexHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
 for (const domain of ['locations', 'outlines', 'neighbors']) {
   const indexHtml2 = renderDomainIndex(domain, ledgers);
+  const shippedContinents = CONTINENTS.filter((continent) => scopeSupportsDomain(
+    { kind: 'continent', id: continent.id, label: continent.name },
+    domain,
+  )).length;
   assert.equal(
     (indexHtml2.match(/data-action="open-scope"/g) ?? []).length,
-    1,
-    `${domain} opens only the continent it has shipped.`,
+    shippedContinents,
+    `${domain} opens every continent with canonical shipped coverage.`,
   );
   assert.ok(
     indexHtml2.includes(`aria-label="Play Africa ${domain === 'neighbors' ? 'neighbours' : domain}"`),
-    `${domain} plays Africa through its canonical display name.`,
+    `${domain} keeps Africa available through its canonical display name.`,
   );
 }
 
