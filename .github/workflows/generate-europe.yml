@@ -51,7 +51,7 @@ jobs:
             localContextCountryIds: Object.freeze(['TUR', 'CYP', 'ARM', 'AZE', 'GEO']),
             localContextBounds: Object.freeze({ minLon: -35, maxLon: 55, minLat: 28, maxLat: 74 }),
             allowedContextPatterns: Object.freeze([
-              Object.freeze({ pattern: 'kosovo', flags: 'i' }),
+              Object.freeze({ pattern: '(kosovo|gibraltar|jersey|guernsey|isle of man|aland|faroe islands)', flags: 'i' }),
             ]),
             // Russia remains one whole canonical geometry. It is excluded only
             // from viewport fitting/focus calculations so far-eastern Russia can
@@ -65,7 +65,11 @@ jobs:
               russia: 'one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so eastern geometry may crop at the canvas edge',
               turkiyeCyprusCaucasus: 'TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum',
               kosovo: 'non-scoring source context; no Atlas application-country target',
-              overseasAndDependencies: 'source features remain non-scoring context unless reconciled to a canonical Atlas country',
+              gibraltar: 'non-scoring British Overseas Territory context; no Atlas application-country target',
+              crownDependencies: 'Jersey, Guernsey and Isle of Man are non-scoring Crown Dependency context; no Atlas application-country targets',
+              aland: 'non-scoring autonomous Finnish territory context; no Atlas application-country target',
+              faroeIslands: 'non-scoring autonomous Danish territory context; no Atlas application-country target',
+              overseasAndDependencies: 'other source features remain non-scoring context unless reconciled to a canonical Atlas country',
               crossContinentAdjacency: 'global application-country topology preserves complete RUS and other cross-continent land borders',
             }),
           });
@@ -141,9 +145,11 @@ jobs:
           NODE
       - run: git status --short
       - run: rm .github/workflows/generate-europe.yml
+      - run: rm -f docs/open/europe-generation-failure.log
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add scripts/map-continent-configs.mjs scripts/map-generation-core.mjs src/data/maps src/data/neighbors docs/architecture docs/open/europe-generation-inspection.txt .github/workflows/generate-europe.yml
+          git add -A docs/open/europe-generation-failure.log
           git commit -m "Generated Europe production geography"
           git push
