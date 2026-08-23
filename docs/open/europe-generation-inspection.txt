@@ -1,0 +1,26 @@
+EUROPE_GEOMETRY_IDS DNK,EST,FIN,ISL,IRL,LVA,LTU,NOR,SWE,GBR,AUT,BEL,FRA,DEU,LIE,LUX,MCO,NLD,CHE,BLR,BGR,CZE,HUN,MDA,POL,ROU,RUS,SVK,UKR,ALB,AND,BIH,HRV,GRC,ITA,MLT,MNE,MKD,PRT,SMR,SRB,SVN,ESP,VAT,TUR,CYP,ARM,AZE,GEO
+EUROPE_CONTEXT_PATHS 7
+EUROPE_LAKES Lake Ladoga,Lake Onega
+EUROPE_FOCUS {"europe":{"x":0,"y":0,"width":835,"height":723},"eastern-europe":{"x":551.69,"y":82.11,"width":180,"height":170},"northern-europe":{"x":426.39,"y":0,"width":251.58,"height":723},"southern-europe":{"x":382.85,"y":140.12,"width":300.37,"height":170},"western-europe":{"x":25.1,"y":108.85,"width":784.8,"height":447.65}}
+EUROPE_GEOMETRY_RUS {"bounds":{"minX":-96.2,"maxX":1184.8,"minY":18.2,"maxY":204.9,"width":1281,"height":186.70000000000002},"locator":null,"callout":null}
+EUROPE_GEOMETRY_FRA {"bounds":{"minX":51.1,"maxX":783.9,"minY":154.5,"maxY":530.5,"width":732.8,"height":376},"locator":null,"callout":null}
+EUROPE_GEOMETRY_NOR {"bounds":{"minX":508.1,"maxX":643.5,"minY":22,"maxY":701,"width":135.39999999999998,"height":679},"locator":null,"callout":null}
+EUROPE_GEOMETRY_PRT {"bounds":{"minX":408.9,"maxX":513.1,"minY":200,"maxY":263.1,"width":104.20000000000005,"height":63.10000000000002},"locator":null,"callout":null}
+EUROPE_GEOMETRY_ESP {"bounds":{"minX":460.1,"maxX":556.6,"minY":191.5,"maxY":275.6,"width":96.5,"height":84.10000000000002},"locator":null,"callout":null}
+EUROPE_GEOMETRY_AND {"bounds":{"minX":544.4,"maxX":545.9,"minY":197.4,"maxY":198.5,"width":1.5,"height":1.0999999999999943},"locator":null,"callout":null}
+EUROPE_GEOMETRY_LIE {"bounds":{"minX":576.5,"maxX":577,"minY":173.8,"maxY":174.9,"width":0.5,"height":1.0999999999999943},"locator":null,"callout":null}
+EUROPE_GEOMETRY_LUX {"bounds":{"minX":561.1,"maxX":564.2,"minY":159.1,"maxY":162.8,"width":3.1000000000000227,"height":3.700000000000017},"locator":null,"callout":null}
+EUROPE_GEOMETRY_MCO {"bounds":{"minX":568.6,"maxX":568.9,"minY":191.7,"maxY":191.9,"width":0.2999999999999545,"height":0.20000000000001705},"locator":null,"callout":null}
+EUROPE_GEOMETRY_SMR {"bounds":{"minX":588.9,"maxX":589.4,"minY":190.6,"maxY":191,"width":0.5,"height":0.4000000000000057},"locator":null,"callout":null}
+EUROPE_GEOMETRY_VAT {"bounds":{"minX":589.7,"maxX":589.7,"minY":201.3,"maxY":201.3,"width":0,"height":0},"locator":null,"callout":null}
+EUROPE_GEOMETRY_MLT {"bounds":{"minX":598.3,"maxX":599.9,"minY":231.5,"maxY":232.9,"width":1.6000000000000227,"height":1.4000000000000057},"locator":{"cx":599.23,"cy":232.31,"r":7},"callout":null}
+EUROPE_ADJ_RUS ["AZE","BLR","CHN","EST","FIN","GEO","KAZ","LTU","LVA","MNG","NOR","POL","PRK","UKR"]
+EUROPE_ADJ_DEU ["AUT","BEL","CHE","CZE","DNK","FRA","LUX","NLD","POL"]
+EUROPE_ADJ_FRA ["AND","BEL","BRA","CHE","DEU","ESP","ITA","LUX","MCO","SUR"]
+EUROPE_ADJ_ITA ["AUT","CHE","FRA","SMR","SVN","VAT"]
+EUROPE_ADJ_ESP ["AND","FRA","MAR","PRT"]
+EUROPE_ADJ_LIE ["AUT","CHE"]
+EUROPE_ADJ_SMR ["ITA"]
+EUROPE_ADJ_VAT ["ITA"]
+EUROPE_ADJ_ISL []
+EUROPE_ADJ_MLT []

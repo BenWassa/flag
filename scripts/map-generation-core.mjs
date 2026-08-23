@@ -518,10 +518,16 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const scoredCatalog = catalogForConfig(catalog, config);
   const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);
   const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);
+  const fitExcludedIds = new Set(config.fitExcludeCountryIds ?? []);
+  const fitCollection = featureCollection(normalized.features.filter((item) => {
+    const countryId = item.properties?.countryId;
+    return !countryId || !fitExcludedIds.has(countryId);
+  }));
+  if (!fitCollection.features.length) throw new Error(`${config.displayName} viewport-fit policy removed every feature.`);
 
   const projection = geoNaturalEarth1().fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
-    normalized,
+    fitCollection,
   );
   projection.clipExtent([[0, 0], [WIDTH, HEIGHT]]);
 
@@ -595,14 +601,17 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     ids.push(row.id);
     regionIds.set(row.region, ids);
   }
+  const focusExcludedIds = new Set(config.focusExcludeCountryIds ?? []);
   for (const [region, ids] of [...regionIds.entries()].sort()) {
-    const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);
+    const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
+    const focusIds = preferredIds.length ? preferredIds : ids;
+    const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);
     scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
   }
 
   const sourceProjection = geoNaturalEarth1().fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
-    normalized,
+    fitCollection,
   );
   sourceProjection.clipExtent([[0, 0], [WIDTH, HEIGHT]]);
   const physicalPath = geoPath(sourceProjection).digits(PATH_DIGITS);
