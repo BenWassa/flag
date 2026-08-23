@@ -1,4 +1,5 @@
-import { CONTINENTS, REGIONS } from '../../data/continents.js';
+import { CONTINENTS } from '../../data/continents.js';
+import { regionLearningScopes } from '../../data/learning-scopes.js';
 import { domainDisplayName } from '../../domain/display.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import {
@@ -24,11 +25,6 @@ function statsFor(summary: ProgressSummary): ScopeStats {
   };
 }
 
-/**
- * A continent this domain has not shipped is still listed, but as an inert
- * card that names the gap. PRODUCT.md allows honest shells; it does not allow
- * them to look playable or to contribute a count they cannot back.
- */
 function shellCard(continent: { id: string; name: string }): string {
   return `
     <div class="continent-row continent-row--shell">
@@ -45,7 +41,7 @@ function shellCard(continent: { id: string; name: string }): string {
 
 function continentCard(
   domain: LearningDomain,
-  continent: { id: string; name: string },
+  continent: (typeof CONTINENTS)[number],
   ledgers: ProgressLedgers,
 ): string {
   const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
@@ -55,7 +51,7 @@ function continentCard(
   if (summary.total === 0) return shellCard(continent);
 
   const stats = statsFor(summary);
-  const regions = REGIONS.filter((region) => region.continentId === continent.id).length;
+  const regions = regionLearningScopes(continent.id).length;
   const name = escapeHtml(continent.name);
   const domainName = escapeHtml(domainDisplayName(domain).toLowerCase());
 
@@ -89,10 +85,6 @@ function continentCard(
   `;
 }
 
-/**
- * Flags is the only domain whose curriculum is the whole world, so it is the
- * only one that can offer a world round above the continent list.
- */
 function worldSection(ledgers: ProgressLedgers): string {
   const worldScope: StudyScope = { kind: 'world', label: 'World' };
   const summary = buildProgressSummary(ledgers, worldScope, 'flags');
