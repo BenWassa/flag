@@ -1,13 +1,4 @@
 Traceback (most recent call last):
-  File "/home/runner/work/flag/flag/scripts/issue-77-apply.py", line 466, in <module>
-    ia, count = re.subn(
-                ^^^^^^^^
-  File "/usr/lib/python3.12/re/__init__.py", line 197, in subn
-    return _compile(pattern, flags).subn(repl, string, count)
-           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/__init__.py", line 334, in _compile_template
-    return _sre.template(pattern, _parser.parse_template(repl, pattern))
-                                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-  File "/usr/lib/python3.12/re/_parser.py", line 1075, in parse_template
-    raise s.error('bad escape %s' % this, len(this)) from None
-re.error: bad escape \s at position 79 (line 1, column 80)
+  File "/home/runner/work/flag/flag/scripts/issue-77-apply.py", line 250, in <module>
+    raise RuntimeError(f"{path}: split-row Play styling remains")
+RuntimeError: src/styles/styles.css: split-row Play styling remains

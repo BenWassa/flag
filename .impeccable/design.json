@@ -24,7 +24,7 @@
     "depth": {
       "primary": "0 4px 0 pressed-blue, collapsing to 0 1px 0 + translateY(3px) on press",
       "tile": "soft two-layer standing shadow (--depth-tile) on interactive tiles",
-      "arcade": "Atlas scope-selection exception (Home continent list, continent region list, region domain-play grid): 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press. Domain launchers reached after a domain is chosen keep the soft tile depth."
+      "arcade": "Home mode-card exception only: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press. Post-mode continent and region selection uses soft tile depth."
     },
     "breakpoints": {
       "compact": "639px",
@@ -43,6 +43,6 @@
     "The World Crown is absent from routine locked states and rendered only when canonical world completion is earned",
     "Mobile-first interaction and no horizontal scrolling for primary selection",
     "Radius, depth, typography, navigation composition and milestone scarcity remain locked as Tactile Atlas",
-    "Navigation is scope-first: Home lists continents, a continent lists regions, and region surfaces expose the domain entry points without changing durable typed routes"
+    "Navigation is mode-first: Home chooses the learning domain, then full-width continent and region rows choose geography before deliberate launcher Play/Learn actions"
   ]
 }

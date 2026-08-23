@@ -38,7 +38,7 @@ assert.equal(
   'All four result-state document-title branches use the Atlas suffix.',
 );
 
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Brand metadata changes invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v17'"), 'Brand metadata changes invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("'./manifest.webmanifest'"), 'Updated install metadata remains in the offline shell.');
 
 const storageSources = await Promise.all([

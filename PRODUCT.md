@@ -228,8 +228,8 @@ The interface should reveal only the next meaningful decision.
 Navigation is **mode-first**. The learner chooses what they are practising, then where:
 
 1. **Home** — the four learning modes, each showing the coverage it currently teaches and the progress earned in it.
-2. **Continent index** — that mode's six continents, with direct Play. Continents the mode has not shipped appear as honest, inert shells.
-3. **Continent launcher** — Play the whole continent, or any of its regions, plus Learn.
+2. **Continent index** — that mode's six continents as full-width geography rows with visible evidence. A supported row opens its launcher; unshipped continents remain honest, inert shells.
+3. **Continent launcher** — deliberate Play/Learn actions for the active continent or selected region, with full-width region rows that expose their existing progress without starting a round themselves.
 
 Core navigation principles:
 
@@ -237,7 +237,7 @@ Core navigation principles:
 - no horizontal scrolling for primary selection;
 - the learning mode is chosen first; geography is chosen within it;
 - coverage is stated honestly at every level, and unshipped curriculum never looks playable;
-- Learn and Play remain direct;
+- Learn and Play remain direct once the learner has deliberately selected the geographic scope;
 - Back/Forward and direct links remain first-class;
 - URLs own durable navigation state;
 - active-round internals remain ephemeral session state.

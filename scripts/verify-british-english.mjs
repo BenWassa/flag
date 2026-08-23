@@ -247,7 +247,7 @@ assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbo
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v17'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas styling remains part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Technical stylesheet filename remains stable.');
 
