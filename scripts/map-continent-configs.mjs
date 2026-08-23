@@ -67,7 +67,6 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
   ]),
   islandLocatorIds: Object.freeze(['MLT']),
   precisionSensitiveCountryIds: Object.freeze(['AND', 'LIE', 'LUX', 'MCO', 'SMR', 'VAT', 'MLT']),
-  wholeOutlineCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
   callouts: Object.freeze({
     AND: Object.freeze({ dx: -28, dy: 18, r: 10 }),
     LIE: Object.freeze({ dx: 24, dy: -20, r: 10 }),
@@ -85,18 +84,19 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
   allowedContextPatterns: Object.freeze([
     Object.freeze({ pattern: '(kosovo|gibraltar|jersey|guernsey|isle of man|aland|faroe islands)', flags: 'i' }),
   ]),
-  // Whole-country silhouettes stay canonical. Remote or overseas parts are
-  // excluded only from Europe viewport fitting/focus and clipped at render time.
+  // Whole-country polygons stay canonical. Remote or overseas parts are
+  // excluded only from Europe viewport fitting/focus; the SVG viewBox crops
+  // them visually without creating a second geometry source.
   fitExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
   focusExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
   adjacencyMode: 'global',
   policy: 'standard-v1',
   boundaryPolicy: Object.freeze({
     naturalEarthView: 'default de-facto',
-    russia: 'one canonical whole-country RUS outline; Europe map rendering is clipped to its canvas and RUS is excluded only from viewport fit/focus calculations',
-    france: 'one canonical whole-country FRA outline including French Guiana; Europe map rendering is clipped to its canvas and FRA is excluded from fit/focus so overseas geometry does not distort Europe',
-    norway: 'one canonical whole-country NOR outline; remote multipart source geometry is excluded from fit/focus while Europe map rendering stays clipped to its canvas',
-    microstates: 'AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical outline geometry is retained',
+    russia: 'one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so the SVG viewport can crop eastern geometry without shrinking Europe',
+    france: 'one canonical whole-country FRA geometry including French Guiana; excluded from Europe fit/focus so overseas geometry does not distort Europe',
+    norway: 'one canonical whole-country NOR geometry; remote multipart source geometry is excluded from Europe fit/focus',
+    microstates: 'AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical polygon geometry is retained',
     turkiyeCyprusCaucasus: 'TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum',
     kosovo: 'non-scoring source context; no Atlas application-country target',
     gibraltar: 'non-scoring British Overseas Territory context; no Atlas application-country target',
