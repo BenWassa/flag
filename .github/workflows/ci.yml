@@ -1,116 +1,26 @@
 name: CI
 
 on:
+  push:
+    branches: [main]
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.head_ref }}
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
-      - name: Generate clean-main Africa baseline
-        shell: bash
-        run: |
-          set -euo pipefail
-          git fetch origin main
-          git worktree add --detach /tmp/atlas-main origin/main
-          pushd /tmp/atlas-main
-          npm install
-          npm run maps:generate
-          if git diff --quiet -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json; then
-            echo "Current main reproduces its checked-in Africa artifacts byte-for-byte."
-          else
-            echo "Current main already regenerates checked-in Africa differently; comparing this generated baseline instead."
-            git diff --stat -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
-          fi
-          cp src/data/maps/africa.ts /tmp/main-generated-africa.ts
-          cp src/data/neighbors/africa.ts /tmp/main-generated-africa-neighbors.ts
-          cp docs/architecture/cartography-provenance.json /tmp/main-generated-africa-provenance.json
-          popd
-      - name: Apply shared Asia expansion hardening
-        shell: bash
-        run: |
-          python - <<'PY'
-          from pathlib import Path
-
-          core = Path('scripts/map-generation-core.mjs')
-          source = core.read_text()
-          patches = [
-            (
-              """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );\n""",
-              """  const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);\n\n  // Cross-continent context can be necessary for truthful rendering without\n  // being appropriate for the learner-continent camera extent.\n  const fitContextIds = config.fitContextCountryIds\n    ? new Set(config.fitContextCountryIds)\n    : null;\n  const projectionInput = fitContextIds\n    ? featureCollection(normalized.features.filter((item) =>\n        item.properties?.role !== 'context-country' || fitContextIds.has(item.properties?.countryId)))\n    : normalized;\n\n  const projection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n""",
-            ),
-            (
-              """  const adjacency = config.adjacencyMode === 'global'\n    ? sliceGlobalAdjacency(globalGraph.adjacency, scoredCatalog, globalGraph.representedIds, config)\n    : deriveLocalAdjacency(simplifiedTopology);\n""",
-              """  const adjacencyCatalog = [...scoredCatalog];\n  for (const countryId of config.extraAdjacencyCountryIds ?? []) {\n    const row = catalog.find((item) => item.id === countryId);\n    if (!row) throw new Error(`Unknown extra adjacency country ${countryId} for ${config.displayName}.`);\n    if (!adjacencyCatalog.some((item) => item.id === countryId)) adjacencyCatalog.push(row);\n  }\n  const adjacency = config.adjacencyMode === 'global'\n    ? sliceGlobalAdjacency(globalGraph.adjacency, adjacencyCatalog, globalGraph.representedIds, config)\n    : deriveLocalAdjacency(simplifiedTopology);\n""",
-            ),
-            (
-              """  const regionIds = new Map();\n  for (const row of scoredCatalog) {\n    const ids = regionIds.get(row.region) ?? [];\n    ids.push(row.id);\n    regionIds.set(row.region, ids);\n  }\n  for (const [region, ids] of [...regionIds.entries()].sort()) {\n    const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);\n    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n  }\n""",
-              """  if (config.learningScopes) {\n    for (const scope of config.learningScopes) {\n      const scopeFeatures = scope.countryIds.map((id) => simplifiedById.get(id)).filter(Boolean);\n      if (scopeFeatures.length !== scope.countryIds.length) {\n        const represented = new Set(scopeFeatures.map((item) => item.properties?.countryId));\n        const missing = scope.countryIds.filter((id) => !represented.has(id));\n        throw new Error(`${config.displayName} scope ${scope.id} is missing generated geometry: ${missing.join(', ')}`);\n      }\n      scopeFocus[scope.id] = boundsToFocus(planarPath.bounds(featureCollection(scopeFeatures)));\n    }\n  } else {\n    const regionIds = new Map();\n    for (const row of scoredCatalog) {\n      const ids = regionIds.get(row.region) ?? [];\n      ids.push(row.id);\n      regionIds.set(row.region, ids);\n    }\n    for (const [region, ids] of [...regionIds.entries()].sort()) {\n      const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);\n      scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));\n    }\n  }\n""",
-            ),
-            (
-              """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    normalized,\n  );\n""",
-              """  const sourceProjection = geoNaturalEarth1().fitExtent(\n    [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],\n    projectionInput,\n  );\n""",
-            ),
-          ]
-          for old, new in patches:
-              if old not in source:
-                  raise SystemExit('map generation patch anchor not found')
-              source = source.replace(old, new, 1)
-          core.write_text(source)
-
-          routing = Path('scripts/verify-routing.mjs')
-          source = routing.read_text()
-          old = """assert.equal(\n  serializeRoutePath(normalizeAvailableRoute(route('/locations/asia'))),\n  '/locations',\n  'An unshipped continent falls back to the domain index rather than a substituted scope.',\n);\n"""
-          new = """assert.equal(\n  serializeRoutePath(normalizeAvailableRoute(route('/locations/asia'))),\n  '/locations/asia',\n  'A shipped Asia Locations route survives availability normalisation.',\n);\n"""
-          if old not in source:
-              raise SystemExit('routing verifier patch anchor not found')
-          routing.write_text(source.replace(old, new, 1))
-
-          achievements = Path('scripts/verify-achievements.mjs')
-          source = achievements.read_text()
-          old = """assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose the complete four-domain proving-ground curriculum.');\nassert.equal(regionHasCompleteCurriculum('west-asia'), false, 'A Flags-only region is not complete curriculum.');\nconst everywhereQualified = awardEligibleAchievements(empty, () => true);\nassert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'west-asia', 'flags'), true, 'A supported individual domain can still earn mastery outside Africa.');\nassert.equal(isRegionComplete(everywhereQualified.state, 'west-asia'), false, 'Unsupported domain absence never counts as complete-region progress.');\n\nconst westAsiaReadModel = getRegionAchievementReadModel(everywhereQualified.state, westAsia.id);\nassert.ok(westAsiaReadModel);\nassert.deepEqual(westAsiaReadModel.supportedDomains, ['flags']);\nassert.equal(westAsiaReadModel.completeCurriculum, false);\nassert.equal(westAsiaReadModel.complete, false);\n"""
-          new = """assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose the complete four-domain proving-ground curriculum.');\nassert.equal(regionHasCompleteCurriculum('west-asia'), false, 'Legacy West Asia is not a learner-facing complete curriculum.');\nconst everywhereQualified = awardEligibleAchievements(empty, () => true);\nassert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'west-asia', 'flags'), false, 'Hidden legacy West Asia does not receive new mastery awards.');\nassert.equal(isRegionComplete(everywhereQualified.state, 'west-asia'), false, 'Hidden legacy West Asia never counts as complete-region progress.');\n\nconst legacyWestAsiaState = { ...empty, regionDomainMasteries: ['west-asia:flags'] };\nconst westAsiaReadModel = getRegionAchievementReadModel(legacyWestAsiaState, westAsia.id);\nassert.ok(westAsiaReadModel);\nassert.deepEqual(westAsiaReadModel.supportedDomains, ['flags']);\nassert.equal(westAsiaReadModel.domainMastery.flags, true, 'Previously earned West Asia mastery remains readable from persistence.');\nassert.equal(westAsiaReadModel.completeCurriculum, false);\nassert.equal(westAsiaReadModel.complete, false);\n"""
-          if old not in source:
-              raise SystemExit('achievement verifier West Asia patch anchor not found')
-          source = source.replace(old, new, 1)
-          old = """for (const continentId of ['asia', 'europe', 'north-america', 'south-america', 'oceania']) {\n  assert.equal(continentHasCompleteCurriculum(continentId), false, `${continentId} is not complete curriculum today.`);\n  assert.equal(isContinentComplete(everywhereQualified.state, continentId), false, `${continentId} cannot accidentally complete from Flags-only evidence.`);\n}\n"""
-          new = """assert.equal(continentHasCompleteCurriculum('asia'), true, 'Asia is a complete four-domain curriculum after Issue #26.');\nassert.equal(isContinentComplete(everywhereQualified.state, 'asia'), true, 'Universally qualifying evidence can complete the shipped Asia curriculum.');\nfor (const continentId of ['europe', 'north-america', 'south-america', 'oceania']) {\n  assert.equal(continentHasCompleteCurriculum(continentId), false, `${continentId} is not complete curriculum today.`);\n  assert.equal(isContinentComplete(everywhereQualified.state, continentId), false, `${continentId} cannot accidentally complete from Flags-only evidence.`);\n}\n"""
-          if old not in source:
-              raise SystemExit('achievement verifier continent patch anchor not found')
-          achievements.write_text(source.replace(old, new, 1))
-          PY
-      - run: npm run maps:generate
-      - name: Prove Africa generation semantics are unchanged
-        shell: bash
-        run: |
-          set -euo pipefail
-          cmp src/data/maps/africa.ts /tmp/main-generated-africa.ts
-          cmp src/data/neighbors/africa.ts /tmp/main-generated-africa-neighbors.ts
-          cmp docs/architecture/cartography-provenance.json /tmp/main-generated-africa-provenance.json
-          echo "Branch-generated Africa is byte-identical to clean current-main generation."
-          git restore --worktree -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
-          git diff --exit-code -- src/data/maps/africa.ts src/data/neighbors/africa.ts docs/architecture/cartography-provenance.json
-          echo "Checked-in Africa production artifacts remain untouched by Issue #26."
+      - run: npm run check
       - run: npm test
-      - name: Commit canonical generated source
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git fetch origin main
-          git restore --source=origin/main -- .github/workflows/ci.yml
-          git add .github/workflows/ci.yml scripts/map-generation-core.mjs scripts/verify-routing.mjs scripts/verify-achievements.mjs src/data/maps/asia.ts src/data/neighbors/asia.ts src/data/neighbors/global.ts docs/architecture/asia-cartography-provenance.json
-          git commit -m "Generate and verify canonical Asia geography"
-          git push origin HEAD:${{ github.head_ref }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flag-atlas-dist
+          path: dist
+          if-no-files-found: error
