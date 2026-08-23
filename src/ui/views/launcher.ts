@@ -92,7 +92,7 @@ export function renderLauncher(model: LauncherModel): string {
   const domainName = escapeHtml(domainLabel(model.domain));
   const domainTitle = escapeHtml(domainDisplayName(model.domain));
   const selectedRegionId = model.selectedRegion?.id;
-  const parentLabel = model.domain === 'flags' ? 'Back to continents' : 'Back to learning domains';
+  const parentLabel = `Back to ${domainTitle}`;
   const map = model.showMap && model.mapAsset
     ? renderLauncherMap(model.mapAsset, model.domain, selectedRegionId)
     : '';

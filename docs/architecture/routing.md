@@ -1,6 +1,6 @@
 # Routing and product information architecture
 
-**Status:** Issue #10 architecture, updated through Issues #2, #3, #15, #16, and #21<br>
+**Status:** Issue #10 architecture, updated through Issues #2, #3, #15, #16, #21, and the mode-first IA change<br>
 **Transport:** hash URLs on GitHub Pages  
 **Route source of truth:** `src/routing/routes.ts`  
 **Browser adapter:** `src/routing/router.ts`
@@ -13,7 +13,7 @@ Navigation is the composition of three independent dimensions:
 2. **Geographic scope** — World where applicable, continent, region, and later country/detail where a mechanic requires it.
 3. **Activity** — Learn, Play, Review.
 
-The learner should be able to identify all three dimensions on an active task surface without extra navigation chrome. Before a round, the interface reveals only the next real decision: domains with one available continent canonicalise directly to their launcher instead of rendering a one-choice page.
+The learner should be able to identify all three dimensions on an active task surface without extra navigation chrome. Before a round, navigation is **mode-first**: the domain is chosen first, then a continent within that domain, then optionally a region within that continent. A domain that ships one continent still renders its continent index, listing the rest as honest shells, rather than skipping to a launcher — the coverage gap is information the learner is owed, not a page to optimise away.
 
 Current product availability:
 
@@ -38,39 +38,41 @@ The router serialises a typed route to a path first. The hash transport is the o
 
 | State | URL |
 |---|---|
-| Product Home | `/#/` |
+| Product Home — mode index | `/#/` |
 | Progress | `/#/progress` |
-| Flags domain | `/#/flags` |
-| Flags → Africa | `/#/flags/africa` |
+| Flags continent index | `/#/flags` |
+| Flags → Africa launcher | `/#/flags/africa` |
 | Flags → West Africa | `/#/flags/africa/west-africa` |
 | Flags → West Africa → Learn | `/#/flags/africa/west-africa/learn` |
 | Flags → World → Play | `/#/flags/test` |
-| Locations bare domain | `/#/locations` → `/#/locations/africa` |
-| Locations → Africa | `/#/locations/africa` |
+| Locations continent index | `/#/locations` |
+| Locations → Africa launcher | `/#/locations/africa` |
 | Locations → West Africa | `/#/locations/africa/west-africa` |
 | Locations → West Africa → Play | `/#/locations/africa/west-africa/test` |
 | Locations → West Africa → Review | `/#/locations/africa/west-africa/review` |
-| Outlines bare domain | `/#/outlines` → `/#/outlines/africa` |
+| Outlines continent index | `/#/outlines` |
 | Outlines → West Africa | `/#/outlines/africa/west-africa` |
-| Neighbours bare domain | `/#/neighbors` → `/#/neighbors/africa` |
-| Neighbours → Africa | `/#/neighbors/africa` |
+| Neighbours continent index | `/#/neighbors` |
+| Neighbours → Africa launcher | `/#/neighbors/africa` |
 | Neighbours → West Africa → Learn | `/#/neighbors/africa/west-africa/learn` |
 
 Region routes always include their parent continent. The parser rejects a valid region under the wrong continent, e.g. `/flags/asia/west-africa`.
 
-Bare `locations`, `outlines`, and `neighbors` routes are accepted for compatibility and normalised with `replaceState` to the Africa launcher. The replacement avoids leaving a redundant one-choice URL in browser history.
+A bare `/{domain}` route is now a real screen — that domain's continent index — for all four domains, so it is no longer redirected anywhere.
+
+The retired scope-first `/atlas/{continent}` surface no longer parses. Any unparseable hash, including a legacy `/atlas/*` link, is replaced with Home via `replaceState` so the address bar never keeps claiming a screen that does not exist.
 
 ## Canonical launcher information architecture
 
 ```text
-Home
-├── Flags ────────► continent list ──────► launcher (continent, optional region)
-├── Locations ────► Africa launcher
-├── Outlines ─────► Africa launcher
-└── Neighbours ────► Africa launcher
+Home (four mode cards)
+├── Flags ─────► continent index ──► launcher (continent, optional region)
+├── Locations ─► continent index ──► launcher (continent, optional region)
+├── Outlines ──► continent index ──► launcher (continent, optional region)
+└── Neighbours ► continent index ──► launcher (continent, optional region)
 ```
 
-Home retains four domain rows. Each row is split into a body that opens the next real decision and a trailing Play control that starts the existing activity directly. Flags Play targets World; the other three target Africa. The Flags continent list uses the same split-row contract.
+Every domain uses the identical three-level shape. Home carries no Play control at all: it commits to a mode and nothing else. The continent index splits each shipped continent into a body that opens the launcher and a trailing Play control that starts a continent-wide round directly; an unshipped continent renders inert, with no action. Only Flags adds a world Play/Learn pair above its continent list, because only Flags teaches the world.
 
 One routed launcher represents `(domain, continentScope, selectedRegion | null)`. A region URL does not identify a second screen: `/#/locations/africa/west-africa` is the Africa Locations launcher with West Africa selected. Its Play and Learn actions both name and target West Africa, while an explicit All Africa control clears the selection. The region list is always present; an Africa map may progressively enhance Locations, Outlines, and Neighbours without blocking the launcher or becoming a second selection model.
 
@@ -84,6 +86,8 @@ The launcher contains decision-relevant status only. Country ledgers live in Pro
 - Progress;
 - Learning route: `{ domain, scope?, activity? }`.
 
+A learning route with no scope is that domain's continent index — the second level of the hierarchy, not an incomplete route.
+
 `StudyScope` continues to use the canonical IDs in `src/data/continents.ts`. There is no flag router, map router, outline router, or Neighbours router; all are interpretations of the same learning route.
 
 Key pure functions:
@@ -92,10 +96,10 @@ Key pure functions:
 - `serializeRoutePath` — typed route → URL path;
 - `routeForScope` / `routeForScopeId` — construct canonical learning routes;
 - `stableRoute` — remove transient activity while retaining domain/scope;
-- `parentRoute` — one conceptual level upward, with Africa-only continent launchers returning Home;
+- `parentRoute` — one conceptual level upward: a launcher returns to its domain's continent index, a continent index returns Home;
 - `routeTitle` — deterministic document title using canonical learner-facing domain display names.
 
-Application route normalisation adds the availability contract: bare Locations, Outlines, and Neighbours routes become their Africa continent routes, while activity routes without matching in-memory sessions become their stable launcher route.
+Application route normalisation adds the availability contract: a scope a domain has not shipped collapses to that domain's continent index — which states the coverage honestly — rather than being silently substituted with a different continent, while activity routes without matching in-memory sessions become their stable launcher route. Availability is deliberately not a parse error: `parseRoutePath` stays a pure grammar, and `normalizeAvailableRoute` owns what is currently shipped.
 
 `src/routing/router.ts` is a browser transport adapter. Product navigation only consumes typed routes. A future clean-path deployment can replace the hash adapter with a History-path adapter while preserving the route model and product navigation calls.
 
@@ -165,11 +169,11 @@ This is preferable to serialising a partial session until there is a versioned, 
 
 Launcher navigation distinguishes three operations:
 
-- **Back:** leave the launcher for its true parent. Flags launchers return to the Flags continent list; Locations, Outlines, and Neighbours launchers return to Home. This remains true when a region is selected.
+- **Back:** leave the launcher for its true parent — that domain's continent index. This remains true when a region is selected.
 - **All Africa:** clear a selected region and return the same launcher to continent scope. It is not Back.
 - **Select region:** replace the current launcher URL rather than push. Selecting West Africa and then East Africa creates no chain of abandoned selections.
 
-`parentRoute` for a continent scope therefore returns Home for Locations, Outlines, and Neighbours, but still returns the Flags domain route for Flags. A selected-region launcher must resolve its header Back control from the launcher's continent parent rather than treating All Africa as its parent action.
+`parentRoute` for any scoped learning route therefore returns `{ domain }`, and `parentRoute` for a bare domain route returns Home. Because region selection replaces rather than pushes, this keeps the header Back control and browser Back agreeing on the same destination.
 
 Starting Learn or Play pushes an activity route. Browser Back from the round returns to the exact launcher scope that started it, including a selected region. The stable route for `/#/locations/africa/west-africa/test`, for example, is `/#/locations/africa/west-africa`.
 
@@ -187,7 +191,7 @@ A syntactically valid route can also point to curriculum that is not enabled. Cu
 
 Stable titles derive from typed route state and canonical learner-facing display names, for example:
 
-- `Flags · Atlas`;
+- `Flags · Atlas` (the Flags continent index);
 - `West Africa flags · Atlas`;
 - `Play West Africa locations · Atlas`;
 - `Play West Africa neighbours · Atlas`.
@@ -196,7 +200,7 @@ Completed rounds add the result state explicitly, e.g. `Round complete · West A
 
 ## Home and branding decision
 
-The learner-facing product name is **Atlas**. The Home IA is a compact geographic index of learning domains, with Flags, Locations, Outlines, and Neighbours as peers. Every row provides direct Play; its body reveals only the next real scope decision.
+The learner-facing product name is **Atlas**. The Home IA is a compact index of the four learning modes, with Flags, Locations, Outlines, and Neighbours as peers, each carrying its current coverage and accumulated evidence. Home reveals only the next real decision — which mode — and starts no round itself.
 
 Branding remains presentation: stable routes and internal identifiers retain their compatibility names, while `flags` is one learning domain rather than the routing root.
 

@@ -16,8 +16,9 @@ assert.equal(manifest.short_name, 'Atlas', 'Installed PWA short name uses Atlas.
 const titleCases = [
   ['/', 'Atlas'],
   ['/progress', 'Progress · Atlas'],
-  ['/atlas/africa', 'Africa · Atlas'],
   ['/flags', 'Flags · Atlas'],
+  ['/neighbors', 'Neighbours · Atlas'],
+  ['/flags/africa', 'Africa flags · Atlas'],
   ['/flags/africa/west-africa', 'West Africa flags · Atlas'],
   ['/locations/africa/west-africa/test', 'Play West Africa locations · Atlas'],
   ['/outlines/africa/west-africa/learn', 'Learn West Africa outlines · Atlas'],

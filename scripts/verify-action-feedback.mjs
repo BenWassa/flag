@@ -2,7 +2,12 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
-import { renderContinent } from '../dist/ui/views/atlas.js';
+import { renderDomainIndex } from '../dist/ui/views/domain.js';
+import { renderHome } from '../dist/ui/views/home.js';
+import { createInitialLocationProgress } from '../dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
+import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
 import { renderProgress } from '../dist/ui/views/progress.js';
 import { createInitialAchievementState } from '../dist/domain/achievements.js';
 
@@ -83,52 +88,49 @@ for (const call of [
 }
 assert.ok(atlasTheme.includes('.is-launching'), 'The busy state has a production treatment.');
 
-/* --- Region-card launchers name their domain ----------------------------- */
+/* --- Mode and continent cards name themselves ---------------------------- */
 
-const africa = renderContinent(createInitialProgress(COUNTRIES), { kind: 'continent', id: 'africa', label: 'Africa' });
-const europe = renderContinent(createInitialProgress(COUNTRIES), { kind: 'continent', id: 'europe', label: 'Europe' });
+const flagProgress = createInitialProgress(COUNTRIES);
+const ledgers = {
+  flags: flagProgress,
+  locations: createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS),
+  outlines: createInitialProgress(COUNTRIES),
+  neighbors: createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
+};
+const home = renderHome(ledgers);
+const locationsIndex = renderDomainIndex('locations', ledgers);
 
-// Polygon and Intersect are not legible at 22px on their own; DESIGN.md accepts
+// Polygon and Intersect are not legible at 32px on their own; DESIGN.md accepts
 // them only "paired with the visible ... label", so the label has to be real
 // text a sighted learner reads, not a hidden span or a title attribute.
-for (const [name, markup, regions] of [['Africa', africa, 5], ['Europe', europe, 4]]) {
-  const seen = seenText(markup);
-  for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
-    assert.equal(
-      seen.split(label).length - 1 >= regions,
-      true,
-      `${name} names ${label} visibly on every region card.`,
-    );
-  }
+const homeSeen = seenText(home);
+for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
+  assert.ok(homeSeen.includes(label), `Home names ${label} visibly beside its glyph.`);
 }
-assert.equal(
-  (africa.match(/class="domain-launch__label"/g) ?? []).length,
-  24,
-  'Africa: five regions plus the continent-wide entry × four named launchers.',
-);
-// An unavailable domain stays inert: labelled, but not a control.
-const absentTags = [...europe.matchAll(/<(span|button)[^>]*domain-launch--absent[^>]*>/g)];
-assert.ok(absentTags.length > 0, 'Europe still marks its unsupported domains.');
-for (const [tag, tagName] of absentTags) {
-  assert.equal(tagName, 'span', 'An unavailable domain is not a button.');
-  assert.equal(/data-action/.test(tag), false, 'An unavailable domain carries no action.');
+
+// An unshipped continent stays inert: named, but not a control.
+const shellTags = [...locationsIndex.matchAll(/<(div|button)[^>]*continent-row--shell[^>]*>/g)];
+assert.ok(shellTags.length > 0, 'Locations still marks the continents it has not shipped.');
+for (const [tag, tagName] of shellTags) {
+  assert.equal(tagName, 'div', 'An unshipped continent is not a button.');
+  assert.equal(/data-action/.test(tag), false, 'An unshipped continent carries no action.');
 }
 assert.ok(
-  europe.includes('<span class="visually-hidden">not available yet</span>'),
-  'The unavailable state reaches assistive technology as words, not colour.',
+  seenText(locationsIndex).includes('Coming soon'),
+  'The unshipped state reaches every learner as words, not colour.',
 );
 
-// Starting a round is ordinary primary action, so the launchers use the action
-// colour rather than reading as neutral chrome.
+// Starting a round is ordinary primary action, so the continent Play control
+// uses the action colour rather than reading as neutral chrome.
 assert.match(
   atlasTheme,
-  /\.domain-launch__mark\s*\{[^}]*color:\s*var\(--action\)/,
-  'Domain launchers use Atlas Blue.',
+  /\.page--tile-index \.continent-row__play\s*\{[^}]*color:\s*var\(--action\)/,
+  'Continent Play controls use Atlas Blue.',
 );
 assert.match(
   atlasTheme,
-  /\.domain-launch--absent \.domain-launch__mark\s*\{[^}]*border:\s*2px dashed/,
-  'Unavailable launchers use the dashed unavailable treatment Progress already established.',
+  /\.page--tile-index \.continent-row--shell\s*\{[^}]*border-style:\s*dashed/,
+  'Unshipped continents use the dashed unavailable treatment Progress already established.',
 );
 
 /* --- Hover, and the banned side-stripe ----------------------------------- */
@@ -174,10 +176,10 @@ const reducedMotionBlocks = [...atlasTheme.matchAll(/@media \(prefers-reduced-mo
   .map(([, body]) => body)
   .join('\n');
 assert.ok(reducedMotionBlocks.includes('.app-notice'), 'The notice does not animate under reduced motion.');
-assert.ok(reducedMotionBlocks.includes('.domain-launch.is-launching'), 'The busy pulse stops under reduced motion.');
+assert.ok(reducedMotionBlocks.includes('.continent-row__play.is-launching'), 'The busy pulse stops under reduced motion.');
 assert.ok(
-  reducedMotionBlocks.includes('.domain-launch:hover .domain-launch__mark'),
-  'Launcher hover travel is removed under reduced motion.',
+  reducedMotionBlocks.includes('.atlas-card:hover'),
+  'Mode-card hover travel is removed under reduced motion.',
 );
 
-console.log('Action-feedback verification passed: visible failure notices, launcher busy state, labelled region-card launchers, no side-stripe accents, mastery legend, and reduced-motion coverage.');
+console.log('Action-feedback verification passed: visible failure notices, launcher busy state, labelled mode and continent cards, no side-stripe accents, mastery legend, and reduced-motion coverage.');

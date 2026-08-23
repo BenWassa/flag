@@ -32,7 +32,7 @@ Important current decisions:
 - Atlas Blue is action, green is correct, red is wrong, purple is mastery, gold is scarce prestige;
 - Africa is the first complete four-domain production proving ground;
 - other continents may appear as honest shells before their full data ships, but unsupported domains must never count as complete;
-- region × domain cross-domain competency (#35) is surfaced directly on each region's card in the continent surface (identity, country count, one domain-launch shortcut per domain); there is no separate region-detail screen — it was built, then retired as redundant once the region card itself carried this;
+- navigation is **mode-first**: Home chooses a learning domain, `/{domain}` lists that domain's continents, and `/{domain}/{continent}` is the launcher (whole-continent Play plus its region list). The scope-first `/atlas/*` surface and the region card's four-domain launch row are retired; #35's cross-domain competency reading now lives on Progress;
 - the production visual style is **Tactile Atlas**. Preserve its documented system unless a focused product decision changes it; do not assume Tailwind/React/framework migration is part of future work.
 
 ## Commands
@@ -104,7 +104,7 @@ Read Issue #29 and `docs/product/learning-and-mastery.md` before changing schedu
 Implemented:
 
 - semantic palette and mastery/prestige hierarchy;
-- mobile-first scope-first navigation;
+- mobile-first mode-first navigation;
 - four-tier radius system and restrained tactile depth;
 - system-sans typography and reduced-motion behaviour;
 - Phosphor Bold routine iconography;

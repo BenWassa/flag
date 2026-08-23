@@ -12,11 +12,11 @@ import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
+import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 import { icon } from '../dist/ui/components/icons.js';
 import { renderLauncherMap } from '../dist/ui/components/launcher-map.js';
-import { renderDomainHome } from '../dist/ui/views/domain.js';
+import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
-import { renderContinent } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -115,119 +115,100 @@ const westAfricaScope = { kind: 'region', id: 'west-africa', label: 'West Africa
 const africaRegionIds = AFRICA_MAP_REGION_CONFIGS.map((config) => config.scope.id).filter(Boolean).sort();
 const playIcon = icon('play');
 
-// Home is scope-first: one tactile card per continent, no domain choice and no
-// round start until a scope has actually been selected.
-const home = renderHome(flagProgress);
-const homeWithoutPersistence = renderHome(flagProgress, false);
+// Home is mode-first: one tactile card per learning domain. Geography is not
+// offered here at all, and no round can start before a mode is chosen.
+const ledgers = {
+  flags: flagProgress,
+  locations: locationProgress,
+  outlines: outlineProgress,
+  neighbors: neighborProgress,
+};
+const home = renderHome(ledgers);
+const homeWithoutPersistence = renderHome(ledgers, false);
 assertCommonSurface('Home', home);
 assert.equal(home.includes('brand-mark'), false, 'Home presents the Atlas wordmark without a leading flag mark.');
-assert.equal(occurrences(home, 'class="continent-icon"'), CONTINENTS.length, 'Home gives every continent an outline icon.');
 assertPreRoundContentRemoved('Home', home);
-assertNoLegacyInteractiveRow('Home', home, 'continent-row');
-const homeContinentCards = actionTags(home, 'button', 'open-atlas');
-assert.equal(homeContinentCards.length, CONTINENTS.length, 'Home renders one card per continent.');
+const homeModeCards = actionTags(home, 'button', 'open-domain');
+assert.equal(homeModeCards.length, LEARNING_DOMAIN_IDS.length, 'Home renders one card per learning domain.');
 assert.deepEqual(
-  sortedIds(homeContinentCards),
-  CONTINENTS.map((continent) => continent.id).sort(),
-  'Home addresses every continent by its canonical id.',
+  sortedIds(homeModeCards),
+  [...LEARNING_DOMAIN_IDS].sort(),
+  'Home addresses every domain by its stable internal id.',
 );
-assert.equal(home.includes('Choose a skill'), false, 'Deleted Home instruction stays deleted.');
-assert.equal(home.includes('Learning domains'), false, 'Deleted Home list heading stays deleted.');
-assert.equal(home.includes('4 available'), false, 'Deleted Home availability summary stays deleted.');
+const homeText = visibleText(home);
+for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
+  assert.ok(homeText.includes(label), `Home names ${label} in visible text, not by glyph alone.`);
+}
+assert.equal(home.includes('data-action="open-atlas"'), false, 'The retired scope-first atlas action stays retired.');
+assert.equal(home.includes('data-action="open-scope"'), false, 'Home does not select geography directly.');
+assert.equal(actionTags(home, 'button', 'quick-play').length, 0, 'Home starts no round before a mode and a scope are chosen.');
 assert.equal(home.includes('storage-notice'), false, 'Home keeps the storage notice quiet while persistence works.');
 assert.ok(
   homeWithoutPersistence.includes('storage-notice')
     && visibleText(homeWithoutPersistence).includes("today's progress will be lost"),
   'Home persistence failure renders the honest storage notice.',
 );
-// Home stays focused on the six continent choices. World Flags remains
-// available through the existing domain routes, not as a competing footer CTA.
-const worldFlagsEntry = actionTags(home, 'button', 'quick-play');
-assert.equal(worldFlagsEntry.length, 0, 'Home has no direct World Flags footer action.');
-assert.equal(home.includes('data-action="open-domain"'), false, 'Home no longer opens the retired domain-first index.');
 
-// Continent surface: the regions of one continent, each showing which of the
-// four domains actually has data behind it.
-const continentSurface = renderContinent(flagProgress, africaScope);
-assertCommonSurface('Continent surface', continentSurface);
-assertPreRoundContentRemoved('Continent surface', continentSurface);
-// Region cards are no longer a link to a separate "select a mode" screen —
-// each region's four domain-launch shortcuts identify it directly.
-const continentQuickPlay = actionTags(continentSurface, 'button', 'quick-play');
-assert.deepEqual(
-  [...new Set(sortedIds(continentQuickPlay))],
-  [...REGIONS.filter((region) => region.continentId === 'africa').map((region) => region.id), 'africa'].sort(),
-  'The Africa surface lists its five production regions plus the continent-wide entry.',
-);
-assert.equal(
-  actionTags(continentSurface, 'button', 'open-atlas').length,
-  0,
-  'Region cards no longer open a dead-end region-detail screen.',
-);
-assert.equal(
-  occurrences(continentSurface, 'domain-launch--absent'),
-  0,
-  'Every Africa region supports all four domains, so no indicator reads as absent.',
-);
-
-// #76: exactly one continent-scoped Play entry, first in the card list, styled
-// distinctly from region cards.
-const continentCards = openingTags(continentSurface, 'div').filter((tag) => hasClass(tag, 'atlas-card--continent'));
-assert.equal(continentCards.length, 1, 'The continent surface has exactly one continent-scoped launch row.');
-const continentScopedPlay = continentQuickPlay.filter((tag) => attribute(tag, 'data-id') === 'africa');
-assert.equal(continentScopedPlay.length, LEARNING_DOMAIN_IDS.length, 'The continent row exposes all four domain launchers.');
-for (const tag of continentScopedPlay) {
-  assert.equal(attribute(tag, 'data-domain') !== undefined, true, 'Each continent-scoped launcher names its domain.');
-}
-assert.ok(visibleText(continentSurface).includes('All of Africa'), 'The continent row reads as an aggregate, not a sixth region.');
-const firstAfricaRegionName = REGIONS.find((region) => region.continentId === 'africa')?.name;
-assert.ok(
-  continentSurface.indexOf('All of Africa') < continentSurface.indexOf(firstAfricaRegionName),
-  'The continent row renders first, above the region cards.',
-);
-
-const europeSurface = renderContinent(flagProgress, { kind: 'continent', id: 'europe', label: 'Europe' });
-assert.ok(
-  occurrences(europeSurface, 'domain-launch--absent') > 0,
-  'A continent without generated geometry marks its unsupported domains.',
-);
-// Unsupported domains render as inert shells on the region card itself, never
-// as launchers — quick-play only exists for domains that genuinely have data.
-assert.ok(visibleText(europeSurface).includes('Neighbours'), 'Region cards use the British-English domain label, even when inert.');
-assert.equal(actionTags(continentSurface, 'button', 'route-parent').length, 1, 'The continent surface has one Back control.');
-
-// Flags retains its genuine six-way continent decision, with the same split
-// row and scope-specific direct Play contract.
-const flagsDomain = renderDomainHome('flags', flagProgress, false);
-assertCommonSurface('Flags continent index', flagsDomain);
-assertPreRoundContentRemoved('Flags continent index', flagsDomain);
-assertNoLegacyInteractiveRow('Flags continent index', flagsDomain, 'continent-row');
-assert.equal(occurrences(flagsDomain, '<div class="continent-row">'), CONTINENTS.length);
-const continentOpenButtons = actionTags(flagsDomain, 'button', 'open-scope');
-const continentPlayButtons = actionTags(flagsDomain, 'button', 'quick-play');
-assert.equal(continentOpenButtons.length, CONTINENTS.length, 'Every continent has an open control.');
-assert.equal(continentPlayButtons.length, CONTINENTS.length, 'Every continent has a Play control.');
-assert.equal(occurrences(flagsDomain, playIcon), CONTINENTS.length, 'Every continent Play control uses the shared icon.');
-assert.ok(flagsDomain.includes('data-action="start-test">Play world</button>'), 'World assessment is labelled Play.');
-assert.ok(flagsDomain.includes('storage-notice'), 'The Flags index retains its storage-degraded state.');
-for (const continent of CONTINENTS) {
-  const open = continentOpenButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
-  const play = continentPlayButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
-  assert.equal(open.length, 1, `${continent.name} has one open control.`);
-  assert.equal(play.length, 1, `${continent.name} has one Play control.`);
-  assertButtonContract(play[0], {
-    'data-action': 'quick-play',
-    'data-domain': 'flags',
-    'data-id': continent.id,
-    'aria-label': `Play ${continent.name} flags`,
-  });
-}
-for (const unavailableDomain of ['locations', 'outlines', 'neighbors']) {
-  assert.throws(
-    () => renderDomainHome(unavailableDomain, flagProgress),
-    /canonicalises to its Africa launcher/,
-    `${unavailableDomain} must not retain a one-choice domain screen.`,
+// Every domain now has a continent index; a domain that ships one continent
+// still lists the other five, as inert shells that name the gap.
+for (const domain of LEARNING_DOMAIN_IDS) {
+  const index = renderDomainIndex(domain, ledgers, false);
+  assertCommonSurface(`${domain} continent index`, index);
+  assertPreRoundContentRemoved(`${domain} continent index`, index);
+  assertNoLegacyInteractiveRow(`${domain} continent index`, index, 'continent-row');
+  assert.equal(
+    occurrences(index, 'class="continent-icon"'),
+    CONTINENTS.length,
+    `${domain} gives every continent an outline icon.`,
   );
+  assert.equal(
+    actionTags(index, 'button', 'route-parent').length,
+    1,
+    `${domain} continent index has one Back control.`,
+  );
+  assert.ok(index.includes('storage-notice'), `${domain} continent index retains its storage-degraded state.`);
+
+  const openButtons = actionTags(index, 'button', 'open-scope');
+  const playButtons = actionTags(index, 'button', 'quick-play');
+  const supported = CONTINENTS.filter((continent) =>
+    scopeSupportsDomain({ kind: 'continent', id: continent.id, label: continent.name }, domain));
+  assert.equal(openButtons.length, supported.length, `${domain} opens only the continents it has shipped.`);
+  assert.equal(playButtons.length, supported.length, `${domain} plays only the continents it has shipped.`);
+  assert.equal(occurrences(index, playIcon), supported.length, `${domain} Play controls use the shared icon.`);
+  assert.equal(
+    occurrences(index, 'continent-row--shell'),
+    CONTINENTS.length - supported.length,
+    `${domain} lists every unshipped continent as an honest shell.`,
+  );
+
+  for (const continent of supported) {
+    const open = openButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
+    const play = playButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
+    assert.equal(open.length, 1, `${continent.name} has one open control in ${domain}.`);
+    assert.equal(play.length, 1, `${continent.name} has one Play control in ${domain}.`);
+    assertButtonContract(open[0], {
+      'data-action': 'open-scope',
+      'data-domain': domain,
+      'data-id': continent.id,
+    });
+    assertButtonContract(play[0], {
+      'data-action': 'quick-play',
+      'data-domain': domain,
+      'data-id': continent.id,
+    });
+  }
+}
+
+// Only Flags teaches the world, so only Flags offers a world round above its
+// continent list. The other three must not imply coverage they do not have.
+const flagsDomain = renderDomainIndex('flags', ledgers, false);
+assert.ok(flagsDomain.includes('data-action="start-test">Play world</button>'), 'World assessment is labelled Play.');
+assert.ok(flagsDomain.includes('data-action="start-learn">Learn world</button>'), 'World study is labelled Learn.');
+for (const domain of ['locations', 'outlines', 'neighbors']) {
+  const index = renderDomainIndex(domain, ledgers, false);
+  assert.equal(index.includes('start-test'), false, `${domain} must not offer a world round it cannot teach.`);
+  assert.equal(visibleText(index).includes('World'), false, `${domain} must not claim world coverage.`);
+  assert.ok(visibleText(index).includes('Coming soon'), `${domain} names its unshipped continents honestly.`);
 }
 
 const launcherCases = [

@@ -1,3 +1,4 @@
+import { CONTINENTS } from '../data/continents.js';
 import { COUNTRIES } from '../data/countries.js';
 import { countryEvidenceState, type EvidenceBackedRecord, type CountryEvidenceState } from './evidence.js';
 import type { LocationProgressState } from './map-models.js';
@@ -133,4 +134,52 @@ export function buildScopeProgressSummaries(
 ): ProgressSummary[] {
   return (['flags', 'locations', 'outlines', 'neighbors'] as const).map((domain) =>
     buildProgressSummary(ledgers, scope, domain, now));
+}
+
+export interface DomainProgressSummary {
+  domain: LearningDomain;
+  label: string;
+  total: number;
+  unseen: number;
+  learning: number;
+  strong: number;
+  due: number;
+  supportedContinentIds: string[];
+}
+
+/**
+ * Everything one domain currently teaches, summed over the continents that
+ * domain actually ships. Continent country sets are disjoint, so this is a
+ * plain sum — and it deliberately measures shipped curriculum rather than the
+ * eventual 195, so an Africa-only domain reads as complete when Africa is.
+ */
+export function buildDomainProgressSummary(
+  ledgers: ProgressLedgers,
+  domain: LearningDomain,
+  now = new Date(),
+): DomainProgressSummary {
+  const summary: DomainProgressSummary = {
+    domain,
+    label: DOMAIN_LABELS[domain],
+    total: 0,
+    unseen: 0,
+    learning: 0,
+    strong: 0,
+    due: 0,
+    supportedContinentIds: [],
+  };
+
+  for (const continent of CONTINENTS) {
+    const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
+    const continentSummary = buildProgressSummary(ledgers, scope, domain, now);
+    if (!continentSummary.supported || continentSummary.total === 0) continue;
+    summary.supportedContinentIds.push(continent.id);
+    summary.total += continentSummary.total;
+    summary.unseen += continentSummary.unseen;
+    summary.learning += continentSummary.learning;
+    summary.strong += continentSummary.strong;
+    summary.due += continentSummary.due;
+  }
+
+  return summary;
 }

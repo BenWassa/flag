@@ -11,9 +11,8 @@ import {
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
-import { renderDomainHome } from '../dist/ui/views/domain.js';
+import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
-import { renderContinent } from '../dist/ui/views/atlas.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
@@ -55,24 +54,33 @@ const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const outlineProgress = createInitialProgress(COUNTRIES);
 const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY));
-const homeHtml = renderHome(flagProgress);
-assert.equal((homeHtml.match(/data-action="open-atlas"/g) ?? []).length, 6, 'Home exposes all six continents.');
-const africaAtlasHtml = renderContinent(flagProgress, { kind: 'continent', id: 'africa', label: 'Africa' });
-assert.equal(
-  (africaAtlasHtml.match(/data-action="quick-play"/g) ?? []).length,
-  24,
-  'Every Africa region, plus the continent-wide entry, exposes all four learning domains as direct launch shortcuts.',
-);
+const ledgers = {
+  flags: flagProgress,
+  locations: locationProgress,
+  outlines: outlineProgress,
+  neighbors: neighborProgress,
+};
+const homeHtml = renderHome(ledgers);
+assert.equal((homeHtml.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
-  assert.ok(
-    africaAtlasHtml.includes(`Play West Africa ${label.toLowerCase()}`),
-    `The continent surface exposes ${label} through its canonical display name.`,
-  );
+  assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home names ${label} by its canonical display name.`);
 }
 
-const flagsHomeHtml = renderDomainHome('flags', flagProgress);
-assert.ok(flagsHomeHtml.includes('Play world') && flagsHomeHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
-assert.equal((flagsHomeHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
+const flagsIndexHtml = renderDomainIndex('flags', ledgers);
+assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
+assert.equal((flagsIndexHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
+for (const domain of ['locations', 'outlines', 'neighbors']) {
+  const indexHtml2 = renderDomainIndex(domain, ledgers);
+  assert.equal(
+    (indexHtml2.match(/data-action="open-scope"/g) ?? []).length,
+    1,
+    `${domain} opens only the continent it has shipped.`,
+  );
+  assert.ok(
+    indexHtml2.includes(`aria-label="Play Africa ${domain === 'neighbors' ? 'neighbours' : domain}"`),
+    `${domain} plays Africa through its canonical display name.`,
+  );
+}
 
 const launchers = [
   ['Locations', renderMapHome(locationProgress, AFRICA_MAP_SCOPE)],
@@ -88,4 +96,4 @@ for (const [name, html] of launchers) {
   }
 }
 
-console.log('Cross-domain integration verification passed: scope-first Home, four-domain region grid, direct Africa launchers, v16 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: mode-first Home, per-domain continent indexes, direct Africa launchers, v16 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

@@ -112,7 +112,8 @@ button:focus-visible,
 
 .screen-title { min-width: 0; display: grid; gap: 2px; }
 .screen-title h1,
-.overview-heading h1 {
+.overview-heading h1,
+.overview-heading h2 {
   margin: 0;
 }
 .screen-title span,
@@ -748,7 +749,8 @@ button:focus-visible,
 
 @media (max-width: 639px) {
   .overview-heading { align-items: start; }
-  .overview-heading h1 { font-size: 1.75rem; }
+  .overview-heading h1,
+  .overview-heading h2 { font-size: 1.75rem; }
   .mastery-total strong { font-size: 1.65rem; }
   .continent-row { grid-template-columns: minmax(0, 1fr) 50px; }
   .continent-row__open {

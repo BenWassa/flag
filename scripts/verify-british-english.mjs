@@ -14,7 +14,7 @@ import { createInitialProgress } from '../dist/domain/progress.js';
 import { buildQuiz } from '../dist/domain/quiz.js';
 import { parseRoutePath, routeTitle, serializeRoutePath } from '../dist/routing/routes.js';
 import { neighborMapSummary, renderNeighborMap } from '../dist/ui/components/neighbor-map.js';
-import { renderDomainHome } from '../dist/ui/views/domain.js';
+import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
@@ -44,8 +44,15 @@ assert.equal(serializeRoutePath(neighborRoute), '/neighbors/africa/west-africa/t
 assert.equal(neighborRoute.activity, 'test', 'Play remains backed by the stable internal Test activity.');
 assert.equal(routeTitle(neighborRoute), 'Play West Africa neighbours · Atlas');
 
-const homeHtml = renderHome(flagProgress, locationProgress, outlineProgress, neighborProgress);
-const flagsDomainHtml = renderDomainHome('flags', flagProgress);
+const britishLedgers = {
+  flags: flagProgress,
+  locations: locationProgress,
+  outlines: outlineProgress,
+  neighbors: neighborProgress,
+};
+const homeHtml = renderHome(britishLedgers);
+const flagsDomainHtml = renderDomainIndex('flags', britishLedgers);
+const neighborsDomainHtml = renderDomainIndex('neighbors', britishLedgers);
 const flagsLauncherHtml = renderScope(flagProgress, africaScope);
 const locationsLauncherHtml = renderMapHome(locationProgress, africaScope);
 const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope);
@@ -116,6 +123,7 @@ const neighborPlayHtml = renderNeighborQuiz(neighborPlaySession, null, '');
 const renderedSurfaces = [
   ['Home', homeHtml],
   ['Flags domain', flagsDomainHtml],
+  ['Neighbours domain', neighborsDomainHtml],
   ['Flags launcher', flagsLauncherHtml],
   ['Locations launcher', locationsLauncherHtml],
   ['Outlines launcher', outlinesLauncherHtml],
