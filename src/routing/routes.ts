@@ -6,6 +6,7 @@ import {
   type LearningDomain,
   type StudyScope,
 } from '../domain/models.js';
+import { scopeSupportsDomain } from '../domain/scope-support.js';
 
 export type AppRoute =
   | { name: 'home' }
