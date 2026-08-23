@@ -284,11 +284,11 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v17'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'The Tactile Atlas stylesheet must be part of the offline shell.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v16 Atlas PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v27 Atlas PWA shell.');

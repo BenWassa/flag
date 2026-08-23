@@ -1,3 +1,5 @@
+// v27 restores full-width post-mode continent and region navigation for Issue #77
+// and retires learner-facing row-level Quick Play shortcuts.
 // v26 ships #75's refresh-dropped-round notice and heading fix, #76's
 // continent-wide Play entry, and full mobile PWA installability (iOS
 // standalone launch metadata, manifest identity/category fields, and an
@@ -14,12 +16,12 @@
 // v19 makes zero-land-neighbour countries learnable in Neighbours.
 // v18 removes river linework from shared runtime cartography to keep political borders unambiguous.
 // v17 shipped the Neighbours mobile keyboard-stability layout/runtime update.
-// Issue #16 baseline retained for release-lineage verification: const VERSION = 'flag-atlas-v17'
+// Issue #16 baseline retained for release-lineage verification: const VERSION = 'flag-atlas-v16'
 // v16 shipped the Atlas learner-facing brand and install metadata.
 // v15 shipped the Tactile Atlas visual layer and its production stylesheet.
 // v14 shipped the simplified launcher IA and learner-facing Play terminology.
 // Historical cartography/routing cache lineage remains flag-atlas-v10, flag-atlas-v9, and flag-atlas-v8.
-const VERSION = 'flag-atlas-v26';
+const VERSION = 'flag-atlas-v27';
 const SHELL = [
   './',
   './index.html',
