@@ -15,7 +15,7 @@ import {
 import { renderProgress } from '../dist/ui/views/progress.js';
 
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
-const europe = { kind: 'continent', id: 'europe', label: 'Europe' };
+const unsupportedContinent = { kind: 'continent', id: 'oceania', label: 'Oceania' };
 const flags = createInitialProgress(COUNTRIES);
 const locations = createInitialLocationProgress(countryIdsForSupportedScope(africa, 'locations'));
 const outlines = createInitialProgress(COUNTRIES.filter((country) => country.continentId === 'africa'));
@@ -67,7 +67,7 @@ assert.equal(dueFlags.strong, 0, 'Due evidence is presented as a distinct live s
 assert.equal(dueFlags.action, 'review', 'Due work takes priority over Learn and Play recommendations.');
 assert.equal(evidenceForCountry(ledgers, 'flags', 'GHA', now).status, 'due');
 
-const unsupported = buildProgressSummary(ledgers, europe, 'locations', now);
+const unsupported = buildProgressSummary(ledgers, unsupportedContinent, 'locations', now);
 assert.equal(unsupported.supported, false, 'Unsupported continent/domain combinations remain explicitly unavailable.');
 assert.equal(unsupported.total, 0, 'Unsupported curriculum is excluded from totals.');
 assert.equal(unsupported.action, null, 'Unsupported curriculum never receives a practice recommendation.');

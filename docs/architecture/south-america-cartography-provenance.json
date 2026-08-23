@@ -52,26 +52,27 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.002080013417159028,
-    "coordinateCountBefore": 56682,
-    "coordinateCountAfter": 40775
+    "weightThreshold": 0.003195508588557676,
+    "coordinateCountBefore": 52353,
+    "coordinateCountAfter": 38209
   },
   "adjacency": {
-    "source": "continent-local canonical topology",
+    "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
-    "somaliland": "dissolved into canonical SOM scoring geometry; no separate target",
-    "westernSahara": "non-scoring context; not merged into MAR",
-    "birTawil": "non-scoring context; not merged into EGY or SDN",
-    "unRole": "policy/dispute/disclaimer audit reference, not runtime redistribution source",
-    "scoredCountries": 54
+    "frenchGuiana": "non-scoring sovereign FRA context; local display geometry clipped to French Guiana",
+    "falklands": "non-scoring disputed context; no separate Atlas target",
+    "southernPatagonianIceField": "non-scoring undemarcated Argentina-Chile boundary context; no separate Atlas target and no reassignment",
+    "trinidadAndTobago": "remains canonical North America / Caribbean; not a South America scoring target",
+    "crossContinentAdjacency": "global application-country topology preserves COL-PAN and sovereign overseas land borders",
+    "scoredCountries": 12
   },
   "runtimeOptimization": {
     "pathDigits": 1,
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
-    "canvasUnits": "Africa 835x723 projected canvas units",
+    "canvasUnits": "South America 835x723 projected canvas units",
     "physicalTolerance": {
       "ocean": 0.4,
       "lakes": 0.15,

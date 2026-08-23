@@ -1,3 +1,4 @@
+import { countryIdsForLearningScope } from '../data/learning-scopes.js';
 import type {
   Country,
   EvidenceActivity,
@@ -193,9 +194,8 @@ export function applyPassiveExposure(
 }
 
 export function countriesInScope(countries: Country[], scope: StudyScope): Country[] {
-  if (scope.kind === 'world') return countries;
-  if (scope.kind === 'continent') return countries.filter((country) => country.continentId === scope.id);
-  return countries.filter((country) => country.regionId === scope.id);
+  const ids = new Set(countryIdsForLearningScope(scope));
+  return countries.filter((country) => ids.has(country.id));
 }
 
 export function getScopeStats(

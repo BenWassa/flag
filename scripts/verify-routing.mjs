@@ -1,6 +1,5 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
 import { createHashRouter } from '../dist/routing/router.js';
 import {
   normalizeAvailableRoute,
@@ -8,7 +7,6 @@ import {
   parseRoutePath,
   routeTitle,
   serializeRoutePath,
-  scopeForQuickPlay,
   stableRoute,
 } from '../dist/routing/routes.js';
 
@@ -97,48 +95,15 @@ assert.equal(serializeRoutePath(normalizeAvailableRoute(locationsAfrica)), '/loc
 // Unshipped curriculum falls back to the domain index, which states the
 // coverage honestly, rather than silently substituting a different continent.
 assert.equal(
-  serializeRoutePath(normalizeAvailableRoute(route('/locations/asia'))),
+  serializeRoutePath(normalizeAvailableRoute(route('/locations/oceania'))),
   '/locations',
   'An unshipped continent falls back to the domain index rather than a substituted scope.',
 );
 assert.equal(
-  serializeRoutePath(normalizeAvailableRoute(route('/neighbors/europe/western-europe'))),
+  serializeRoutePath(normalizeAvailableRoute(route('/neighbors/oceania/melanesia'))),
   '/neighbors',
   'An unshipped region falls back to the domain index too.',
 );
-
-const africaScope = { kind: 'continent', id: 'africa', label: 'Africa' };
-for (const [domain, expectedScope] of [
-  ['flags', { kind: 'world', label: 'World' }],
-  ['locations', africaScope],
-  ['outlines', africaScope],
-  ['neighbors', africaScope],
-]) {
-  assert.deepEqual(
-    scopeForQuickPlay(domain, domain),
-    expectedScope,
-    `Home ${domain} Quick Play must resolve to its documented full scope.`,
-  );
-}
-
-for (const continent of CONTINENTS) {
-  assert.deepEqual(
-    scopeForQuickPlay('flags', continent.id),
-    { kind: 'continent', id: continent.id, label: continent.name },
-    `Flags Quick Play must resolve the ${continent.name} continent row.`,
-  );
-}
-
-for (const region of REGIONS.filter((item) => item.continentId === 'africa')) {
-  const expectedScope = { kind: 'region', id: region.id, label: region.name };
-  for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-    assert.deepEqual(
-      scopeForQuickPlay(domain, region.id),
-      expectedScope,
-      `${domain} Quick Play must resolve the ${region.name} region row.`,
-    );
-  }
-}
 
 // Mode-first Back chain: Home picks a domain, the domain route lists that
 // domain's continents, and a scoped launcher is one of those continents. A
@@ -244,7 +209,7 @@ assert.ok(app.includes('createHashRouter'), 'Application must compose through th
 assert.ok(app.includes('stableRoute'), 'Active-round refresh fallback must use the stable route.');
 assert.ok(app.includes('normalizeAvailableRoute'), 'Application must canonicalise availability through the exported pure route helper.');
 assert.ok(app.includes('select-region') && app.includes('select-continent'), 'Launcher selection must use explicit replace-only actions.');
-assert.ok(app.includes('quick-play'), 'Application must dispatch direct Play without a parallel activity model.');
+assert.equal(app.includes('quick-play'), false, 'Application has no dead row-level Quick Play dispatch.');
 assert.ok(
   app.includes('review-mistakes')
     && app.includes('review-map-mistakes')
@@ -273,7 +238,7 @@ assert.equal(home.includes('data-action="open-scope"'), false, 'Home does not se
 const domainIndex = await readFile('dist/ui/views/domain.js', 'utf8');
 assert.ok(domainIndex.includes('data-action="route-parent"'), 'The domain index exposes the shared Back contract.');
 assert.ok(domainIndex.includes('data-action="open-scope"'), 'The domain index opens a continent within its own domain.');
-assert.ok(domainIndex.includes('data-action="quick-play"'), 'A continent can be played straight from the domain index.');
+assert.equal(domainIndex.includes('data-action="quick-play"'), false, 'A continent row navigates to its deliberate launcher instead of starting a round.');
 assert.ok(domainIndex.includes('continent-row--shell'), 'Unshipped continents render as inert shells, not launchers.');
 
 const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
@@ -291,9 +256,11 @@ for (const [name, scopeSource] of [
 }
 
 const launcher = await readFile('dist/ui/views/launcher.js', 'utf8');
-for (const action of ['launcher-parent', 'select-region', 'select-continent', 'quick-play']) {
+for (const action of ['launcher-parent', 'select-region', 'select-continent']) {
   assert.ok(launcher.includes(`data-action="${action}"`), `Shared launcher must expose ${action}.`);
 }
+assert.equal(launcher.includes('data-action="quick-play"'), false, 'Region rows select scope and expose no inline Play shortcut.');
+assert.ok(launcher.includes('region-row__progress'), 'Every launcher region exposes its shared progress strip.');
 assert.ok(launcher.includes('aria-pressed'), 'Region selection must be programmatic as well as visual.');
 assert.ok(launcher.includes('Play ${scopeLabel}') && launcher.includes('Learn ${scopeLabel}'), 'Launcher Play and Learn actions must both name the active scope.');
 assert.equal(launcher.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
@@ -317,11 +284,11 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
 assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'The Tactile Atlas stylesheet must be part of the offline shell.');
 assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
 assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
 assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v16 Atlas PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v27 Atlas PWA shell.');

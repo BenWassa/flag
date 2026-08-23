@@ -7,10 +7,32 @@ import type { ContinentId } from '../../domain/models.js';
 import type { LandAdjacency } from '../../domain/neighbor-game.js';
 import {
   AFRICA_LAND_ADJACENCY,
+  AFRICA_STANDARD_NEIGHBOR_TARGET_IDS as AFRICA_TOPOLOGY_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
 } from './africa.js';
+import {
+  SOUTH_AMERICA_LAND_ADJACENCY,
+  SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+} from './south-america.js';
+import {
+  EUROPE_LAND_ADJACENCY,
+  EUROPE_ZERO_LAND_NEIGHBOR_IDS,
+} from './europe.js';
+import {
+  ASIA_LAND_ADJACENCY,
+  ASIA_ZERO_LAND_NEIGHBOR_IDS,
+} from './asia.js';
 
-export { AFRICA_LAND_ADJACENCY, AFRICA_ZERO_LAND_NEIGHBOR_IDS };
+export {
+  AFRICA_LAND_ADJACENCY,
+  AFRICA_ZERO_LAND_NEIGHBOR_IDS,
+  SOUTH_AMERICA_LAND_ADJACENCY,
+  SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+  EUROPE_LAND_ADJACENCY,
+  EUROPE_ZERO_LAND_NEIGHBOR_IDS,
+  ASIA_LAND_ADJACENCY,
+  ASIA_ZERO_LAND_NEIGHBOR_IDS,
+};
 
 export interface NeighborContinentData {
   continentId: ContinentId;
@@ -20,19 +42,14 @@ export interface NeighborContinentData {
 }
 
 // Africa's current shipped target policy remains stable through the generic
-// refactor. The build-time global graph introduced by #57 may know complete
-// Egypt/Morocco adjacency, but re-enabling existing targets is a separate
-// curriculum change rather than a side effect of architecture work.
+// refactor. The build-time global graph may know complete Egypt/Morocco
+// adjacency, but re-enabling existing Africa targets is a separate curriculum
+// change rather than a side effect of Asia expansion.
 export const AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS = Object.freeze(['EGY', 'MAR'] as const);
 const AFRICA_COVERAGE_EXCLUDED = new Set<string>(AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS);
 
-/**
- * Every country whose land borders the topology genuinely knows, including the
- * island nations whose truthful answer is that they have none. Only countries
- * with incomplete cross-continent topology are held back.
- */
 export const AFRICA_STANDARD_NEIGHBOR_TARGET_IDS = Object.freeze(
-  Object.keys(AFRICA_LAND_ADJACENCY).filter((countryId) => !AFRICA_COVERAGE_EXCLUDED.has(countryId)),
+  AFRICA_TOPOLOGY_NEIGHBOR_TARGET_IDS.filter((countryId) => !AFRICA_COVERAGE_EXCLUDED.has(countryId)),
 );
 
 const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData>> = {
@@ -40,6 +57,21 @@ const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData
     continentId: 'africa',
     adjacency: AFRICA_LAND_ADJACENCY,
     coverageExcludedIds: AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
+  },
+  'south-america': {
+    continentId: 'south-america',
+    adjacency: SOUTH_AMERICA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
+  },
+  europe: {
+    continentId: 'europe',
+    adjacency: EUROPE_LAND_ADJACENCY,
+    coverageExcludedIds: [],
+  },
+  asia: {
+    continentId: 'asia',
+    adjacency: ASIA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
   },
 };
 
@@ -65,14 +97,14 @@ export function landAdjacencyForScope(scopeId: string): LandAdjacency | undefine
 }
 
 export function generatedNeighborCountryIds(): readonly string[] {
-  return Object.values(NEIGHBOR_CONTINENT_DATA)
+  return [...new Set(Object.values(NEIGHBOR_CONTINENT_DATA)
     .filter((data): data is NeighborContinentData => Boolean(data))
-    .flatMap((data) => Object.keys(data.adjacency));
+    .flatMap((data) => Object.keys(data.adjacency)))];
 }
 
 /**
- * Guessing may legitimately cross a learner-continent boundary (for example
- * Colombia → Panama), so the entry field recognises every canonical app country.
+ * Guessing may legitimately cross a learner-continent boundary, so the entry
+ * field recognises every canonical app country.
  */
 export const NEIGHBOR_GUESS_COUNTRY_IDS = Object.freeze(COUNTRIES.map((country) => country.id));
 

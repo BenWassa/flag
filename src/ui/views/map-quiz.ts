@@ -1,8 +1,10 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { currentMapTarget } from '../../domain/map-game.js';
 import type { MapRegionAsset, MapSession } from '../../domain/map-models.js';
+import { answerFeedback } from '../../domain/round-feedback.js';
 import { icon } from '../components/icons.js';
 import { renderMapSvg } from '../components/map.js';
+import { answerFeedbackPanel } from '../components/round-feedback.js';
 import { escapeHtml } from '../format.js';
 
 export function renderMapQuiz(
@@ -20,6 +22,14 @@ export function renderMapQuiz(
   const wrongCountry = lastWrongCountryId ? COUNTRY_BY_ID.get(lastWrongCountryId) : undefined;
   const showFeedback = session.mode === 'learn';
   const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, wrongCountry?.name);
+  const lastAttempt = session.attempts.at(-1);
+  const currentPlayAttempt = session.mode === 'test'
+    && state?.resolved
+    && lastAttempt?.targetCountryId === targetId
+    && lastAttempt.resolved
+      ? lastAttempt
+      : undefined;
+  const playFeedback = currentPlayAttempt ? answerFeedback(currentPlayAttempt.correct, target.name) : null;
   const mapLabel = session.scope.kind === 'continent'
     ? 'Africa country map'
     : `Africa map with ${session.scope.label} active`;
@@ -38,7 +48,9 @@ export function renderMapQuiz(
       <section class="map-prompt" aria-labelledby="map-prompt-heading">
         <p class="map-prompt__kicker">Find</p>
         <h1 id="map-prompt-heading" tabindex="-1" data-autofocus>${escapeHtml(target.name)}</h1>
-        <p class="map-prompt__status ${feedback.className}">${feedback.text}</p>
+        ${playFeedback
+          ? answerFeedbackPanel(playFeedback)
+          : `<p class="map-prompt__status ${feedback.className}">${feedback.text}</p>`}
       </section>
 
       <section class="map-stage" aria-label="${escapeHtml(mapLabel)}">
@@ -60,7 +72,6 @@ function visibleFeedback(
   wrongCountryName?: string,
 ): { text: string; className: string } {
   if (session.mode === 'test') {
-    if (resolution) return { text: 'Answer recorded', className: '' };
     return {
       text: session.currentIndex === 0
         ? 'One tap each · pinch or wheel to zoom · swipe or drag to pan Africa · results at the end.'

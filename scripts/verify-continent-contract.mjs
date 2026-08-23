@@ -10,6 +10,7 @@ export async function verifyContinentContract({
   continentId,
   expectedCountryIds,
   expectedRegionIds,
+  expectedRegionalCountryIds = expectedCountryIds,
   expectedNeighborCountryIds = expectedCountryIds,
   runtimeModulePath,
   maxRawBytes = 1_000_000,
@@ -30,8 +31,12 @@ export async function verifyContinentContract({
   );
 
   const regionUnion = continent.regions.flatMap((region) => [...region.countryIds]);
-  assert.equal(new Set(regionUnion).size, regionUnion.length, `${continentId} generated regions do not duplicate countries.`);
-  assert.deepEqual(sorted(regionUnion), sorted(expectedCountryIds), `${continentId} generated regions partition the continent curriculum.`);
+  assert.equal(new Set(regionUnion).size, regionUnion.length, `${continentId} learner-facing regions do not duplicate countries.`);
+  assert.deepEqual(
+    sorted(new Set(regionUnion)),
+    sorted(expectedRegionalCountryIds),
+    `${continentId} learner-facing regional coverage is exact, including intentional cross-continent membership.`,
+  );
 
   const continentScope = continent.scope;
   assert.deepEqual(

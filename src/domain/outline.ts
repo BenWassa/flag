@@ -44,16 +44,17 @@ interface RawBounds {
 
 /**
  * Normalize one canonical generated polygon into a fixed 100×100 silhouette
- * frame. Directly rendered map countries use `path`; tiny island countries use
- * the generator-retained `outlinePath` while Locations keeps its tap locator.
- * Both fields come from the same Issue #9 topology/projection pipeline.
+ * frame. `outlinePath` is preferred when the generator retains a whole-country
+ * silhouette separately from viewport-clipped Locations geometry. Otherwise
+ * the map `path` is used directly. Both fields come from the same canonical
+ * Natural Earth topology/projection pipeline.
  *
  * The production d3-geo polygon pipeline emits M/L/Z paths. Rejecting other
  * commands is deliberate: a generator change must be reviewed rather than
  * silently normalized with incorrect SVG command semantics.
  */
 export function normalizeOutlineGeometry(geometry: MapCountryGeometry): OutlineGeometry {
-  const source = geometry.path ?? geometry.outlinePath;
+  const source = geometry.outlinePath ?? geometry.path;
   if (!source) throw new Error(`Outline geometry missing canonical path for ${geometry.countryId}.`);
   if (!SUPPORTED_PATH_COMMANDS.test(source)) {
     throw new Error(`Unsupported SVG command in canonical outline path for ${geometry.countryId}.`);

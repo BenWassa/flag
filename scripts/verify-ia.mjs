@@ -13,7 +13,6 @@ import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
 import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
-import { icon } from '../dist/ui/components/icons.js';
 import { renderLauncherMap } from '../dist/ui/components/launcher-map.js';
 import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
@@ -113,7 +112,6 @@ const neighborProgress = createInitialNeighborProgress(Object.keys(AFRICA_LAND_A
 const africaScope = { kind: 'continent', id: 'africa', label: 'Africa' };
 const westAfricaScope = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 const africaRegionIds = AFRICA_MAP_REGION_CONFIGS.map((config) => config.scope.id).filter(Boolean).sort();
-const playIcon = icon('play');
 
 // Home is mode-first: one tactile card per learning domain. Geography is not
 // offered here at all, and no round can start before a mode is chosen.
@@ -169,12 +167,11 @@ for (const domain of LEARNING_DOMAIN_IDS) {
   assert.ok(index.includes('storage-notice'), `${domain} continent index retains its storage-degraded state.`);
 
   const openButtons = actionTags(index, 'button', 'open-scope');
-  const playButtons = actionTags(index, 'button', 'quick-play');
+  const quickPlayButtons = actionTags(index, 'button', 'quick-play');
   const supported = CONTINENTS.filter((continent) =>
     scopeSupportsDomain({ kind: 'continent', id: continent.id, label: continent.name }, domain));
   assert.equal(openButtons.length, supported.length, `${domain} opens only the continents it has shipped.`);
-  assert.equal(playButtons.length, supported.length, `${domain} plays only the continents it has shipped.`);
-  assert.equal(occurrences(index, playIcon), supported.length, `${domain} Play controls use the shared icon.`);
+  assert.equal(quickPlayButtons.length, 0, `${domain} exposes no row-level Quick Play shortcut.`);
   assert.equal(
     occurrences(index, 'continent-row--shell'),
     CONTINENTS.length - supported.length,
@@ -183,16 +180,9 @@ for (const domain of LEARNING_DOMAIN_IDS) {
 
   for (const continent of supported) {
     const open = openButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
-    const play = playButtons.filter((tag) => attribute(tag, 'data-id') === continent.id);
-    assert.equal(open.length, 1, `${continent.name} has one open control in ${domain}.`);
-    assert.equal(play.length, 1, `${continent.name} has one Play control in ${domain}.`);
+    assert.equal(open.length, 1, `${continent.name} has one deliberate navigation control in ${domain}.`);
     assertButtonContract(open[0], {
       'data-action': 'open-scope',
-      'data-domain': domain,
-      'data-id': continent.id,
-    });
-    assertButtonContract(play[0], {
-      'data-action': 'quick-play',
       'data-domain': domain,
       'data-id': continent.id,
     });
@@ -290,27 +280,22 @@ for (const launcherCase of launcherCases) {
     const regionWrappers = openingTags(html, 'div').filter((tag) => hasClass(tag, 'region-row'));
     const regionOpenButtons = actionTags(html, 'button', 'select-region');
     const regionPlayButtons = actionTags(html, 'button', 'quick-play');
-    assert.equal(regionWrappers.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} has five split region rows.`);
+    assert.equal(regionWrappers.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} has five full-width region rows.`);
     assert.equal(regionOpenButtons.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} has five region selectors.`);
-    assert.equal(regionPlayButtons.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} has five region Play controls.`);
-    assert.equal(occurrences(html, playIcon), AFRICA_MAP_REGION_CONFIGS.length, `${name} uses the play icon in every region row.`);
+    assert.equal(regionPlayButtons.length, 0, `${name} has no inline region Play shortcuts.`);
+    assert.equal(
+      occurrences(html, 'class="region-row__progress"'),
+      AFRICA_MAP_REGION_CONFIGS.length,
+      `${name} gives every region a progress strip.`,
+    );
     assert.deepEqual(sortedIds(regionOpenButtons), africaRegionIds, `${name} exposes every region selector.`);
-    assert.deepEqual(sortedIds(regionPlayButtons), africaRegionIds, `${name} exposes every direct region Play target.`);
 
     for (const config of AFRICA_MAP_REGION_CONFIGS) {
       const id = config.scope.id;
       const open = regionOpenButtons.find((tag) => attribute(tag, 'data-id') === id);
-      const quickPlay = regionPlayButtons.find((tag) => attribute(tag, 'data-id') === id);
       assert.ok(open, `${name} exposes ${config.scope.label} selection.`);
-      assert.ok(quickPlay, `${name} exposes ${config.scope.label} Play.`);
       assert.equal(attribute(open, 'data-domain'), launcherCase.domain);
       assert.equal(attribute(open, 'aria-pressed'), String(id === scope.id));
-      assertButtonContract(quickPlay, {
-        'data-action': 'quick-play',
-        'data-domain': launcherCase.domain,
-        'data-id': id,
-        'aria-label': `Play ${config.scope.label} ${launcherCase.domainLabel}`,
-      });
     }
 
     const selectedRows = regionWrappers.filter((tag) => hasClass(tag, 'region-row--selected'));
@@ -404,10 +389,8 @@ for (const launcherCase of launcherCases.filter((item) => item.hasMap)) {
   }
 }
 
-// Shared icon and CSS contracts make the split controls independently usable.
-assert.ok(playIcon.includes('aria-hidden="true"'), 'The Play glyph is hidden from accessibility APIs.');
-assert.ok(playIcon.includes('focusable="false"'), 'The Play glyph cannot take focus independently.');
-assert.ok(playIcon.includes('fill="currentColor"'), 'The shared SVG contains the filled Play path.');
+// Pre-round geography selection uses labelled scope controls rather than
+// inline Play shortcuts or Unicode glyphs.
 for (const html of allPreRoundSurfaces) {
   assert.equal(/[▶►▸⏵]/u.test(html), false, 'Pre-round controls never use Unicode play glyphs.');
 }
@@ -423,15 +406,30 @@ const roundLaunchGuard = await readFile('src/state/round-launch-guard.ts', 'utf8
 const locationsRound = await readFile('src/state/locations-round.ts', 'utf8');
 const outlinesRound = await readFile('src/state/outlines-round.ts', 'utf8');
 
-const openControlRule = styles.match(/\.continent-row__open,\s*\.region-row__open\s*\{([^}]*)\}/)?.[1];
-assert.ok(openControlRule, 'Split-row open controls have a shared CSS rule.');
-assert.match(openControlRule, /min-height:\s*78px/, 'Split-row bodies exceed the 44px touch minimum.');
+const continentListRule = atlasTheme.match(/\.page--tile-index \.continent-list\s*\{([^}]*)\}/)?.[1];
+assert.ok(continentListRule, 'Domain continent selection has a canonical Atlas-theme rule.');
+assert.match(
+  continentListRule,
+  /grid-template-columns:\s*minmax\(0,\s*1fr\)/,
+  'Phone continent selection is a single full-width stack.',
+);
 
-const playControlRule = styles.match(/\.continent-row__play,\s*\.region-row__play\s*\{([^}]*)\}/)?.[1];
-assert.ok(playControlRule, 'Split-row Play controls have a shared CSS rule.');
-assert.match(playControlRule, /min-width:\s*44px/, 'Play controls meet the minimum width.');
-assert.match(playControlRule, /min-height:\s*44px/, 'Play controls meet the minimum height.');
-assert.match(playControlRule, /border-left:\s*1px solid var\(--line\)/, 'Play controls have a visible separator.');
+const continentOpenRule = atlasTheme.match(/\.page--tile-index \.continent-row__open\s*\{([^}]*)\}/)?.[1];
+assert.ok(continentOpenRule, 'Continent rows have a dedicated full-width control rule.');
+assert.match(continentOpenRule, /width:\s*100%/, 'The whole continent row is the navigation target.');
+assert.match(continentOpenRule, /min-height:\s*112px/, 'Supported continent rows remain generous touch targets.');
+
+const regionOpenRule = atlasTheme.match(/\.region-row__open\s*\{([^}]*)\}/)?.[1];
+assert.ok(regionOpenRule, 'Region rows have a dedicated full-width control rule.');
+assert.match(regionOpenRule, /width:\s*100%/, 'The whole region row is the selection target.');
+assert.match(regionOpenRule, /min-height:\s*92px/, 'Region rows remain generous touch targets with progress visible.');
+
+const regionProgressRule = atlasTheme.match(/\.region-row__progress\s*\{([^}]*)\}/)?.[1];
+assert.ok(regionProgressRule, 'Region progress has an explicit layout slot.');
+assert.match(regionProgressRule, /grid-column:\s*1\s*\/\s*-1/, 'Region progress spans the full row width.');
+assert.equal(atlasTheme.includes('.continent-row__play'), false, 'Canonical navigation styling has no dead continent Play cell.');
+assert.equal(atlasTheme.includes('.region-row__play'), false, 'Canonical navigation styling has no dead region Play cell.');
+assert.equal(app.includes('quick-play'), false, 'Application dispatch contains no row-level Quick Play path.');
 
 // Touch-target sizing for Learn is owned by atlas-theme.css, which loads after
 // styles.css and overrides it. Asserting against styles.css measured a value
@@ -630,4 +628,4 @@ for (const deletedFunction of ['renderLocationsHome', 'renderOutlinesHome', 'ren
   assert.equal(domainView.includes(deletedFunction), false, `${deletedFunction} stays deleted.`);
 }
 
-console.log('Issue 21 IA verification passed: split rows, scoped actions, routed launchers, retryable progressive maps, accessible selection state, responsive layouts, removed content, SVG Play controls, and CSS interaction contracts.');
+console.log('IA verification passed: mode-first Home, full-width geography selection, deliberate launcher Play/Learn, visible region progress, routed launchers, accessible selection state, and responsive layout contracts.');

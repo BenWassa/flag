@@ -150,11 +150,15 @@ const testSession = buildMapSession(westAsset, 'test', 'test-wrong', ['GHA']);
 const testWrong = applyMapGuess(testSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'MLI', 700);
 assert.equal(testWrong.outcome.resolved, true, 'Test mode accepts exactly one tap per target.');
 assert.equal(testWrong.session.targets.GHA.resolution, 'incorrect', 'Test wrong answers are retained for result feedback.');
-assert.equal(testWrong.outcome.revealed, false, 'Test mode does not reveal correctness during the round.');
+assert.equal(testWrong.outcome.revealed, false, 'Test still preserves one-tap scoring semantics rather than Learn reveal semantics.');
 const testHtml = renderMapQuiz(westAsset, testWrong.session, 'MLI');
-assert.ok(!testHtml.includes('map-country--wrong-pulse'), 'Test mode does not leak correctness through red styling.');
-assert.ok(testHtml.includes('map-country--recorded'), 'Test visibly acknowledges the selected country with a neutral state.');
-assert.ok(testHtml.includes('Answer recorded'), 'Test confirms input without revealing correctness.');
+assert.ok(testHtml.includes('answer-feedback--wrong'), 'Test exposes the shared wrong feedback panel immediately.');
+assert.ok(testHtml.includes('Not quite'), 'Test wrong feedback is understandable without colour.');
+assert.ok(testHtml.includes('Answer: Ghana'), 'Test wrong feedback names the correct country.');
+assert.ok(testHtml.includes('map-country--wrong-pulse'), 'Test marks the selected wrong country semantically on the map.');
+assert.ok(testHtml.includes('map-country--current-correct'), 'Test indicates the actual target only after resolution.');
+assert.ok(!testHtml.includes('Answer recorded'), 'Test no longer hides correctness behind a neutral acknowledgement.');
+assert.equal((testHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Resolved Test feedback locks extra taps during the dwell.');
 
 const fullWestSession = buildMapSession(westAsset, 'learn', 'render-west-round');
 const westQuizHtml = renderMapQuiz(westAsset, fullWestSession, null);
@@ -271,8 +275,8 @@ assert.ok(mapCss.includes('opacity: 1'), 'Normal context geography is no longer 
 assert.ok(!mapCss.includes('opacity: .28'), 'The previous strainingly faint context opacity is removed.');
 assert.ok(mapCss.includes('.map-country__locator-hit'), 'Island dots receive explicit enlarged touch surfaces.');
 assert.ok(mapCss.includes('.map-country[tabindex]:focus'), 'SVG focus overrides the rectangular tabindex outline.');
-assert.ok(mapCss.includes('.map-country--current-correct'), 'First-try correct taps keep high-salience feedback.');
-assert.ok(mapCss.includes('.map-country--recorded'), 'Test taps keep neutral visible acknowledgment.');
+assert.ok(mapCss.includes('.map-country--current-correct'), 'Correct taps keep high-salience semantic feedback.');
+assert.ok(mapCss.includes('.map-country--wrong-pulse'), 'Wrong taps keep high-salience semantic feedback.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
 assert.ok(mapCartographyCss.includes('touch-action: none'), 'The custom map controller owns pan and pinch gestures.');
@@ -292,7 +296,7 @@ assert.ok(atlasTheme.includes('prefers-reduced-motion: reduce'), 'The built Atla
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas brand rollout owns the v16 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Issue #77 shell changes own the v27 PWA cache.');
 assert.ok(serviceWorker.includes('./atlas-theme.css'), 'The Tactile Atlas stylesheet is part of the offline shell.');
 assert.ok(serviceWorker.includes('./map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
@@ -302,4 +306,4 @@ const africaRound = buildMapSession(africaAsset, 'learn', 'africa-cross-region',
 assert.equal(africaRound.countryIds.length, 5, 'All-Africa round accepts targets across all five regions.');
 assert.deepEqual(new Set(africaRound.countryIds), new Set(representativeIds));
 
-console.log('Africa map verification passed: 54-country coverage, launcher hierarchy, regional context, island dots, callouts, feedback, Atlas shell, and mobile contracts.');
+console.log('Africa map verification passed: 54-country coverage, launcher hierarchy, regional context, island dots, callouts, explicit feedback, Atlas shell, and mobile contracts.');

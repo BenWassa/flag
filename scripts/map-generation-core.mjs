@@ -505,11 +505,16 @@ function deriveLocalAdjacency(simplifiedTopology) {
 
 function sliceGlobalAdjacency(globalAdjacency, scoredCatalog, representedIds, config) {
   const output = {};
-  for (const row of scoredCatalog) {
-    if (!representedIds.has(row.id)) {
-      throw new Error(`Global Natural Earth adjacency topology does not represent ${row.id} for ${config.displayName}.`);
+  // Scored curriculum plus any canonical country this continent's module must
+  // teach through an overlapping learner scope (Issue #28 Egypt in Middle
+  // East). Extra members gain adjacency only; continent ownership, country
+  // records and progress stay canonical elsewhere.
+  const ids = [...scoredCatalog.map((row) => row.id), ...(config.adjacencyExtraCountryIds ?? [])];
+  for (const id of ids) {
+    if (!representedIds.has(id)) {
+      throw new Error(`Global Natural Earth adjacency topology does not represent ${id} for ${config.displayName}.`);
     }
-    output[row.id] = [...(globalAdjacency[row.id] ?? [])];
+    output[id] = [...(globalAdjacency[id] ?? [])];
   }
   return output;
 }
@@ -518,10 +523,16 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const scoredCatalog = catalogForConfig(catalog, config);
   const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);
   const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);
+  const fitExcludedIds = new Set(config.fitExcludeCountryIds ?? []);
+  const fitCollection = featureCollection(normalized.features.filter((item) => {
+    const countryId = item.properties?.countryId;
+    return !countryId || !fitExcludedIds.has(countryId);
+  }));
+  if (!fitCollection.features.length) throw new Error(`${config.displayName} viewport-fit policy removed every feature.`);
 
   const projection = geoNaturalEarth1().fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
-    normalized,
+    fitCollection,
   );
   projection.clipExtent([[0, 0], [WIDTH, HEIGHT]]);
 
@@ -595,14 +606,37 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     ids.push(row.id);
     regionIds.set(row.region, ids);
   }
+  const focusExcludedIds = new Set(config.focusExcludeCountryIds ?? []);
+  const focusForIds = (ids) => {
+    const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
+    const focusIds = preferredIds.length ? preferredIds : ids;
+    const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);
+    return boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
+  };
+  // Canonical classification regions that Atlas deliberately does not expose to
+  // learners get no focus entry, so no navigation can resolve to them.
+  const hiddenFocusRegions = new Set(config.hiddenFocusRegionIds ?? []);
   for (const [region, ids] of [...regionIds.entries()].sort()) {
-    const regionFeatures = ids.map((id) => simplifiedById.get(id)).filter(Boolean);
-    scopeFocus[region] = boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
+    if (hiddenFocusRegions.has(region)) continue;
+    scopeFocus[region] = focusForIds(ids);
+  }
+  // Learner-facing scopes may deliberately overlap the canonical region
+  // taxonomy (Issue #28 Middle East, and Caucasus). They own no country
+  // records; they only need deterministic framing derived from the same
+  // simplified geometry, including keyed cross-continent context members.
+  for (const [scopeId, ids] of Object.entries(config.derivedFocusScopes ?? {})) {
+    const missing = ids.filter((id) => !simplifiedById.has(id));
+    if (missing.length) {
+      throw new Error(
+        `${config.displayName} derived focus scope ${scopeId} is missing geometry for ${missing.join(', ')}.`,
+      );
+    }
+    scopeFocus[scopeId] = focusForIds([...ids]);
   }
 
   const sourceProjection = geoNaturalEarth1().fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
-    normalized,
+    fitCollection,
   );
   sourceProjection.clipExtent([[0, 0], [WIDTH, HEIGHT]]);
   const physicalPath = geoPath(sourceProjection).digits(PATH_DIGITS);

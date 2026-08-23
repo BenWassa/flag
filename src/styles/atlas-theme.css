@@ -4,7 +4,11 @@
   --surface-subtle: #eef3fb;
   --track: #e3e9f2;
   --text: #101318;
-  --text-muted: #667085;
+  /* Darkened from #667085, which cleared 4.5:1 on the canvas (4.68) but not on
+     the --action-soft background a selected continent/region row uses (4.36),
+     failing WCAG 2.2 SC 1.4.3 for the evidence line. This value clears both
+     (5.58 on canvas, 5.20 on --action-soft) and stays clearly secondary. */
+  --text-muted: #5b6478;
   --line: #d9e0ea;
   --line-strong: #b7c2d1;
   --action: #2563eb;
@@ -152,13 +156,13 @@ body { letter-spacing: -.006em; }
 
 .page--tile-index .continent-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr);
   gap: 12px;
 }
 
 .page--tile-index .continent-row {
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-columns: minmax(0, 1fr);
   border: 1px solid var(--line);
   border-radius: var(--radius-tile);
   background: var(--surface);
@@ -175,28 +179,27 @@ body { letter-spacing: -.006em; }
 .page--tile-index .continent-row:active { transform: translateY(1px); }
 
 .page--tile-index .continent-row__open {
-  min-height: 132px;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr auto;
-  align-content: stretch;
-  gap: 8px;
-  padding: 17px 14px 15px 16px;
+  width: 100%;
+  min-height: 112px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 82px 20px;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  gap: 7px 14px;
+  padding: 15px 15px 14px 17px;
 }
 
-/* Placed explicitly rather than auto-flowed: the shared continent-row rules
-   pin progress and score to their own row/column below 640px, and a tile that
-   inherited that placement would drop the silhouette underneath the strip. */
 .page--tile-index .continent-row__identity {
-  align-self: start;
+  align-self: end;
   grid-column: 1;
   grid-row: 1;
   gap: 3px;
 }
 
 .page--tile-index .continent-row__identity strong {
-  font-size: 18px;
-  font-weight: 780;
-  letter-spacing: -.025em;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: -.03em;
 }
 
 .page--tile-index .continent-row__identity small {
@@ -204,15 +207,11 @@ body { letter-spacing: -.006em; }
   line-height: 1.35;
 }
 
-/* Geography stays the loudest thing on the tile (DESIGN.md): the silhouette
-   fills the slack row between the continent's name and its evidence strip,
-   held back to a tint so it reads as the tile's subject rather than as a
-   control competing with the Play button beside it. */
 .page--tile-index .continent-row__mark {
   align-self: center;
   justify-self: center;
-  grid-column: 1;
-  grid-row: 2;
+  grid-column: 2;
+  grid-row: 1 / 4;
   display: grid;
   place-items: center;
   min-height: 0;
@@ -221,9 +220,20 @@ body { letter-spacing: -.006em; }
 }
 
 .page--tile-index .continent-row__mark .continent-icon {
-  width: 54px;
-  height: 54px;
+  width: 70px;
+  height: 70px;
   max-height: 100%;
+}
+
+.page--tile-index .continent-row__evidence {
+  grid-column: 1;
+  grid-row: 2;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
 .page--tile-index .continent-row__progress {
@@ -233,18 +243,24 @@ body { letter-spacing: -.006em; }
   width: 100%;
 }
 
-/* A continent this domain has not shipped: inert, no Play column, dashed to
-   match the unavailable treatment Progress already uses. Never a failure
-   colour — the curriculum is simply not here yet.
+.page--tile-index .continent-row__progress .status-strip {
+  height: 7px;
+  border-radius: 999px;
+}
 
-   Deliberately shorter than a shipped tile. An Africa-only domain lists one
-   continent it can teach and five it cannot, and at equal height the five
-   would own the screen; halving them keeps the list honest without letting
-   absent curriculum outweigh the continent the learner came to play. */
+.page--tile-index .continent-row__open > .ui-icon {
+  display: block;
+  grid-column: 3;
+  grid-row: 1 / 4;
+  align-self: center;
+  justify-self: end;
+}
+
+/* Unsupported curriculum remains honest and inert, but it follows the same
+   full-width vertical rhythm as shipped continents rather than reverting to a
+   compact tile grid. */
 .page--tile-index .continent-row--shell {
-  /* Without this the grid row stretches the shell back to the height of the
-     shipped tile beside it, undoing the demotion above. */
-  align-self: start;
+  align-self: stretch;
   grid-template-columns: minmax(0, 1fr);
   border-style: dashed;
   box-shadow: none;
@@ -252,11 +268,11 @@ body { letter-spacing: -.006em; }
 }
 
 .page--tile-index .continent-row--shell .continent-row__open {
-  min-height: 0;
+  min-height: 62px;
   grid-template-rows: auto;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  padding: 12px 14px;
+  padding: 11px 14px 11px 17px;
   cursor: default;
 }
 
@@ -272,8 +288,8 @@ body { letter-spacing: -.006em; }
 }
 
 .page--tile-index .continent-row--shell .continent-row__mark .continent-icon {
-  width: 28px;
-  height: 28px;
+  width: 30px;
+  height: 30px;
 }
 
 .page--tile-index .continent-row--shell:hover {
@@ -283,83 +299,92 @@ body { letter-spacing: -.006em; }
 
 .page--tile-index .continent-row--shell:active { transform: none; }
 
-.page--tile-index .continent-row__progress .status-strip {
-  height: 7px;
-  border-radius: 999px;
-}
-
-/* Removed outright rather than visually hidden: the adjacent status strip is
-   role="img" with an aria-label carrying the same mastered/learning/unseen
-   counts, so an opacity:0 score was announcing the tally a second time to
-   screen readers while sighted users saw it once. */
-.page--tile-index .continent-row__score { display: none; }
-
-.page--tile-index .continent-row__open > .ui-icon { display: none; }
-
-.page--tile-index .continent-row__play {
-  width: 48px;
-  min-height: 100%;
-  border-left: 1px solid var(--line);
-  background: var(--action-soft);
-  color: var(--action);
-}
-
-.page--tile-index .continent-row__play:active {
-  background: color-mix(in srgb, var(--action-soft) 76%, var(--action));
-  transform: translateY(1px);
-}
-
-
 .region-list {
   display: grid;
-  gap: 9px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
 .region-row {
-  grid-template-columns: minmax(0, 1fr) 50px;
+  grid-template-columns: minmax(0, 1fr);
   border: 1px solid var(--line);
   border-radius: var(--radius-tile);
   background: var(--surface);
   overflow: hidden;
   box-shadow: var(--depth-tile);
-  transition: box-shadow 140ms ease;
+  transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease;
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .region-row:hover { box-shadow: var(--depth-tile-hover); }
+  .region-row:hover {
+    border-color: var(--line-strong);
+    box-shadow: var(--depth-tile-hover);
+  }
 }
 
 .region-row--selected {
   border-color: color-mix(in srgb, var(--action) 44%, var(--line));
   background: var(--action-soft);
-  box-shadow: inset 3px 0 0 var(--action);
+  box-shadow: inset 3px 0 0 var(--action), var(--depth-tile);
 }
 
 .region-row__open {
-  min-height: 66px;
-  padding: 10px 12px 10px 15px;
+  width: 100%;
+  min-height: 92px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 20px;
+  grid-template-rows: auto auto auto;
+  align-items: center;
+  gap: 6px 10px;
+  padding: 13px 14px 12px 16px;
+}
+
+.region-row__identity {
+  grid-column: 1;
+  grid-row: 1;
 }
 
 .region-row__identity strong {
-  font-weight: 760;
-  letter-spacing: -.015em;
+  font-size: 16px;
+  font-weight: 780;
+  letter-spacing: -.02em;
 }
 
 .region-row__status {
+  grid-column: 2;
+  grid-row: 1;
   color: var(--action);
-  font-weight: 720;
+  font-size: 12px;
+  font-weight: 760;
 }
 
-.region-row__play {
-  width: 50px;
-  border-left-color: var(--line);
-  color: var(--action);
-  background: color-mix(in srgb, var(--action-soft) 62%, var(--surface));
+.region-row__evidence {
+  grid-column: 1 / 3;
+  grid-row: 2;
+  min-width: 0;
+  color: var(--text-muted);
+  font-size: 11px;
+  font-weight: 650;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
 }
 
-.region-row__play:active {
-  background: var(--action-soft);
-  transform: translateY(1px);
+.region-row__progress {
+  grid-column: 1 / -1;
+  grid-row: 3;
+  min-width: 0;
+}
+
+.region-row__progress .status-strip {
+  height: 7px;
+  border-radius: 999px;
+}
+
+.region-row__open > .ui-icon {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  justify-self: end;
 }
 
 .page--launcher .topbar { margin-bottom: 18px; }
@@ -685,8 +710,8 @@ body { letter-spacing: -.006em; }
   .page--tile-index .continent-row:active,
   .icon-button:active,
   .text-icon-button:active,
-  .region-row__play:active,
-  .page--tile-index .continent-row__play:active {
+  .region-row__open:active,
+  .page--tile-index .continent-row__open:active {
     transform: none;
   }
 }
@@ -914,17 +939,11 @@ body { letter-spacing: -.006em; }
    so nothing reflows; only the mark reads as occupied. */
 .is-launching { cursor: progress; }
 
-.continent-row__play.is-launching,
-.region-row__play.is-launching,
 .button.is-launching {
   background: var(--action-soft);
   color: var(--action);
 }
 
-.continent-row__play.is-launching,
-.region-row__play.is-launching {
-  animation: launch-pulse 900ms ease-in-out infinite;
-}
 
 .button--primary.is-launching {
   border-color: var(--action-pressed);
@@ -934,15 +953,9 @@ body { letter-spacing: -.006em; }
   transform: translateY(3px);
 }
 
-@keyframes launch-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: .55; }
-}
 
 @media (prefers-reduced-motion: reduce) {
   .app-notice:not([hidden]) { animation: none; }
-  .continent-row__play.is-launching,
-  .region-row__play.is-launching { animation: none; opacity: .7; }
   .button--primary.is-launching { transform: none; }
 }
 

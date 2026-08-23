@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
+import { CONTINENTS } from '../dist/data/continents.js';
 import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
@@ -11,6 +12,7 @@ import {
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
+import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
@@ -40,7 +42,7 @@ assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell incl
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v16'"), 'Atlas brand rollout owns the v16 PWA cache.');
+assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v27'"), 'Issue #77 shell changes advance the PWA cache to v27.');
 assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
 assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
@@ -49,6 +51,7 @@ const app = await readFile('dist/app.js', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
   assert.ok(app.includes(marker), `Combined app orchestration retains ${marker}.`);
 }
+assert.equal(app.includes('quick-play'), false, 'Combined app orchestration has no retired row-level Quick Play path.');
 
 const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
@@ -69,16 +72,26 @@ for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
 const flagsIndexHtml = renderDomainIndex('flags', ledgers);
 assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
 assert.equal((flagsIndexHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
+assert.equal((flagsIndexHtml.match(/data-action="quick-play"/g) ?? []).length, 0, 'Flags continent rows do not bypass their launchers.');
 for (const domain of ['locations', 'outlines', 'neighbors']) {
   const indexHtml2 = renderDomainIndex(domain, ledgers);
+  const shippedContinents = CONTINENTS.filter((continent) => scopeSupportsDomain(
+    { kind: 'continent', id: continent.id, label: continent.name },
+    domain,
+  )).length;
   assert.equal(
     (indexHtml2.match(/data-action="open-scope"/g) ?? []).length,
-    1,
-    `${domain} opens only the continent it has shipped.`,
+    shippedContinents,
+    `${domain} opens every continent with canonical shipped coverage.`,
+  );
+  assert.equal(
+    (indexHtml2.match(/data-action="quick-play"/g) ?? []).length,
+    0,
+    `${domain} exposes no row-level Quick Play shortcut.`,
   );
   assert.ok(
-    indexHtml2.includes(`aria-label="Play Africa ${domain === 'neighbors' ? 'neighbours' : domain}"`),
-    `${domain} plays Africa through its canonical display name.`,
+    indexHtml2.includes('<strong>Africa</strong>'),
+    `${domain} names Africa through its canonical display label.`,
   );
 }
 
@@ -90,10 +103,12 @@ const launchers = [
 for (const [name, html] of launchers) {
   assert.ok(html.includes('Play Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
   assert.equal((html.match(/data-action="select-region"/g) ?? []).length, 5, `${name} exposes the five Africa regions.`);
+  assert.equal((html.match(/class="region-row__progress"/g) ?? []).length, 5, `${name} exposes progress for all five Africa regions.`);
+  assert.equal((html.match(/data-action="quick-play"/g) ?? []).length, 0, `${name} keeps Play on the active launcher rather than region rows.`);
   assert.ok(html.includes('data-launcher-map-slot'), `${name} reserves the shared lazy map slot.`);
   for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend', 'neighbor-policy']) {
     assert.equal(html.includes(deletedSurface), false, `${name} does not restore deleted pre-round ${deletedSurface} UI.`);
   }
 }
 
-console.log('Cross-domain integration verification passed: mode-first Home, per-domain continent indexes, direct Africa launchers, v16 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: mode-first Home, full-width continent and region selection, deliberate Africa launchers, v27 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

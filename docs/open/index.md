@@ -44,31 +44,58 @@ spun off a focused follow-up issue below.
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
   No repository plan yet; read the GitHub issue before starting.
 
-#75 (silent round-drop on refresh) and #76 (full-continent Play) are complete
-and closed. #76's continent-wide Play survives the mode-first IA change: it now
-lives on each domain's continent index and inside the launcher, rather than on
-the retired scope-first continent surface.
+#77 (full-width continent/region navigation, Quick Play removal) and #78
+(explicit Locations Play feedback) shipped in v0.7.0; their closeout records are
+[`issue-77-full-width-navigation.md`](../closed/issue-77-full-width-navigation.md)
+and [`issue-78-locations-play-feedback.md`](../closed/issue-78-locations-play-feedback.md).
 
-**Mode-first IA change (no issue number).** Navigation was inverted from
-scope-first to mode-first: Home lists the four learning modes with their
-progress, `/{domain}` lists that mode's continents, and `/{domain}/{continent}`
-is the launcher. The `/atlas/*` routes, `src/ui/views/atlas.ts` and the region
-card's four-domain launch row are retired. Normative descriptions live in
-`PRODUCT.md`, `DESIGN.md` and
+#75 (silent round-drop on refresh) and #76 (full-continent Play) are complete
+and closed. #76 remains the historical record for the direct-play experiment,
+but #77 supersedes its learner-facing row-level Quick Play direction. Whole-
+continent Play still exists as a normal deliberate launcher action; it is no
+longer exposed as a trailing shortcut on continent or region selection rows.
+
+**Mode-first IA change.** Navigation remains mode-first: Home lists the four
+learning modes with their progress, `/{domain}` lists that mode's continents,
+and `/{domain}/{continent}` is the launcher. Issue #77 refines the post-Home
+presentation so continents and regions are full-width selection rows and the
+active launcher owns Play/Learn. The `/atlas/*` routes, `src/ui/views/atlas.ts`
+and the region card's four-domain launch row remain retired. Normative
+descriptions live in `PRODUCT.md`, `DESIGN.md` and
 [`../architecture/routing.md`](../architecture/routing.md); the closed records of
-#35 and #74 describe the superseded scope-first design and should be read as
-history.
+#35, #74 and #76 describe superseded historical presentation/shortcut decisions
+and should be read as history.
 
 ### 5. Geography expansion
 
-- [#22 — North America](https://github.com/BenWassa/flag/issues/22) (also owns Central America; #23 is superseded/closed — see [`issue-23-central-america-expansion.md`](../closed/issue-23-central-america-expansion.md))
-- [#24 — South America](https://github.com/BenWassa/flag/issues/24)
-- [#25 — Europe](https://github.com/BenWassa/flag/issues/25)
-- [#26 — Asia](https://github.com/BenWassa/flag/issues/26)
-- [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
-- [#28 — Middle East conventional cross-continental learning region](https://github.com/BenWassa/flag/issues/28)
+South America (#24), Europe (#25) and Asia (#26) shipped in v0.7.0 across all
+four learning domains, together with the Middle East cross-continental scope
+(#28). Their closeout records are
+[`issue-24-south-america-expansion.md`](../closed/issue-24-south-america-expansion.md),
+[`issue-25-europe-expansion.md`](../closed/issue-25-europe-expansion.md),
+[`issue-26-asia-expansion.md`](../closed/issue-26-asia-expansion.md) and
+[`issue-28-middle-east-region.md`](../closed/issue-28-middle-east-region.md).
 
-Africa remains the production baseline. Other continents can appear as shell/navigation states for visual and IA testing before their full Locations/Outlines/Neighbours data is implemented, but unsupported curriculum must never count towards mastery/completion.
+Atlas now ships four production continents — Africa, South America, Europe and
+Asia — each with a dedicated verifier gating curriculum, territory/context
+policy, adjacency and runtime payload budget.
+
+Still outstanding:
+
+- [#22 — North America](https://github.com/BenWassa/flag/issues/22) (also owns Central America; #23 is superseded/closed — see [`issue-23-central-america-expansion.md`](../closed/issue-23-central-america-expansion.md))
+- [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
+
+Africa remains the reference baseline. North America and Oceania still appear
+as shell/navigation states, and unsupported curriculum must never count towards
+mastery/completion.
+
+**Continent payload follow-up.** Physical map context (ocean, coastline, lakes)
+is now simplified per continent, which cut Europe by 29% and Asia by 21% of
+gzip. Asia still ships the largest lazy chunk at roughly 478 KB gzip, because
+its canvas spans canonical whole-country geometry. Clipping context layers to
+each continent's viewport is the next available reduction and is tracked
+separately; it needs a generator change and a full four-continent regeneration,
+so it was deliberately not bundled into the v0.7.0 integration.
 
 ## Working rules
 

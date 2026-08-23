@@ -1,8 +1,36 @@
 # Issue #28 — Middle East conventional cross-continental learning scope
 
-**Status:** policy locked; implementation should use the shared global expansion learning-scope model.
+**Status:** policy locked and being implemented inside Issue #26 on `issue-26-asia-middle-east-expansion`; do not create a separate Middle East geography/routing/progress implementation. PR #82 is the active implementation PR and remains unmerged while verification is incomplete.
 
 GitHub: https://github.com/BenWassa/flag/issues/28
+
+## Implementation note — 2026-08-22/23
+
+Issue #28 is being consumed deliberately as part of the Asia expansion rather than developed as a parallel subsystem. This sequencing is important because Middle East is the first learner-facing scope that crosses canonical continent ownership: Egypt remains African while participating in the 17-country Middle East learning scope.
+
+Work already performed on the Issue #26 branch:
+
+- the exact 17-country Middle East membership is represented through shared learning-scope definitions;
+- Egypt (`EGY`) remains the same canonical African country/progress identity and also participates in Middle East;
+- Armenia, Azerbaijan and Georgia are excluded from Middle East and surfaced as the separate Caucasus learner scope;
+- learner-facing Asia navigation is designed around Central Asia, East Asia, Southeast Asia, South Asia, Middle East and Caucasus;
+- legacy `west-asia` is retained only for compatibility/formal taxonomy where needed and is not an ordinary learner-facing duplicate;
+- Flags, Locations, Outlines and Neighbours are being wired to the same scope membership source rather than maintaining four membership lists;
+- progress/mastery evaluation is being hardened to support overlapping scopes from canonical country evidence;
+- the shared Natural Earth generator now supports explicit learning-scope focus bounds, cross-continent context and additional canonical adjacency support needed by Middle East without introducing a second topology source;
+- canonical Asia generation succeeds with Egypt/cross-scope support and the river-free map policy intact;
+- source-policy guards were exercised for special/disputed features rather than bypassed;
+- generator changes have been proven to leave Africa generation semantics unchanged relative to clean current-main generation.
+
+Current verification boundary:
+
+- TypeScript checking and the production build succeed in the instrumented Node 22 CI run;
+- canonical Asia generation succeeds;
+- the strengthened Africa no-regression gate succeeds;
+- the full `npm test` suite is **not yet green** because the legacy general verifier still hard-codes Locations as having exactly one shipped continent and fails when Asia correctly becomes the second;
+- final production chunk/gzip measurement, full visual QA, browser/device QA and final CI-green state have therefore **not** yet been claimed.
+
+The complete implementation worklog, CI findings, source-feature classifications, generator changes and remaining release steps are recorded in `docs/open/issue-26-asia-expansion.md`. That document is the authoritative execution log for the combined Asia + Middle East implementation.
 
 ## Locked learner-facing scope
 

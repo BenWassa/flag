@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
 import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
+import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../dist/domain/progress.js';
 import { balancedPositions, buildQuiz, createSeededRandom } from '../dist/domain/quiz.js';
 
@@ -173,14 +174,18 @@ assert.equal(
   CONTINENTS.length,
   'Flags reaches every continent from its own index.',
 );
+const shippedLocationContinents = CONTINENTS.filter((continent) => scopeSupportsDomain(
+  { kind: 'continent', id: continent.id, label: continent.name },
+  'locations',
+)).length;
 assert.equal(
   (screens.locationsIndex.match(/data-action="open-scope"/g) ?? []).length,
-  1,
-  'Locations opens only the continent it has actually shipped.',
+  shippedLocationContinents,
+  'Locations opens every continent with canonical shipped map coverage.',
 );
 assert.equal(
   (screens.locationsIndex.match(/continent-row--shell/g) ?? []).length,
-  CONTINENTS.length - 1,
+  CONTINENTS.length - shippedLocationContinents,
   'Every continent Locations has not shipped is still listed, as an honest shell.',
 );
 assert.ok(

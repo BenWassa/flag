@@ -3,10 +3,22 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { MAP_GENERATION_CONFIGS } from './map-continent-configs.mjs';
 
 const PATH_DIGITS = 1;
+// Defaults are the Africa-calibrated baseline. Coastline defaults to 0 so
+// continents generated before per-continent tuning stay byte-identical.
 const PHYSICAL_TOLERANCE = Object.freeze({
   ocean: 0.4,
   lakes: 0.15,
+  coastline: 0,
 });
+
+/**
+ * Physical context (ocean, coastline, lakes) is non-interactive decoration
+ * behind the curriculum, so its detail budget scales with how much canvas a
+ * continent spans. Country geometry and adjacency are never touched here.
+ */
+function physicalToleranceFor(config) {
+  return { ...PHYSICAL_TOLERANCE, ...(config.physicalTolerance ?? {}) };
+}
 
 function extractLiteral(source, name) {
   const declaration = `export const ${name}`;
@@ -33,13 +45,13 @@ function replaceLiteral(source, name, value) {
   return `${source.slice(0, parsed.equalsIndex + 1)}${replacement}${source.slice(parsed.endIndex)}`;
 }
 
-function formatNumber(value) {
-  const rounded = Number(value.toFixed(PATH_DIGITS));
+function formatNumber(value, digits = PATH_DIGITS) {
+  const rounded = Number(value.toFixed(digits));
   return Object.is(rounded, -0) ? '0' : String(rounded);
 }
 
-function roundSvgPath(path) {
-  return path.replace(/-?\d+(?:\.\d+)?/g, (value) => formatNumber(Number(value)));
+function roundSvgPath(path, digits = PATH_DIGITS) {
+  return path.replace(/-?\d+(?:\.\d+)?/g, (value) => formatNumber(Number(value), digits));
 }
 
 function distanceToSegment(point, start, end) {
@@ -149,22 +161,30 @@ async function optimizeContinent(config) {
   const coastlinePaths = extractLiteral(source, `${prefix}_COASTLINE_PATHS`).value;
   const water = extractLiteral(source, `${prefix}_WATER`).value;
 
-  for (const item of Object.values(geometry)) {
-    if (item.path) item.path = roundSvgPath(item.path);
-    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath);
+  const precisionSensitiveIds = new Set(config.precisionSensitiveCountryIds ?? []);
+  for (const [countryId, item] of Object.entries(geometry)) {
+    const digits = precisionSensitiveIds.has(countryId) ? 2 : PATH_DIGITS;
+    if (item.path) item.path = roundSvgPath(item.path, digits);
+    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath, digits);
   }
   for (let index = 0; index < contextPaths.length; index += 1) contextPaths[index] = roundSvgPath(contextPaths[index]);
   for (let index = 0; index < sharedBoundaryPaths.length; index += 1) sharedBoundaryPaths[index] = roundSvgPath(sharedBoundaryPaths[index]);
-  for (let index = 0; index < coastlinePaths.length; index += 1) coastlinePaths[index] = roundSvgPath(coastlinePaths[index]);
+  const tolerance = physicalToleranceFor(config);
+  for (let index = 0; index < coastlinePaths.length; index += 1) {
+    coastlinePaths[index] = tolerance.coastline > 0
+      ? simplifySvgPath(coastlinePaths[index], tolerance.coastline)
+      : roundSvgPath(coastlinePaths[index]);
+  }
 
-  if (water.oceanPath) water.oceanPath = simplifySvgPath(water.oceanPath, PHYSICAL_TOLERANCE.ocean);
-  for (const lake of water.lakes ?? []) lake.path = simplifySvgPath(lake.path, PHYSICAL_TOLERANCE.lakes);
+  if (water.oceanPath) water.oceanPath = simplifySvgPath(water.oceanPath, tolerance.ocean);
+  for (const lake of water.lakes ?? []) lake.path = simplifySvgPath(lake.path, tolerance.lakes);
 
   provenance.runtimeOptimization = {
     pathDigits: PATH_DIGITS,
     method: 'projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context',
     canvasUnits: `${config.displayName} ${835}x${723} projected canvas units`,
-    physicalTolerance: { ...PHYSICAL_TOLERANCE },
+    physicalTolerance: tolerance,
+    precisionSensitiveCountryIds: [...precisionSensitiveIds],
   };
 
   source = replaceLiteral(source, `${prefix}_CARTOGRAPHY_PROVENANCE`, provenance);
@@ -186,6 +206,7 @@ async function optimizeContinent(config) {
 
 for (const config of MAP_GENERATION_CONFIGS) await optimizeContinent(config);
 console.log(
-  `Physical path tolerances: ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}; `
+  `Physical path tolerances: baseline ocean ${PHYSICAL_TOLERANCE.ocean}, lakes ${PHYSICAL_TOLERANCE.lakes}, `
+  + `coastline ${PHYSICAL_TOLERANCE.coastline}; per-continent overrides applied where configured; `
   + `final path precision ${PATH_DIGITS} decimal.`,
 );
