@@ -22,9 +22,13 @@ export function renderMapQuiz(
   const wrongCountry = lastWrongCountryId ? COUNTRY_BY_ID.get(lastWrongCountryId) : undefined;
   const showFeedback = session.mode === 'learn';
   const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, wrongCountry?.name);
-  const currentPlayAttempt = session.mode === 'test' && state?.resolved
-    ? session.attempts.findLast((attempt) => attempt.targetCountryId === targetId && attempt.resolved)
-    : undefined;
+  const lastAttempt = session.attempts.at(-1);
+  const currentPlayAttempt = session.mode === 'test'
+    && state?.resolved
+    && lastAttempt?.targetCountryId === targetId
+    && lastAttempt.resolved
+      ? lastAttempt
+      : undefined;
   const playFeedback = currentPlayAttempt ? answerFeedback(currentPlayAttempt.correct, target.name) : null;
   const mapLabel = session.scope.kind === 'continent'
     ? 'Africa country map'
