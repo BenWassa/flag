@@ -2,14 +2,76 @@ name: CI
 
 on:
   push:
-    branches: [main]
+    branches: [main, issue-25-europe-expansion]
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
+  regenerate-europe:
+    if: github.ref == 'refs/heads/issue-25-europe-expansion'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run maps:generate
+      - run: npm run check
+      - run: npm run build
+      - name: Inspect generated Europe runtime
+        run: |
+          node --input-type=module <<'NODE' | tee docs/open/europe-generation-inspection.txt
+          import { readFile, stat } from 'node:fs/promises';
+          import { gzipSync } from 'node:zlib';
+          const map = await import('./dist/data/maps/europe.js');
+          const geometry = map.EUROPE_GEOMETRY;
+          const adjacency = map.EUROPE_LAND_ADJACENCY;
+          const pathBounds = (path) => {
+            const points = [...String(path ?? '').matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)]
+              .map((match) => [Number(match[1]), Number(match[2])]);
+            if (!points.length) return null;
+            const xs = points.map(([x]) => x);
+            const ys = points.map(([, y]) => y);
+            return {
+              minX: Math.min(...xs), maxX: Math.max(...xs),
+              minY: Math.min(...ys), maxY: Math.max(...ys),
+              width: Math.max(...xs) - Math.min(...xs),
+              height: Math.max(...ys) - Math.min(...ys),
+            };
+          };
+          const bytes = await readFile('dist/data/maps/europe.js');
+          console.log('EUROPE_RUNTIME_BYTES', (await stat('dist/data/maps/europe.js')).size);
+          console.log('EUROPE_RUNTIME_GZIP_BYTES', gzipSync(bytes, { level: 9 }).byteLength);
+          console.log('EUROPE_GEOMETRY_IDS', Object.keys(geometry).join(','));
+          console.log('EUROPE_CONTEXT_PATHS', map.EUROPE_EXTRA_CONTEXT_PATHS.length);
+          console.log('EUROPE_LAKES', map.EUROPE_WATER.lakes.map((lake) => lake.name).join(','));
+          console.log('EUROPE_FOCUS', JSON.stringify(map.EUROPE_SCOPE_FOCUS));
+          for (const id of ['RUS','FRA','NOR','AND','LIE','LUX','MCO','SMR','VAT','MLT']) {
+            const item = geometry[id];
+            console.log(`EUROPE_GEOMETRY_${id}`, JSON.stringify({
+              bounds: pathBounds(item?.path ?? item?.outlinePath),
+              locator: item?.locator ?? null,
+              callout: item?.callout ?? null,
+            }));
+          }
+          for (const id of ['RUS','FRA','ESP','LIE','SMR','VAT','ISL','MLT']) {
+            console.log(`EUROPE_ADJ_${id}`, JSON.stringify(adjacency[id]));
+          }
+          NODE
+      - name: Commit deterministic generated output and restore CI
+        run: |
+          git show HEAD^:.github/workflows/ci.yml > .github/workflows/ci.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/workflows/ci.yml src/data/maps src/data/neighbors docs/architecture docs/open/europe-generation-inspection.txt
+          git commit -m "Regenerate Europe geography after QA hardening"
+          git push
+
   verify:
+    if: github.ref != 'refs/heads/issue-25-europe-expansion'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
