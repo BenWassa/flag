@@ -14,12 +14,18 @@ import {
   SOUTH_AMERICA_LAND_ADJACENCY,
   SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
 } from './south-america.js';
+import {
+  EUROPE_LAND_ADJACENCY,
+  EUROPE_ZERO_LAND_NEIGHBOR_IDS,
+} from './europe.js';
 
 export {
   AFRICA_LAND_ADJACENCY,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
   SOUTH_AMERICA_LAND_ADJACENCY,
   SOUTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+  EUROPE_LAND_ADJACENCY,
+  EUROPE_ZERO_LAND_NEIGHBOR_IDS,
 };
 
 export interface NeighborContinentData {
@@ -49,6 +55,11 @@ const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData
   'south-america': {
     continentId: 'south-america',
     adjacency: SOUTH_AMERICA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
+  },
+  europe: {
+    continentId: 'europe',
+    adjacency: EUROPE_LAND_ADJACENCY,
     coverageExcludedIds: [],
   },
 };

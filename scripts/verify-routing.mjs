@@ -97,12 +97,12 @@ assert.equal(serializeRoutePath(normalizeAvailableRoute(locationsAfrica)), '/loc
 // Unshipped curriculum falls back to the domain index, which states the
 // coverage honestly, rather than silently substituting a different continent.
 assert.equal(
-  serializeRoutePath(normalizeAvailableRoute(route('/locations/asia'))),
+  serializeRoutePath(normalizeAvailableRoute(route('/locations/oceania'))),
   '/locations',
   'An unshipped continent falls back to the domain index rather than a substituted scope.',
 );
 assert.equal(
-  serializeRoutePath(normalizeAvailableRoute(route('/neighbors/europe/western-europe'))),
+  serializeRoutePath(normalizeAvailableRoute(route('/neighbors/oceania/melanesia'))),
   '/neighbors',
   'An unshipped region falls back to the domain index too.',
 );
