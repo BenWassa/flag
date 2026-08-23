@@ -19,7 +19,10 @@ import { renderDomainIndex } from '../dist/ui/views/domain.js';
 import { renderHome } from '../dist/ui/views/home.js';
 import { renderMapHome } from '../dist/ui/views/map-home.js';
 import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
+import { renderNeighborResults } from '../dist/ui/views/neighbor-results.js';
 import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
+import { renderOutlineResults } from '../dist/ui/views/outline-results.js';
+import { renderResults } from '../dist/ui/views/results.js';
 import { renderScope } from '../dist/ui/views/scope.js';
 
 function occurrences(value, needle) {
@@ -138,6 +141,7 @@ const homeText = visibleText(home);
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeText.includes(label), `Home names ${label} in visible text, not by glyph alone.`);
 }
+assert.equal(/\b\d+ countries\b/.test(homeText), false, 'Home coverage labels omit redundant country totals.');
 assert.equal(home.includes('data-action="open-atlas"'), false, 'The retired scope-first atlas action stays retired.');
 assert.equal(home.includes('data-action="open-scope"'), false, 'Home does not select geography directly.');
 assert.equal(actionTags(home, 'button', 'quick-play').length, 0, 'Home starts no round before a mode and a scope are chosen.');
@@ -166,6 +170,11 @@ for (const domain of LEARNING_DOMAIN_IDS) {
     `${domain} continent index has one Back control.`,
   );
   assert.ok(index.includes('storage-notice'), `${domain} continent index retains its storage-degraded state.`);
+  assert.equal(
+    /\b\d+ (?:countries|regions)\b/.test(visibleText(index)),
+    false,
+    `${domain} continent index omits redundant country and region totals.`,
+  );
 
   const openButtons = actionTags(index, 'button', 'open-scope');
   const quickPlayButtons = actionTags(index, 'button', 'quick-play');
@@ -258,6 +267,12 @@ for (const launcherCase of launcherCases) {
     );
     assert.ok(html.includes('class="status-strip"'), `${name} retains the progress strip.`);
     assert.ok(!html.includes('strong evidence'), `${name} does not expose the scheduler-flavoured strong-evidence count.`);
+    assert.equal(/\b\d+ regions\b/.test(visibleText(html)), false, `${name} omits the redundant region total.`);
+    assert.match(
+      html,
+      /<div class="list-heading">\s*<h2 id="launcher-regions-heading">Regions<\/h2>\s*<\/div>/,
+      `${name} renders the Regions heading without a repeated list count.`,
+    );
     assert.ok(html.includes('storage-notice'), `${name} retains its storage-degraded state.`);
     assert.equal(html.includes('Quick Play'), false, `${name} always names the active scope.`);
     assertNoLegacyInteractiveRow(name, html, 'region-row');
@@ -329,6 +344,39 @@ for (const launcherCase of launcherCases) {
       assert.equal(html.includes('class="launcher-map"'), false, `${name} never renders a launcher map.`);
     }
   }
+}
+
+const reviewSession = { mode: 'test', scope: africaScope };
+const reviewResults = [
+  ['Flags', renderResults({
+    session: reviewSession,
+    correct: 0,
+    total: 1,
+    newlyMastered: [],
+    missed: [{ countryId: 'GHA', selectedCountryId: 'NGA', correct: false }],
+  }), 'review-heading'],
+  ['Outlines', renderOutlineResults({
+    session: reviewSession,
+    correct: 0,
+    total: 1,
+    newlyMastered: [],
+    missed: [{ countryId: 'GHA', selectedCountryId: 'NGA', correct: false }],
+  }), 'outline-review-heading'],
+  ['Neighbours', renderNeighborResults({
+    session: reviewSession,
+    cleanCompletions: 0,
+    total: 1,
+    completed: 0,
+    exhausted: 1,
+    missedCountryIds: ['GHA'],
+  }), 'neighbor-review-heading'],
+];
+for (const [name, html, headingId] of reviewResults) {
+  assert.match(
+    html,
+    new RegExp(`<div class="list-heading"><h2 id="${headingId}">Review<\\/h2><\\/div>`),
+    `${name} review heading omits a count duplicated by its review list.`,
+  );
 }
 
 // The map layer hydrates progressively and mirrors the five always-present

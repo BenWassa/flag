@@ -33,7 +33,7 @@ export function renderNeighborResults(result: NeighborSessionResult): string {
 
       ${missedNames.length ? `
         <section class="atlas-section" aria-labelledby="neighbor-review-heading">
-          <div class="list-heading"><h2 id="neighbor-review-heading">Review</h2><span>${missedNames.length}</span></div>
+          <div class="list-heading"><h2 id="neighbor-review-heading">Review</h2></div>
           <p>${missedNames.join(', ')}</p>
           <button class="button button--primary" data-action="review-neighbors">Review these countries</button>
         </section>

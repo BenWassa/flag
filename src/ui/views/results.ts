@@ -32,7 +32,7 @@ export function renderResults(result: SessionResult): string {
 
       ${missed.length ? `
         <section class="result-section" aria-labelledby="review-heading">
-          <div class="list-heading"><h2 id="review-heading">Review</h2><span>${missed.length} missed</span></div>
+          <div class="list-heading"><h2 id="review-heading">Review</h2></div>
           <div class="mistake-list">
             ${missed.map(({ correct, selected }) => `
               <div class="mistake-row">

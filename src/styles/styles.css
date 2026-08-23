@@ -178,7 +178,6 @@ button:focus-visible,
   gap: var(--space-4);
 }
 .list-heading h2 { margin: 0; line-height: 1.2; letter-spacing: -.015em; }
-.list-heading > span { color: var(--text-muted); font-size: 12px; font-variant-numeric: tabular-nums; }
 
 .continent-row,
 .region-row {

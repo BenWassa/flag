@@ -106,7 +106,7 @@ export function renderLauncher(model: LauncherModel): string {
         <span class="launcher-header__icon" aria-hidden="true">${domainIcon(model.domain)}</span>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus aria-label="${scopeLabel} ${domainName} launcher">${scopeLabel}</h1>
-          <span>${domainTitle} · ${model.regions.length} regions</span>
+          <span>${domainTitle}</span>
         </div>
       </header>
 
@@ -144,7 +144,6 @@ export function renderLauncher(model: LauncherModel): string {
         <section class="atlas-section launcher__regions" aria-labelledby="launcher-regions-heading">
           <div class="list-heading">
             <h2 id="launcher-regions-heading">Regions</h2>
-            <span>${model.regions.length}</span>
           </div>
           <div class="region-list">
             ${model.regions.map((region) => renderRegionRow(

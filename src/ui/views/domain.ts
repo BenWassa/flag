@@ -1,5 +1,4 @@
 import { CONTINENTS } from '../../data/continents.js';
-import { regionLearningScopes } from '../../data/learning-scopes.js';
 import { getContinentAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
 import { domainDisplayName } from '../../domain/display.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
@@ -54,7 +53,6 @@ function continentCard(
   if (summary.total === 0) return shellCard(continent);
 
   const stats = statsFor(summary);
-  const regions = regionLearningScopes(continent.id).length;
   const name = escapeHtml(continent.name);
   const crestEarned = getContinentAchievementReadModel(achievements, continent.id)?.crestEarned ?? false;
 
@@ -69,7 +67,6 @@ function continentCard(
       >
         <span class="continent-row__identity">
           <strong>${name}</strong>
-          <small>${summary.total} countries · ${regions} regions</small>
         </span>
         <span class="continent-row__mark" aria-hidden="true">${continentIcon(continent.id)}</span>
         ${summary.due > 0 ? `<span class="continent-row__evidence">${summary.due} due</span>` : ''}
@@ -123,7 +120,7 @@ export function renderDomainIndex(
         <span class="launcher-header__icon" aria-hidden="true">${domainIcon(domain)}</span>
         <div class="screen-title">
           <h1 tabindex="-1" data-autofocus>${title}</h1>
-          <span>${coverage} · ${summary.total} countries</span>
+          <span>${coverage}</span>
         </div>
       </header>
 
@@ -138,7 +135,6 @@ export function renderDomainIndex(
       <section class="atlas-section" aria-labelledby="continents-heading">
         <div class="list-heading">
           <h2 id="continents-heading">Continents</h2>
-          <span>${CONTINENTS.length}</span>
         </div>
         <div class="continent-list">
           ${CONTINENTS.map((continent) => continentCard(domain, continent, ledgers, achievements)).join('')}

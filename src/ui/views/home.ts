@@ -48,7 +48,7 @@ function modeCard(domain: LearningDomain, ledgers: ProgressLedgers): string {
       <span class="atlas-card__body">
         <span class="atlas-card__identity">
           <strong>${label}</strong>
-          <small>${coverage} · ${summary.total} countries</small>
+          <small>${coverage}</small>
         </span>
         ${progressStrip(stats)}
       </span>
