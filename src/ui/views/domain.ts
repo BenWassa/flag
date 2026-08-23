@@ -53,7 +53,7 @@ function continentCard(
   const stats = statsFor(summary);
   const regions = regionLearningScopes(continent.id).length;
   const name = escapeHtml(continent.name);
-  const domainName = escapeHtml(domainDisplayName(domain).toLowerCase());
+  const dueCopy = summary.due > 0 ? ` · ${summary.due} due` : '';
 
   return `
     <div class="continent-row">
@@ -69,18 +69,10 @@ function continentCard(
           <small>${summary.total} countries · ${regions} regions</small>
         </span>
         <span class="continent-row__mark" aria-hidden="true">${continentIcon(continent.id)}</span>
+        <span class="continent-row__evidence">${summary.strong} strong · ${summary.learning} learning${dueCopy}</span>
         <span class="continent-row__progress">${progressStrip(stats)}</span>
-        <span class="continent-row__score" aria-label="${summary.strong} of ${summary.total} strong"><strong>${summary.strong}</strong><small>/${summary.total}</small></span>
         ${icon('chevron')}
       </button>
-      <button
-        class="continent-row__play"
-        type="button"
-        data-action="quick-play"
-        data-domain="${domain}"
-        data-id="${escapeHtml(continent.id)}"
-        aria-label="Play ${name} ${domainName}"
-      >${icon('play')}</button>
     </div>
   `;
 }

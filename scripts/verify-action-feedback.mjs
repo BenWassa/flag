@@ -9,6 +9,8 @@ import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
 import { renderProgress } from '../dist/ui/views/progress.js';
+import { CONTINENTS } from '../dist/data/continents.js';
+import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 import { createInitialAchievementState } from '../dist/domain/achievements.js';
 
 const app = await readFile('src/app.ts', 'utf8');
@@ -74,21 +76,22 @@ assert.ok(
   'An unresolvable Neighbours guess tells the learner, instead of doing nothing visible.',
 );
 
-/* --- Async launches show they registered the tap ------------------------- */
+/* --- Async launcher actions show they registered the tap ----------------- */
 
 assert.ok(app.includes('async function withLaunchFeedback('), 'Async launches share one busy-state wrapper.');
 assert.ok(app.includes("element.setAttribute('aria-busy', 'true')"), 'A busy launcher is announced as busy.');
 assert.ok(app.includes("element.classList.add('is-launching')"), 'A busy launcher is visibly busy.');
 assert.match(app, /finally\s*\{[\s\S]*?is-launching/, 'A failed launch releases its control.');
 for (const call of [
-  "withLaunchFeedback(element, () => locationsRound.begin('test', undefined, scope))",
-  "withLaunchFeedback(element, () => outlinesRound.begin('test', undefined, scope))",
+  "withLaunchFeedback(element, () => locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test'))",
+  "withLaunchFeedback(element, () => outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test'))",
 ]) {
-  assert.ok(app.includes(call), `Region-card quick play shows launch feedback: ${call}`);
+  assert.ok(app.includes(call), `The deliberate launcher action shows launch feedback: ${call}`);
 }
+assert.equal(app.includes("action === 'quick-play'"), false, 'Retired row-level Quick Play has no application dispatch.');
 assert.ok(atlasTheme.includes('.is-launching'), 'The busy state has a production treatment.');
 
-/* --- Mode and continent cards name themselves ---------------------------- */
+/* --- Mode and continent rows name themselves ----------------------------- */
 
 const flagProgress = createInitialProgress(COUNTRIES);
 const ledgers = {
@@ -108,7 +111,27 @@ for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeSeen.includes(label), `Home names ${label} visibly beside its glyph.`);
 }
 
-// An unshipped continent stays inert: named, but not a control.
+// Every supported continent is a deliberate navigation target, while an
+// unshipped continent stays inert: named, but not a control. The count is
+// derived so shipping a new continent does not need a verifier edit.
+const supportedLocationContinents = CONTINENTS.filter(
+  (continent) => scopeSupportsDomain({ kind: 'continent', id: continent.id, label: continent.name }, 'locations'),
+);
+assert.ok(supportedLocationContinents.length > 0, 'Locations ships at least one continent.');
+assert.ok(
+  supportedLocationContinents.length < CONTINENTS.length,
+  'This check is only meaningful while some continent is still an unshipped shell.',
+);
+assert.equal(
+  (locationsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  supportedLocationContinents.length,
+  'Locations exposes exactly one navigation row per supported continent.',
+);
+assert.equal(
+  (locationsIndex.match(/data-action="quick-play"/g) ?? []).length,
+  0,
+  'The continent index contains no row-level Play shortcut.',
+);
 const shellTags = [...locationsIndex.matchAll(/<(div|button)[^>]*continent-row--shell[^>]*>/g)];
 assert.ok(shellTags.length > 0, 'Locations still marks the continents it has not shipped.');
 for (const [tag, tagName] of shellTags) {
@@ -119,19 +142,18 @@ assert.ok(
   seenText(locationsIndex).includes('Coming soon'),
   'The unshipped state reaches every learner as words, not colour.',
 );
-
-// Starting a round is ordinary primary action, so the continent Play control
-// uses the action colour rather than reading as neutral chrome.
 assert.match(
   atlasTheme,
-  /\.page--tile-index \.continent-row__play\s*\{[^}]*color:\s*var\(--action\)/,
-  'Continent Play controls use Atlas Blue.',
+  /\.page--tile-index \.continent-row__open\s*\{[^}]*width:\s*100%/,
+  'The whole supported continent row is the navigation target.',
 );
 assert.match(
   atlasTheme,
   /\.page--tile-index \.continent-row--shell\s*\{[^}]*border-style:\s*dashed/,
   'Unshipped continents use the dashed unavailable treatment Progress already established.',
 );
+assert.equal(atlasTheme.includes('.continent-row__play'), false, 'No dead continent Play-cell styling remains.');
+assert.equal(atlasTheme.includes('.region-row__play'), false, 'No dead region Play-cell styling remains.');
 
 /* --- Hover, and the banned side-stripe ----------------------------------- */
 
@@ -176,10 +198,10 @@ const reducedMotionBlocks = [...atlasTheme.matchAll(/@media \(prefers-reduced-mo
   .map(([, body]) => body)
   .join('\n');
 assert.ok(reducedMotionBlocks.includes('.app-notice'), 'The notice does not animate under reduced motion.');
-assert.ok(reducedMotionBlocks.includes('.continent-row__play.is-launching'), 'The busy pulse stops under reduced motion.');
+assert.ok(reducedMotionBlocks.includes('.button--primary.is-launching'), 'The primary launcher does not translate under reduced motion.');
 assert.ok(
   reducedMotionBlocks.includes('.atlas-card:hover'),
   'Mode-card hover travel is removed under reduced motion.',
 );
 
-console.log('Action-feedback verification passed: visible failure notices, launcher busy state, labelled mode and continent cards, no side-stripe accents, mastery legend, and reduced-motion coverage.');
+console.log('Action-feedback verification passed: visible failure notices, deliberate launcher busy state, labelled mode and continent selection, no side-stripe accents, mastery legend, and reduced-motion coverage.');

@@ -1,4 +1,6 @@
-// v27 ships #78's explicit Locations Play feedback and outcome-aware dwell.
+// v27 restores full-width post-mode continent and region navigation for Issue #77,
+// retires learner-facing row-level Quick Play shortcuts, and ships #78's explicit
+// Locations Play feedback and outcome-aware dwell.
 // v26 ships #75's refresh-dropped-round notice and heading fix, #76's
 // continent-wide Play entry, and full mobile PWA installability (iOS
 // standalone launch metadata, manifest identity/category fields, and an

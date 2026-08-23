@@ -53,21 +53,6 @@ export function routeForScopeId(domain: LearningDomain, id: string): LearningRou
   return scope ? routeForScope(domain, scope) : null;
 }
 
-export function scopeForQuickPlay(
-  domain: LearningDomain,
-  id: string | undefined,
-): StudyScope | null {
-  if (id === domain) {
-    return domain === 'flags'
-      ? { kind: 'world', label: 'World' }
-      : AFRICA_MAP_SCOPE;
-  }
-  if (!id) return null;
-  const scope = routeForScopeId(domain, id)?.scope;
-  if (!scope) return null;
-  return scopeSupportsDomain(scope, domain) ? scope : null;
-}
-
 export function stableRoute(route: AppRoute): AppRoute {
   if (route.name !== 'learning' || route.activity === undefined) return route;
   return { name: 'learning', domain: route.domain, scope: route.scope };

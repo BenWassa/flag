@@ -72,9 +72,9 @@ Home (four mode cards)
 └── Neighbours ► continent index ──► launcher (continent, optional region)
 ```
 
-Every domain uses the identical three-level shape. Home carries no Play control at all: it commits to a mode and nothing else. The continent index splits each shipped continent into a body that opens the launcher and a trailing Play control that starts a continent-wide round directly; an unshipped continent renders inert, with no action. Only Flags adds a world Play/Learn pair above its continent list, because only Flags teaches the world.
+Every domain uses the identical three-level shape. Home carries no Play control at all: it commits to a mode and nothing else. On the continent index, each shipped continent is one full-width navigation row that opens the launcher; it does not start a round directly. An unshipped continent renders inert, with no action. Only Flags adds a deliberate world Play/Learn pair above its continent list, because only Flags teaches the world.
 
-One routed launcher represents `(domain, continentScope, selectedRegion | null)`. A region URL does not identify a second screen: `/#/locations/africa/west-africa` is the Africa Locations launcher with West Africa selected. Its Play and Learn actions both name and target West Africa, while an explicit All Africa control clears the selection. The region list is always present; an Africa map may progressively enhance Locations, Outlines, and Neighbours without blocking the launcher or becoming a second selection model.
+One routed launcher represents `(domain, continentScope, selectedRegion | null)`. A region URL does not identify a second screen: `/#/locations/africa/west-africa` is the Africa Locations launcher with West Africa selected. Region rows are selection controls with their existing progress visible; they do not contain a second Play action. The launcher's Play and Learn actions both name and target West Africa, while an explicit All Africa control clears the selection. The region list is always present; an Africa map may progressively enhance Locations, Outlines, and Neighbours without blocking the launcher or becoming a second selection model.
 
 The launcher contains decision-relevant status only. Country ledgers live in Progress, and pre-round learning-state legends, feedback keys, and rules prose do not belong on this route.
 
