@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   apply-verify-and-qa:
-    if: ${{ !contains(github.event.head_commit.message, 'complete full-width navigation') }}
+    if: ${{ !contains(github.event.head_commit.message, 'materialize implementation patch') && !contains(github.event.head_commit.message, 'complete full-width navigation') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +21,29 @@ jobs:
           node-version: 22
 
       - name: Apply scoped Issue 77 patch
-        run: python scripts/issue-77-apply.py
+        id: apply
+        shell: bash
+        run: |
+          set +e
+          python scripts/issue-77-apply.py 2>&1 | tee issue-77-apply.log
+          STATUS=${PIPESTATUS[0]}
+          set -e
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          if [ "$STATUS" -eq 0 ]; then rm issue-77-apply.log; fi
+
+      - name: Materialise patch on branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(#77): materialize implementation patch"
+            git push origin HEAD:issue-77-full-width-navigation
+          fi
+
+      - name: Stop on patch failure
+        if: steps.apply.outputs.status != '0'
+        run: exit 1
 
       - name: Install project dependencies
         run: npm install
@@ -64,25 +86,19 @@ jobs:
               const rows = [...host.children].filter((node) => node instanceof HTMLElement);
               const hostBox = host.getBoundingClientRect();
               const boxes = rows.map((row) => row.getBoundingClientRect());
-              const fullWidth = boxes.every((box) => Math.abs(box.width - hostBox.width) <= 1.5);
-              const verticalStack = boxes.every((box, index) => index === 0 || box.top > boxes[index - 1].top + 1);
-              const noHorizontalOverflow = document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1;
-              const quickPlay = document.querySelectorAll('[data-action="quick-play"]').length;
-              const progress = document.querySelectorAll('.region-row__progress').length;
-              const modeCards = document.querySelectorAll('[data-action="open-domain"]').length;
               return {
                 route: location.hash,
                 rowCount: rows.length,
                 expectedRows,
                 hostWidth: hostBox.width,
                 rowWidths: boxes.map((box) => box.width),
-                fullWidth,
-                verticalStack,
-                noHorizontalOverflow,
-                quickPlay,
-                regionProgress: progress,
+                fullWidth: boxes.every((box) => Math.abs(box.width - hostBox.width) <= 1.5),
+                verticalStack: boxes.every((box, index) => index === 0 || box.top > boxes[index - 1].top + 1),
+                noHorizontalOverflow: document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+                quickPlay: document.querySelectorAll('[data-action="quick-play"]').length,
+                regionProgress: document.querySelectorAll('.region-row__progress').length,
                 expectRegionProgress,
-                modeCards,
+                modeCards: document.querySelectorAll('[data-action="open-domain"]').length,
                 selectedText: document.body.innerText.includes('Selected'),
                 playWestAfrica: document.body.innerText.includes('Play West Africa'),
                 learnWestAfrica: document.body.innerText.includes('Learn West Africa'),
@@ -124,10 +140,8 @@ jobs:
           path: /tmp/issue-77-qa
           if-no-files-found: error
 
-      - name: Commit completed implementation and remove one-shot scaffolding
+      - name: Remove one-shot scaffolding
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm scripts/issue-77-apply.py .github/workflows/issue-77-apply.yml
           git add -A
           git commit -m "feat(#77): complete full-width navigation"
