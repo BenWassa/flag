@@ -1,10 +1,11 @@
 import { COUNTRY_BY_ID } from '../../data/countries.js';
+import { getMapContinentConfigForScope } from '../../data/map-scopes.js';
 import { currentMapTarget } from '../../domain/map-game.js';
 import type { MapRegionAsset, MapSession } from '../../domain/map-models.js';
-import { answerFeedback } from '../../domain/round-feedback.js';
+import { answerFeedback, roundScore } from '../../domain/round-feedback.js';
 import { icon } from '../components/icons.js';
 import { renderMapSvg } from '../components/map.js';
-import { answerFeedbackPanel } from '../components/round-feedback.js';
+import { answerFeedbackPanel, liveScore } from '../components/round-feedback.js';
 import { escapeHtml } from '../format.js';
 
 export function renderMapQuiz(
@@ -21,7 +22,10 @@ export function renderMapQuiz(
   const state = session.targets[targetId];
   const wrongCountry = lastWrongCountryId ? COUNTRY_BY_ID.get(lastWrongCountryId) : undefined;
   const showFeedback = session.mode === 'learn';
-  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, wrongCountry?.name);
+  const continentLabel = session.scope.id
+    ? getMapContinentConfigForScope(session.scope.id)?.scope.label ?? session.scope.label
+    : session.scope.label;
+  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, continentLabel, wrongCountry?.name);
   const lastAttempt = session.attempts.at(-1);
   const currentPlayAttempt = session.mode === 'test'
     && state?.resolved
@@ -30,9 +34,10 @@ export function renderMapQuiz(
       ? lastAttempt
       : undefined;
   const playFeedback = currentPlayAttempt ? answerFeedback(currentPlayAttempt.correct, target.name) : null;
+  const score = roundScore(session.attempts, session.countryIds.length);
   const mapLabel = session.scope.kind === 'continent'
-    ? 'Africa country map'
-    : `Africa map with ${session.scope.label} active`;
+    ? `${continentLabel} country map`
+    : `${continentLabel} map with ${session.scope.label} active`;
 
   return `
     <main class="page page--map-quiz">
@@ -48,6 +53,7 @@ export function renderMapQuiz(
       <section class="map-prompt" aria-labelledby="map-prompt-heading">
         <p class="map-prompt__kicker">Find</p>
         <h1 id="map-prompt-heading" tabindex="-1" data-autofocus>${escapeHtml(target.name)}</h1>
+        ${session.mode === 'test' ? liveScore(score) : ''}
         ${playFeedback
           ? answerFeedbackPanel(playFeedback)
           : `<p class="map-prompt__status ${feedback.className}">${feedback.text}</p>`}
@@ -69,12 +75,13 @@ function visibleFeedback(
   session: MapSession,
   resolution: MapSession['targets'][string]['resolution'],
   misses: number,
+  continentLabel: string,
   wrongCountryName?: string,
 ): { text: string; className: string } {
   if (session.mode === 'test') {
     return {
       text: session.currentIndex === 0
-        ? 'One tap each · pinch or wheel to zoom · swipe or drag to pan Africa · results at the end.'
+        ? `One tap each · pinch or wheel to zoom · swipe or drag to pan ${continentLabel} · results at the end.`
         : 'Tap one country.',
       className: '',
     };
@@ -104,7 +111,7 @@ function visibleFeedback(
 
   return {
     text: session.currentIndex === 0
-      ? 'Tap the country · pinch to zoom · swipe or drag to pan Africa.'
+      ? `Tap the country · pinch to zoom · swipe or drag to pan ${continentLabel}.`
       : 'Tap the country on the map.',
     className: '',
   };
