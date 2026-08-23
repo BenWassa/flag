@@ -1,0 +1,159 @@
+name: Apply Europe cartography hardening source
+
+on:
+  push:
+    branches: [issue-25-europe-expansion]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch shared source
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          config_path = Path('scripts/map-continent-configs.mjs')
+          config = config_path.read_text()
+          old = "  islandLocatorIds: Object.freeze(['MLT']),\n  callouts: Object.freeze({}),"
+          new = """  islandLocatorIds: Object.freeze(['MLT']),
+  precisionSensitiveCountryIds: Object.freeze(['AND', 'LIE', 'LUX', 'MCO', 'SMR', 'VAT', 'MLT']),
+  wholeOutlineCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
+  callouts: Object.freeze({
+    AND: Object.freeze({ dx: -28, dy: 18, r: 10 }),
+    LIE: Object.freeze({ dx: 24, dy: -20, r: 10 }),
+    LUX: Object.freeze({ dx: -25, dy: -20, r: 10 }),
+    MCO: Object.freeze({ dx: 27, dy: 16, r: 10 }),
+    SMR: Object.freeze({ dx: 24, dy: -16, r: 10 }),
+    VAT: Object.freeze({ dx: -26, dy: 18, r: 10 }),
+  }),"""
+          assert old in config
+          config = config.replace(old, new, 1)
+          old = "  fitExcludeCountryIds: Object.freeze(['RUS']),\n  focusExcludeCountryIds: Object.freeze(['RUS']),"
+          assert old in config
+          config = config.replace(old, "  fitExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),\n  focusExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),", 1)
+          old = "    russia: 'one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so eastern geometry may crop at the canvas edge',"
+          assert old in config
+          config = config.replace(old, """    russia: 'one canonical whole-country RUS outline; Europe map rendering is clipped to its canvas and RUS is excluded only from viewport fit/focus calculations',
+    france: 'one canonical whole-country FRA outline including French Guiana; Europe map rendering is clipped to its canvas and FRA is excluded from fit/focus so overseas geometry does not distort Europe',
+    norway: 'one canonical whole-country NOR outline; remote multipart source geometry is excluded from fit/focus while Europe map rendering stays clipped to its canvas',
+    microstates: 'AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical outline geometry is retained',""", 1)
+          config_path.write_text(config)
+
+          core_path = Path('scripts/map-generation-core.mjs')
+          core = core_path.read_text()
+          old = "import { geoNaturalEarth1, geoPath } from 'd3-geo';"
+          assert old in core
+          core = core.replace(old, "import { geoIdentity, geoNaturalEarth1, geoPath } from 'd3-geo';", 1)
+          old = "  const planarPath = geoPath().digits(PATH_DIGITS);"
+          assert old in core
+          core = core.replace(old, """  const planarPath = geoPath().digits(PATH_DIGITS);
+  const clippedPlanarPath = geoPath(
+    geoIdentity().clipExtent([[0, 0], [WIDTH, HEIGHT]]),
+  ).digits(PATH_DIGITS);""", 1)
+          old = """  const islandLocators = new Set(config.islandLocatorIds ?? []);
+  const geometry = {};
+  for (const item of simplifiedCollection.features.filter((featureValue) => featureValue.properties?.countryId)) {
+    const id = item.properties.countryId;
+    const countryPath = planarPath(item);
+    if (!countryPath) throw new Error(`Simplified topology projected ${id} to an empty path.`);
+    const countryGeometry = { countryId: id };
+    if (item.properties?.role === 'country' && islandLocators.has(id)) {
+      const centroid = planarPath.centroid(item);
+      countryGeometry.outlinePath = countryPath;
+      countryGeometry.locator = {
+        cx: Number(centroid[0].toFixed(2)),
+        cy: Number(centroid[1].toFixed(2)),
+        r: 7,
+      };
+    } else {
+      countryGeometry.path = countryPath;
+    }
+    if (item.properties?.role === 'country') {
+      const callout = calloutFor(config, id, planarPath.centroid(item));
+      if (callout) countryGeometry.callout = callout;
+    }
+    geometry[id] = countryGeometry;
+  }"""
+          new = """  const islandLocators = new Set(config.islandLocatorIds ?? []);
+  const wholeOutlineIds = new Set(config.wholeOutlineCountryIds ?? []);
+  const geometry = {};
+  for (const item of simplifiedCollection.features.filter((featureValue) => featureValue.properties?.countryId)) {
+    const id = item.properties.countryId;
+    const fullCountryPath = planarPath(item);
+    const countryPath = clippedPlanarPath(item);
+    if (!fullCountryPath) throw new Error(`Simplified topology projected ${id} to an empty path.`);
+    const countryGeometry = { countryId: id };
+    if (item.properties?.role === 'country' && islandLocators.has(id)) {
+      const centroid = planarPath.centroid(item);
+      countryGeometry.outlinePath = fullCountryPath;
+      countryGeometry.locator = {
+        cx: Number(centroid[0].toFixed(2)),
+        cy: Number(centroid[1].toFixed(2)),
+        r: 7,
+      };
+    } else {
+      if (countryPath) countryGeometry.path = countryPath;
+      if (item.properties?.role === 'country' && wholeOutlineIds.has(id)) {
+        countryGeometry.outlinePath = fullCountryPath;
+      }
+    }
+    if (item.properties?.role === 'country') {
+      const callout = calloutFor(config, id, planarPath.centroid(item));
+      if (callout) countryGeometry.callout = callout;
+    }
+    geometry[id] = countryGeometry;
+  }"""
+          assert old in core
+          core = core.replace(old, new, 1)
+          old = "  const contextPaths = contextFeatures.map((item) => planarPath(item)).filter(Boolean);"
+          assert old in core
+          core = core.replace(old, "  const contextPaths = contextFeatures.map((item) => clippedPlanarPath(item)).filter(Boolean);", 1)
+          old = "  const sharedBoundaryPath = planarPath(sharedMesh);\n  const coastlinePath = planarPath(coastlineMesh);"
+          assert old in core
+          core = core.replace(old, "  const sharedBoundaryPath = clippedPlanarPath(sharedMesh);\n  const coastlinePath = clippedPlanarPath(coastlineMesh);", 1)
+          core_path.write_text(core)
+
+          optimizer_path = Path('scripts/optimize-map-runtime.mjs')
+          optimizer = optimizer_path.read_text()
+          old = "function formatNumber(value) {\n  const rounded = Number(value.toFixed(PATH_DIGITS));"
+          assert old in optimizer
+          optimizer = optimizer.replace(old, "function formatNumber(value, digits = PATH_DIGITS) {\n  const rounded = Number(value.toFixed(digits));", 1)
+          old = "function roundSvgPath(path) {\n  return path.replace(/-?\\d+(?:\\.\\d+)?/g, (value) => formatNumber(Number(value)));\n}"
+          assert old in optimizer
+          optimizer = optimizer.replace(old, "function roundSvgPath(path, digits = PATH_DIGITS) {\n  return path.replace(/-?\\d+(?:\\.\\d+)?/g, (value) => formatNumber(Number(value), digits));\n}", 1)
+          old = """  for (const item of Object.values(geometry)) {
+    if (item.path) item.path = roundSvgPath(item.path);
+    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath);
+  }"""
+          new = """  const precisionSensitiveIds = new Set(config.precisionSensitiveCountryIds ?? []);
+  for (const [countryId, item] of Object.entries(geometry)) {
+    const digits = precisionSensitiveIds.has(countryId) ? 2 : PATH_DIGITS;
+    if (item.path) item.path = roundSvgPath(item.path, digits);
+    if (item.outlinePath) item.outlinePath = roundSvgPath(item.outlinePath, digits);
+  }"""
+          assert old in optimizer
+          optimizer = optimizer.replace(old, new, 1)
+          old = "    physicalTolerance: { ...PHYSICAL_TOLERANCE },"
+          assert old in optimizer
+          optimizer = optimizer.replace(old, "    physicalTolerance: { ...PHYSICAL_TOLERANCE },\n    precisionSensitiveCountryIds: [...precisionSensitiveIds],", 1)
+          optimizer_path.write_text(optimizer)
+
+          outline_path = Path('src/domain/outline.ts')
+          outline = outline_path.read_text()
+          old = '  const source = geometry.path ?? geometry.outlinePath;'
+          assert old in outline
+          outline_path.write_text(outline.replace(old, '  const source = geometry.outlinePath ?? geometry.path;', 1))
+          PY
+      - name: Commit patched source
+        run: |
+          rm .github/workflows/apply-europe-seams.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/map-continent-configs.mjs scripts/map-generation-core.mjs scripts/optimize-map-runtime.mjs src/domain/outline.ts .github/workflows/apply-europe-seams.yml
+          git commit -m "Harden Europe cartography source"
+          git push
