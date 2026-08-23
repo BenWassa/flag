@@ -62,11 +62,11 @@ for (const country of asset.countries) {
 }
 
 const adjacency = neighbors.SOUTH_AMERICA_LAND_ADJACENCY;
-assert.deepEqual(sorted(adjacency.COL ?? []), ['BRA', 'ECU', 'PAN', 'PER', 'VEN']);
-assert.deepEqual(sorted(adjacency.BOL ?? []), ['ARG', 'BRA', 'CHL', 'PRY', 'PER']);
+assert.deepEqual(sorted(adjacency.COL ?? []), sorted(['BRA', 'ECU', 'PAN', 'PER', 'VEN']));
+assert.deepEqual(sorted(adjacency.BOL ?? []), sorted(['ARG', 'BRA', 'CHL', 'PRY', 'PER']));
 assert.deepEqual(
   sorted(adjacency.BRA ?? []),
-  ['ARG', 'BOL', 'COL', 'FRA', 'GUY', 'PRY', 'PER', 'SUR', 'URY', 'VEN'],
+  sorted(['ARG', 'BOL', 'COL', 'FRA', 'GUY', 'PRY', 'PER', 'SUR', 'URY', 'VEN']),
   'Brazil retains complete application-country land adjacency, including sovereign France via French Guiana.',
 );
 assert.ok((adjacency.SUR ?? []).includes('FRA'), 'Suriname retains its sovereign-France/French Guiana land border.');
