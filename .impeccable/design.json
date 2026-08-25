@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "surface": "Atlas web app",
   "visitorMode": "operate",
-  "status": "tactile-atlas",
+  "status": "tactile-atlas-v1",
   "tokens": {
     "colors": {
       "canvas": "#F6F8FB",
@@ -23,8 +23,9 @@
     },
     "depth": {
       "primary": "0 4px 0 pressed-blue, collapsing to 0 1px 0 + translateY(3px) on press",
-      "tile": "soft two-layer standing shadow (--depth-tile) on interactive tiles",
-      "arcade": "Home mode-card exception only: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press. Post-mode continent and region selection uses soft tile depth."
+      "answer": "shallower tactile press, approximately translateY(2px)",
+      "tile": "soft two-layer standing shadow (--depth-tile) on interactive post-mode rows/tiles",
+      "arcade": "Home mode-card exception only: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press"
     },
     "breakpoints": {
       "compact": "639px",
@@ -34,15 +35,21 @@
   },
   "principles": [
     "Geography is the content; interface is the instrument",
-    "Atlas Blue drives ordinary action while green and red stay transient feedback",
-    "Region-by-domain mastery is purple; gold is deliberately scarce",
-    "Complete continents earn source-derived silhouette crests; world completion alone earns the Crown",
-    "Country records are live learning evidence, not prestige objects",
-    "Progress is mastery-first: continent and region achievement geography precedes practise guidance, progressively disclosed country evidence, and reset utilities",
-    "Earned region-domain competency uses the shared domain glyph with a non-colour check cue; complete regions use restrained gold; unsupported curriculum is visually distinct from unearned supported competency",
-    "The World Crown is absent from routine locked states and rendered only when canonical world completion is earned",
+    "Atlas is mobile-first, low-friction, information-first and minimally gamified",
+    "Atlas Blue drives ordinary action while green and red stay correctness feedback",
+    "Region-by-domain Mastery is purple; gold is deliberately scarce completion/prestige",
+    "Country records are live learning evidence, not learner-facing prestige objects",
+    "Ordinary progress is a quiet blue successful-retrieval strip rather than a mastery dashboard",
+    "The dedicated Progress screen is retired; progress is surfaced in Home, domain indexes, launchers and Results",
+    "A single Perfect round is transient result feedback and is not persistent Mastery",
+    "Complete regions use restrained gold without a separate badge or Crown",
+    "Completed continent rows render the shipped continent trophy/crest artwork on domain continent indexes",
+    "World completion alone reserves the Crown; the state exists but no learner-facing React Crown surface ships in v1",
     "Mobile-first interaction and no horizontal scrolling for primary selection",
     "Radius, depth, typography, navigation composition and milestone scarcity remain locked as Tactile Atlas",
-    "Navigation is mode-first: Home chooses the learning domain, then full-width continent and region rows choose geography before deliberate launcher Play/Learn actions"
+    "Navigation is mode-first: Home chooses the learning domain, the domain index chooses a supported continent, and launcher rows start Play directly for continent or region scope",
+    "Learn remains a subordinate whole-continent action on launchers; Flags Learn is a browse-and-reveal gallery",
+    "No continent, region or hemisphere colour taxonomy; colour always reinforces another state cue",
+    "No glassmorphism, bento dashboards or decorative UI overload"
   ]
 }

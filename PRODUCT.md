@@ -1,308 +1,190 @@
 # Atlas Product
 
-<!-- impeccable:product-schema 1 -->
-
-## Product identity
-
-**Atlas** is a mobile-first geography-learning PWA built around four learning domains:
-
-- **Flags**
-- **Locations**
-- **Outlines**
-- **Neighbours**
-
-The product should feel fast, direct and progressively disclosed. Geography remains the main content; the interface exists to make learning and assessment frictionless.
-
-The repository and some stable internal identifiers still use legacy `flag` / `flag-atlas` names. Those are compatibility details, not learner-facing brand guidance.
+**Status:** Atlas v1.0 production truth
+**Product:** mobile-first geography-learning PWA
+**Learner-facing language:** modern British English (`en-GB`)
 
 ## Product purpose
 
-Atlas helps learners build reliable geographic knowledge at region, continent and world scale.
+Atlas teaches world geography through direct retrieval and geographic context across four peer learning domains:
 
-The core loop is:
+- **Flags** — identify countries from national flags;
+- **Locations** — identify countries by geographic position;
+- **Outlines** — identify countries by silhouette;
+- **Neighbours** — identify complete direct land-border neighbour sets.
 
-**choose geography → choose Learn or Play → practise/retrieve → update live learning evidence → earn broader mastery when the body of knowledge is complete**
+Atlas should remain fast, low-friction and information-first. Geography is usually the dominant visual object. Progress and prestige should clarify learning rather than create an activity economy: no XP, coins, lives, reward shop, fantasy rank ladder or routine celebration layer.
 
-The product should reward meaningful learning rather than activity volume.
+The product is deliberately mobile-first, progressively disclosed and minimally gamified. Meaningful learning matters more than interaction volume.
 
-## Geography hierarchy
+## Current production information architecture
 
-The durable geographic hierarchy is:
+Navigation is **mode-first**:
 
-**World → Continent → Region**
+`Home → learning domain → continent → Play scope`
 
-The region remains the first meaningful mastery unit, but it is reached inside one learning domain rather than across all four at once: navigation is mode-first, so the domain is chosen before the geography. Earned region × domain mastery is earned by two consecutive perfect full-region Play rounds in that domain and persists thereafter (see [`docs/product/learning-and-mastery.md`](docs/product/learning-and-mastery.md)); the dedicated Progress screen that read it as one cross-domain competency set has been retired, with no replacement — but the mastery mark and complete-region/continent gold outline are readable again directly on the existing region/continent launcher rows.
+Home contains the four domain choices and starts no round. A domain index shows all six continents. Supported continents open their continent launcher; unsupported continents remain honest inert shells.
 
-Country remains the canonical data identity and the atomic evidence unit underneath the learning engines, but country is not a learner-facing prestige tier.
+Inside a supported continent launcher:
 
-Conventional learning scopes may eventually overlap canonical continent/subregion classification where pedagogically useful, as documented by the Middle East work in #28.
+- the whole-continent row starts **Play** for the continent;
+- each region row starts **Play** for that region;
+- a subordinate **Learn {Continent}** action starts Learn for the whole continent;
+- there is no select-region-then-Play intermediate state in the ordinary v1 UI.
 
-## Learning domains
+Flags additionally exposes deliberate World Play/Learn actions because the complete 195-country flag curriculum exists globally.
 
-### Flags
-
-Recognise a country from its national flag.
-
-Flags currently supports the full 195-country curriculum.
-
-### Locations
-
-Identify countries from their true map location.
-
-Production coverage is Africa, South America, Europe and Asia.
-
-### Outlines
-
-Identify countries from their silhouette/outline.
-
-Production coverage is Africa, South America, Europe and Asia, reusing canonical production geometry.
-
-### Neighbours
-
-Identify all direct land-border neighbours of a target country.
-
-Production coverage is Africa, South America, Europe and Asia, using adjacency derived from canonical topology.
-
-Stable internal identifiers retain American spelling where required for compatibility (`neighbors`, `/neighbors`, storage keys, filenames/types).
-
-## Continent rollout
-
-Africa was the first complete production proving ground for all four learning domains and remains the reference baseline. South America, Europe and Asia shipped to the same bar in v0.7.0, proving that a continent can be added through shared scope/configuration/policy plus generated assets rather than another core refactor.
-
-Other continents should be allowed to exist as navigational/product shells where useful for design and IA testing, but unsupported domains must be represented honestly and must not contribute to completion.
-
-Issues #22 (North America) and #27 (Oceania) own the remaining continent expansion work. World-level completion is therefore part of the product model before it is technically obtainable.
+Typed hash routes own durable navigation state. Active round order, current question, guesses, timers and result objects remain ephemeral session state. Browser Back/Forward remains first-class behaviour; a hard refresh of an activity route falls back to that activity's stable scope.
 
 ## Learn and Play
 
 ### Learn
 
-Learn is for familiarisation and corrective practice.
+Learn is for familiarisation and corrective learning. It is domain-appropriate rather than a slower copy of Play.
 
-Its exact mechanic may differ by domain. Passive browse/reveal can be appropriate where it improves initial encoding, but passive exposure does not create scored learning evidence.
+**Flags Learn** is a browse-and-reveal gallery for the complete selected scope. Names are hidden until individually revealed or revealed together. Reveal state is ephemeral. Browsing or revealing flags writes **no** country learning evidence.
 
-Flags Learn is being redesigned as a browse/reveal gallery in #30.
+**Locations Learn** is guided map retrieval. Learners can retry; first-try, after-miss and revealed outcomes remain distinct. Genuine unassisted retrieval can contribute country learning evidence; assisted/revealed outcomes are recorded with weaker semantics.
+
+**Outlines Learn** is multiple-choice silhouette retrieval with immediate correctness feedback. Genuine clean retrieval contributes learning evidence; wrong answers provide contradictory evidence.
+
+**Neighbours Learn** asks the learner to build the complete land-neighbour set for each target. Clean completion, assisted completion and exhausted/revealed outcomes remain distinct evidence qualities.
 
 ### Play
 
-Play is scored retrieval and assessment.
+Play is scored retrieval/assessment. The stable internal activity identifier remains `test` for compatibility.
 
-Play provides stronger evidence of existing knowledge than passive study and may calibrate already-known material faster than ordinary corrective practice.
+Play gives correctness/result feedback without changing the evidence or achievement rule in presentation code. Each domain keeps its native task semantics:
 
-The internal activity value may remain `test`, including stable route/data-action identifiers. Learner-facing language is **Play**.
+- Flags and Outlines score recognition questions;
+- Locations gives one scored map tap per target;
+- Neighbours scores clean completion of the entire required neighbour set for a target.
 
-## Live learning evidence
+Results offer repeat and mistake review where applicable.
 
-Country-level records are the scheduler's evidence layer.
+## Country-level learning evidence
 
-They should remain rich enough to support future learning-science refinement, including concepts such as:
+Country records are the live learning/scheduling layer. They answer operational questions such as:
 
-- no scored evidence yet;
-- active learning / uncertainty;
-- strong evidence;
-- due for review;
-- lapse / contradictory evidence;
-- response history;
-- confusion history;
-- domain-specific outcome quality.
+- has this country been encountered or retrieved correctly?;
+- is the evidence still weak?;
+- is there strong evidence?;
+- has contradictory evidence caused a lapse?;
+- is review due where the domain supports due dates?;
+- what confusion or miss history should influence future practice?
 
-Current internal fields such as `unseen`, `learning`, and `mastered` may remain for compatibility while the model evolves.
+Country evidence is **not** learner-facing prestige. Internal compatibility state may still use `unseen`, `learning` and `mastered`; routine product copy presents learning evidence rather than calling an individual country a Mastered achievement.
 
-Do **not** simplify the backend merely because the learner-facing achievement system is more restrained.
+The ordinary blue progress strip represents countries with at least one successful retrieval. It is intentionally separate from durable Mastery.
 
-Do **not** describe an individual country as a prestigious learner-facing mastery achievement.
+## Perfect round
 
-Issue #29 owns refinement of this evidence model and Learn/Play weighting.
+A **Perfect round** is transient feedback for one Play result with no misses under that domain's native scoring rules.
 
-## Earned mastery and completion
+It is shown on Results and does not persist as an achievement. A single perfect round is not Mastery.
 
-Atlas separates **live learning evidence** from **earned achievement state**.
+Perfect-round feedback can occur at continent, region or World scope where that Play route exists. Only region-scoped Play results participate in the current region × domain Mastery streak logic.
 
-### Region × domain — Mastery
+## Learner-facing Mastery
 
-The first meaningful learner-facing mastery unit is one complete learning domain across an entire region.
+The first durable prestige unit is **region × domain Mastery**: for example, Flags of West Africa or Locations of Central Asia.
 
-Examples:
+Purple is reserved for this durable competency state. Country-level evidence does not independently promote a country into learner-facing Mastery.
 
-- Flags of West Africa mastered
-- Locations of East Africa mastered
-- Outlines of Southern Africa mastered
-- Neighbours of North Africa mastered
+### Current v1.0 qualification behaviour
 
-Incomplete competencies are neutral. Earned competencies use the shared purple mastery language.
+The achievement engine currently awards region × domain Mastery after **two consecutive perfect region-scoped Play results** for that region and domain. A non-perfect region-scoped Play result resets the in-progress streak; an already-earned Mastery is not revoked.
+
+There is a known v1.0 qualification-integrity defect: ordinary region Play is full-scope in Locations, but Flags, Outlines and Neighbours currently default to 10 targets. The achievement recorder does not yet verify that those results covered every eligible target in the region. Therefore a region containing more than 10 eligible targets can currently earn Mastery in those three domains after two perfect 10-target region Play rounds.
+
+The locked product rule is stricter: Mastery should require two consecutive perfect **complete-region** Play results. Issue **#108** owns closing the implementation gap. Until #108 ships, documentation and tests must not describe complete-region coverage as already enforced in all four domains.
+
+## Completion hierarchy
 
 ### Complete region
 
-A region is complete when all required supported domain masteries are earned.
+A region is complete only when:
 
-Keep the useful scope count, for example:
+1. that learner-facing region has genuine, non-empty curriculum in **all four** domains; and
+2. all four region × domain Masteries have been earned.
 
-**West Africa — 17 countries**
+Unsupported geography never counts as automatically complete.
 
-Do not replace it with `100%` or `17/17` after completion.
-
-A complete region receives a restrained gold accent/border. It does not receive a crown or separate emblem.
+The shipped presentation is deliberately restrained: the region row keeps its useful target/country count and progress strip, earned domain Mastery remains visibly purple, and a complete region gains a gold completion treatment. There is no separate region badge, shield or Crown.
 
 ### Complete continent
 
-A continent is complete when every required region/domain mastery for that continent is earned.
+A continent is complete only when every learner-facing region required by that continent has genuine four-domain curriculum and every one of those regions is complete.
 
-No completion quantity is needed.
+The achievement state is persisted independently. In production, a completed continent is surfaced on the **domain continent index** by replacing its ordinary geography silhouette with the continent trophy/crest artwork and applying the completion row treatment.
 
-Completion earns a prominent **continent crest** based on the continent silhouette with restrained purple/gold treatment.
+The repository contains trophy artwork for all six continents. Those assets are not merely dormant files: the completed-continent row renders them through the React presentation layer.
 
-### Complete world
+There is no separate full-screen continent trophy ceremony in v1.0.
 
-World completion is Atlas's ultimate achievement.
+### World completion
 
-Reserve the **Crown** for this state alone.
+World completion is the highest and final prestige tier. The persisted achievement model contains a `worldCrown` state and exposes it through the achievement read model.
 
-Do not show `195/195`, a percentage, a rank ladder, or a higher fantasy tier above it.
+The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. North America and Oceania remain incomplete. There is also **no current React learner-facing World Crown renderer or ceremony**. The Crown remains the reserved eventual presentation for genuine world completion; do not invent a tier above it.
 
-### Persistence
+## Persistence and reset
 
-Earned mastery/completion is acquired and not lost in the current product model.
+The four domain learning ledgers persist independently. Earned achievements and in-progress region-perfect-run streaks persist in separate versioned local-storage namespaces.
 
-Live country evidence may later lapse or be revalidated without automatically revoking an earned achievement. Future decay/revalidation policy is intentionally a separate learning-model decision.
+Current earned Mastery/completion is monotonic: once awarded, later lapses or non-perfect rounds do not revoke it. Live country evidence may weaken or become due independently.
 
-Issue #34 owns this achievement layer.
+Infrastructure helpers exist to clear achievement/streak storage, but the current React product exposes **no learner-facing full progress/achievement reset control**. The retired Progress screen's reset utility is not part of v1.0 production UI. Clearing browser/site data can of course remove local state; a future coordinated in-product reset would need to reset all relevant ledgers and achievement/streak state together.
 
-## Gamification philosophy
+No new reset feature is committed by this document.
 
-Gamification should reward meaningful learning, not every interaction.
+## Where progress appears now
 
-Principles:
+The dedicated **Progress** screen has been retired. Atlas does not currently promise a replacement dashboard.
 
-- ordinary interaction can feel tactile and satisfying;
-- green/red feedback is immediate and temporary;
-- purple is durable competence;
-- gold is scarce prestige;
-- achievement treatment becomes stronger as achievements become rarer;
-- no XP economy;
-- no coins;
-- no arbitrary streak rewards;
-- no achievement spam;
-- no separate fantasy/rank system;
-- stronger celebration is reserved for genuinely rare milestones.
+Progress is distributed into the learning flow:
 
-See [`docs/product/gamification.md`](docs/product/gamification.md).
+- Home shows concise per-domain evidence progress;
+- domain continent indexes show supported coverage/progress and completed-continent trophy state;
+- continent launchers show whole-continent and region progress strips;
+- region rows show earned Mastery and complete-region treatment;
+- Results show round performance, including transient Perfect round feedback.
 
-## Brand colour system
+The richer cross-domain Progress composition from the former screen is historical, not an active future requirement.
 
-The palette is informed by quantitative analysis of the 195 national flags rather than arbitrary theme selection.
+## Current geography coverage
 
-Locked semantic roles:
-
-| Role | Colour |
+| Domain | Production-ready coverage |
 | --- | --- |
-| Primary action | `#2563EB` Atlas Blue |
-| Pressed/depth | `#1749B8` |
-| Action tint | `#EAF0FF` |
-| Correct | `#137A55` |
-| Wrong | `#B42318` |
-| Mastery | `#6D3FC0` |
-| Prestige / completeness | `#E0AF2F` |
-| Canvas | `#F6F8FB` |
-| Primary text | `#101318` |
+| Flags | full 195-country curriculum; World, all six continents and learner-facing regions |
+| Locations | Africa, South America, Europe and Asia, plus their supported learner-facing regions |
+| Outlines | Africa, South America, Europe and Asia, plus their supported learner-facing regions |
+| Neighbours | Africa, South America, Europe and Asia, with only targets whose complete canonical land-neighbour set is representable |
 
-Blue is the strongest major flag-derived family that remains semantically available after reserving green for correct and red for wrong. Purple is exceptionally rare in world flags, making it well suited to durable mastery. Gold remains deliberately scarce.
+**North America (#22)** and **Oceania (#27)** remain open geography expansion work for Locations, Outlines and Neighbours. Their continent rows may appear as honest unavailable shells, but unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.
 
-Do not create continent/region colour themes from the study.
+Flags remains globally available independently of those geography gaps.
 
-See [`docs/product/colour-system.md`](docs/product/colour-system.md).
+## Locked product and design constraints
 
-## Visual design status
+- canonical country identity is ISO3;
+- product copy uses British English: **Neighbours, colour, centre, behaviour, practise** as the verb;
+- stable internal identifiers such as `neighbors`, `/neighbors`, `test` and existing storage keys remain unchanged for compatibility;
+- one canonical Natural Earth 1:10m production topology pipeline owns geography used by Locations, Outlines and Neighbours;
+- no handwritten country geometry, second topology source or handwritten neighbour table;
+- geography identity comes from geography itself, not a continent/region colour taxonomy;
+- Atlas Blue is ordinary action, green correct, red wrong, purple durable Mastery and gold scarce prestige/completion;
+- state cannot rely on colour alone;
+- geography should normally be the richest visual object;
+- no glassmorphism, bento dashboard treatment or decorative UI overload;
+- tactile depth is allowed, but the interface should not become toy-like or bounce-heavy.
 
-The semantic colour system, achievement hierarchy and product principles are locked.
+See `DESIGN.md`, `docs/product/colour-system.md`, `docs/product/learning-and-mastery.md` and `docs/architecture/earned-achievements.md` for the durable implementation boundaries.
 
-The visual style is locked: **Tactile Atlas**. Shape language, radii, elevation, press physics, typography personality and motion are decided and implemented; see `DESIGN.md` for the complete specification.
+## Deliberately deferred or optional
 
-Issue #32 records the implemented visual-system rollout. Achievement art direction (region mastery badges, continent crests, the world Crown) remains genuinely open and depends on #34's earned-mastery persistence landing first.
-
-`DESIGN.md`'s shipped Tactile Atlas aesthetic is now normative product truth, not a placeholder to be discarded on a future design pass.
-
-## Navigation and information architecture
-
-The interface should reveal only the next meaningful decision.
-
-Navigation is **mode-first**. The learner chooses what they are practising, then where:
-
-1. **Home** — the four learning modes, each showing the coverage it currently teaches and the progress earned in it.
-2. **Continent index** — that mode's six continents as full-width geography rows with visible evidence. A supported row opens its launcher; unshipped continents remain honest, inert shells.
-3. **Continent launcher** — a whole-continent row above full-width region rows, each exposing its progress and starting Play for its own scope on a single tap, with one subordinate Learn action for the continent below the list. The launcher offers exactly one way to choose a scope; the deferred map-first alternative is [#104](https://github.com/BenWassa/flag/issues/104).
-
-Core navigation principles:
-
-- mobile-first;
-- no horizontal scrolling for primary selection;
-- the learning mode is chosen first; geography is chosen within it;
-- coverage is stated honestly at every level, and unshipped curriculum never looks playable;
-- Learn and Play remain direct once the learner has deliberately selected the geographic scope;
-- Back/Forward and direct links remain first-class;
-- URLs own durable navigation state;
-- active-round internals remain ephemeral session state.
-
-Issue #35's region × domain cross-domain competency read was retired from a region card's launch row in favour of a dedicated Progress screen, and that Progress screen has since been retired in turn; the underlying earned achievement state keeps persisting, and now surfaces again directly on the region/continent launcher rows (a single-domain purple mastery mark, a gold complete-region/continent outline) rather than through either prior surface.
-
-## Persistence and compatibility
-
-- Preserve learner progress through redesigns.
-- Keep domain ledgers independent.
-- Version stored data when schemas change.
-- Do not rename stable routes/storage identifiers solely to match learner-facing language or the Atlas rebrand.
-- The repository name `flag` may remain.
-- Legacy `flag-atlas:*` storage/cache identifiers may remain where migration cost outweighs cosmetic consistency.
-
-Issue #36 records the learner-facing product rename.
-
-## Cartography
-
-Production geography uses the canonical Natural Earth topology pipeline.
-
-Do not:
-
-- hand-author country geometry;
-- add a second topology source;
-- hand-maintain neighbour tables;
-- change geopolitical/boundary policy as part of unrelated UI work.
-
-Locations, Outlines and Neighbours should continue to reuse canonical geometry and adjacency infrastructure.
-
-## Product language
-
-All learner-facing copy uses modern British English (`en-GB`).
-
-- **Neighbours**
-- **colour**
-- **centre**
-- **behaviour**
-- **practise** as a verb / **practice** as a noun
-
-Stable technical identifiers may retain American spelling for compatibility.
-
-Country names follow [`docs/product/country-naming.md`](docs/product/country-naming.md).
-
-## Accessibility
-
-Atlas must support:
-
-- keyboard operation;
-- visible focus;
-- reduced motion;
-- mobile safe areas;
-- readable zoomed text;
-- non-colour-only status communication;
-- answer-safe accessible labels;
-- stable focus after rerenders;
-- usable portrait and short-landscape layouts.
-
-## Product principles
-
-1. Get the learner into useful geography quickly.
-2. Keep scope under learner control while letting the evidence model adapt underneath it.
-3. Separate passive study, scored retrieval, live evidence and earned mastery.
-4. Make mastery meaningful by awarding it at region × domain scale, not per country.
-5. Make prestige scarce: purple competence, gold completion, continent crest, world Crown.
-6. Keep maps and flags more visually important than product chrome.
-7. Preserve current progress and compatibility while the learning model becomes more sophisticated.
-8. Expand globally through the existing canonical geography architecture rather than parallel systems.
+- **#104** is a deferred product exploration of a map-first continent launcher. It is not scheduled and would require a deliberate reversal or refinement of current colour/accessibility rules before implementation.
+- a dedicated achievement milestone queue/ceremony is optional product/design work, not current v1 behaviour;
+- a new Progress dashboard is not currently promised;
+- World Crown learner-facing artwork/surface remains deferred until genuine world completion is achievable and a focused design decision is made;
+- country-evidence decay/revalidation must remain separate from already-earned prestige unless a future product decision explicitly changes that rule.
