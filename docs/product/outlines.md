@@ -1,7 +1,7 @@
 # Country Outline Learning
 
-**Status:** current Atlas v1 domain contract  
-**Identity key:** ISO3  
+**Status:** current Atlas v1 domain contract
+**Identity key:** ISO3
 **Geometry source:** canonical production cartography
 
 ## Product skill
