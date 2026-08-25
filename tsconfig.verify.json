@@ -13,6 +13,9 @@
     "src/main.tsx",
     "src/sw.ts",
     "src/map-viewport.ts",
-    "src/neighbor-map-runtime.ts"
+    "src/neighbor-map-runtime.ts",
+    "src/infrastructure/development-sandbox.ts",
+    "src/infrastructure/development-sandbox.test.ts",
+    "src/react/components/DevelopmentSandboxPanel.tsx"
   ]
 }

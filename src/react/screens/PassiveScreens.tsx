@@ -19,12 +19,17 @@ import {
 import { countriesInScope } from '../../domain/progress.js';
 import { scopeSupportsDomain } from '../../domain/scope-support.js';
 import { coverageLabel } from '../../ui/format.js';
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
+import { isDevelopmentSandbox } from '../../infrastructure/runtime-environment.js';
 import { useAtlasActions } from '../actions.js';
 import { FlagImage } from '../components/FlagImage.js';
 import { ContinentIcon, ContinentTrophy, DomainIcon, Icon } from '../components/Icon.js';
 import { ProgressStrip } from '../components/ProgressStrip.js';
 import { useAuth } from '../useAuth.js';
+
+const DevelopmentSandboxPanel = typeof __ATLAS_DEVELOPMENT_SANDBOX__ !== 'undefined' && __ATLAS_DEVELOPMENT_SANDBOX__
+  ? lazy(() => import('../components/DevelopmentSandboxPanel.js'))
+  : null;
 
 export function domainCoverageLabel(summary: DomainProgressSummary): string {
   const names = summary.supportedContinentIds.map((id) => CONTINENTS.find((continent) => continent.id === id)?.name ?? id);
@@ -87,7 +92,11 @@ export function ProfileScreen() {
         <div className="screen-title"><h1 tabIndex={-1} data-autofocus>Profile</h1></div>
       </header>
 
-      {loading ? null : user ? (
+      {isDevelopmentSandbox && DevelopmentSandboxPanel ? (
+        <Suspense fallback={<p>Loading development sandbox…</p>}><DevelopmentSandboxPanel /></Suspense>
+      ) : null}
+
+      {isDevelopmentSandbox ? null : loading ? null : user ? (
         <div className="profile-card">
           {user.photoURL
             ? <img className="profile-card__avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />

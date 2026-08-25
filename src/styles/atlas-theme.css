@@ -1094,3 +1094,59 @@ body { letter-spacing: -.006em; }
   .app-notice:not([hidden]) { border: 2px solid CanvasText; background: Canvas; }
   .app-notice__icon { color: CanvasText; }
 }
+/* Development-only sandbox tooling; its markup is removed from production builds. */
+.dev-sandbox {
+  display: grid;
+  gap: 1rem;
+  padding: 1.25rem;
+  border: 1px solid #cbd5e1;
+  border-radius: 1rem;
+  background: #fff;
+}
+
+.dev-sandbox__heading,
+.dev-sandbox__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  flex-wrap: wrap;
+}
+
+.dev-sandbox__heading h2,
+.dev-sandbox h3,
+.dev-sandbox p { margin: 0; }
+
+.dev-sandbox__status {
+  padding: .3rem .6rem;
+  border-radius: .5rem;
+  background: #eaf0ff;
+  color: #1749b8;
+  font-weight: 700;
+}
+
+.dev-sandbox__presets {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: .65rem;
+}
+
+.dev-sandbox__label { font-weight: 700; }
+
+.dev-sandbox textarea {
+  box-sizing: border-box;
+  width: 100%;
+  resize: vertical;
+  padding: .75rem;
+  border: 1px solid #94a3b8;
+  border-radius: .65rem;
+  font: .75rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+
+.dev-sandbox textarea:focus-visible { outline: 3px solid #2563eb; outline-offset: 2px; }
+.dev-sandbox__reset {
+  justify-self: start;
+  border-color: var(--wrong);
+  color: var(--wrong);
+  background: var(--wrong-soft);
+}

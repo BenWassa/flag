@@ -36,6 +36,8 @@ npm run dev
 
 Vite serves the source application at `http://localhost:5173` with module-aware hot updates. The production artifact is generated separately:
 
+The development server runs in an isolated sandbox. Learner progress is stored under `flag-atlas:dev-sandbox:*`, never under production learner keys, and Firebase authentication is disabled. Open Profile to seed common edge cases, reset the sandbox, or import/export its complete JSON dataset. Sandbox state survives reloads until explicitly reset.
+
 ```bash
 npm run build
 ```

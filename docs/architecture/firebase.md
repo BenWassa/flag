@@ -114,6 +114,16 @@ The four progress ledgers keep their stable namespace suffix while their payload
 
 Attempt logs are local arrays, capped at 2,000 entries and written on a short debounce with page-hide flushing.
 
+### Development sandbox boundary
+
+`npm run dev` is deliberately isolated from both production learner storage and Firebase. Vite compiles the development server with a fixed `development-sandbox` capability; it is not enabled by a URL parameter, browser preference or persisted value.
+
+In that mode, the shared storage guard maps only the ten learner namespaces above to `flag-atlas:dev-sandbox:*`. It never reads, writes, migrates or removes the corresponding production keys. Install-prompt dismissal remains ordinary browser UI state and is not remapped. The Profile screen exposes development-only seed, reset and JSON import/export tools for the sandbox dataset; these validate data through the existing persistence sanitisers and are removed from the production bundle.
+
+Firebase is also a hard build-time boundary in development: the Auth module is loaded dynamically only when remote account services are enabled, so the development Profile neither registers an Auth listener nor permits sign-in/sign-out. Firestore already has no application-level caller. Future cloud-sync work under #106 must preserve this rule: a development build must not initialise or contact production account services.
+
+Production and plain-Node verifier builds retain the stable `flag-atlas:*` namespaces and existing optional Auth behaviour unchanged.
+
 These existing loaders/sanitisers remain the trust boundary for persisted learner data. Future Firestore data must not bypass them merely because it came from an authenticated account.
 
 ## Firestore data model

@@ -1,3 +1,6 @@
+import { developmentSandboxKey, isLearnerStorageKey } from './persistence-keys.js';
+import { isDevelopmentSandbox } from './runtime-environment.js';
+
 /**
  * Persistence is an enhancement, never a precondition for studying. Safari
  * private mode throws on every write, a blocked-cookie policy throws on
@@ -26,13 +29,16 @@ export interface StorageGuard {
 export function createStorageGuard(): StorageGuard {
   let writable = true;
 
+  const resolveKey = (key: string) =>
+    isDevelopmentSandbox && isLearnerStorageKey(key) ? developmentSandboxKey(key) : key;
+
   return {
     isWritable() {
       return writable;
     },
     readRaw(key) {
       try {
-        return localStorage.getItem(key);
+        return localStorage.getItem(resolveKey(key));
       } catch {
         // A read that throws is a policy block, so writes cannot succeed either.
         writable = false;
@@ -41,7 +47,7 @@ export function createStorageGuard(): StorageGuard {
     },
     writeRaw(key, value) {
       try {
-        localStorage.setItem(key, value);
+        localStorage.setItem(resolveKey(key), value);
         return true;
       } catch {
         writable = false;
@@ -50,7 +56,7 @@ export function createStorageGuard(): StorageGuard {
     },
     removeRaw(key) {
       try {
-        localStorage.removeItem(key);
+        localStorage.removeItem(resolveKey(key));
       } catch {
         writable = false;
       }

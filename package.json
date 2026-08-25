@@ -11,7 +11,7 @@
     "dev": "vite",
     "preview": "vite preview",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vite.json --noEmit",
-    "build": "vite build && tsc -p tsconfig.verify.json",
+    "build": "vite build && tsc -p tsconfig.verify.json && node scripts/finalize-production-build.mjs",
     "test:unit": "vitest run",
     "test:browser": "playwright test",
     "maps:generate": "node scripts/generate-map-assets.mjs",

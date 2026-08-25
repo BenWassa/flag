@@ -36,12 +36,15 @@ function resolveTypeScriptForJsSpecifiers(): Plugin {
   };
 }
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
   // GitHub Pages serves Atlas below /flag/. Relative build URLs keep the same
   // artifact deployable there and in production-artifact smoke tests without
   // coupling the router to a hosting path.
   base: './',
   publicDir: 'public',
+  define: {
+    __ATLAS_DEVELOPMENT_SANDBOX__: JSON.stringify(command === 'serve'),
+  },
   plugins: [
     resolveTypeScriptForJsSpecifiers(),
     react(),
@@ -106,4 +109,4 @@ export default defineConfig({
       },
     },
   },
-});
+}));
