@@ -1,8 +1,8 @@
 # React and Vite migration architecture decision
 
-**Status:** Implemented in production as of Atlas `1.0.0`; closeout remains under #89  
-**Parent:** #89  
-**Execution record:** `docs/open/issue-89-execution-plan.md`  
+**Status:** Implemented in production as of Atlas `1.0.0`; closeout remains under #89
+**Parent:** #89
+**Execution record:** `docs/open/issue-89-execution-plan.md`
 **Implementation log:** `docs/open/issue-89-implementation-worklog.md`
 
 ## Decision
