@@ -35,7 +35,6 @@ export function renderOutlineHome(
   scope: StudyScope,
   achievements: EarnedAchievementState,
   persisting = true,
-  mapAsset?: MapRegionAsset | null,
 ): string {
   const config = scope.id ? getMapScopeConfig(scope.id) : undefined;
   const continent = config ? getMapContinentConfig(config.continentId) : undefined;
@@ -59,7 +58,5 @@ export function renderOutlineHome(
     unitLabel: 'countries',
     persisting,
     storageNotice: 'This browser is blocking storage, so outline progress will last only for this visit.',
-    showMap: true,
-    mapAsset,
   });
 }

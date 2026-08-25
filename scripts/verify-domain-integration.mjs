@@ -103,11 +103,10 @@ const launchers = [
   ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE, achievements)],
 ];
 for (const [name, html] of launchers) {
-  assert.ok(html.includes('Play Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
-  assert.equal((html.match(/data-action="select-region"/g) ?? []).length, 5, `${name} exposes the five Africa regions.`);
-  assert.equal((html.match(/class="region-row__progress"/g) ?? []).length, 5, `${name} exposes progress for all five Africa regions.`);
-  assert.equal((html.match(/data-action="quick-play"/g) ?? []).length, 0, `${name} keeps Play on the active launcher rather than region rows.`);
-  assert.ok(html.includes('data-launcher-map-slot'), `${name} reserves the shared lazy map slot.`);
+  assert.ok(html.includes('All Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
+  assert.equal((html.match(/class="region-row__progress"/g) ?? []).length, 6, `${name} exposes progress for Africa and all five of its regions.`);
+  assert.equal((html.match(/data-action="quick-play"/g) ?? []).length, 0, `${name} has no separate row-level Play shortcut.`);
+  assert.equal(html.includes('data-launcher-map-slot'), false, `${name} reserves no retired launcher map.`);
   for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend', 'neighbor-policy']) {
     assert.equal(html.includes(deletedSurface), false, `${name} does not restore deleted pre-round ${deletedSurface} UI.`);
   }

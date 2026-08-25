@@ -7,12 +7,9 @@ export interface AtlasActions {
   openProfile(): void;
   openDomain(domain: LearningDomain): void;
   openScope(domain: LearningDomain, scopeId: string): void;
-  selectRegion(domain: LearningDomain, scopeId: string, surface?: 'list' | 'map'): void;
-  selectContinent(domain: LearningDomain, scopeId: string): void;
+  playScope(domain: LearningDomain, scopeId: string, element?: HTMLElement | null): void;
+  learnScope(domain: LearningDomain, scopeId: string, element?: HTMLElement | null): void;
   startFlags(mode: 'learn' | 'test'): void;
-  startLocations(mode: 'learn' | 'test', element?: HTMLElement | null): void;
-  startOutlines(mode: 'learn' | 'test', element?: HTMLElement | null): void;
-  startNeighbors(mode: 'learn' | 'test'): void;
   revealFlag(countryId: string): void;
   toggleAllFlagNames(): void;
   answerFlag(countryId: string): void;

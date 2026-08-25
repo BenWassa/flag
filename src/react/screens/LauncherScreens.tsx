@@ -6,7 +6,7 @@ import { getNeighborScopeConfig, landAdjacencyForScope } from '../../data/neighb
 import { isRegionComplete, isRegionDomainMasteryEarned, type EarnedAchievementState } from '../../domain/achievements.js';
 import { hasSuccessfulRetrieval } from '../../domain/evidence.js';
 import { getLocationScopeStats } from '../../domain/map-game.js';
-import type { LocationProgressState, MapRegionAsset } from '../../domain/map-models.js';
+import type { LocationProgressState } from '../../domain/map-models.js';
 import type { NeighborProgressState } from '../../domain/neighbor-models.js';
 import { getNeighborScopeStats } from '../../domain/neighbor-game.js';
 import type { ProgressState, ScopeStats, StudyScope } from '../../domain/models.js';
@@ -23,7 +23,7 @@ export function FlagsLauncherScreen({ progress, scope, achievements, persisting 
   if (!continent) return <Unavailable label="Flag" />;
   const continentScope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
   const selectedRegion = scope.kind === 'region' ? scope : undefined;
-  const model: LauncherModel = { domain: 'flags', continentScope, selectedRegion, stats: getScopeStats(COUNTRIES, progress, selectedRegion ?? continentScope), regions: regionLearningScopes(continent.id).map((definition) => ({ scope: definition.scope, stats: getScopeStats(COUNTRIES, progress, definition.scope), ...status(definition.scope.id, 'flags', achievements) })), unitLabel: 'flags', persisting, storageNotice: "This browser is blocking storage, so today's flag progress will be lost when you close the tab.", showMap: false };
+  const model: LauncherModel = { domain: 'flags', continentScope, selectedRegion, stats: getScopeStats(COUNTRIES, progress, selectedRegion ?? continentScope), regions: regionLearningScopes(continent.id).map((definition) => ({ scope: definition.scope, stats: getScopeStats(COUNTRIES, progress, definition.scope), ...status(definition.scope.id, 'flags', achievements) })), unitLabel: 'flags', persisting, storageNotice: "This browser is blocking storage, so today's flag progress will be lost when you close the tab." };
   return <Launcher model={model} />;
 }
 
@@ -33,14 +33,12 @@ function outlineStats(progress: ProgressState, ids: readonly string[], now = new
   return ids.reduce<ScopeStats>((stats, id) => { if (!COUNTRY_BY_ID.has(id)) return stats; const record = getRecord(progress, id); stats.total += 1; stats[record.status] += 1; if (isDue(record, now)) stats.due += 1; if (hasSuccessfulRetrieval(record)) stats.cleared += 1; return stats; }, { total: 0, unseen: 0, learning: 0, mastered: 0, due: 0, cleared: 0 });
 }
 
-export function GeographyLauncherScreen({ domain, scope, achievements, persisting, mapAsset, progress, mapFailed = false }: {
+export function GeographyLauncherScreen({ domain, scope, achievements, persisting, progress }: {
   domain: 'locations' | 'outlines' | 'neighbors';
   scope: StudyScope;
   achievements: EarnedAchievementState;
   persisting: boolean;
-  mapAsset: MapRegionAsset | null;
   progress: LocationProgressState | ProgressState | NeighborProgressState;
-  mapFailed?: boolean;
 }) {
   const config = domain === 'neighbors' ? (scope.id ? getNeighborScopeConfig(scope.id) : undefined) : (scope.id ? getMapScopeConfig(scope.id) : undefined);
   const continent = config ? getMapContinentConfig(config.continentId) : undefined;
@@ -51,7 +49,7 @@ export function GeographyLauncherScreen({ domain, scope, achievements, persistin
     const ids = domain === 'neighbors' ? getNeighborScopeConfig(id)?.countryIds ?? [] : region.countryIds;
     return { scope: region.scope, stats: statsFor(ids, id), ...status(id, domain, achievements) };
   });
-  const model: LauncherModel = { domain, continentScope: continent.scope, selectedRegion: config.scope.kind === 'region' ? config.scope : undefined, stats: statsFor(config.countryIds, scope.id), regions, unitLabel: domain === 'neighbors' ? 'targets' : 'countries', persisting, storageNotice: `This browser is blocking storage, so ${domain === 'neighbors' ? 'neighbour' : domain === 'locations' ? 'location' : 'outline'} progress will last only for this visit.`, showMap: true, mapAsset, mapFailed };
+  const model: LauncherModel = { domain, continentScope: continent.scope, selectedRegion: config.scope.kind === 'region' ? config.scope : undefined, stats: statsFor(config.countryIds, scope.id), regions, unitLabel: domain === 'neighbors' ? 'targets' : 'countries', persisting, storageNotice: `This browser is blocking storage, so ${domain === 'neighbors' ? 'neighbour' : domain === 'locations' ? 'location' : 'outline'} progress will last only for this visit.` };
   return <Launcher model={model} />;
 }
 

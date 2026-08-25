@@ -53,6 +53,5 @@ export function renderScope(
     unitLabel: 'flags',
     persisting,
     storageNotice: "This browser is blocking storage, so today's flag progress will be lost when you close the tab.",
-    showMap: false,
   });
 }

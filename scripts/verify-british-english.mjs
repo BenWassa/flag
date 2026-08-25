@@ -132,9 +132,9 @@ const renderedSurfaces = [
 ];
 
 assert.ok(flagsDomainHtml.includes('Play world'));
-assert.ok(flagsLauncherHtml.includes('Play Africa'));
-assert.ok(locationsLauncherHtml.includes('Play Africa'));
-assert.ok(outlinesLauncherHtml.includes('Play Africa'));
+assert.ok(flagsLauncherHtml.includes('Play All Africa'));
+assert.ok(locationsLauncherHtml.includes('Play All Africa'));
+assert.ok(outlinesLauncherHtml.includes('Play All Africa'));
 assert.ok(neighborsLauncherHtml.includes('Play West Africa'));
 for (const [name, html] of [
   ['Flags', flagPlayHtml],

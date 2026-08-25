@@ -211,33 +211,18 @@ assert.ok(
 const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const mapAchievements = createInitialAchievementState();
 const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements);
-assert.ok(africaHomeHtml.includes('Play Africa') && africaHomeHtml.includes('Learn Africa'), 'Africa map launcher exposes both round choices.');
+assert.ok(africaHomeHtml.includes('All Africa') && africaHomeHtml.includes('Learn Africa'), 'Africa map launcher exposes both round choices.');
 assert.ok(africaHomeHtml.includes('id="launcher-regions-heading"'), 'Africa map launcher lists regional drills.');
-assert.ok(africaHomeHtml.includes('data-launcher-map-slot'), 'The stable first render reserves the lazy map slot.');
-assert.equal(africaHomeHtml.includes('class="launcher-map"'), false, 'The first render does not pretend the lazy map asset is ready.');
+assert.equal(africaHomeHtml.includes('data-launcher-map-slot'), false, 'The launcher reserves no retired map slot.');
+assert.equal(africaHomeHtml.includes('class="launcher-map"'), false, 'The launcher renders no retired map.');
 for (const config of AFRICA_MAP_REGION_CONFIGS) {
-  assert.ok(africaHomeHtml.includes(`data-id="${config.scope.id}"`), `${config.scope.label} is navigable from Africa locations.`);
+  assert.ok(africaHomeHtml.includes(`data-id="${config.scope.id}"`), `${config.scope.label} is playable from Africa locations.`);
 }
-const africaHomeWithMap = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements, true, africaAsset);
-assert.ok(africaHomeWithMap.includes('class="launcher-map"'), 'The resolved Africa asset fills the existing launcher map slot.');
-const launcherLabelTags = [...africaHomeWithMap.matchAll(/<button\b[^>]*class="[^"]*\blauncher-map__label\b[^"]*"[^>]*>[\s\S]*?<\/button>/g)].map((match) => match[0]);
-assert.ok(africaHomeWithMap.includes('class="launcher-map__silhouette"'), 'The launcher reuses the simple continent-selection silhouette.');
-assert.equal(launcherLabelTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one direct HTML button per Africa region.');
-for (const config of AFRICA_MAP_REGION_CONFIGS) {
-  const labelTag = launcherLabelTags.find((tag) => tag.includes(`data-id="${config.scope.id}"`));
-  assert.ok(labelTag?.includes(`aria-label="Select ${config.scope.label}"`), `${config.scope.label} has a direct accessible name.`);
-  assert.ok(labelTag?.includes('aria-pressed="false"'), `${config.scope.label} starts unselected on the Africa launcher.`);
-  assert.ok(labelTag?.includes(`>${config.scope.label}</button>`), `${config.scope.label} is directly labelled by the HTML map overlay.`);
-}
-assert.equal(africaHomeWithMap.includes('launcher-map-region__label'), false, 'Launcher labels no longer shrink inside the SVG coordinate system.');
-const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, mapAchievements, true, africaAsset);
+const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, mapAchievements, true);
 assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
-assert.ok(westHomeHtml.includes('Play West Africa') && westHomeHtml.includes('Learn West Africa'), 'Selecting West Africa retargets both launcher actions.');
-assert.ok(westHomeHtml.includes('All Africa') && westHomeHtml.includes('Selected'), 'West Africa can be cleared without leaving the launcher.');
-const selectedWestRegion = [...westHomeHtml.matchAll(/<button\b[^>]*class="[^"]*\blauncher-map__label--selected\b[^"]*"[^>]*>/g)]
-  .map((match) => match[0])
-  .find((tag) => tag.includes('data-id="west-africa"'));
-assert.ok(selectedWestRegion?.includes('aria-pressed="true"'), 'The selected West Africa label exposes its pressed state.');
+assert.ok(westHomeHtml.includes('aria-label="Play West Africa"'), 'West Africa plays straight from its row.');
+assert.ok(westHomeHtml.includes('aria-label="Play All Africa"'), 'The whole continent keeps its own row on a region route.');
+assert.equal(westHomeHtml.includes('Selected'), false, 'The launcher no longer models a selected region.');
 for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
   assert.equal(westHomeHtml.includes(deletedSurface), false, `The pre-round launcher does not restore deleted ${deletedSurface} UI.`);
 }
@@ -277,9 +262,7 @@ assert.ok(mapCartographyCss.includes('touch-action: none'), 'The custom map cont
 assert.equal(westQuizHtml.includes('map-viewport-control'), false, 'Location maps stay visually immersive without zoom toolbar chrome.');
 assert.ok(styles.includes('env(safe-area-inset-left)'), 'Shared layouts avoid the left safe area in landscape.');
 assert.ok(styles.includes('env(safe-area-inset-right)'), 'Shared layouts avoid the right safe area in landscape.');
-const launcherLabelRule = styles.match(/\.launcher-map__label\s*\{([^}]*)\}/)?.[1] ?? '';
-assert.match(launcherLabelRule, /font-size:\s*clamp\(11px,/, 'Launcher map overlay labels preserve the 11px typography floor.');
-assert.ok(styles.includes('.launcher-map-region:focus-visible'), 'Keyboard-reachable launcher map regions have a visible focus treatment.');
+assert.equal(styles.includes('.launcher-map'), false, 'The retired launcher map leaves no styling behind.');
 
 const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behavior.');

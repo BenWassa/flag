@@ -1,11 +1,8 @@
 import { COUNTRIES, COUNTRY_BY_ID } from './data/countries.js';
-import { getMapContinentConfigForScope } from './data/map-scopes.js';
-import { loadMapAsset } from './data/maps/index.js';
 import { NEIGHBOR_GUESS_COUNTRY_IDS } from './data/neighbors/index.js';
 import { domainDisplayName } from './domain/display.js';
 import type { LearningDomain, StudyScope } from './domain/models.js';
 import type { ProgressLedgers } from './domain/progress-summary.js';
-import type { MapRegionAsset } from './domain/map-models.js';
 import { resolveCountryGuess } from './domain/neighbor-game.js';
 import { flushMapAttempts } from './infrastructure/map-storage.js';
 import { flushNeighborAttempts } from './infrastructure/neighbor-storage.js';
@@ -38,7 +35,6 @@ import { installNavigationGestures } from './navigation-gestures.js';
 import { markFailedFlags } from './ui/components/flag.js';
 import { icon } from './ui/components/icons.js';
 import { escapeHtml } from './ui/format.js';
-import { renderLauncherMap } from './ui/components/launcher-map.js';
 import { renderFocusIntent } from './ui/focus.js';
 import { renderDomainIndex } from './ui/views/domain.js';
 import { renderFlagsStudy } from './ui/views/flags-study.js';
@@ -68,9 +64,6 @@ const router = createHashRouter(window);
 const allowedNeighborCountryIds = new Set(NEIGHBOR_GUESS_COUNTRY_IDS);
 let currentRoute: AppRoute = { name: 'home' };
 let lastRenderedRouteKey: string | null = null;
-let launcherMapAsset: MapRegionAsset | null = null;
-let launcherMapScopeId: string | null = null;
-let launcherMapRequest = 0;
 let preserveScrollOnNextRoute = false;
 // Flags Learn reveal state is study, not evidence, so it stays ephemeral and
 // resets whenever the learner leaves the study surface.
@@ -321,38 +314,6 @@ function normalizeRoute(route: AppRoute): AppRoute {
   return normalizeAvailableRoute(route);
 }
 
-function routeUsesLauncherMap(route: AppRoute): route is LearningRoute & { scope: StudyScope } {
-  return route.name === 'learning'
-    && route.activity === undefined
-    && route.domain !== 'flags'
-    && route.scope !== undefined;
-}
-
-async function hydrateLauncherMap(route: AppRoute): Promise<void> {
-  const request = ++launcherMapRequest;
-  if (!routeUsesLauncherMap(route)) return;
-
-  const continent = route.scope.id ? getMapContinentConfigForScope(route.scope.id) : undefined;
-  const continentScopeId = continent?.scope.id;
-  const host = root.querySelector<HTMLElement>('[data-launcher-map-slot]');
-  if (!host || !continentScopeId) return;
-  if (launcherMapAsset && launcherMapScopeId === continentScopeId) return;
-
-  try {
-    const asset = await loadMapAsset(continentScopeId);
-    if (!asset) throw new Error(`${route.scope.label} geometry unavailable.`);
-    launcherMapAsset = asset;
-    launcherMapScopeId = continentScopeId;
-
-    if (request !== launcherMapRequest || !host.isConnected || !routesEqual(currentRoute, route)) return;
-    const selectedRegionId = route.scope.kind === 'region' ? route.scope.id : undefined;
-    host.innerHTML = renderLauncherMap(asset, route.domain, selectedRegionId);
-  } catch {
-    if (request !== launcherMapRequest || !host.isConnected || !routesEqual(currentRoute, route)) return;
-    host.innerHTML = '<p class="launcher-map-error">Map unavailable. Choose a region from the list.</p>';
-  }
-}
-
 function applyRoute(requestedRoute: AppRoute): void {
   const route = normalizeRoute(requestedRoute);
   if (!routesEqual(route, requestedRoute)) {
@@ -371,12 +332,6 @@ function applyRoute(requestedRoute: AppRoute): void {
   }
 
   currentRoute = route;
-  if (routeUsesLauncherMap(route)) {
-    const parentScopeId = route.scope.id
-      ? getMapContinentConfigForScope(route.scope.id)?.scope.id ?? null
-      : null;
-    if (parentScopeId !== launcherMapScopeId) launcherMapAsset = null;
-  }
   switch (route.name) {
     case 'home':
       store.navigate({ name: 'home' });
@@ -416,7 +371,6 @@ function applyRoute(requestedRoute: AppRoute): void {
       break;
   }
   render();
-  void hydrateLauncherMap(route);
 }
 
 router.subscribe((route) => {
@@ -556,7 +510,6 @@ function render(previousSelector: string | null = null): void {
         store.view.scope,
         store.achievements,
         store.mapPersisting,
-        launcherMapAsset,
       );
       break;
     case 'map-quiz':
@@ -573,7 +526,6 @@ function render(previousSelector: string | null = null): void {
         store.view.scope,
         store.achievements,
         store.outlinePersisting,
-        launcherMapAsset,
       );
       break;
     case 'outline-quiz':
@@ -589,7 +541,6 @@ function render(previousSelector: string | null = null): void {
         store.view.scope,
         store.achievements,
         store.neighborPersisting,
-        launcherMapAsset,
       );
       break;
     case 'neighbor-quiz':
@@ -629,30 +580,11 @@ function openScope(domainValue: string | undefined, id: string | undefined): voi
   if (route) navigateStable(route);
 }
 
-function replaceLauncherScope(
-  domainValue: string | undefined,
-  id: string | undefined,
-  expectedKind: 'continent' | 'region',
-  focusSurface: 'list' | 'map' = 'list',
-): void {
-  if (!isLearningDomain(domainValue) || !id) return;
-  const route = routeForScopeId(domainValue, id);
-  if (!route?.scope || route.scope.kind !== expectedKind) return;
-  const active = getActiveRoundRoute();
-  if (active && !routesEqual(route, stableRoute(active))) discardActiveRound();
-
-  preserveScrollOnNextRoute = true;
-  router.navigate(route, { replace: true });
-  if (expectedKind === 'region') {
-    const selector = focusSurface === 'map'
-      ? `.launcher-map__label[data-action="select-region"][data-id="${id}"]`
-      : `.region-row__open[data-action="select-region"][data-id="${id}"]`;
-    root.querySelector<HTMLElement | SVGElement>(selector)?.focus({ preventScroll: true });
-    announce(`${route.scope.label} selected.`);
-  } else {
-    root.querySelector<HTMLElement>('.launcher__play')?.focus({ preventScroll: true });
-    announce(`All ${route.scope.label} selected.`);
-  }
+function launcherScope(element: HTMLElement): StudyScope | undefined {
+  const domainValue = element.dataset.domain;
+  const id = element.dataset.scopeId;
+  if (!isLearningDomain(domainValue) || !id) return undefined;
+  return routeForScopeId(domainValue, id)?.scope;
 }
 
 root.addEventListener('click', (event) => {
@@ -693,19 +625,6 @@ root.addEventListener('click', (event) => {
     openScope(element.dataset.domain, id);
     return;
   }
-  if (action === 'select-region') {
-    replaceLauncherScope(
-      element.dataset.domain,
-      id,
-      'region',
-      element.classList.contains('launcher-map__label') ? 'map' : 'list',
-    );
-    return;
-  }
-  if (action === 'select-continent') {
-    replaceLauncherScope(element.dataset.domain, id, 'continent');
-    return;
-  }
   if (action === 'launcher-parent') {
     const parent = parentRoute(currentRoute);
     if (parent) navigateStable(parent);
@@ -717,15 +636,17 @@ root.addEventListener('click', (event) => {
     return;
   }
   if (action === 'start-map-learn' || action === 'start-map-test') {
-    void withLaunchFeedback(element, () => locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test'));
+    const scope = launcherScope(element);
+    void withLaunchFeedback(element, () => locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test', undefined, scope));
     return;
   }
   if (action === 'start-outline-learn' || action === 'start-outline-test') {
-    void withLaunchFeedback(element, () => outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test'));
+    const scope = launcherScope(element);
+    void withLaunchFeedback(element, () => outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test', undefined, scope));
     return;
   }
   if (action === 'start-neighbor-learn' || action === 'start-neighbor-test') {
-    neighborsRound.begin(action === 'start-neighbor-learn' ? 'learn' : 'test');
+    neighborsRound.begin(action === 'start-neighbor-learn' ? 'learn' : 'test', undefined, launcherScope(element));
     return;
   }
   if (action === 'next-neighbor') {
@@ -765,18 +686,30 @@ root.addEventListener('click', (event) => {
     case 'home':
       navigateStable({ name: 'home' });
       return;
-    case 'start-learn':
+    case 'start-learn': {
+      const scope = launcherScope(element);
+      if (scope) {
+        router.navigate(routeForScope('flags', scope, 'learn'));
+        return;
+      }
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
         router.navigate(routeForScope('flags', flagsRound.currentScope(), 'learn'));
         return;
       }
       break;
-    case 'start-test':
+    }
+    case 'start-test': {
+      const scope = launcherScope(element);
+      if (scope) {
+        flagsRound.begin(scope, 'test');
+        return;
+      }
       if (currentRoute.name === 'learning' && currentRoute.domain === 'flags') {
         flagsRound.begin(flagsRound.currentScope(), 'test');
         return;
       }
       break;
+    }
     case 'answer':
       if (id) flagsRound.submitAnswer(id);
       break;

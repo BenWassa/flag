@@ -30,7 +30,6 @@ export function renderNeighborHome(
   scope: StudyScope,
   achievements: EarnedAchievementState,
   persisting = true,
-  mapAsset?: MapRegionAsset | null,
 ): string {
   const config = scope.id ? getNeighborScopeConfig(scope.id) : undefined;
   const continent = config ? getMapContinentConfig(config.continentId) : undefined;
@@ -56,7 +55,5 @@ export function renderNeighborHome(
     unitLabel: 'targets',
     persisting,
     storageNotice: 'This browser is blocking storage, so neighbour progress will last only for this visit.',
-    showMap: true,
-    mapAsset,
   });
 }

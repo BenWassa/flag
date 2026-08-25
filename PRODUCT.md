@@ -229,7 +229,7 @@ Navigation is **mode-first**. The learner chooses what they are practising, then
 
 1. **Home** — the four learning modes, each showing the coverage it currently teaches and the progress earned in it.
 2. **Continent index** — that mode's six continents as full-width geography rows with visible evidence. A supported row opens its launcher; unshipped continents remain honest, inert shells.
-3. **Continent launcher** — deliberate Play/Learn actions for the active continent or selected region, with full-width region rows that expose their existing progress without starting a round themselves.
+3. **Continent launcher** — a whole-continent row above full-width region rows, each exposing its progress and starting Play for its own scope on a single tap, with one subordinate Learn action for the continent below the list. The launcher offers exactly one way to choose a scope; the deferred map-first alternative is [#104](https://github.com/BenWassa/flag/issues/104).
 
 Core navigation principles:
 

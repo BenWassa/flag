@@ -33,6 +33,15 @@ This directory mirrors active product/engineering work that benefits from a dura
   Different flag aspect ratios must not move the multiple-choice touch targets.
   The responsive implementation and verification scope is
   [`issue-90-stable-flag-stage.md`](issue-90-stable-flag-stage.md).
+- [#104 — map-first continent launcher](https://github.com/BenWassa/flag/issues/104).
+  **Deferred, captured only.** The launcher now has exactly one selection
+  method: one tap on a scope row starts Play for that scope. The full-bleed
+  region-map alternative (calm per-region colour, progress encoded into the
+  geography) conflicts with the locked "no region colour taxonomy" decision in
+  [`../product/colour-system.md`](../product/colour-system.md) and would encode
+  progress in colour alone, so it needs its own product decision before any
+  implementation. Scope and reasoning:
+  [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
 - [#86 — clip continent context layers to the viewport](https://github.com/BenWassa/flag/issues/86).
   Reduce lazy map payloads in the shared generator without changing canonical
   country geometry or adjacency. The execution scope is

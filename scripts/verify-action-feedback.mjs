@@ -69,8 +69,10 @@ assert.ok(app.includes("setAttribute('aria-busy', 'true')"), 'A busy launcher is
 assert.ok(app.includes("classList.add('is-launching')"), 'A busy launcher is visibly busy.');
 assert.match(app, /finally\s*\{[\s\S]*?is-launching/, 'A failed launch releases its control.');
 for (const call of [
-  'launchFeedback(element, () => rounds.locations.begin(mode))',
-  'launchFeedback(element, () => rounds.outlines.begin(mode))',
+  "launchFeedback(element, () => rounds.locations.begin('test', undefined, scope))",
+  "launchFeedback(element, () => rounds.outlines.begin('test', undefined, scope))",
+  "launchFeedback(element, () => rounds.locations.begin('learn', undefined, scope))",
+  "launchFeedback(element, () => rounds.outlines.begin('learn', undefined, scope))",
 ]) assert.ok(app.includes(call), `The deliberate launcher action shows launch feedback: ${call}`);
 assert.equal(app.includes('quick-play'), false, 'Retired row-level Quick Play has no application dispatch.');
 assert.ok(atlasTheme.includes('.is-launching'), 'The busy state has a production treatment.');

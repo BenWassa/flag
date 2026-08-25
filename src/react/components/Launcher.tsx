@@ -1,9 +1,7 @@
-import type { MapRegionAsset } from '../../domain/map-models.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import { domainDisplayName } from '../../domain/display.js';
 import { useAtlasActions } from '../actions.js';
 import { DomainIcon, Icon } from './Icon.js';
-import { LauncherMap } from './LauncherMap.js';
 import { ProgressStrip } from './ProgressStrip.js';
 
 export interface LauncherRegion {
@@ -22,10 +20,6 @@ export interface LauncherModel {
   unitLabel: string;
   persisting: boolean;
   storageNotice: string;
-  showMap: boolean;
-  mapAsset?: MapRegionAsset | null;
-  mapLoading?: boolean;
-  mapFailed?: boolean;
 }
 
 const START_ACTIONS: Record<LearningDomain, { play: string; learn: string }> = {
@@ -35,20 +29,37 @@ const START_ACTIONS: Record<LearningDomain, { play: string; learn: string }> = {
   neighbors: { play: 'start-neighbor-test', learn: 'start-neighbor-learn' },
 };
 
-function RegionRow({ model, region }: { model: LauncherModel; region: LauncherRegion }) {
+function ScopeRow({ domain, scope, stats, unitLabel, variant, domainMastered, complete }: {
+  domain: LearningDomain;
+  scope: StudyScope;
+  stats: ScopeStats;
+  unitLabel: string;
+  variant: 'continent' | 'region';
+  domainMastered?: boolean;
+  complete?: boolean;
+}) {
   const actions = useAtlasActions();
-  const selected = region.scope.id === model.selectedRegion?.id;
-  const rowClass = ['region-row', selected ? 'region-row--selected' : '', region.complete ? 'region-row--complete' : ''].filter(Boolean).join(' ');
+  const id = scope.id ?? '';
+  const label = variant === 'continent' ? `All ${scope.label}` : scope.label;
+  const rowClass = ['region-row', variant === 'continent' ? 'region-row--continent' : '', complete ? 'region-row--complete' : ''].filter(Boolean).join(' ');
   return (
     <div className={rowClass}>
-      <button className="region-row__open" type="button" data-id={region.scope.id} aria-pressed={selected} onClick={() => region.scope.id && actions.selectRegion(model.domain, region.scope.id)}>
+      <button
+        className="region-row__open"
+        type="button"
+        data-action={START_ACTIONS[domain].play}
+        data-domain={domain}
+        data-id={id}
+        data-scope-id={id}
+        aria-label={`Play ${label}`}
+        onClick={(event) => id && actions.playScope(domain, id, event.currentTarget)}
+      >
         <span className="region-row__identity">
-          <strong>{region.scope.label}{region.domainMastered ? <span className="region-row__mastery" aria-label="Mastered"><Icon name="star" /></span> : null}</strong>
-          <small>{region.stats.total} {model.unitLabel}</small>
+          <strong>{label}{domainMastered ? <span className="region-row__mastery" aria-label="Mastered"><Icon name="star" /></span> : null}</strong>
+          <small>{stats.total} {unitLabel}</small>
         </span>
-        {selected ? <span className="region-row__status">Selected</span> : null}
-        {region.stats.due > 0 ? <span className="region-row__evidence">{region.stats.due} due</span> : null}
-        <span className="region-row__progress"><ProgressStrip stats={region.stats} /></span>
+        {stats.due > 0 ? <span className="region-row__evidence">{stats.due} due</span> : null}
+        <span className="region-row__progress"><ProgressStrip stats={stats} /></span>
         <Icon name="chevron" />
       </button>
     </div>
@@ -58,23 +69,12 @@ function RegionRow({ model, region }: { model: LauncherModel; region: LauncherRe
 export function Launcher({ model }: { model: LauncherModel }) {
   const actions = useAtlasActions();
   const activeScope = model.selectedRegion ?? model.continentScope;
+  const continentId = model.continentScope.id ?? '';
   const domainTitle = domainDisplayName(model.domain);
   const domainName = domainTitle.toLowerCase();
-  const play = (element: HTMLElement) => {
-    if (model.domain === 'flags') actions.startFlags('test');
-    if (model.domain === 'locations') actions.startLocations('test', element);
-    if (model.domain === 'outlines') actions.startOutlines('test', element);
-    if (model.domain === 'neighbors') actions.startNeighbors('test');
-  };
-  const learn = (element: HTMLElement) => {
-    if (model.domain === 'flags') actions.startFlags('learn');
-    if (model.domain === 'locations') actions.startLocations('learn', element);
-    if (model.domain === 'outlines') actions.startOutlines('learn', element);
-    if (model.domain === 'neighbors') actions.startNeighbors('learn');
-  };
 
   return (
-    <main className="page page--launcher" data-launcher-domain={model.domain} data-launcher-continent={model.continentScope.id ?? ''}>
+    <main className="page page--launcher" data-launcher-domain={model.domain} data-launcher-continent={continentId}>
       <header className="topbar topbar--detail launcher-header">
         <button className="icon-button" type="button" onClick={actions.goBack} aria-label={`Back to ${domainTitle}`}><Icon name="back" /></button>
         <span className="launcher-header__icon" aria-hidden="true"><DomainIcon domain={model.domain} /></span>
@@ -84,19 +84,34 @@ export function Launcher({ model }: { model: LauncherModel }) {
         </div>
       </header>
       <section className="launcher" aria-label={`${model.continentScope.label} ${domainName} launcher`}>
-        <div className="launcher__status">
-          {model.selectedRegion ? <button className="launcher__all-scope" type="button" onClick={() => model.continentScope.id && actions.selectContinent(model.domain, model.continentScope.id)}>All {model.continentScope.label}</button> : null}
-          <ProgressStrip stats={model.stats} />
+        <div className="region-list region-list--continent">
+          <ScopeRow domain={model.domain} scope={model.continentScope} stats={model.stats} unitLabel={model.unitLabel} variant="continent" />
         </div>
-        <button className="button button--primary launcher__play" type="button" data-action={START_ACTIONS[model.domain].play} onClick={(event) => play(event.currentTarget)}>Play {activeScope.label}</button>
-        {model.showMap ? <div className="launcher-map-slot" data-launcher-map-slot data-domain={model.domain} data-continent-id={model.continentScope.id ?? ''}>
-          {model.mapAsset ? <LauncherMap asset={model.mapAsset} domain={model.domain} selectedRegionId={model.selectedRegion?.id} /> : model.mapFailed ? <p className="launcher-map-error">Map unavailable. Choose a region from the list.</p> : <div className="launcher-map-loading" aria-label="Loading map" />}
-        </div> : null}
         <section className="atlas-section launcher__regions" aria-labelledby="launcher-regions-heading">
           <div className="list-heading"><h2 id="launcher-regions-heading">Regions</h2></div>
-          <div className="region-list">{model.regions.map((region) => <RegionRow model={model} region={region} key={region.scope.id} />)}</div>
+          <div className="region-list">
+            {model.regions.map((region) => (
+              <ScopeRow
+                domain={model.domain}
+                scope={region.scope}
+                stats={region.stats}
+                unitLabel={model.unitLabel}
+                variant="region"
+                domainMastered={region.domainMastered}
+                complete={region.complete}
+                key={region.scope.id}
+              />
+            ))}
+          </div>
         </section>
-        <button className="button button--tertiary launcher__learn" type="button" data-action={START_ACTIONS[model.domain].learn} onClick={(event) => learn(event.currentTarget)}>Learn {activeScope.label}</button>
+        <button
+          className="button button--tertiary launcher__learn"
+          type="button"
+          data-action={START_ACTIONS[model.domain].learn}
+          data-domain={model.domain}
+          data-scope-id={continentId}
+          onClick={(event) => continentId && actions.learnScope(model.domain, continentId, event.currentTarget)}
+        >Learn {model.continentScope.label}</button>
       </section>
       {!model.persisting ? <p className="storage-notice">{model.storageNotice}</p> : null}
     </main>

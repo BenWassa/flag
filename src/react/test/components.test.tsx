@@ -14,8 +14,7 @@ import { DomainScreen, HomeScreen } from '../screens/PassiveScreens.js';
 function actions(): AtlasActions {
   return {
     goHome: vi.fn(), goBack: vi.fn(), openProfile: vi.fn(), openDomain: vi.fn(), openScope: vi.fn(),
-    selectRegion: vi.fn(), selectContinent: vi.fn(), startFlags: vi.fn(),
-    startLocations: vi.fn(), startOutlines: vi.fn(), startNeighbors: vi.fn(),
+    playScope: vi.fn(), learnScope: vi.fn(), startFlags: vi.fn(),
     revealFlag: vi.fn(), toggleAllFlagNames: vi.fn(), answerFlag: vi.fn(),
     answerLocation: vi.fn(), answerOutline: vi.fn(), setNeighborQuery: vi.fn(),
     submitNeighbor: vi.fn(), submitNeighborQuery: vi.fn(), advance: vi.fn(),
@@ -53,7 +52,7 @@ describe('React screen actions', () => {
     expect(unavailable.every((label) => label.closest('button') === null)).toBe(true);
   });
 
-  it('routes launcher region and Play choices directly', async () => {
+  it('plays a launcher scope from a single row tap', async () => {
     const atlasActions = actions();
     const stats = { total: 10, unseen: 10, learning: 0, mastered: 0, due: 0, cleared: 0 };
     const model: LauncherModel = {
@@ -61,14 +60,17 @@ describe('React screen actions', () => {
       continentScope: { kind: 'continent', id: 'africa', label: 'Africa' },
       stats,
       regions: [{ scope: { kind: 'region', id: 'west-africa', label: 'West Africa' }, stats }],
-      unitLabel: 'flags', persisting: true, storageNotice: '', showMap: false,
+      unitLabel: 'flags', persisting: true, storageNotice: '',
     };
     render(<AtlasActionsContext value={atlasActions}><Launcher model={model} /></AtlasActionsContext>);
 
-    await userEvent.click(screen.getByRole('button', { name: /West Africa/i }));
-    await userEvent.click(screen.getByRole('button', { name: 'Play Africa' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Play West Africa' }));
+    expect(atlasActions.playScope).toHaveBeenCalledWith('flags', 'west-africa', expect.anything());
 
-    expect(atlasActions.selectRegion).toHaveBeenCalledWith('flags', 'west-africa');
-    expect(atlasActions.startFlags).toHaveBeenCalledWith('test');
+    await userEvent.click(screen.getByRole('button', { name: 'Play All Africa' }));
+    expect(atlasActions.playScope).toHaveBeenCalledWith('flags', 'africa', expect.anything());
+
+    await userEvent.click(screen.getByRole('button', { name: 'Learn Africa' }));
+    expect(atlasActions.learnScope).toHaveBeenCalledWith('flags', 'africa', expect.anything());
   });
 });

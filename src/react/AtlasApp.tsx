@@ -7,7 +7,6 @@ import { domainDisplayName } from '../domain/display.js';
 import { resolveCountryGuess } from '../domain/neighbor-game.js';
 import type { LearningDomain, StudyScope } from '../domain/models.js';
 import type { ProgressLedgers } from '../domain/progress-summary.js';
-import type { MapRegionAsset } from '../domain/map-models.js';
 import { flushMapAttempts } from '../infrastructure/map-storage.js';
 import { flushNeighborAttempts } from '../infrastructure/neighbor-storage.js';
 import { flushOutlineAttempts } from '../infrastructure/outline-storage.js';
@@ -61,8 +60,6 @@ export function AtlasApp() {
   const [notice, setNotice] = useState('');
   const [revealedFlags, setRevealedFlags] = useState<ReadonlySet<string>>(new Set());
   const [revealAll, setRevealAll] = useState(false);
-  const [launcherMap, setLauncherMap] = useState<{ scopeId: string | null; asset: MapRegionAsset | null; failed: boolean }>({ scopeId: null, asset: null, failed: false });
-  const launcherRequest = useRef(0);
 
   const announce = useCallback((message: string) => {
     if (!message) return;
@@ -162,18 +159,14 @@ export function AtlasApp() {
     router.navigate(initial, { replace: true });
   }, [router]);
 
+  // Warm the continent's cartography while the learner is still choosing, so the
+  // first Play does not pay the whole map download.
   useEffect(() => {
     const route = currentRoute.current;
     if (route.name !== 'learning' || route.activity !== undefined || route.domain === 'flags' || !route.scope?.id) return;
     const continentId = getMapContinentConfigForScope(route.scope.id)?.scope.id;
-    if (!continentId || (launcherMap.scopeId === continentId && launcherMap.asset)) return;
-    const request = ++launcherRequest.current;
-    setLauncherMap({ scopeId: continentId, asset: null, failed: false });
-    void loadMapAsset(continentId).then((asset) => {
-      if (request !== launcherRequest.current) return;
-      setLauncherMap({ scopeId: continentId, asset: asset ?? null, failed: !asset });
-    }).catch(() => request === launcherRequest.current && setLauncherMap({ scopeId: continentId, asset: null, failed: true }));
-  }, [store.view, launcherMap.scopeId, launcherMap.asset]);
+    if (continentId) void loadMapAsset(continentId).catch(() => undefined);
+  }, [store.view]);
 
   const discardRound = useCallback(() => {
     const active = getActiveRoundRoute();
@@ -192,20 +185,6 @@ export function AtlasApp() {
     router.navigate(route);
   }, [discardRound, router]);
 
-  const replaceScope = useCallback((domain: LearningDomain, id: string, kind: 'continent' | 'region', surface: 'list' | 'map' = 'list') => {
-    const route = routeForScopeId(domain, id);
-    if (!route?.scope || route.scope.kind !== kind) return;
-    const active = getActiveRoundRoute();
-    if (active && !routesEqual(route, stableRoute(active))) discardRound();
-    preserveScroll.current = true;
-    router.navigate(route, { replace: true });
-    window.requestAnimationFrame(() => {
-      const selector = kind === 'region' ? `${surface === 'map' ? '.launcher-map-region' : '.region-row__open'}[data-id="${CSS.escape(id)}"]` : '.launcher__play';
-      document.querySelector<HTMLElement>(selector)?.focus({ preventScroll: true });
-    });
-    announce(kind === 'region' ? `${route.scope.label} selected.` : `All ${route.scope.label} selected.`);
-  }, [announce, discardRound, router]);
-
   const launchFeedback = useCallback(async (element: HTMLElement | null | undefined, launch: () => Promise<void>) => {
     element?.setAttribute('aria-busy', 'true');
     element?.classList.add('is-launching');
@@ -218,12 +197,23 @@ export function AtlasApp() {
     openProfile: () => navigateStable({ name: 'profile' }),
     openDomain: (domain) => navigateStable({ name: 'learning', domain }),
     openScope: (domain, id) => { const route = routeForScopeId(domain, id); if (route) navigateStable(route); },
-    selectRegion: (domain, id, surface = 'list') => replaceScope(domain, id, 'region', surface),
-    selectContinent: (domain, id) => replaceScope(domain, id, 'continent'),
+    playScope: (domain, id, element) => {
+      const scope = routeForScopeId(domain, id)?.scope;
+      if (!scope) return;
+      if (domain === 'flags') rounds.flags.begin(scope, 'test');
+      else if (domain === 'locations') void launchFeedback(element, () => rounds.locations.begin('test', undefined, scope));
+      else if (domain === 'outlines') void launchFeedback(element, () => rounds.outlines.begin('test', undefined, scope));
+      else rounds.neighbors.begin('test', undefined, scope);
+    },
+    learnScope: (domain, id, element) => {
+      const scope = routeForScopeId(domain, id)?.scope;
+      if (!scope) return;
+      if (domain === 'flags') navigateStable(routeForScope('flags', scope, 'learn'));
+      else if (domain === 'locations') void launchFeedback(element, () => rounds.locations.begin('learn', undefined, scope));
+      else if (domain === 'outlines') void launchFeedback(element, () => rounds.outlines.begin('learn', undefined, scope));
+      else rounds.neighbors.begin('learn', undefined, scope);
+    },
     startFlags: (mode) => mode === 'learn' ? router.navigate(routeForScope('flags', rounds.flags.currentScope(), 'learn')) : rounds.flags.begin(rounds.flags.currentScope(), 'test'),
-    startLocations: (mode, element) => void launchFeedback(element, () => rounds.locations.begin(mode)),
-    startOutlines: (mode, element) => void launchFeedback(element, () => rounds.outlines.begin(mode)),
-    startNeighbors: (mode) => rounds.neighbors.begin(mode),
     revealFlag: (id) => setRevealedFlags((current) => { const next = new Set(current); next.has(id) ? next.delete(id) : next.add(id); return next; }),
     toggleAllFlagNames: () => { setRevealAll((value) => { announce(!value ? 'All country names revealed.' : 'Country names hidden.'); return !value; }); setRevealedFlags(new Set()); },
     answerFlag: (id) => rounds.flags.submitAnswer(id),
@@ -236,7 +226,7 @@ export function AtlasApp() {
     exitRound: () => { if (!getActiveRoundRoute()) return; rounds.cancelAllPending(); discardRound(); router.back(); },
     review: (domain) => { if (domain === 'flags') rounds.flags.reviewMistakes(); if (domain === 'locations') rounds.locations.reviewMistakes(); if (domain === 'outlines') rounds.outlines.reviewMistakes(); if (domain === 'neighbors') rounds.neighbors.reviewMistakes(); },
     repeat: (domain) => { if (domain === 'flags') rounds.flags.repeat(); if (domain === 'locations') rounds.locations.repeat(); if (domain === 'outlines') rounds.outlines.repeat(); if (domain === 'neighbors') rounds.neighbors.repeat(); },
-  }), [announce, discardRound, finishInteraction, launchFeedback, navigateStable, notify, replaceScope, rounds, router, store]);
+  }), [announce, discardRound, finishInteraction, launchFeedback, navigateStable, notify, rounds, router, store]);
 
   const ledgers: ProgressLedgers = { flags: store.progress, locations: store.locationProgress, outlines: store.outlineProgress, neighbors: store.neighborProgress };
   const persisting = store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting;
@@ -263,7 +253,7 @@ export function AtlasApp() {
   useGlobalLifecycle(currentRoute, actions, store);
 
   return <AtlasActionsContext.Provider value={actions}>
-    {screen(store, ledgers, persisting, revealedFlags, revealAll, launcherMap, rounds.neighbors.getQuery())}
+    {screen(store, ledgers, persisting, revealedFlags, revealAll, rounds.neighbors.getQuery())}
     <p className="visually-hidden" role="status" aria-live="polite">{announcement}</p>
     {notice ? <div className="app-notice" role="status" aria-live="polite"><span className="app-notice__body"><span className="app-notice__icon" aria-hidden="true"><Icon name="warning" /></span><span className="app-notice__message">{notice}</span></span><button className="app-notice__dismiss" type="button" onClick={dismissNotice} aria-label="Dismiss message"><Icon name="close" /></button></div> : null}
     <InstallBanner />
@@ -278,7 +268,7 @@ function createControllers(context: RoundContext) {
   return { flags, locations, outlines, neighbors, cancelAllPending: () => { flags.cancelPending(); locations.cancelPending(); outlines.cancelPending(); } };
 }
 
-function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolean, revealed: ReadonlySet<string>, revealAll: boolean, launcherMap: { asset: MapRegionAsset | null; failed: boolean }, neighborQuery: string) {
+function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolean, revealed: ReadonlySet<string>, revealAll: boolean, neighborQuery: string) {
   switch (store.view.name) {
     case 'home': return <HomeScreen ledgers={ledgers} persisting={allPersisting} />;
     case 'profile': return <ProfileScreen />;
@@ -287,13 +277,13 @@ function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolea
     case 'flags-study': return <FlagsStudyScreen scope={store.view.scope} revealedIds={revealed} revealAll={revealAll} />;
     case 'quiz': return store.session ? <FlagsQuizScreen session={store.session} progress={store.progress} answeredCountryId={store.answeredCountryId} /> : null;
     case 'results': return <RecognitionResultsScreen result={store.view.result} domain="flags" />;
-    case 'map-home': return <GeographyLauncherScreen domain="locations" scope={store.view.scope} achievements={store.achievements} persisting={store.mapPersisting} progress={store.locationProgress} mapAsset={launcherMap.asset} mapFailed={launcherMap.failed} />;
+    case 'map-home': return <GeographyLauncherScreen domain="locations" scope={store.view.scope} achievements={store.achievements} persisting={store.mapPersisting} progress={store.locationProgress} />;
     case 'map-quiz': return store.mapSession && store.mapAsset ? <LocationQuizScreen asset={store.mapAsset} session={store.mapSession} lastWrongCountryId={store.mapLastWrongCountryId} /> : null;
     case 'map-results': return store.mapAsset ? <LocationResultsScreen asset={store.mapAsset} result={store.view.result} /> : null;
-    case 'outline-home': return <GeographyLauncherScreen domain="outlines" scope={store.view.scope} achievements={store.achievements} persisting={store.outlinePersisting} progress={store.outlineProgress} mapAsset={launcherMap.asset} mapFailed={launcherMap.failed} />;
+    case 'outline-home': return <GeographyLauncherScreen domain="outlines" scope={store.view.scope} achievements={store.achievements} persisting={store.outlinePersisting} progress={store.outlineProgress} />;
     case 'outline-quiz': return store.outlineSession && store.outlineAsset ? <OutlineQuizScreen asset={store.outlineAsset} session={store.outlineSession} progress={store.outlineProgress} answeredCountryId={store.outlineAnsweredCountryId} /> : null;
     case 'outline-results': return <RecognitionResultsScreen result={store.view.result} domain="outlines" />;
-    case 'neighbor-home': return <GeographyLauncherScreen domain="neighbors" scope={store.view.scope} achievements={store.achievements} persisting={store.neighborPersisting} progress={store.neighborProgress} mapAsset={launcherMap.asset} mapFailed={launcherMap.failed} />;
+    case 'neighbor-home': return <GeographyLauncherScreen domain="neighbors" scope={store.view.scope} achievements={store.achievements} persisting={store.neighborPersisting} progress={store.neighborProgress} />;
     case 'neighbor-quiz': return store.neighborSession ? <NeighborQuizScreen session={store.neighborSession} lastOutcome={store.neighborLastOutcome} query={neighborQuery} /> : null;
     case 'neighbor-results': return <NeighborResultsScreen result={store.view.result} />;
   }
