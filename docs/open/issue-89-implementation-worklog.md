@@ -130,35 +130,72 @@ Documentation and issue metadata only. Reverting the Phase 1 PR returns the repo
 
 | Phase | Child | Branch/PR | `npm test` | Artifact/CI evidence | Status |
 | --- | --- | --- | --- | --- | --- |
-| 1 | #91 | `issue-91-react-vite-baseline` | baseline `main` CI #382 green; branch gate pending | Pages #359 baseline green | in progress |
-| 2 | #92 | pending | pending | pending | blocked by Phase 1 |
-| 3 | #93 | pending | pending | pending | blocked |
-| 4 | #94 | pending | pending | pending | blocked |
-| 5 | #95 | pending | pending | pending | blocked |
-| 6 | #96 | pending | pending | pending | blocked |
-| 7 | #97 | pending | pending | pending | blocked |
-| 8 | #98 | pending | pending | pending | blocked |
-| 9 | #99 | pending | pending | pending | blocked |
-| 10 | #100 | pending | pending | pending | blocked |
-| 11 | #101 | pending | pending | pending | blocked |
-| 12 | #89 | pending | pending | pending | blocked |
+| 1 | #91 | merged baseline docs on `origin/main` | baseline CI #382 green | Pages #359 baseline green | complete |
+| 2 | #92 | `origin/issue-92-vite-foundation` | inherited green foundation; candidate gate green | Vite artifact verified | candidate integrated |
+| 3 | #93 | `issue-89-react-vite-completion` | candidate gate green | Workbox InjectManifest artifact verified | candidate integrated |
+| 4 | #94 | same integrated branch | candidate gate green | React shell/error boundary inspected | candidate integrated |
+| 5 | #95 | same integrated branch | component + invariant coverage green | browser flow exercised | candidate integrated |
+| 6 | #96 | same integrated branch | invariant coverage green | Flags Play browser smoke green | candidate integrated |
+| 7 | #97 | same integrated branch | invariant coverage green | production route/render inspected | candidate integrated |
+| 8 | #98 | same integrated branch | map/cartography verifiers green | desktop/mobile launcher map green | candidate integrated |
+| 9 | #99 | same integrated branch | neighbour/keyboard verifiers green | production route/render inspected | candidate integrated |
+| 10 | #100 | same integrated branch | production graph migrated | legacy verifier fixtures remain | partial |
+| 11 | #101 | same integrated branch | `npm test` + Playwright matrix green | physical/offline install gates outstanding | partial |
+| 12 | #89 | pending merge/reconciliation | pending merged-tree gate | pending | blocked by remaining gates |
 
 ## Parity evidence ledger
 
 | Contract | Baseline source | Migrated evidence |
 | --- | --- | --- |
-| mode-first IA | `DESIGN.md`, routing verifier | pending |
-| hash URL grammar | `docs/architecture/routing.md`, routing verifier | pending |
-| refresh-to-launcher | `src/app.ts`, routing verifier | pending |
-| storage compatibility | infrastructure/storage modules + verifiers | pending |
-| learning/evidence/mastery | domain/state + verifiers | pending |
-| ISO3/naming | country data + naming policy/verifiers | pending |
-| canonical geography | cartography docs/generator/verifiers | pending |
-| British English | `verify-british-english.mjs` | pending |
-| visible failure vs live status | `DESIGN.md`, `src/app.ts` | pending |
-| keyboard/focus | current app/view behaviour + verifiers | pending |
-| lazy geography | dynamic imports + cartography verifiers | pending |
-| PWA/offline/update | `public/sw.js` + production build | pending |
+| mode-first IA | `DESIGN.md`, routing verifier | React component + IA/routing verifiers green |
+| hash URL grammar | `docs/architecture/routing.md`, routing verifier | preserved; routing verifier green |
+| refresh-to-launcher | `src/app.ts`, routing verifier | React normalisation + routing verifier green |
+| storage compatibility | infrastructure/storage modules + verifiers | unchanged namespaces/schemas; full suite green |
+| learning/evidence/mastery | domain/state + verifiers | unchanged engines/controllers; full suite green |
+| ISO3/naming | country data + naming policy/verifiers | unchanged; full suite green |
+| canonical geography | cartography docs/generator/verifiers | lazy generated modules and all cartography gates green |
+| British English | `verify-british-english.mjs` | green against generated application artifact |
+| visible failure vs live status | `DESIGN.md`, `src/app.ts` | React-owned channels; action-feedback verifier green |
+| keyboard/focus | current app/view behaviour + verifiers | React focus intent + keyboard verifiers green; physical gate pending |
+| lazy geography | dynamic imports + cartography verifiers | four lazy continent chunks verified and excluded from precache |
+| PWA/offline/update | `public/sw.js` + production build | Workbox-generated worker verified; installed/offline manual gate pending |
 | physical mobile | #71 | not performed / still open |
 
 Subsequent phases append their evidence below rather than rewriting the baseline record.
+
+## Integrated migration candidate — Phases 2–11
+
+Branch `issue-89-react-vite-completion` continues from the completed Vite-foundation branch and integrates the remaining browser-runtime work as one review candidate. This is intentionally not recorded as issue closeout: physical-device evidence remains with #71, remote hosting remains with #46, and the old string renderers are still emitted solely for the existing plain-Node verifier family until those assertions are replaced.
+
+### Implemented runtime
+
+- React 19 owns the production entry point, application shell, Home/domain indexes, launchers, Flags study, all four active-round surfaces, results, notices, announcements and install UI.
+- The typed hash router, `AppStore`, round controllers, storage schemas, product language and learning/achievement rules are preserved.
+- Component handlers replace global delegated interaction routing. Stable action names remain compatibility metadata where required.
+- Vite and `@vitejs/plugin-react` own development and production builds.
+- `vite-plugin-pwa` uses Workbox InjectManifest to build `src/sw.ts`; cache generation is `flag-atlas-v29`, generated shell assets are precached, outdated Workbox entries and older Atlas shell/runtime caches are removed, and lazy continent chunks remain runtime-loaded.
+- A React error boundary provides a visible reload path without changing or clearing saved progress.
+
+### Verification added and adapted
+
+- Vitest + Testing Library cover Home navigation, inert unsupported continent shells, region selection and deliberate Play actions.
+- Playwright covers Home → Flags → live Play and Locations launcher-map loading in desktop Chromium and Pixel 7 emulation.
+- Existing geography, learning, evidence, routing, cartography, PWA, British-English, accessibility-semantic and achievement verifiers remain active. Build assertions now inspect the generated Workbox artifact rather than a handwritten shell array.
+- Production bundle at this candidate: `app.js` about 321 KB raw / 98 KB gzip; all continent geometry remains in separate lazy chunks.
+
+Verification run on 2026-08-24:
+
+- `npm test` — passed: strict application/config type checks, 3 React component tests, Vite/Workbox production build and the complete plain-Node invariant suite.
+- `npm run test:browser` — passed: 4/4 production-preview tests across desktop Chromium and Pixel 7 emulation.
+- `git diff --check` — passed.
+- No physical-device, installed-PWA or remote Firebase deployment gate is claimed.
+
+### Release and Firebase boundary
+
+- This is a major-release candidate, but `package.json` remains at `0.7.0`. The release workflow should perform the deliberate `1.0.0` version bump, changelog/release notes, tag and publication only after this branch is reviewed and merged and the remaining release gates are accepted.
+- No Firebase project was guessed or created. Firebase tooling is not authenticated in this environment and Issue #46 requires an explicit existing project ID or approval to create a project before local `firebase.json` configuration or deployment is coupled to remote infrastructure.
+- GitHub Pages and hash URLs remain the deployable default, so this candidate does not broaden the migration into auth, Firestore, clean URLs or storage sync.
+
+### Known compatibility tail
+
+The production graph no longer imports `src/app.ts` or legacy `src/ui/views/*` string screens. Those modules remain temporarily compiled by `tsconfig.verify.json` because the invariant suite still uses their deterministic markup as product-contract fixtures. Removing them requires replacing those remaining fixture assertions with React component/browser equivalents; it is the outstanding Phase 10 cleanup, not a production runtime dependency.

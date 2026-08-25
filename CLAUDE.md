@@ -36,7 +36,7 @@ Important current decisions:
 - other continents may appear as honest shells before their full data ships, but unsupported domains must never count as complete;
 - navigation is **mode-first**: Home chooses a learning domain, `/{domain}` lists that domain's continents, and `/{domain}/{continent}` is the launcher (whole-continent Play plus its region list). The scope-first `/atlas/*` surface and the region card's four-domain launch row are retired;
 - the production visual style is **Tactile Atlas**. Preserve its documented system unless a focused product decision changes it;
-- Issue #89 is incrementally migrating the presentation/build layers to React and Vite. Treat the existing router, product engine, persistence, learning rules, cartography and CSS semantics as preservation boundaries; follow the phase plan rather than opportunistically rewriting them.
+- Issue #89's integrated candidate runs the production presentation/build layers on React and Vite. Treat the existing router, product engine, persistence, learning rules, cartography and CSS semantics as preservation boundaries; the remaining legacy view modules are verifier fixtures, not the production entry path.
 
 ## Commands
 
@@ -47,6 +47,7 @@ npm run check    # strict application + Vite-config type-check
 npm run build    # Vite production build + temporary verifier compatibility emit
 npm run verify   # run every invariant verifier against the built artifact/contracts
 npm test         # check + production build + complete verifier suite (CI gate)
+npm run test:browser          # production-preview desktop/mobile Chromium smoke matrix
 npm run maps:generate            # regenerate canonical generated geography from pinned Natural Earth sources
 npm run maps:generate -- --update-hashes   # only after a reviewed, intentional upstream source change
 ```
@@ -57,7 +58,7 @@ Requires Node 22.12+.
 
 ## Architecture
 
-The product engine remains layered TypeScript under `src/`. During #89 the presentation owner changes incrementally, but the dependency direction does not:
+The product engine remains layered TypeScript under `src/`. React owns browser presentation, but the dependency direction does not:
 
 ```text
 src/data/            static curriculum + generated geography fixtures
@@ -65,7 +66,8 @@ src/domain/          pure learning/evidence/game rules — no DOM/React dependen
 src/infrastructure/  persistence and asset providers
 src/routing/         typed route model + hash-router transport
 src/state/           application/session orchestration
-src/ui/              presentation/screens; progressively React-owned under #89
+src/react/           React application shell, screens and components
+src/ui/              framework-independent adapters + temporary verifier fixtures
 ```
 
 Key rules:
@@ -76,7 +78,7 @@ Key rules:
 - **Map/outline/neighbour geometry is generated, not hand-authored.** Use the canonical Natural Earth production topology pipeline; never create a second map source or handwritten neighbour table.
 - **Country learning ledgers remain domain-specific.** New earned achievement state should be layered cleanly above them rather than flattening the domain mechanics.
 - **Flags** supports the full world/195-country curriculum. **Locations**, **Outlines**, and **Neighbours** support four production continents as of v0.7.0: Africa (5 regions), South America (3), Europe (4) and Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28). North America and Oceania remain honest shells.
-- **React is a presentation dependency only.** During #89, use adapters around the typed router, `AppStore`, round controllers, map viewport maths and persistence rather than replacing those systems.
+- **React is a presentation dependency only.** Keep adapters around the typed router, `AppStore`, round controllers, map viewport maths and persistence rather than replacing those systems.
 
 ## Product naming and compatibility
 

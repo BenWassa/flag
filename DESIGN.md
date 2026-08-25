@@ -392,7 +392,7 @@ Do not introduce:
 
 Tactile Atlas remains centred in `atlas-theme.css`, the override sheet loaded after the hand-authored base/domain styles and responsible for shared semantic tokens and product-wide tactile primitives. Focused surfaces may add a small dedicated sheet when that keeps ownership clear; #56 added `progress.css` immediately before `atlas-theme.css` on that principle, but it was removed along with the Progress screen it styled.
 
-No React, Tailwind or other UI/CSS framework was introduced to build this. The existing framework-free TypeScript view layer, routing, and `data-action` interaction model are unchanged — this remains an extension of the existing architecture, not a framework migration.
+React now owns the browser presentation and interaction lifecycle. This does not change the Tactile Atlas visual system: plain CSS, existing semantic classes and `atlas-theme.css` remain normative. The typed router, product engine and generated geography remain framework-independent; Tailwind, CSS-in-JS and a parallel component theme are not part of the migration. Stable `data-action` identifiers may remain as compatibility metadata, but React component handlers own interaction dispatch.
 
 ## Resolved by Tactile Atlas
 

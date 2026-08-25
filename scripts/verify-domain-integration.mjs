@@ -43,10 +43,10 @@ assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell incl
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Issue #77 shell changes advance the PWA cache to v28.');
-assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
-assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
-assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite integration advances the PWA cache to v29.');
+assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
+assert.ok(serviceWorker.includes('outline.css') && serviceWorker.includes('neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
+assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
 const app = await readFile('src/app.ts', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
@@ -113,4 +113,4 @@ for (const [name, html] of launchers) {
   }
 }
 
-console.log('Cross-domain integration verification passed: mode-first Home, full-width continent and region selection, deliberate Africa launchers, v28 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: mode-first Home, full-width continent and region selection, deliberate Africa launchers, v29 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

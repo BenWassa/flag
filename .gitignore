@@ -5,3 +5,5 @@ dist.previous-*/
 .build.lock
 .DS_Store
 graphify-out/
+test-results/
+playwright-report/

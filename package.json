@@ -9,23 +9,39 @@
   },
   "scripts": {
     "dev": "vite",
+    "preview": "vite preview",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vite.json --noEmit",
     "build": "vite build && tsc -p tsconfig.verify.json",
+    "test:unit": "vitest run",
+    "test:browser": "playwright test",
     "maps:generate": "node scripts/generate-map-assets.mjs",
     "icons:continents:generate": "node scripts/generate-continent-icons.mjs",
     "icons:brand:generate": "node scripts/generate-brand-icons.mjs",
     "verify": "node scripts/verify-vite-build.mjs && node scripts/verify.mjs && node scripts/verify-learning-evidence.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-continent-foundation.mjs && node scripts/verify-south-america.mjs && node scripts/verify-europe.mjs && node scripts/verify-asia-expansion.mjs && node scripts/verify-map-contrast.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-neighbor-keyboard.mjs && node scripts/verify-mobile-gestures.mjs && node scripts/verify-zero-neighbours.mjs && node scripts/verify-play-feedback.mjs && node scripts/verify-flags-study.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-achievements.mjs && node scripts/verify-progress-summary.mjs && node scripts/verify-british-english.mjs && node scripts/verify-atlas-brand.mjs && node scripts/verify-action-feedback.mjs",
-    "test": "npm run check && npm run build && npm run verify"
+    "test": "npm run check && npm run test:unit && npm run build && npm run verify"
   },
   "devDependencies": {
     "@phosphor-icons/core": "2.1.1",
+    "@playwright/test": "1.62.1",
+    "@testing-library/react": "16.3.2",
+    "@testing-library/user-event": "14.6.6",
     "@types/node": "22.20.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "19.2.5",
+    "@vitejs/plugin-react": "6.1.0",
     "d3-geo": "3.1.1",
+    "jsdom": "29.1.1",
     "sharp": "^0.35.3",
     "topojson-client": "3.1.0",
     "topojson-server": "3.0.1",
     "topojson-simplify": "3.0.3",
     "typescript": "5.8.3",
-    "vite": "8.2.2"
+    "vite": "8.2.2",
+    "vite-plugin-pwa": "1.3.0",
+    "vitest": "4.1.11"
+  },
+  "dependencies": {
+    "react": "19.2.8",
+    "react-dom": "19.2.8"
   }
 }

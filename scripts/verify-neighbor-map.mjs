@@ -229,9 +229,9 @@ assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography st
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Issue #77 shell changes own the v28 PWA cache.');
-assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas remains cached with the neighbour map shell.');
-assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbor map runtime is cached in the app shell.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite integration owns the v29 PWA cache.');
+assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas remains cached with the neighbour map shell.');
+assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbor map runtime is cached in the app shell.');
 const css = await readFile('dist/neighbors.css', 'utf8');
 assert.ok(css.includes('neighbor-map-country--target') && css.includes('neighbor-map-country--unresolved') && css.includes('neighbor-map-country--solved') && css.includes('neighbor-map-country--revealed'));
 assert.ok(css.includes('(orientation: landscape) and (max-height: 620px)'), 'Short landscape has a deliberate side-by-side layout.');

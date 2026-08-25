@@ -37,8 +37,8 @@ assert.equal(
   'All four result-state document-title branches use the Atlas suffix.',
 );
 
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'The current app-shell cache version is asserted explicitly.');
-assert.ok(serviceWorker.includes("'./manifest.webmanifest'"), 'Updated install metadata remains in the offline shell.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'The React/Vite app-shell cache version is asserted explicitly.');
+assert.ok(serviceWorker.includes('manifest.webmanifest'), 'Updated install metadata remains in the offline shell.');
 
 const storageSources = await Promise.all([
   'dist/infrastructure/storage.js',

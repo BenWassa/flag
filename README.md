@@ -46,7 +46,7 @@ To run the complete verification suite:
 npm test
 ```
 
-`npm test` type-checks the application and Vite configuration, builds the production app, preserves the temporary verifier-only module emit required by the existing plain-Node invariant suite, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. The deployable static app is written to `dist/`.
+`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, preserves the temporary verifier-only module emit required by the existing plain-Node invariant suite, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
 
 Serve `dist/` with any static server for production-artifact inspection, for example:
 
@@ -66,7 +66,7 @@ During supported quizzes:
 
 Pushes to `main` run `.github/workflows/pages.yml`, which builds and deploys the tested `dist/` artifact to GitHub Pages after CI succeeds.
 
-Firebase Hosting can replace GitHub Pages later without changing the application structure; that work remains separate from the React/Vite migration.
+Firebase Hosting can replace GitHub Pages without changing the application structure. Local hosting configuration and remote deployment remain part of Issue #46: selecting or creating a Firebase project is an explicit infrastructure decision and is not inferred during the React/Vite migration.
 
 ## Architecture
 
@@ -76,7 +76,10 @@ src/domain           learning evidence + domain engines
 src/infrastructure   persistence + flag assets
 src/routing          stable hash-route model
 src/state            application/session state
-src/ui               presentation and screens
+src/react            React shell, screens and components
+src/ui               framework-independent UI/map adapters and legacy verifier fixtures
+src/main.tsx         production browser entry
+src/sw.ts            generated Workbox service-worker policy
 ```
 
 The domain layer has no browser UI dependency. The learning evidence model, earned-achievement layer and presentation system should remain separable so each can evolve without forcing a rewrite of the others.

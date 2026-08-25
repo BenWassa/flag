@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
 const css = await readFile('dist/neighbors.css', 'utf8');
-const runtime = await readFile('dist/neighbor-map-runtime.js', 'utf8');
+const runtime = await readFile('src/neighbor-map-runtime.ts', 'utf8');
 const app = await readFile('src/app.ts', 'utf8');
 
 assert.ok(css.includes('min-height: 100svh'), 'Neighbours uses a stable small-viewport baseline instead of making the whole page follow keyboard-driven dvh changes.');

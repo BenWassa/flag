@@ -60,11 +60,11 @@ for (const file of CSS_FILES) {
 }
 
 const manifest = JSON.parse(await readFile(join(DIST, '.vite/manifest.json'), 'utf8'));
-for (const source of ['src/app.ts', 'src/map-viewport.ts', 'src/neighbor-map-runtime.ts']) {
+for (const source of ['src/main.tsx', 'src/map-viewport.ts', 'src/neighbor-map-runtime.ts']) {
   assert.ok(manifest[source], `Vite manifest contains browser entry ${source}.`);
   assert.equal(manifest[source].isEntry, true, `${source} remains a production entry.`);
 }
-assert.equal(manifest['src/app.ts'].file, 'app.js', 'App entry keeps its stable Phase 2 service-worker filename.');
+assert.equal(manifest['src/main.tsx'].file, 'app.js', 'React application entry keeps a stable service-worker filename.');
 assert.equal(manifest['src/map-viewport.ts'].file, 'map-viewport.js', 'Map viewport entry keeps its stable Phase 2 service-worker filename.');
 assert.equal(manifest['src/neighbor-map-runtime.ts'].file, 'neighbor-map-runtime.js', 'Neighbour map runtime keeps its stable Phase 2 service-worker filename.');
 
@@ -100,12 +100,10 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
 }
 
 const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
-const shellMatch = sw.match(/const SHELL = \[([\s\S]*?)\];/);
-assert.ok(shellMatch, 'Service worker still exposes the Phase 2 shell list.');
-const shellPaths = [...shellMatch[1].matchAll(/['"]\.\/([^'"]*)['"]/g)].map((match) => match[1]);
-for (const shellPath of shellPaths) {
-  const target = shellPath === '' ? 'index.html' : shellPath;
-  assert.equal(await exists(join(DIST, target)), true, `Service-worker shell target ${target} exists in the Vite artifact.`);
+assert.ok(sw.includes('flag-atlas-v29'), 'Build-aware service worker uses the React/Vite cache generation.');
+assert.ok(sw.includes('index.html'), 'Injected precache includes the offline navigation shell.');
+for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
+  assert.equal(new RegExp(`${continent}-[A-Za-z0-9_-]+\\.js`).test(sw), false, `${continent} geography remains runtime-cached rather than precached.`);
 }
 
 console.log(`Verified Vite production artifact: ${relativeFiles.length} files; app.js ${appBytes} B.`);

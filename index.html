@@ -36,26 +36,6 @@
       FINISH: review, validation, and implementation notes are part of the build.
     -->
     <div id="app"></div>
-    <p id="live-status" class="visually-hidden" role="status" aria-live="polite"></p>
-    <!--
-      Visible counterpart to #live-status. Routine progress talk stays
-      screen-reader-only above; anything the learner must actually see when an
-      action does not complete (a round that could not load its geometry, an
-      unrecognised country name) is rendered here instead. It sits outside
-      #app so it survives the app's innerHTML re-render, and is its own live
-      region so a message is seen and announced exactly once.
-    -->
-    <div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden></div>
-    <!--
-      Persists across every route render (#app is fully replaced on
-      navigation) because neither platform surfaces installability well on
-      its own: Chrome's install affordance is a small omnibox glyph, and iOS
-      Safari has no install prompt at all. Not a live region — it names an
-      available action, not something that just happened.
-    -->
-    <div id="install-banner" class="install-banner" hidden></div>
-    <script type="module" src="./src/map-viewport.ts"></script>
-    <script type="module" src="./src/neighbor-map-runtime.ts"></script>
-    <script type="module" src="./src/app.ts"></script>
+    <script type="module" src="./src/main.tsx"></script>
   </body>
 </html>

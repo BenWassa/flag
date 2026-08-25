@@ -21,7 +21,7 @@ export type IconName =
  * ships only Atlas's semantic set instead of the complete icon catalogue.
  * Source names are documented beside aliases whose Atlas meaning differs.
  */
-const PATHS: Record<IconName, string> = {
+export const ICON_PATHS: Record<IconName, string> = {
   back: '<path d="M228,128a12,12,0,0,1-12,12H69l51.52,51.51a12,12,0,0,1-17,17l-72-72a12,12,0,0,1,0-17l72-72a12,12,0,0,1,17,17L69,116H216A12,12,0,0,1,228,128Z"/>', // arrow-left
   close: '<path d="M208.49,191.51a12,12,0,0,1-17,17L128,145,64.49,208.49a12,12,0,0,1-17-17L111,128,47.51,64.49a12,12,0,0,1,17-17L128,111l63.51-63.52a12,12,0,0,1,17,17L145,128Z"/>', // x
   chevron: '<path d="M184.49,136.49l-80,80a12,12,0,0,1-17-17L159,128,87.51,56.49a12,12,0,1,1,17-17l80,80A12,12,0,0,1,184.49,136.49Z"/>', // caret-right
@@ -39,7 +39,7 @@ const PATHS: Record<IconName, string> = {
 };
 
 export function icon(name: IconName, className = ''): string {
-  return `<svg class="ui-icon ${className}" viewBox="0 0 256 256" width="20" height="20" aria-hidden="true" focusable="false" fill="currentColor">${PATHS[name]}</svg>`;
+  return `<svg class="ui-icon ${className}" viewBox="0 0 256 256" width="20" height="20" aria-hidden="true" focusable="false" fill="currentColor">${ICON_PATHS[name]}</svg>`;
 }
 
 /** Shared domain-identity glyph, used on Home tiles and in the launcher header. */

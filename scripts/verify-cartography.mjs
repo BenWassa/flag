@@ -132,8 +132,8 @@ assert.ok(indexSource.includes("import('./africa.js')"), 'Africa geometry remain
 const builtIndex = await readFile('dist/index.html', 'utf8');
 assert.ok(builtIndex.includes('./map-cartography.css'), 'Production artifact loads cartography styles after the established map styles.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes('flag-atlas-v8'), 'PWA cache is invalidated for the production cartography change.');
-assert.ok(serviceWorker.includes('./map-cartography.css'), 'New map viewport/cartography CSS is offline-shell compatible.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'PWA cache retains the production cartography change in the React/Vite generation.');
+assert.ok(serviceWorker.includes('map-cartography.css'), 'New map viewport/cartography CSS is offline-shell compatible.');
 
 const africaModulePath = 'dist/data/maps/africa.js';
 const africaModule = await stat(africaModulePath);

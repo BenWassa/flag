@@ -144,6 +144,6 @@ const mapCss = await readFile('dist/map.css', 'utf8');
 assert.ok(mapCss.includes('.map-country--current-wrong'), 'The production stylesheet contains the explicit wrong-country state.');
 assert.ok(mapCss.includes('stroke-dasharray: 5 3'), 'Wrong-country feedback has a non-colour dashed cue.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Issue #78 advances the shell cache for changed map presentation.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite advances the shell cache while preserving map presentation.');
 
 console.log('Locations edge verification passed: small-country targets, explicit Play feedback, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');

@@ -7,9 +7,11 @@
     "declaration": false,
     "sourceMap": false
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": [
     "src/app.ts",
+    "src/main.tsx",
+    "src/sw.ts",
     "src/map-viewport.ts",
     "src/neighbor-map-runtime.ts"
   ]

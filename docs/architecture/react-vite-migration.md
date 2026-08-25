@@ -1,6 +1,6 @@
 # React and Vite migration architecture decision
 
-**Status:** Accepted for Issue #89  
+**Status:** Accepted; integrated implementation candidate on `issue-89-react-vite-completion`
 **Parent:** #89  
 **Execution plan:** `docs/open/issue-89-execution-plan.md`  
 **Implementation log:** `docs/open/issue-89-implementation-worklog.md`
