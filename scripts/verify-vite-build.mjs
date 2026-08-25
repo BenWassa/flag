@@ -3,6 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
 const DIST = 'dist';
+const CSS_FILES = ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css'];
 
 async function exists(path) {
   try {
@@ -28,12 +29,7 @@ for (const file of [
   'app.js',
   'map-viewport.js',
   'neighbor-map-runtime.js',
-  'styles.css',
-  'map.css',
-  'map-cartography.css',
-  'outline.css',
-  'neighbors.css',
-  'atlas-theme.css',
+  ...CSS_FILES,
   'manifest.webmanifest',
   'sw.js',
   'icons/app-icon.svg',
@@ -46,6 +42,12 @@ for (const file of [
   assert.equal(await exists(join(DIST, file)), true, `Vite production artifact contains ${file}.`);
 }
 
+for (const file of CSS_FILES) {
+  const source = await readFile(join('src/styles', file));
+  const built = await readFile(join(DIST, file));
+  assert.deepEqual(built, source, `${file} remains byte-identical during the build-tool migration.`);
+}
+
 const indexHtml = await readFile(join(DIST, 'index.html'), 'utf8');
 assert.equal(indexHtml.includes('/src/'), false, 'Production HTML contains no source-module URLs.');
 assert.equal(indexHtml.includes('src="/'), false, 'Production HTML does not assume a domain-root script path.');
@@ -53,7 +55,7 @@ assert.equal(indexHtml.includes('href="/'), false, 'Production HTML does not ass
 for (const file of ['app.js', 'map-viewport.js', 'neighbor-map-runtime.js']) {
   assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
 }
-for (const file of ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css']) {
+for (const file of CSS_FILES) {
   assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
 }
 
