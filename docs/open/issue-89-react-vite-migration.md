@@ -36,18 +36,18 @@ The pre-migration proposal for `useSyncExternalStore` plus `AppStore.subscribe()
 | Issue | Reconciled status | Current evidence / remaining gate |
 | --- | --- | --- |
 | #91 | closed | Baseline/contracts phase was completed before production migration. |
-| #92 | complete and closable | Vite owns dev/build output; relative Pages paths and lazy geography are verified; current Node 22 CI and Pages are green; exact current artifacts inspected. |
-| #93 | partially complete; re-scope | Workbox InjectManifest and the intended cache policy ship, but production-browser offline/update recovery has not been demonstrated. Keep open as a runtime PWA validation tail coordinated with #101. |
-| #94 | materially complete; closeout documentation | React owns the shell/global lifecycle. Router/store adaptation shipped through a simpler root-owned implementation rather than the proposed observable-store API. No parallel router/store exists. |
-| #95 | complete and closable | Passive React surfaces and Flags study ship; routing/IA/action-feedback invariants, React component coverage and available browser smoke evidence cover the phase boundary. |
-| #96 | partially complete; re-scope | Flags production UI is React-owned and invariants are green, but the issue's required complete active-round component/browser coverage is not present. |
-| #97 | partially complete; re-scope | Outlines production UI is React-owned and invariants are green, but complete React component/browser coverage is not present. |
-| #98 | partially complete; re-scope | Locations production UI is React-owned and map/cartography invariants are broad; browser coverage currently reaches round launch only, not answer/pan/zoom/results parity. |
-| #99 | partially complete; re-scope | Neighbours production UI is React-owned and invariant coverage is broad; there is no current Playwright Neighbours flow or equivalent React component closeout coverage. |
-| #100 | partially complete; re-scope | Production runtime no longer depends on legacy string renderers/global dispatch, but legacy renderer fixtures and the broad verifier emit remain and are physically deployed as unreferenced files. |
-| #101 | genuinely still open | Final browser/offline/accessibility/production hardening is materially incomplete; physical-device evidence remains explicitly owned by #71. |
+| #92 | closed — complete | Vite owns dev/build output; relative Pages paths and lazy geography are verified; current Node 22 CI and Pages are green; exact current artifacts inspected. |
+| #93 | open — partially complete; re-scoped | Workbox InjectManifest and the intended cache policy ship, but production-browser offline/update recovery has not been demonstrated. It remains a runtime PWA validation tail coordinated with #101. |
+| #94 | closed — material completion documented | React owns the shell/global lifecycle. Router/store adaptation shipped through a simpler root-owned implementation rather than the proposed observable-store API. No parallel router/store exists. |
+| #95 | closed — complete | Passive React surfaces and Flags study ship; routing/IA/action-feedback invariants, React component coverage and available browser smoke evidence cover the phase boundary. |
+| #96 | open — partially complete; re-scoped | Flags production UI is React-owned and invariants are green, but the issue's required complete active-round component/browser coverage is not present. |
+| #97 | open — partially complete; re-scoped | Outlines production UI is React-owned and invariants are green, but complete React component/browser coverage is not present. |
+| #98 | open — partially complete; re-scoped | Locations production UI is React-owned and map/cartography invariants are broad; browser coverage currently reaches round launch only, not answer/pan/zoom/results parity. |
+| #99 | open — partially complete; re-scoped | Neighbours production UI is React-owned and invariant coverage is broad; there is no current Playwright Neighbours flow or equivalent React component closeout coverage. |
+| #100 | open — partially complete; re-scoped | Production runtime no longer depends on legacy string renderers/global dispatch, but legacy renderer fixtures and the broad verifier emit remain and are physically deployed as unreferenced files. |
+| #101 | open — genuinely still open | Final browser/offline/accessibility/production hardening is materially incomplete; physical-device evidence remains explicitly owned by #71. |
 
-The live GitHub issues must match this matrix after this reconciliation branch merges.
+Live GitHub state was reconciled to this matrix during PR #105: #92, #94 and #95 were closed with evidence comments; #93 and #96–#101 were rewritten around current remaining work; #89 was rewritten and intentionally left open.
 
 ## Exact remaining compatibility tail (#100)
 
@@ -147,8 +147,8 @@ Closeout work under #89 must not change, merely to finish migration bookkeeping:
 
 ## Remaining closeout sequence
 
-1. Close #92, #94 and #95 with evidence-backed comments after this reconciliation is recorded.
-2. Re-scope #93 and #96–#100 to current remaining work rather than historical migration implementation.
+1. #92, #94 and #95 were closed during this reconciliation with evidence-backed comments.
+2. #93 and #96–#101 were re-scoped to current remaining work rather than historical migration implementation.
 3. Complete the verification-only tails for #93/#96–#99 or explicitly transfer non-duplicated final checks into #101 before closing those children.
 4. Complete #100 compatibility/verifier cleanup without product-semantic changes.
 5. Complete #101 against the exact post-#100 production artifact.
