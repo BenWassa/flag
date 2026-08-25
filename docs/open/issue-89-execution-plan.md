@@ -1,415 +1,371 @@
-# Issue #89 React/Vite migration — canonical execution plan
+# Issue #89 React/Vite migration — reconciled execution plan
 
-**Status:** Active  
+**Status:** Active closeout plan after Atlas `1.0.0`  
 **Parent:** #89  
 **Architecture decision:** `docs/architecture/react-vite-migration.md`  
-**Worklog:** `docs/open/issue-89-implementation-worklog.md`
+**Implementation log:** `docs/open/issue-89-implementation-worklog.md`
 
-This file is the canonical dependency/order plan for #89. The issue body remains the scope-level epic; this plan turns that scope into reviewable delivery phases.
+## Purpose
 
-## Recovery note
+This document now records the migration sequence against what actually shipped. It is no longer a future-tense instruction to port the production UI: React and Vite already own production on `main`.
 
-The architecture decision and this execution plan had been prepared during #89 scoping but were not present on the `main` commit that opened the epic. Phase 1 restores them from the approved migration decisions and the live Issue #89 contract. This is a documentation-state recovery, not a scope change.
+The remaining programme is a compatibility-removal and verification closeout. Historical phase numbering is retained so the child issues continue to map cleanly to the original #89 programme.
 
-## Rules for every phase
+## Reconciled phase ledger
 
-1. Start from the current merged `main` after the previous phase.
-2. Read the child issue and all files it names before editing.
-3. Use a dedicated branch and focused pull request.
-4. Keep `main` deployable; do not rely on an unmerged later phase.
-5. Preserve routing, persistence, ISO3 identity, geography, learning/mastery semantics and British-English learner copy.
-6. Prefer adapters around existing product-engine code over rewrites.
-7. Run focused checks continuously, then the complete `npm test` gate on Node 22.
-8. Inspect the exact generated production artifact for the phase.
-9. Reconcile with current `main` before finalising; resolve conflicts semantically.
-10. Record implementation decisions, deviations, failures, rollback boundary and verification evidence in the worklog/PR.
-11. Do not claim physical-device or browser coverage that did not actually run.
-12. A later phase may begin only after its dependency phase is merged and green.
+| Phase | Issue | Post-v1 classification | Tracker action |
+| --- | --- | --- | --- |
+| 1 | #91 | complete | already closed |
+| 2 | #92 | complete and closable | close with current-main Vite/CI/Pages evidence |
+| 3 | #93 | partially complete; re-scope | keep open for production PWA/offline/update runtime validation |
+| 4 | #94 | materially complete; closeout documentation | document actual router/store adaptation and close |
+| 5 | #95 | complete and closable | close with passive-surface/routing/component evidence |
+| 6 | #96 | partially complete; re-scope | keep open for Flags active-round React/browser verification tail |
+| 7 | #97 | partially complete; re-scope | keep open for Outlines active-round React/browser verification tail |
+| 8 | #98 | partially complete; re-scope | keep open for Locations interaction/browser verification tail |
+| 9 | #99 | partially complete; re-scope | keep open for Neighbours interaction/browser verification tail |
+| 10 | #100 | partially complete; re-scope | keep open for verifier compatibility/legacy renderer/CSS cleanup |
+| 11 | #101 | genuinely still open | final exact-artifact browser/offline/accessibility hardening |
+| 12 | #89 | open | close only after required children and final merged-main gate |
 
-## Phase map
+## Shipped foundation
 
-| Phase | Child issue | Delivery unit | Depends on | Primary rollback boundary |
-| --- | --- | --- | --- | --- |
-| 1 | #91 | baseline, parity matrix, architecture/contracts | #89 scope | documentation/evidence only |
-| 2 | #92 | Vite build/dev/CI foundation | 1 | revert build/tooling changes; vanilla UI remains |
-| 3 | #93 | build-aware PWA integration | 2 | revert service-worker build integration |
-| 4 | #94 | React shell + router/store/lifecycle adapters | 3 | revert React shell; Vite vanilla app remains |
-| 5 | #95 | passive navigation + launchers + Flags study | 4 | revert bounded passive surfaces to compatibility host |
-| 6 | #96 | Flags active rounds | 5 | revert Flags screens only |
-| 7 | #97 | Outlines active rounds | 6 | revert Outlines screens only |
-| 8 | #98 | Locations map surfaces | 7 | revert Locations React ownership only |
-| 9 | #99 | Neighbours map/input surfaces | 8 | revert Neighbours React ownership only |
-| 10 | #100 | remove legacy renderers + CSS rationalisation | 9 | revert compatibility-removal/CSS commit |
-| 11 | #101 | final production/offline/a11y/browser validation | 10 | hardening-only changes remain isolated |
-| 12 | #89 | main sync, evidence reconciliation and epic closeout | 11 | no new product work; close only on satisfied evidence |
+The following are now production facts rather than future deliverables:
 
-Optional AppStore decomposition is deliberately **not** a required phase. Evaluate it after parity only if the observable adapter exposes a concrete maintainability/rendering problem. A third-party state library is outside #89.
+- Vite owns the browser development/build path.
+- `src/main.tsx` mounts React.
+- `src/react/AtlasApp.tsx` owns the production application lifecycle and all shipped screen families.
+- The typed Atlas hash router remains the route authority.
+- `AppStore` and the existing domain round controllers remain the application orchestration layer.
+- Workbox InjectManifest builds `src/sw.ts`.
+- GitHub Pages deploys after successful `main` CI.
+- Generated geography remains lazy and canonical.
+- No production browser dependency on `src/app.ts` or `src/ui/views/*` remains.
 
----
+The remaining open work must not recreate migration implementation merely to match the old phase chronology.
 
-## Phase 1 — baseline and contracts (#91)
+## Phase 2 / #92 — Vite foundation
 
-### Deliverables
+### Reconciled state
 
-- restore the migration architecture decision and this execution plan;
-- baseline current `main` commit, CI and Pages deploy state;
-- record canonical route/refresh/history contracts;
-- record current build/dev/PWA structure and lazy-geography policy;
-- classify existing verifiers;
-- create the cross-surface parity matrix;
-- record the #71 physical-device dependency honestly;
-- establish the implementation worklog and child issue chain.
+Complete.
 
-### Acceptance gate
+Current-main evidence:
 
-No production entry point changes. Baseline contracts and comparison evidence exist before Vite lands.
+- `package.json` uses Vite for `dev` and `build`;
+- `vite.config.ts` uses `base: './'`;
+- `src/main.tsx`, `src/map-viewport.ts` and `src/neighbor-map-runtime.ts` are Vite entries with stable output names;
+- geography remains split into lazy continent chunks;
+- `scripts/verify-vite-build.mjs` checks relative paths, expected entries and lazy chunks;
+- current-main Node 22 CI #401 is green;
+- current-main Pages run #376 is green;
+- the exact CI and Pages artifacts were inspected during reconciliation.
 
-### Focused checks
+### Closeout
 
-- current `main` CI success recorded;
-- current Pages deployment success recorded;
-- docs/index links resolve;
-- no product source or generated asset changes in the PR.
+Close #92. No further build-foundation implementation belongs there.
 
-### Rollback
+## Phase 3 / #93 — PWA integration
 
-Revert the documentation PR. Runtime remains untouched.
+### What is complete
 
----
+- `vite-plugin-pwa` uses Workbox InjectManifest;
+- `src/sw.ts` owns the custom Atlas policy;
+- the generated service worker precaches the shell;
+- old Atlas caches are cleaned up;
+- navigation has a precached `index.html` fallback;
+- same-origin requests use network-first runtime caching;
+- FlagCDN uses cache-first runtime caching;
+- lazy continent chunks are excluded from precache and eligible for runtime caching;
+- install metadata and React install UI are present;
+- current build output uses `flag-atlas-v29`.
 
-## Phase 2 — Vite foundation (#92)
+### Remaining acceptance tail
 
-### Deliverables
+Static policy inspection is not the issue's behavioural exit gate.
 
-- select current supported React/Vite versions, but add only build dependencies needed by this phase;
-- add `vite.config.ts` with GitHub Pages repository-relative base behaviour;
-- make Vite own dev and production builds while retaining the vanilla TypeScript entry point;
-- preserve all static manifest/icon/service-worker inputs until Phase 3;
-- remove/retire bespoke build/dev scripts only after all their useful guarantees are replaced;
-- adapt TypeScript/CI/build verification to Vite output;
-- preserve lazy continent dynamic imports and output budgets;
-- keep `npm run check`, `npm run build`, `npm test` meanings stable.
+#93 remains open only for evidence that the **production build** actually:
 
-### Acceptance gate
+- opens the shell while offline after the required cache population;
+- revisits previously loaded lazy geography offline;
+- transitions through an updated deployment without a stranded mixed-version shell;
+- retains intended install/update behaviour in an available browser environment.
 
-The unchanged vanilla Atlas UI is built and deployed by Vite. Full invariant suite passes; direct hash URLs and repository-subpath asset URLs remain correct; exact `dist/` inspected.
+Coordinate these checks with #101 so they are executed once and cited by both issues rather than duplicated.
 
-### Rollback
+Do not alter PWA semantics as part of closeout unless the validation exposes a real defect.
 
-Revert Vite/tooling PR to the custom build. No React dependency is required by production yet.
+## Phase 4 / #94 — React shell and lifecycle
 
----
+### Reconciled state
 
-## Phase 3 — PWA integration (#93)
+Materially complete.
 
-### Deliverables
+Production React owns:
 
-- replace hard-coded built shell assets in the service worker with Vite-build-aware injection/generation;
-- preserve cache naming/version lifecycle and old-cache cleanup;
-- preserve offline navigation fallback;
-- preserve network-first same-origin app/geography policy;
-- preserve cache-first `flagcdn.com` policy;
-- preserve lazy geography cache-after-first-use behaviour;
-- preserve manifest/icons/iOS metadata/install-prompt persistence;
-- add production-build PWA verification including mixed-version update safety.
+- route interpretation and screen composition;
+- document title;
+- visible notices and live announcements;
+- error boundary/degraded render handling;
+- install UI;
+- focus intent;
+- global keyboard handling;
+- navigation gestures;
+- persistence flushing;
+- service-worker registration.
 
-### Acceptance gate
+### Accepted implementation deviation
 
-Production-built shell opens offline; already-loaded geography revisits offline; flags use intended cache path; manifest/install metadata are intact; deploy update cannot strand old HTML against missing hashed assets.
+The pre-migration plan expected `useSyncExternalStore` plus `AppStore.subscribe()/notify()`. Production instead:
 
-### Rollback
+- subscribes directly to the existing typed router from the React root;
+- owns a single `AppStore` instance in that root;
+- explicitly invalidates React state after store/controller mutations.
 
-Revert PWA integration while retaining Vite foundation.
+This preserves one router and one application store without introducing a second state model. Rebuilding the abandoned adapter mechanism after v1 would add churn without completing a missing production surface.
 
----
+### Closeout
 
-## Phase 4 — React shell and compatibility adapters (#94)
+Document the deviation and close #94.
 
-### Deliverables
+## Phase 5 / #95 — passive React surfaces
 
-- add React entry point and stable application shell;
-- add typed-router React subscription adapter;
-- add explicit AppStore subscribe/notify boundary;
-- retain existing round controllers;
-- move route normalisation/document title into stable React/application ownership;
-- React-own visible notices, hidden live announcements and install banner;
-- preserve focus/scroll, pagehide/visibility flushing, gestures and service-worker registration;
-- add error boundary/degraded render state;
-- host still-unmigrated screens through one named temporary compatibility boundary;
-- establish Vitest/Testing Library infrastructure.
+### Reconciled state
 
-### Acceptance gate
+Complete.
 
-React owns the shell but learner-visible screens remain parity-compatible. Routing, active-round refresh, install/notice behaviour and persistence continue to work.
+React owns Home, profile, domain continent indexes, launchers, unavailable/shell states and Flags browse-and-reveal study.
 
-### Rollback
+Evidence includes:
 
-Revert React shell PR; Vite/PWA vanilla app remains deployable.
+- current routing, IA, British-English and action-feedback invariant suites;
+- current React component tests for Home/launcher behaviour and inert unsupported geography;
+- available Playwright direct-route/Back smoke evidence;
+- current production artifact inspection.
 
----
+Final cross-domain browser hardening remains #101 rather than reopening passive-surface migration implementation.
 
-## Phase 5 — passive navigation and Flags study (#95)
+### Closeout
 
-### Deliverables
+Close #95.
 
-Port to React:
+## Phase 6 / #96 — Flags active rounds
 
-- Home;
-- per-domain continent indexes;
-- continent/region launcher;
-- launcher map and unavailable states;
-- Flags browse-and-reveal Learn surface.
+### What is complete
 
-Add only proven shared primitives: page/header controls, mode cards, geography rows, progress strip, semantic icon component, notices/busy UI and flag image wrapper.
+Flags Play, feedback, results, repeat/review/exit and evidence orchestration are React-owned in production. Existing Flags/product/evidence invariants remain green.
 
-### Acceptance gate
+### Remaining acceptance tail
 
-Mode-first IA, route URLs, region replace-navigation, Back/Forward, direct links, Flags study reveal accessibility, unavailable shells, focus and responsive behaviour match baseline.
+The original issue explicitly required active-round component and browser evidence. Current React component tests do not exercise Flags rounds, and the current Playwright smoke only proves that a Flags round starts.
 
-### Rollback
+Re-scope #96 to verification only:
 
-Revert passive-surface port; compatibility shell remains available for these bounded screens.
+- React/component evidence for answer feedback and active-round lifecycle where appropriate;
+- a complete browser Flags round including correct/wrong handling and results;
+- review/repeat/exit or an explicitly justified representative subset;
+- refresh fallback and persisted evidence/achievement reload assertions.
 
----
+No scoring, evidence, route or timing semantics should change unless a test exposes a genuine defect.
 
-## Phase 6 — Flags active rounds (#96)
+## Phase 7 / #97 — Outlines active rounds
 
-### Deliverables
+### What is complete
 
-Port Flags:
+Outlines Learn/Play/results are React-owned and continue to use canonical outline geometry plus existing round/evidence semantics. Invariant coverage is green.
 
-- Play question surface;
-- answer feedback;
-- result surface;
-- review mistakes;
-- repeat;
-- exit;
-- keyboard shortcuts and auto-advance lifecycle.
+### Remaining acceptance tail
 
-Keep the flags round controller and all scoring/evidence/achievement semantics intact.
+Current React component and Playwright suites do not provide the complete Outlines active-round coverage required by the issue.
 
-### Acceptance gate
+Re-scope #97 to verification only:
 
-Complete Flags Play, feedback, review/repeat, refresh recovery, persistence and achievement flows pass invariant, component and browser tests.
+- representative React component semantics for active Outlines state;
+- one complete browser Outlines flow through results;
+- refresh fallback and persisted evidence/achievement behaviour;
+- accessible naming/focus/keyboard semantics appropriate to the port.
 
-### Rollback
+Do not change canonical geometry or learning semantics as part of this closeout.
 
-Revert Flags React screens only; passive React surfaces remain.
+## Phase 8 / #98 — Locations map surfaces
 
----
+### What is complete
 
-## Phase 7 — Outlines active rounds (#97)
+Locations launcher/active/results surfaces are React-owned. Existing map/cartography verifiers cover generated geometry, framing, feedback state, viewport maths, pan/zoom persistence, responsive contracts and lazy loading.
 
-### Deliverables
+### Remaining acceptance tail
 
-Port Outlines equivalent flows while reusing canonical generated outline geometry and existing controller/state contracts.
+The current Playwright suite reaches a Locations round but does not exercise the issue's browser interaction exit gate.
 
-### Acceptance gate
+Re-scope #98 to verification only:
 
-Learn/Play, keyboard 1–4, feedback/advance, review/repeat, persistence, refresh recovery and achievement flows pass invariant/component/browser tests.
+- answer a Locations target in the production browser build;
+- exercise pointer/mouse pan/zoom and the available mobile-emulation path without claiming physical touch hardware;
+- verify results/repeat/exit and route behaviour;
+- verify reduced-motion/keyboard paths where browser-level coverage materially adds to existing invariants;
+- preserve lazy continent loading and cartography policy.
 
-### Rollback
+Physical mobile interaction remains #71.
 
-Revert Outlines React screens only.
+## Phase 9 / #99 — Neighbours map and input
 
----
+### What is complete
 
-## Phase 8 — Locations map surfaces (#98)
+Neighbours map/input/results surfaces are React-owned. Existing invariant coverage is broad across topology-derived adjacency, zero-land-neighbour handling, autocomplete, keyboard layout contracts, map state, persistence and responsive behaviour.
 
-### Deliverables
+### Remaining acceptance tail
 
-- React-own Locations launcher/quiz/results DOM;
-- retain generated map asset model and canonical geometry;
-- retain framework-independent viewport maths;
-- attach imperative pan/zoom/pointer behaviour through refs/effects with deterministic cleanup;
-- preserve lazy geometry loading and stale-request invalidation;
-- preserve answer/busy/error/feedback/framing states;
-- preserve map keyboard semantics and reduced motion.
+There is no current Playwright Neighbours flow and no active-round React component coverage equivalent to the issue's exit gate.
 
-### Acceptance gate
+Re-scope #99 to verification only:
 
-Every currently supported continent/scope passes routing, lazy-load, answer, pan/zoom, result/review/repeat, cartography and persistence checks. React does not eagerly import continent geometry.
+- browser keyboard/input/suggestion selection;
+- correct/wrong/duplicate or representative feedback state;
+- zero-land-neighbour path;
+- map feedback and results;
+- review/repeat/persistence reload where required by the issue contract.
 
-### Rollback
+Physical software-keyboard/mobile-device validation remains #71.
 
-Revert Locations port while retaining React ownership of earlier domains.
+## Phase 10 / #100 — compatibility removal and CSS rationalisation
 
----
+### What production has already achieved
 
-## Phase 9 — Neighbours map/input surfaces (#99)
+- React owns every shipped production screen.
+- The production browser graph does not import `src/app.ts` or `src/ui/views/*`.
+- Global delegated `data-action` dispatch is no longer the production interaction model.
 
-### Deliverables
+### Exact remaining compatibility tail
 
-- React-own Neighbours map and form lifecycle;
-- preserve typed-country resolution and canonical ISO3 IDs;
-- port combobox/suggestions without losing keyboard semantics;
-- preserve zero-land-neighbour truthfulness;
-- preserve feedback/result/review/repeat flows;
-- preserve mobile keyboard/map anchoring and map interaction;
-- preserve direct-land adjacency policy and topology-derived data.
+Current `npm run build` performs `vite build` and then `tsc -p tsconfig.verify.json` into the same `dist/` directory.
 
-### Acceptance gate
+As a result:
 
-Keyboard, mobile viewport, map, zero-neighbour, persistence and browser flows pass across supported continents.
+- the legacy string-renderer source tree still exists under `src/ui/views/`;
+- `src/app.ts` remains as a source fixture/reference for implementation-coupled verifiers;
+- verifier-compatible unbundled modules are emitted into `dist/`;
+- the exact current Pages artifact contains 16 compiled `ui/views/*.js` files that are not referenced by `index.html` or the React application bundle;
+- `scripts/verify-vite-build.mjs` deliberately asserts some of this compatibility output exists;
+- other verifier scripts still read legacy compiled views or `src/app.ts` source to assert historical markup/orchestration contracts.
 
-### Rollback
+### Current #100 scope
 
-Revert Neighbours port only.
+#100 should now do only the following, in this order:
 
----
+1. inventory every verifier that depends on `src/app.ts`, `src/ui/views/*` or verifier-only `dist/` markup;
+2. replace each implementation-coupled assertion with the correct framework-independent invariant, React component assertion or production-browser assertion without weakening coverage;
+3. move/narrow/remove the `tsconfig.verify.json` compatibility emit so verifier-only modules are not appended to the deployable `dist/`;
+4. remove legacy string-renderer source and obsolete coordinator compatibility only after no verifier relies on it;
+5. use actual React production markup/coverage evidence to remove dead CSS selectors;
+6. preserve Tactile Atlas tokens, learner behaviour and stable compatibility identifiers.
 
-## Phase 10 — compatibility removal and CSS rationalisation (#100)
+Stable inert `data-action` values may remain as metadata where useful; the target is obsolete global dispatch, not gratuitous identifier churn.
 
-### Deliverables
+### Exit gate
 
-- delete migrated string screen renderers;
-- delete root-wide `innerHTML` rendering path;
-- delete global `data-action` dispatch;
-- remove obsolete `src/app.ts` coordinator/temporary adapters;
-- replace remaining string UI helpers with React components where they own markup;
-- rationalise CSS by final component ownership;
-- preserve `atlas-theme.css` tokens/behaviour;
-- remove dead selectors only with evidence;
-- update architecture and contributor docs.
+- no verifier requires the legacy string renderers or old coordinator implementation;
+- the deployable artifact contains only production-required output plus deliberately shipped static assets;
+- obsolete legacy renderer/coordinator source is removed;
+- CSS cleanup is evidence-based and behaviour-neutral;
+- full Node 22 verification remains green.
 
-### Acceptance gate
+This reconciliation branch does **not** implement #100.
 
-All production UI/lifecycles are React-owned; no untracked legacy compatibility path remains; complete test suite and production artifact stay green.
+## Phase 11 / #101 — final validation
 
-### Rollback
+#101 remains the final integration gate after the compatibility tail is resolved.
 
-Revert this cleanup PR to restore compatibility code without reverting completed React ports.
+Evidence must be recorded separately rather than collapsed into “tests pass.”
 
----
+### A. Invariant verification
 
-## Phase 11 — final hardening and validation (#101)
+Required:
 
-### Deliverables
+- Node 22 `npm run check`;
+- full `npm test`;
+- all geography, routing, learning, persistence, language, achievement and cartography verifiers.
 
-- complete Vitest/Testing Library coverage for new lifecycle boundaries;
-- Playwright critical-flow suite against the production build;
-- route/direct-link/refresh/Back/Forward suite;
-- Flags + Outlines complete flows;
-- Locations load/answer/pan/zoom/results;
-- Neighbours input/keyboard/map/results;
-- unavailable geography and failed-lazy-load feedback;
-- stored progress reload;
-- service-worker/offline production smoke;
-- bundle and lazy-continent size inspection;
-- phone portrait, short-landscape, desktop and 200% text browser coverage where automation supports it;
-- exact `dist/`/manifest/service-worker/build-artifact inspection;
-- final documentation evidence.
+Current-main status: green in CI #401.
 
-### Physical-device boundary
+### B. Vitest / Testing Library
 
-Issue #71 remains open for physical Pixel/Android Chrome and iPhone/iOS Safari/installed-PWA evidence. Browser automation or responsive emulation is not physical-device testing. If #71 is not complete, #101 and #89 must state that remainder rather than manufacture evidence.
+Required: component coverage for material React lifecycle/interaction boundaries, especially those replacing legacy implementation-coupled fixtures.
 
-### Acceptance gate
+Current-main status: only three passive/launcher tests; active-round coverage is missing.
 
-All available automated/browser gates are green on current `main`-equivalent code and any physical-device-only remainder is explicit.
+### C. Playwright / browser
 
-### Rollback
+Required against the production preview:
 
-Hardening-only fixes are individually revertible; no new architecture is introduced here.
+- Home/launcher/Learn/Play navigation;
+- Back/Forward/direct hash/refresh recovery;
+- complete Flags and Outlines flows;
+- Locations answer/pan/zoom/results;
+- Neighbours keyboard/input/map/results including zero-neighbour behaviour;
+- unavailable/failed lazy-load feedback;
+- stored-progress reload;
+- responsive/accessibility checks practical in automated browsers.
 
----
+Current-main status: three smoke tests configured for desktop Chromium and Pixel 7 emulation; current CI does not run `npm run test:browser`.
 
-## Phase 12 — final sync and epic closeout (#89)
+### D. Production artifact
 
-### Procedure
+Required:
 
-1. Fetch current `main` and verify the Phase 11 head includes it.
-2. Resolve any late conflicts semantically against the preserved contracts.
-3. Re-run the complete Node 22 `npm test` gate and browser/PWA CI.
-4. Inspect the exact generated production artifact and its manifest/service worker/lazy chunks.
-5. Confirm GitHub Actions CI is green and GitHub Pages deploy is green on merged `main`.
-6. Reconcile child issue/PR links and close completed children with evidence.
-7. Update `docs/open/issue-89-implementation-worklog.md` with final SHA, tests, artifact evidence, deviations and any manual/device remainder.
-8. Move #89 documentation to closed only if the repository convention and completion state justify it.
-9. Close #89 only when its definition of done is actually satisfied. If physical-device validation remains required, leave the tracking issue open and name that exact remainder.
+- inspect the exact post-#100 `dist/` artifact;
+- confirm Pages-relative asset paths;
+- confirm lazy geography remains lazy;
+- confirm compatibility-only output has been removed as intended;
+- review bundle/chunk evidence without rewriting cartography.
 
-No new feature or refactor work belongs in Phase 12.
+Current-main baseline artifact has already been inspected for reconciliation, but #101 must use the final post-#100 artifact.
 
-## Parity matrix
+### E. PWA/offline
 
-The implementation worklog maintains status/evidence against this matrix.
+Required against production output:
 
-| Surface/contract | Baseline invariant | React/Vite parity requirement |
-| --- | --- | --- |
-| Home | four mode cards; no round starts | same mode-first IA and evidence visibility |
-| Domain index | six continent rows/shells | same supported/inert state and full-width scan |
-| Launcher | continent + selected region, Play/Learn | same replace-selection and deliberate start actions |
-| Flags study | reveal state ephemeral; no evidence | same answer-safe accessible names and local reveal |
-| Flags Play | controller timing/evidence/achievements | exact semantic parity |
-| Outlines | canonical geometry + controller | exact semantic parity |
-| Locations | lazy canonical map + viewport state | same geometry/loading/framing/pan/zoom/answers |
-| Neighbours | topology adjacency + input/keyboard/map | same guesses, zero-neighbour truth and mobile contract |
-| Routing | typed hash URLs | identical serialisation/normalisation/history |
-| Refresh | activity without live session → launcher | identical replacement behaviour |
-| Progress | versioned independent ledgers | existing payloads load unchanged |
-| Achievements | existing earned semantics | no mastery/scoring rule changes |
-| Naming | ISO3 + canonical labels | no identity/name drift |
-| Cartography | pinned Natural Earth pipeline | no second source or handwritten geometry |
-| British English | Neighbours/Play etc. | no learner-facing regression |
-| Notice/live status | visible failures vs hidden routine | split preserved without duplicate announcements |
-| Focus/keyboard | explicit focus + shortcuts | equivalent or improved semantics |
-| Mobile | direct map gestures/safe areas | no regression; physical evidence separate |
-| PWA | install/offline/lazy cache/update | build-aware equivalent behaviour |
-| Performance | lazy geography + size budgets | no eager map bundling; measured budgets |
+- service-worker registration/control smoke;
+- offline shell fallback;
+- previously loaded geography offline;
+- deployment/update recovery appropriate to the #93 contract.
 
-## Verifier classification
+Current-main status: static Workbox policy is verified; runtime offline/update evidence is missing.
 
-Use three classes during the migration:
+### F. Physical devices — explicit boundary
 
-1. **Preserved contract verifier** — geography, learning, evidence, achievements, routing, British English, map generation and other product invariants. Keep active.
-2. **Implementation-coupled verifier** — asserts the old string-template/build output shape. Adapt when its phase changes ownership; do not silently delete.
-3. **Missing browser/component coverage** — lifecycle, focus, live DOM semantics, service worker and browser history. Add Vitest/Testing Library or Playwright coverage.
+#71 remains the source of truth for:
 
-Every removed assertion must have either an unchanged higher-level contract test or an explicit replacement named in the PR.
+- physical Pixel/Android Chrome;
+- physical iPhone/iOS Safari;
+- installed-PWA physical validation;
+- device safe areas, real software keyboard and gesture interaction.
 
-## Focused PR template
+Do not make #101 duplicate those tests. Record #71's status and keep emulator/browser evidence labelled accurately.
 
-Each phase PR should include:
+## Phase 12 / #89 closeout
 
-```md
-## Parent
-#89 / child #NN
+Close #89 only when:
 
-## Phase boundary
-What this PR changes and explicitly does not change.
+- all required child issues are closed or explicitly superseded with evidence-preserving scope transfer;
+- #100 compatibility cleanup is complete;
+- #101 final automated/browser/PWA gates are complete;
+- the final branch is synchronised with current `main`;
+- final Node 22 CI is green;
+- the exact final production artifact has been inspected;
+- #71 physical-device status is stated honestly without being reclassified as automated evidence.
 
-## Preserved contracts
-Routing / storage / learning / geography / language / PWA items relevant here.
+If any of those conditions remains unmet, #89 stays open even though Atlas is already `1.0.0`.
 
-## Implementation
-Key adapters/components/build changes and why.
+## Branch and PR discipline for remaining work
 
-## Verification
-- focused checks
-- `npm test` on Node 22
-- component/browser/PWA checks actually run
-- exact production artifact inspection
-- CI links/status
+For any remaining child implementation/verification:
 
-## Deviations/failures
-Anything that differed from the plan and the resolution.
-
-## Rollback
-Exact independent revert boundary.
-
-## Manual evidence
-Only testing actually performed; physical-device evidence identified explicitly.
-```
-
-## Merge discipline
-
-A phase PR is not merged merely because its local diff looks correct. Before merge:
-
-- compare against current `main`;
-- update/rebase/merge current `main` into the branch as appropriate;
-- resolve semantic conflicts;
-- run the complete gates on the final head;
-- inspect the final artifact generated from that head;
-- confirm CI is green.
-
-The next phase branches from merged `main`, not from an unmerged predecessor.
+1. start from current `main`;
+2. read the reconciled issue body and these #89 documents;
+3. use a dedicated focused branch/PR;
+4. do not change learning, routing, persistence, cartography, UI design or PWA semantics unless a discovered defect requires separately justified repair;
+5. run the required focused checks continuously;
+6. run Node 22 `npm test` before merge;
+7. inspect the exact production artifact when the issue affects build/browser/PWA output;
+8. sync current `main` before merge and resolve conflicts semantically;
+9. record only testing that actually occurred.
