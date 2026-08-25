@@ -1,6 +1,6 @@
 # Atlas — Product Requirements
 
-**Status:** current v1.0 product baseline  
+**Status:** current v1.0 product baseline
 **Normative overview:** `../../PRODUCT.md`
 
 This document records durable implementation requirements without duplicating closed-issue history.
