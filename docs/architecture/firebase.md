@@ -1,9 +1,9 @@
 # Firebase architecture
 
-**Status:** partially implemented on Atlas 1.0.0  
-**Reconciled against:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`  
-**Tracking issue:** #46  
-**Remaining cloud-data work:** #106  
+**Status:** partially implemented on Atlas 1.0.0
+**Reconciled against:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`
+**Tracking issue:** #46
+**Remaining cloud-data work:** #106
 **Remaining Hosting work:** #107
 
 ## Purpose
