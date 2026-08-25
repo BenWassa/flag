@@ -7,3 +7,4 @@ dist.previous-*/
 graphify-out/
 test-results/
 playwright-report/
+.firebase/
