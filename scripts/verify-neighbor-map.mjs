@@ -215,7 +215,10 @@ for (const id of AFRICA_ZERO_LAND_NEIGHBOR_IDS) {
 }
 
 // Production structure: lazy geometry, existing viewport, shell/PWA and responsive/a11y contracts.
-const runtime = await readFile('dist/neighbor-map-runtime.js', 'utf8');
+// Source-text implementation guards inspect the canonical runtime source rather
+// than Vite's minified production entry; the product behaviour and artifact
+// checks above/below continue to exercise compiled output.
+const runtime = await readFile('src/neighbor-map-runtime.ts', 'utf8');
 assert.ok(runtime.includes('loadMapAsset(scopeId)') && runtime.includes('assetPromiseByScopeId'), 'Neighbour geometry is requested lazily and memoised by the active scope.');
 assert.ok(!runtime.includes('AFRICA_GEOMETRY'), 'Neighbor runtime does not eagerly embed the heavyweight canonical geometry module.');
 assert.ok(runtime.includes('detachedShell') && runtime.includes('patchNeighborMapShell'), 'Guess rerenders reuse the expensive SVG shell and patch puzzle layers only.');
