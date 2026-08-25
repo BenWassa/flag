@@ -1,7 +1,7 @@
 # Atlas Product
 
-**Status:** Atlas v1.0 production truth  
-**Product:** mobile-first geography-learning PWA  
+**Status:** Atlas v1.0 production truth
+**Product:** mobile-first geography-learning PWA
 **Learner-facing language:** modern British English (`en-GB`)
 
 ## Product purpose
