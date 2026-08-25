@@ -71,12 +71,11 @@ function renderScopeRow(
         aria-label="Play ${label}"
       >
         <span class="region-row__identity">
-          <strong>${label}${options.domainMastered ? `<span class="region-row__mastery" aria-label="Mastered">${icon('star')}</span>` : ''}</strong>
-          <small>${stats.total} ${escapeHtml(unitLabel)}</small>
+          <strong>${label}${options.domainMastered ? '<span class="visually-hidden">, Mastered</span>' : ''}</strong>
         </span>
+        <span class="region-row__count">${stats.total} ${escapeHtml(unitLabel)}</span>
         ${stats.due > 0 ? `<span class="region-row__evidence">${stats.due} due</span>` : ''}
         <span class="region-row__progress">${progressStrip(stats)}</span>
-        ${icon('chevron')}
       </button>
     </div>
   `;
@@ -107,25 +106,17 @@ export function renderLauncher(model: LauncherModel): string {
       </header>
 
       <section class="launcher" aria-label="${continentLabel} ${domainName} launcher">
-        <div class="region-list region-list--continent">
+        <div class="region-list launcher__scope-list">
           ${renderScopeRow(model.domain, model.continentScope, model.stats, model.unitLabel, 'continent')}
-        </div>
-
-        <section class="atlas-section launcher__regions" aria-labelledby="launcher-regions-heading">
-          <div class="list-heading">
-            <h2 id="launcher-regions-heading">Regions</h2>
-          </div>
-          <div class="region-list">
-            ${model.regions.map((region) => renderScopeRow(
+          ${model.regions.map((region) => renderScopeRow(
               model.domain,
               region.scope,
               region.stats,
               model.unitLabel,
               'region',
               { domainMastered: region.domainMastered, complete: region.complete },
-            )).join('')}
-          </div>
-        </section>
+          )).join('')}
+        </div>
 
         <button
           class="button button--tertiary launcher__learn"

@@ -175,7 +175,7 @@ const outlineAchievements = createInitialAchievementState();
 const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, outlineAchievements, true);
 assert.ok(homeHtml.includes('aria-label="Play All Africa"') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
 assert.equal(/\b\d+ regions\b/.test(homeHtml), false, 'Africa outline launcher omits its redundant region summary.');
-assert.ok(homeHtml.includes('id="launcher-regions-heading"'), 'Africa outline launcher lists all regional drills.');
+assert.ok(homeHtml.includes('data-id="west-africa"'), 'Africa outline launcher lists all regional drills without a separate section heading.');
 assert.ok(homeHtml.includes('data-domain="outlines"'), 'Outline regions must route through the shared domain router.');
 const westHomeHtml = renderOutlineHome(outlineProgress, westScope, outlineAchievements, true);
 assert.ok(westHomeHtml.includes('aria-label="Play West Africa"'), 'Each outline region plays straight from its row.');

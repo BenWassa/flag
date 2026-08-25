@@ -212,7 +212,7 @@ const emptyAfricaProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS
 const mapAchievements = createInitialAchievementState();
 const africaHomeHtml = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements);
 assert.ok(africaHomeHtml.includes('All Africa') && africaHomeHtml.includes('Learn Africa'), 'Africa map launcher exposes both round choices.');
-assert.ok(africaHomeHtml.includes('id="launcher-regions-heading"'), 'Africa map launcher lists regional drills.');
+assert.ok(africaHomeHtml.includes('data-id="west-africa"'), 'Africa map launcher lists regional drills without a separate section heading.');
 assert.equal(africaHomeHtml.includes('data-launcher-map-slot'), false, 'The launcher reserves no retired map slot.');
 assert.equal(africaHomeHtml.includes('class="launcher-map"'), false, 'The launcher renders no retired map.');
 for (const config of AFRICA_MAP_REGION_CONFIGS) {

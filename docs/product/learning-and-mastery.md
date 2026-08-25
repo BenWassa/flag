@@ -145,7 +145,7 @@ These are intentionally different concepts.
 - region scope only;
 - current engine requires two consecutive perfect region-scoped Play results;
 - intended to represent two consecutive perfect complete-region results once #108 is fixed;
-- shown in purple on region rows.
+- exposed as explicit Mastered wording on compact region rows without requiring a repeated purple star; dedicated Mastery presentation continues to reserve purple.
 
 Never use the phrases interchangeably.
 

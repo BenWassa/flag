@@ -260,11 +260,7 @@ for (const launcherCase of launcherCases) {
     assert.ok(html.includes('class="status-strip"'), `${name} retains the progress strip.`);
     assert.ok(!html.includes('strong evidence'), `${name} does not expose the scheduler-flavoured strong-evidence count.`);
     assert.equal(/\b\d+ regions\b/.test(visibleText(html)), false, `${name} omits the redundant region total.`);
-    assert.match(
-      html,
-      /<div class="list-heading">\s*<h2 id="launcher-regions-heading">Regions<\/h2>\s*<\/div>/,
-      `${name} renders the Regions heading without a repeated list count.`,
-    );
+    assert.equal(html.includes('launcher-regions-heading'), false, `${name} keeps all scopes in one continuous list without a Regions section.`);
     assert.ok(html.includes('storage-notice'), `${name} retains its storage-degraded state.`);
     assert.equal(html.includes('Quick Play'), false, `${name} always names the active scope.`);
     assertNoLegacyInteractiveRow(name, html, 'region-row');
@@ -287,6 +283,9 @@ for (const launcherCase of launcherCases) {
       `${name} gives every scope row a progress strip.`,
     );
     assert.ok(html.includes('>All Africa'), `${name} names its whole-continent row.`);
+    assert.equal(html.includes('region-row__mastery'), false, `${name} does not use the retired purple star treatment.`);
+    assert.equal(occurrences(html, 'class="region-row__count"'), AFRICA_MAP_REGION_CONFIGS.length + 1, `${name} puts one trailing count on every row.`);
+    assert.equal(occurrences(html, 'class="ui-icon icon--chevron"'), 0, `${name} rows do not repeat a redundant trailing chevron.`);
 
     for (const play of playButtons) {
       const id = attribute(play, 'data-id');
@@ -319,8 +318,8 @@ for (const launcherCase of launcherCases) {
     assert.ok(html.includes('>Learn Africa</button>'), `${name} visibly names Learn Africa.`);
     assert.equal(learn.includes(' disabled'), false, `${name} Learn is usable immediately.`);
 
-    assert.ok(html.indexOf('region-row--continent') < html.indexOf('launcher__regions'), `${name} puts the continent row above its regions.`);
-    assert.ok(html.indexOf('launcher__learn') > html.indexOf('launcher__regions'), `${name} keeps Learn after regions.`);
+    assert.ok(html.indexOf('region-row--continent') < html.indexOf('North Africa'), `${name} puts the continent row above its regions.`);
+    assert.ok(html.indexOf('launcher__learn') > html.indexOf('Southern Africa'), `${name} keeps Learn after regions.`);
   }
 }
 
@@ -395,6 +394,9 @@ assert.match(regionOpenRule, /min-height:\s*92px/, 'Region rows remain generous 
 const regionProgressRule = atlasTheme.match(/\.region-row__progress\s*\{([^}]*)\}/)?.[1];
 assert.ok(regionProgressRule, 'Region progress has an explicit layout slot.');
 assert.match(regionProgressRule, /grid-column:\s*1\s*\/\s*-1/, 'Region progress spans the full row width.');
+const regionCountRule = atlasTheme.match(/\.region-row__count\s*\{([^}]*)\}/)?.[1];
+assert.ok(regionCountRule, 'Region counts have an explicit trailing layout slot.');
+assert.match(regionCountRule, /grid-column:\s*2/, 'Region counts align at the trailing edge.');
 assert.equal(atlasTheme.includes('.continent-row__play'), false, 'Canonical navigation styling has no dead continent Play cell.');
 assert.equal(atlasTheme.includes('.region-row__play'), false, 'Canonical navigation styling has no dead region Play cell.');
 assert.equal(app.includes('quick-play'), false, 'Application dispatch contains no row-level Quick Play path.');

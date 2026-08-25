@@ -129,13 +129,13 @@ A single miss-free Play result receives transient **Perfect round** treatment on
 
 ### Region × domain Mastery
 
-Earned Mastery is purple and must include a non-colour cue. Current region rows use the shared domain/achievement mark and accessible Mastered labelling.
+Earned Mastery is purple and must include a non-colour cue. Compact launcher rows use accessible Mastered labelling without adding a purple star merely to repeat state inside navigation.
 
 The current qualification engine counts two consecutive perfect region-scoped Play results. #108 tracks the v1 defect where Flags, Outlines and Neighbours can currently qualify from 10-target region rounds instead of verified complete-region runs.
 
 ### Complete region
 
-A complete region receives restrained gold completion treatment while preserving the region name, useful count, progress strip and any purple Mastery signal. There is no separate region badge, medal, shield or Crown.
+A complete region receives a restrained brushed-metal gold edge while preserving the region name, trailing useful count, progress strip and accessible Mastery labelling. The material effect uses subtle light and shadow tones rather than a flat saturated yellow stripe. There is no separate region badge, medal, shield or Crown.
 
 ### Complete continent
 

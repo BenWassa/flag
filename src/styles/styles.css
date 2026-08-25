@@ -606,9 +606,8 @@ button:focus-visible,
   .continent-row__progress { grid-column: 1 / -1; grid-row: 2; }
   .continent-row__score { grid-column: 2; grid-row: 1; }
   .continent-row__open > .ui-icon { grid-column: 3; grid-row: 1; }
-  .region-row { grid-template-columns: minmax(0, 1fr) 50px; }
-  .region-row__open { grid-template-columns: minmax(0, 1fr) 22px; gap: 4px 10px; }
-  .region-row__open > .ui-icon { grid-column: 2; grid-row: 1 / span 2; }
+  .region-row { grid-template-columns: minmax(0, 1fr); }
+  .region-row__open { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
   .text-icon-button span { display: none; }
   .text-icon-button { width: 44px; padding: 0; }
   .filter-tab { font-size: 12px; }
@@ -681,5 +680,11 @@ button:focus-visible,
   .answer-button,
   .button { forced-color-adjust: auto; }
   .status-strip__cleared { background: CanvasText; }
-  .region-row--continent { border: 1px solid CanvasText; }
+  .region-row--continent,
+  .region-row--complete,
+  .page--tile-index .continent-row--complete {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
 }

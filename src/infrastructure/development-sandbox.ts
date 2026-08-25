@@ -112,10 +112,33 @@ function markEvidence(state: Record<LearnerStorageKey, unknown>, due: boolean): 
   };
 }
 
+function markProgressForIds(state: Record<LearnerStorageKey, unknown>, countryIds: readonly string[]): void {
+  const at = '2026-08-01T00:00:00.000Z';
+  for (const key of progressKeys.keys()) {
+    const progress = state[key] as { records: Record<string, { status: string; evidence: ReturnType<typeof createEvidenceSummary>; [name: string]: unknown }> };
+    for (const id of countryIds) {
+      const record = progress.records[id];
+      if (!record) continue;
+      record.status = 'learning';
+      record.evidence = {
+        ...record.evidence,
+        cleanPlayRetrievals: Math.max(1, record.evidence.cleanPlayRetrievals),
+        lastActivity: 'play',
+        lastOutcome: 'clean-retrieval',
+        lastEvidenceAt: at,
+        lastScoredAt: at,
+      };
+    }
+  }
+}
+
 export function createDevelopmentSandboxPreset(preset: DevelopmentSandboxPreset): DevelopmentSandboxBundle {
   assertSandbox();
   const state = initialState();
-  if (preset === 'partial-evidence') markEvidence(state, false);
+  if (preset === 'partial-evidence') {
+    markEvidence(state, false);
+    markProgressForIds(state, ['DZA', 'EGY', 'GHA', 'NGA', 'CMR', 'COD', 'ETH', 'KEN', 'ZAF']);
+  }
   if (preset === 'review-due') markEvidence(state, true);
   if (preset === 'one-perfect-round') {
     state['flag-atlas:region-domain-perfect-run-streaks:v1'] = { version: 1, streaks: { 'west-africa:flags': 1 } };
@@ -126,10 +149,14 @@ export function createDevelopmentSandboxPreset(preset: DevelopmentSandboxPreset)
       regionDomainMasteries: [regionDomainMasteryKey('west-africa', 'flags')],
     };
   }
-  if (preset === 'complete-region') state['flag-atlas:earned-achievements:v1'] = achievementState(['west-africa'], []);
+  if (preset === 'complete-region') {
+    state['flag-atlas:earned-achievements:v1'] = achievementState(['west-africa'], []);
+    markProgressForIds(state, regionLearningScopes('africa').find((definition) => definition.scope.id === 'west-africa')?.countryIds ?? []);
+  }
   if (preset === 'complete-continent') {
     const africaRegions = regionLearningScopes('africa').map((definition) => definition.scope.id).filter((id): id is string => Boolean(id));
     state['flag-atlas:earned-achievements:v1'] = achievementState(africaRegions, ['africa']);
+    markProgressForIds(state, COUNTRIES.filter((country) => country.continentId === 'africa').map((country) => country.id));
   }
   if (preset === 'world-crown') state['flag-atlas:earned-achievements:v1'] = achievementState(allRegionIds(), CONTINENTS.map((continent) => continent.id), true);
   return { version: DEVELOPMENT_SANDBOX_BUNDLE_VERSION, namespace: DEVELOPMENT_SANDBOX_NAMESPACE, state };

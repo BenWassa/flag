@@ -55,12 +55,11 @@ function ScopeRow({ domain, scope, stats, unitLabel, variant, domainMastered, co
         onClick={(event) => id && actions.playScope(domain, id, event.currentTarget)}
       >
         <span className="region-row__identity">
-          <strong>{label}{domainMastered ? <span className="region-row__mastery" aria-label="Mastered"><Icon name="star" /></span> : null}</strong>
-          <small>{stats.total} {unitLabel}</small>
+          <strong>{label}{domainMastered ? <span className="visually-hidden">, Mastered</span> : null}</strong>
         </span>
+        <span className="region-row__count">{stats.total} {unitLabel}</span>
         {stats.due > 0 ? <span className="region-row__evidence">{stats.due} due</span> : null}
         <span className="region-row__progress"><ProgressStrip stats={stats} /></span>
-        <Icon name="chevron" />
       </button>
     </div>
   );
@@ -84,13 +83,9 @@ export function Launcher({ model }: { model: LauncherModel }) {
         </div>
       </header>
       <section className="launcher" aria-label={`${model.continentScope.label} ${domainName} launcher`}>
-        <div className="region-list region-list--continent">
+        <div className="region-list launcher__scope-list">
           <ScopeRow domain={model.domain} scope={model.continentScope} stats={model.stats} unitLabel={model.unitLabel} variant="continent" />
-        </div>
-        <section className="atlas-section launcher__regions" aria-labelledby="launcher-regions-heading">
-          <div className="list-heading"><h2 id="launcher-regions-heading">Regions</h2></div>
-          <div className="region-list">
-            {model.regions.map((region) => (
+          {model.regions.map((region) => (
               <ScopeRow
                 domain={model.domain}
                 scope={region.scope}
@@ -101,9 +96,8 @@ export function Launcher({ model }: { model: LauncherModel }) {
                 complete={region.complete}
                 key={region.scope.id}
               />
-            ))}
-          </div>
-        </section>
+          ))}
+        </div>
         <button
           className="button button--tertiary launcher__learn"
           type="button"
