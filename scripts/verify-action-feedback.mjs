@@ -12,7 +12,7 @@ import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
 import { CONTINENTS } from '../dist/data/continents.js';
 import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
 
-const app = await readFile('src/app.ts', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
 const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
 const launcherStyles = await readFile('dist/styles.css', 'utf8');
@@ -31,27 +31,13 @@ function seenText(markup) {
 
 // Routine progress talk stays screen-reader-only; anything reporting that an
 // action did not happen has to be seen. Two separate regions, both live.
-assert.ok(
-  html.includes('<p id="live-status" class="visually-hidden" role="status" aria-live="polite">'),
-  'The screen-reader-only announcement region is unchanged.',
-);
-assert.match(
-  html,
-  /<div id="app-notice" class="app-notice" role="status" aria-live="polite" hidden><\/div>/,
-  'The shell carries a visible, live, initially-hidden notice region.',
-);
-// Outside #app, or the app's own innerHTML re-render would destroy it mid-message.
-assert.ok(
-  html.indexOf('id="app-notice"') > html.indexOf('<div id="app"></div>'),
-  'The notice region lives outside the app root so a re-render cannot drop it.',
-);
+assert.ok(app.includes('<p className="visually-hidden" role="status" aria-live="polite">{announcement}</p>'), 'React owns the screen-reader-only announcement region.');
+assert.ok(app.includes('<div className="app-notice" role="status" aria-live="polite">'), 'React owns a visible live notice region when a notice exists.');
+assert.ok(html.includes('<div id="app"></div>') && !html.includes('id="app-notice"'), 'The React root owns transient feedback rather than a parallel static shell.');
 
-assert.ok(app.includes('function notify(message: string): void'), 'app.ts owns a notify channel.');
-assert.ok(
-  app.includes('${escapeHtml(message)}'),
-  'Notice copy is escaped: scope labels reach it from route state.',
-);
-assert.ok(app.includes('data-notice-dismiss'), 'A notice can be dismissed before its timeout.');
+assert.ok(app.includes('const notify = useCallback((message: string) =>'), 'AtlasApp owns a notify channel.');
+assert.ok(app.includes('setNotice(message)'), 'React renders notice copy as text, retaining its automatic escaping.');
+assert.ok(app.includes('onClick={dismissNotice}'), 'A notice can be dismissed before its timeout.');
 assert.ok(
   /router\.subscribe[\s\S]{0,400}dismissNotice\(\)/.test(app),
   'Navigating away clears a stale notice.',
@@ -78,17 +64,17 @@ assert.ok(
 
 /* --- Async launcher actions show they registered the tap ----------------- */
 
-assert.ok(app.includes('async function withLaunchFeedback('), 'Async launches share one busy-state wrapper.');
-assert.ok(app.includes("element.setAttribute('aria-busy', 'true')"), 'A busy launcher is announced as busy.');
-assert.ok(app.includes("element.classList.add('is-launching')"), 'A busy launcher is visibly busy.');
+assert.ok(app.includes('const launchFeedback = useCallback(async'), 'Async launches share one busy-state wrapper.');
+assert.ok(app.includes("setAttribute('aria-busy', 'true')"), 'A busy launcher is announced as busy.');
+assert.ok(app.includes("classList.add('is-launching')"), 'A busy launcher is visibly busy.');
 assert.match(app, /finally\s*\{[\s\S]*?is-launching/, 'A failed launch releases its control.');
 for (const call of [
-  "withLaunchFeedback(element, () => locationsRound.begin(action === 'start-map-learn' ? 'learn' : 'test'))",
-  "withLaunchFeedback(element, () => outlinesRound.begin(action === 'start-outline-learn' ? 'learn' : 'test'))",
-]) {
-  assert.ok(app.includes(call), `The deliberate launcher action shows launch feedback: ${call}`);
-}
-assert.equal(app.includes("action === 'quick-play'"), false, 'Retired row-level Quick Play has no application dispatch.');
+  "launchFeedback(element, () => rounds.locations.begin('test', undefined, scope))",
+  "launchFeedback(element, () => rounds.outlines.begin('test', undefined, scope))",
+  "launchFeedback(element, () => rounds.locations.begin('learn', undefined, scope))",
+  "launchFeedback(element, () => rounds.outlines.begin('learn', undefined, scope))",
+]) assert.ok(app.includes(call), `The deliberate launcher action shows launch feedback: ${call}`);
+assert.equal(app.includes('quick-play'), false, 'Retired row-level Quick Play has no application dispatch.');
 assert.ok(atlasTheme.includes('.is-launching'), 'The busy state has a production treatment.');
 
 /* --- Mode and continent rows name themselves ----------------------------- */

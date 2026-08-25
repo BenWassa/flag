@@ -1,0 +1,18 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": false,
+    "outDir": "dist",
+    "rootDir": "src",
+    "declaration": false,
+    "sourceMap": false
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
+  "exclude": [
+    "src/app.ts",
+    "src/main.tsx",
+    "src/sw.ts",
+    "src/map-viewport.ts",
+    "src/neighbor-map-runtime.ts"
+  ]
+}

@@ -132,9 +132,9 @@ const renderedSurfaces = [
 ];
 
 assert.ok(flagsDomainHtml.includes('Play world'));
-assert.ok(flagsLauncherHtml.includes('Play Africa'));
-assert.ok(locationsLauncherHtml.includes('Play Africa'));
-assert.ok(outlinesLauncherHtml.includes('Play Africa'));
+assert.ok(flagsLauncherHtml.includes('Play All Africa'));
+assert.ok(locationsLauncherHtml.includes('Play All Africa'));
+assert.ok(outlinesLauncherHtml.includes('Play All Africa'));
 assert.ok(neighborsLauncherHtml.includes('Play West Africa'));
 for (const [name, html] of [
   ['Flags', flagPlayHtml],
@@ -225,7 +225,7 @@ assert.ok(app.includes("mode === 'test'"), 'Built orchestration retains Test as 
 for (const learnerPhrase of ['Test round', 'Repeat test']) {
   assert.equal(app.includes(learnerPhrase), false, `Built app does not expose obsolete learner phrase: ${learnerPhrase}`);
 }
-assert.ok(app.includes("behavior: 'instant'"), 'DOM scrollTo behavior is a Web API property and remains intentionally American-spelled.');
+assert.match(app, /behavior:\s*.instant/, 'DOM scrollTo behavior is a Web API property and remains intentionally American-spelled.');
 
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('<html lang="en-GB">'), 'The document declares British English for browser and assistive-technology language handling.');
@@ -241,8 +241,8 @@ assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbo
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Atlas learner-facing brand rollout invalidates the previous PWA cache.');
-assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'Tactile Atlas styling remains part of the offline shell.');
-assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Technical stylesheet filename remains stable.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite rollout invalidates the previous PWA cache.');
+assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas styling remains part of the offline shell.');
+assert.ok(serviceWorker.includes('neighbors.css'), 'Technical stylesheet filename remains stable.');
 
-console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v28 Atlas cache contract.');
+console.log('British-English verification passed: learner-facing Play copy, internal /test compatibility, rendered UI, titles, Neighbours accessibility text, metadata, storage, and v29 Atlas cache contract.');

@@ -232,6 +232,13 @@ body { letter-spacing: -.006em; }
   max-height: 100%;
 }
 
+.page--tile-index .continent-row__mark .continent-trophy {
+  width: 82px;
+  height: 82px;
+  max-height: 100%;
+  object-fit: contain;
+}
+
 .page--tile-index .continent-row__evidence {
   grid-column: 1;
   grid-row: 2;
@@ -324,11 +331,15 @@ body { letter-spacing: -.006em; }
   }
 }
 
-.region-row--selected {
+/* The whole-continent row is the launcher's dominant action, so it carries the
+   Atlas Blue action tint the retired primary Play button used to own. */
+.region-row--continent {
   border-color: color-mix(in srgb, var(--action) 44%, var(--line));
   background: var(--action-soft);
   box-shadow: inset 3px 0 0 var(--action), var(--depth-tile);
 }
+
+.region-row--continent .region-row__identity strong { font-size: 17px; }
 
 /* Every supported domain in this region has earned its perfect-run mastery —
    the region itself is complete. Restrained gold border only, never a fill,
@@ -367,14 +378,6 @@ body { letter-spacing: -.006em; }
   color: var(--mastery);
 }
 .region-row__mastery .ui-icon { width: 14px; height: 14px; }
-
-.region-row__status {
-  grid-column: 2;
-  grid-row: 1;
-  color: var(--action);
-  font-size: 12px;
-  font-weight: 760;
-}
 
 .region-row__evidence {
   grid-column: 1 / 3;
@@ -433,31 +436,6 @@ body { letter-spacing: -.006em; }
   border-radius: var(--radius-sm);
 }
 
-.launcher__status {
-  padding: 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-tile);
-  background: var(--surface);
-  box-shadow: var(--depth-tile);
-}
-
-.launcher__play {
-  min-height: 58px;
-  margin-top: 15px;
-  border-radius: var(--radius-tile);
-  font-size: 17px;
-}
-
-.launcher-map-slot:not(:empty) { margin-top: 18px; }
-
-.launcher-map {
-  height: clamp(170px, 29dvh, 260px);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-tile);
-  background: var(--surface-subtle);
-  box-shadow: var(--depth-tile);
-}
-
 .launcher__regions { margin-top: 24px; }
 
 .launcher__learn {
@@ -483,8 +461,8 @@ body { letter-spacing: -.006em; }
 .quiz-header { min-height: 54px; }
 
 /* The pannable map canvas is a real interactive surface, so it earns the same
-   standing-tile treatment as launcher-map and region-row rather than the flat
-   chrome used for feedback strips. */
+   standing-tile treatment as region-row rather than the flat chrome used for
+   feedback strips. */
 .map-stage {
   border-radius: var(--radius-tile);
   box-shadow: var(--depth-tile);
@@ -874,6 +852,52 @@ body { letter-spacing: -.006em; }
   .atlas-card:hover {
     transform: none;
   }
+}
+
+/* ==========================================================================
+   Profile
+   ========================================================================== */
+
+.page--profile { width: min(100%, 560px); }
+
+.profile-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  padding: 28px 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-tile);
+  background: var(--surface);
+  box-shadow: var(--depth-tile);
+  text-align: center;
+}
+
+.profile-card__avatar {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  object-fit: cover;
+}
+
+.profile-card__avatar--fallback {
+  display: grid;
+  place-items: center;
+  background: var(--surface-subtle);
+  color: var(--text-muted);
+}
+
+.profile-card__avatar--fallback .ui-icon { width: 40px; height: 40px; }
+
+.profile-card__identity { display: grid; gap: 2px; }
+.profile-card__identity small { color: var(--text-muted); font-size: 13px; }
+
+.profile-card--signed-out p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
 }
 
 /* ==========================================================================

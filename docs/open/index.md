@@ -29,13 +29,41 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
+- [#90 — keep the Flags question layout stable between flags](https://github.com/BenWassa/flag/issues/90).
+  Different flag aspect ratios must not move the multiple-choice touch targets.
+  The responsive implementation and verification scope is
+  [`issue-90-stable-flag-stage.md`](issue-90-stable-flag-stage.md).
+- [#104 — map-first continent launcher](https://github.com/BenWassa/flag/issues/104).
+  **Deferred, captured only.** The launcher now has exactly one selection
+  method: one tap on a scope row starts Play for that scope. The full-bleed
+  region-map alternative (calm per-region colour, progress encoded into the
+  geography) conflicts with the locked "no region colour taxonomy" decision in
+  [`../product/colour-system.md`](../product/colour-system.md) and would encode
+  progress in colour alone, so it needs its own product decision before any
+  implementation. Scope and reasoning:
+  [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
+- [#86 — clip continent context layers to the viewport](https://github.com/BenWassa/flag/issues/86).
+  Reduce lazy map payloads in the shared generator without changing canonical
+  country geometry or adjacency. The execution scope is
+  [`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
+
 ### 4. Platform quality and IA
 
 - [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
-  This is a tracking epic for an incremental presentation/build-layer port,
-  with the existing domain, geography, evidence, persistence and typed routing
-  contracts preserved. See
-  [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md).
+  This is the tracking epic for an incremental presentation/build-layer port.
+  The scope-level epic is [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md);
+  the durable architecture decision is
+  [`../architecture/react-vite-migration.md`](../architecture/react-vite-migration.md);
+  the canonical dependency/order plan is
+  [`issue-89-execution-plan.md`](issue-89-execution-plan.md); and implementation
+  evidence is recorded in
+  [`issue-89-implementation-worklog.md`](issue-89-implementation-worklog.md).
+  The staged child chain is #91 → #92 → #93 → #94 → #95 → #96 → #97 → #98 →
+  #99 → #100 → #101, followed by #89 closeout. Do not skip forward or collapse
+  unrelated phases into one long-lived branch.
+  Child issues #92–#101 are intentionally scoped as phase sections in the
+  canonical execution plan rather than duplicated into ten competing issue
+  documents.
 
 #72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
 complete and closed. Their closeout records are
@@ -49,9 +77,11 @@ spun off a focused follow-up issue below.
   and [`issue-71-implementation-notes.md`](issue-71-implementation-notes.md).
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
-  not re-run browser checks expecting to close it.
+  not re-run browser checks expecting to close it. #89 must not claim this
+  physical evidence unless #71 actually records it.
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
-  No repository plan yet; read the GitHub issue before starting.
+  Keep this separate from #89 so hosting/storage migration does not change the
+  React/Vite compatibility boundary while the platform port is in flight.
 
 #87 (gamification connective-tissue defects: due-state reporting, Play
 feedback parity, Progress evidence coverage) is complete and closed. Its
@@ -107,21 +137,21 @@ Africa remains the reference baseline. North America and Oceania still appear
 as shell/navigation states, and unsupported curriculum must never count towards
 mastery/completion.
 
-**Continent payload follow-up.** Physical map context (ocean, coastline, lakes)
+**Continent payload follow-up (#86).** Physical map context (ocean, coastline, lakes)
 is now simplified per continent, which cut Europe by 29% and Asia by 21% of
 gzip. Asia still ships the largest lazy chunk at roughly 478 KB gzip, because
 its canvas spans canonical whole-country geometry. Clipping context layers to
-each continent's viewport is the next available reduction and is tracked
-separately; it needs a generator change and a full four-continent regeneration,
-so it was deliberately not bundled into the v0.7.0 integration.
+each continent's viewport is the next available reduction and is tracked in
+[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md); it needs a
+generator change and a full four-continent regeneration, so it was deliberately
+not bundled into the v0.7.0 integration.
 
 ## Working rules
 
-- Before starting new work, check `gh issue list --state open` against this file and `docs/closed/`: any issue already closed on GitHub whose doc still lives in `docs/open/` should be moved to `docs/closed/` (`git mv`) and this index updated to drop/relink it.
-- Read the GitHub Issue fully before implementation.
-- Read `PRODUCT.md`, `DESIGN.md`, and the relevant durable product/architecture docs.
-- `DESIGN.md` and `.impeccable/design.json` define the locked Tactile Atlas production system; focused issues may resolve previously deferred achievement presentation without creating a second visual language.
-- Preserve stable routing, country identity, storage and cartography contracts.
+- Before starting new work, reconcile GitHub issue state against this file and `docs/closed/`.
+- Read the live GitHub Issue fully before implementation.
+- Read `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, and the relevant durable product/architecture docs.
+- Preserve stable routing, country identity, storage, learning and cartography contracts.
 - Use dedicated branches and focused PRs.
-- Run `npm test`, inspect the exact production artifact and confirm CI before merge.
+- Run `npm test` under Node 22, inspect the exact production artifact and confirm CI before merge.
 - Do not claim physical-device/browser testing that was not performed.

@@ -180,7 +180,7 @@ The mechanism is a solid bottom shadow standing in for physical thickness, remov
 - **primary button** — rests on a solid `0 4px 0` pressed-blue depth with no ambient glow; on `:active` drops to `0 1px 0` and translates down 3px;
 - **answer button** — rests on `0 3px 0` in its semantic colour; on `:active` drops to `0 1px 0` and translates down 2px;
 - **tiles, icon buttons and geographic selection rows** — no standing depth; they translate down 1px and darken slightly;
-- **Atlas arcade tier** — a scoped exception to the three tiers above: a `2px solid` border in `--text` plus a hard `2px 2px 0` offset shadow (no colour, no blur), collapsing on press by translating diagonally to `(2px, 2px)` rather than dropping vertically. This covers **Home's mode cards only**. Home is the one screen every session starts on and the product's single highest-frequency decision, so it earns a harder tactile signature; everything reached after a mode is chosen — the domain's continent tiles, its region rows, the launcher status card — keeps the soft `--depth-tile` shadow described under [Shapes, radius and elevation](#shapes-radius-and-elevation). The tier narrowed from three surfaces to one when navigation became mode-first: the continent and region surfaces are now per-domain rather than a shared scope-selection journey, so the arcade treatment marks the choice above them instead of running through all of them.
+- **Atlas arcade tier** — a scoped exception to the three tiers above: a `2px solid` border in `--text` plus a hard `2px 2px 0` offset shadow (no colour, no blur), collapsing on press by translating diagonally to `(2px, 2px)` rather than dropping vertically. This covers **Home's mode cards only**. Home is the one screen every session starts on and the product's single highest-frequency decision, so it earns a harder tactile signature; everything reached after a mode is chosen — the domain's continent tiles, its launcher scope rows — keeps the soft `--depth-tile` shadow described under [Shapes, radius and elevation](#shapes-radius-and-elevation). The tier narrowed from three surfaces to one when navigation became mode-first: the continent and region surfaces are now per-domain rather than a shared scope-selection journey, so the arcade treatment marks the choice above them instead of running through all of them.
 
 Press travel stays within 2–4px. Anything larger reads as a toy.
 
@@ -227,7 +227,7 @@ Navigation should be immediately scannable and support large touch targets.
 
 1. **Home** — a single-column stack of four tactile mode cards: Flags, Locations, Outlines, Neighbours. Each names the mode, states the coverage it currently teaches (`World · 195 countries`, `Africa · 54 countries`), and carries its evidence strip, so accumulated progress is visible the moment the app opens. Home starts no round: it commits to a mode and nothing else.
 2. **Domain continent index** (`/{domain}`) — the six continents *for that mode* as full-width stacked geography rows carrying the continent silhouette, country and region counts, and live evidence. A supported row opens that continent's launcher; it does not start a round. Flags additionally offers deliberate world Learn/Play actions above the list because Flags is the only mode whose curriculum is the world.
-3. **Continent launcher** (`/{domain}/{continent}`) — the shared launcher: one deliberate Play action for the active scope, a full-width region list with visible progress, and Learn. Selecting a region retargets the same screen and the same Play/Learn actions rather than opening another page or bypassing the launcher.
+3. **Continent launcher** (`/{domain}/{continent}`) — the shared launcher: a whole-continent row above a full-width region list, every row carrying visible progress, and one Learn action below. **The launcher has exactly one way to choose a scope: tap its row, which starts Play for that scope immediately.** There is no separate selection step, no detached Play button and no second selection surface. The map-first alternative — a full-bleed region map with geography-encoded progress — is captured and deferred in [`docs/open/issue-104-map-first-launcher.md`](docs/open/issue-104-map-first-launcher.md).
 
 This supersedes the scope-first Home → continent → region-card journey, and with it the region card's four-domain launch row: once the mode is already chosen, a region only needs one Play. The mode-first order also lets an Africa-only mode state its own coverage honestly instead of being discovered continent by continent.
 
@@ -239,9 +239,9 @@ A continent a mode has not shipped still appears — as an honest shell: dashed 
 
 ### Region cross-domain competency
 
-Region cards are full-width scope-selection surfaces inside one mode's launcher: region identity, country count, a single-colour progress strip, a purple mark once that region's mastery in the launcher's current domain is earned, and an explicit selected state. They do not start a round themselves and do not need to become achievement dashboards; the launcher's normal Play/Learn actions operate on whichever scope is selected. The strip is a plain Atlas Blue fill against a neutral track — no segmented brown "learning" state, no printed strong/learning/unseen counts; a country counts toward the fill the moment it has been answered correctly once.
+Region rows are full-width launch surfaces inside one mode's launcher: region identity, country count, a single-colour progress strip, and a purple mark once that region's mastery in the launcher's current domain is earned. **One tap starts Play for that region.** They do not need to become achievement dashboards. The whole-continent row above them carries the same anatomy plus the Atlas Blue action tint that the retired detached Play button used to own. The strip is a plain Atlas Blue fill against a neutral track — no segmented brown "learning" state, no printed strong/learning/unseen counts; a country counts toward the fill the moment it has been answered correctly once.
 
-The four-domain launch row that region cards carried under scope-first navigation is retired. The later row-level Quick Play experiment is also retired: once a mode is chosen, continent and region rows answer only the geographic-selection question, while deliberate Play/Learn remains on the active launcher. This keeps each surface responsible for one decision and avoids tiny trailing action cells. The routine icon set's labelling requirement (see [Resolved by Tactile Atlas](#resolved-by-tactile-atlas), item 8) is unchanged and still binding: Home names all four modes in visible text beside their glyphs.
+The four-domain launch row that region cards carried under scope-first navigation is retired, as is the launcher's own selection map. Within a launcher, a row *is* the Play action for its scope — the earlier split, where rows only selected a scope and a separate button played it, gave the same screen two selection methods and two steps for one decision. Note this is a launcher rule, not a global one: on the domain continent index a continent row still only *opens* that continent's launcher, because choosing a continent and choosing to play it are genuinely different decisions there. The routine icon set's labelling requirement (see [Resolved by Tactile Atlas](#resolved-by-tactile-atlas), item 8) is unchanged and still binding: Home names all four modes in visible text beside their glyphs.
 
 The dedicated Progress surface that used to own the expanded cross-domain achievement reading — each region's four domain identities as one competency set, with neutral supported, purple earned and clearly unavailable states — has been retired with no replacement; a region card only ever shows its own launcher's single domain, not all four side by side. What the region row now shows instead: a purple mark for that one domain's earned mastery, and a restrained gold row outline once the region is complete across every domain it supports (read via the existing achievement state, not a new domain concept).
 
@@ -310,7 +310,7 @@ A tiered radius system, not one universal value:
 radius:
   compact: 8px   # badges, keycaps, answer-key chips
   control: 12px  # buttons, inputs, list rows
-  tile:    18px  # domain/region interactive tiles, launcher status card
+  tile:    18px  # domain/region interactive tiles
   hero:    24px  # the results score card
 ```
 
@@ -318,7 +318,7 @@ This replaces the pre-Atlas 6px/9px pair outright: `--radius-sm` and `--radius-m
 
 Elevation is restrained and functional, not decorative:
 
-- **standing depth** — a soft two-layer shadow (`--depth-tile`) on interactive tiles and the launcher status card, distinguishing "this is a surface you can act on" from flat chrome;
+- **standing depth** — a soft two-layer shadow (`--depth-tile`) on interactive tiles and launcher scope rows, distinguishing "this is a surface you can act on" from flat chrome;
 - **press depth** — the solid bottom-shadow-that-collapses model described under [Interaction character](#interaction-character), reserved for primary buttons and answer buttons;
 - **arcade depth** — a hard-edged exception (`--depth-arcade`: `2px solid` border plus `2px 2px 0` offset shadow, both in `--text`) used exclusively on Home's mode cards, collapsing via diagonal translate rather than vertical drop; deliberately the one place this document's rejection of "thick black borders and hard offset shadows" does not apply, reserved for the product's single highest-frequency decision. Hovering lifts the card by 1px into a 3px offset before the press collapses it;
 - **flat** — rows, lists and ordinary chrome carry a hairline border and no shadow.
@@ -392,7 +392,7 @@ Do not introduce:
 
 Tactile Atlas remains centred in `atlas-theme.css`, the override sheet loaded after the hand-authored base/domain styles and responsible for shared semantic tokens and product-wide tactile primitives. Focused surfaces may add a small dedicated sheet when that keeps ownership clear; #56 added `progress.css` immediately before `atlas-theme.css` on that principle, but it was removed along with the Progress screen it styled.
 
-No React, Tailwind or other UI/CSS framework was introduced to build this. The existing framework-free TypeScript view layer, routing, and `data-action` interaction model are unchanged — this remains an extension of the existing architecture, not a framework migration.
+React now owns the browser presentation and interaction lifecycle. This does not change the Tactile Atlas visual system: plain CSS, existing semantic classes and `atlas-theme.css` remain normative. The typed router, product engine and generated geography remain framework-independent; Tailwind, CSS-in-JS and a parallel component theme are not part of the migration. Stable `data-action` identifiers may remain as compatibility metadata, but React component handlers own interaction dispatch.
 
 ## Resolved by Tactile Atlas
 

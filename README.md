@@ -9,9 +9,9 @@ Atlas combines fast geographic practice with persistent learning evidence and a 
 - **195** core national flags.
 - World → continent → region geographic hierarchy.
 - **Flags** across the full 195-country curriculum.
-- **Locations** currently production-ready for Africa and its five learning regions.
-- **Outlines** currently production-ready for Africa and its five learning regions.
-- **Neighbours** currently uses Africa production topology and generated land-border adjacency.
+- **Locations** currently production-ready for Africa, South America, Europe and Asia plus their supported regions.
+- **Outlines** currently production-ready for Africa, South America, Europe and Asia plus their supported regions.
+- **Neighbours** uses canonical generated production topology and land-border adjacency for supported geography.
 - **Learn** for familiarisation/corrective practice appropriate to each domain.
 - **Play** for scored retrieval/assessment.
 - Rich country-level learning evidence kept separate from learner-facing achievements.
@@ -27,22 +27,28 @@ Product truth lives in [`PRODUCT.md`](PRODUCT.md). The implemented Tactile Atlas
 
 ## Run locally
 
-Requires Node 22+.
+Requires Node 22.12+.
 
 ```bash
 npm install
 npm run dev
 ```
 
-The development server builds the app, serves it at `http://localhost:5173`, and rebuilds when source or static asset files change. To run the full verification suite:
+Vite serves the source application at `http://localhost:5173` with module-aware hot updates. The production artifact is generated separately:
+
+```bash
+npm run build
+```
+
+To run the complete verification suite:
 
 ```bash
 npm test
 ```
 
-`npm test` compiles the TypeScript application and verifies curriculum, routing, cartography, learning-domain and product-copy invariants. The built static app is written to `dist/`.
+`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, preserves the temporary verifier-only module emit required by the existing plain-Node invariant suite, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
 
-Serve `dist/` with any static server, for example:
+Serve `dist/` with any static server for production-artifact inspection, for example:
 
 ```bash
 npx serve dist
@@ -58,9 +64,9 @@ During supported quizzes:
 
 ## Deploy
 
-Pushes to `main` run `.github/workflows/pages.yml`, which builds, verifies, and deploys `dist/` to GitHub Pages once Pages is configured to use **GitHub Actions** as its source.
+Pushes to `main` run `.github/workflows/pages.yml`, which builds and deploys the tested `dist/` artifact to GitHub Pages after CI succeeds.
 
-Firebase Hosting can replace GitHub Pages later without changing the application structure.
+Firebase Hosting can replace GitHub Pages without changing the application structure. Local hosting configuration and remote deployment remain part of Issue #46: selecting or creating a Firebase project is an explicit infrastructure decision and is not inferred during the React/Vite migration.
 
 ## Architecture
 
@@ -70,7 +76,10 @@ src/domain           learning evidence + domain engines
 src/infrastructure   persistence + flag assets
 src/routing          stable hash-route model
 src/state            application/session state
-src/ui               components and screens
+src/react            React shell, screens and components
+src/ui               framework-independent UI/map adapters and legacy verifier fixtures
+src/main.tsx         production browser entry
+src/sw.ts            generated Workbox service-worker policy
 ```
 
 The domain layer has no browser UI dependency. The learning evidence model, earned-achievement layer and presentation system should remain separable so each can evolve without forcing a rewrite of the others.

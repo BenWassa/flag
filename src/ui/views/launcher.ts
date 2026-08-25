@@ -1,8 +1,6 @@
-import type { MapRegionAsset } from '../../domain/map-models.js';
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import { domainDisplayName } from '../../domain/display.js';
 import { domainIcon, icon } from '../components/icons.js';
-import { renderLauncherMap } from '../components/launcher-map.js';
 import { progressStrip } from '../components/progress.js';
 import { escapeHtml } from '../format.js';
 
@@ -24,8 +22,6 @@ export interface LauncherModel {
   unitLabel: string;
   persisting: boolean;
   storageNotice: string;
-  showMap: boolean;
-  mapAsset?: MapRegionAsset | null;
 }
 
 interface LauncherActions {
@@ -46,19 +42,21 @@ function domainLabel(domain: LearningDomain): string {
   return domainDisplayName(domain).toLowerCase();
 }
 
-function renderRegionRow(
+function renderScopeRow(
   domain: LearningDomain,
-  region: LauncherRegion,
+  scope: StudyScope,
+  stats: ScopeStats,
   unitLabel: string,
-  selectedRegionId: string | undefined,
+  variant: 'continent' | 'region',
+  options: { domainMastered?: boolean; complete?: boolean } = {},
 ): string {
-  const selected = region.scope.id === selectedRegionId;
-  const label = escapeHtml(region.scope.label);
-  const id = escapeHtml(region.scope.id ?? '');
+  const play = actionsFor(domain).play;
+  const label = escapeHtml(variant === 'continent' ? `All ${scope.label}` : scope.label);
+  const id = escapeHtml(scope.id ?? '');
   const rowClass = [
     'region-row',
-    selected ? 'region-row--selected' : '',
-    region.complete ? 'region-row--complete' : '',
+    variant === 'continent' ? 'region-row--continent' : '',
+    options.complete ? 'region-row--complete' : '',
   ].filter(Boolean).join(' ');
 
   return `
@@ -66,18 +64,18 @@ function renderRegionRow(
       <button
         class="region-row__open"
         type="button"
-        data-action="select-region"
+        data-action="${play}"
         data-domain="${domain}"
         data-id="${id}"
-        aria-pressed="${selected}"
+        data-scope-id="${id}"
+        aria-label="Play ${label}"
       >
         <span class="region-row__identity">
-          <strong>${label}${region.domainMastered ? `<span class="region-row__mastery" aria-label="Mastered">${icon('star')}</span>` : ''}</strong>
-          <small>${region.stats.total} ${escapeHtml(unitLabel)}</small>
+          <strong>${label}${options.domainMastered ? `<span class="region-row__mastery" aria-label="Mastered">${icon('star')}</span>` : ''}</strong>
+          <small>${stats.total} ${escapeHtml(unitLabel)}</small>
         </span>
-        ${selected ? '<span class="region-row__status">Selected</span>' : ''}
-        ${region.stats.due > 0 ? `<span class="region-row__evidence">${region.stats.due} due</span>` : ''}
-        <span class="region-row__progress">${progressStrip(region.stats)}</span>
+        ${stats.due > 0 ? `<span class="region-row__evidence">${stats.due} due</span>` : ''}
+        <span class="region-row__progress">${progressStrip(stats)}</span>
         ${icon('chevron')}
       </button>
     </div>
@@ -87,17 +85,12 @@ function renderRegionRow(
 export function renderLauncher(model: LauncherModel): string {
   const actions = actionsFor(model.domain);
   const activeScope = model.selectedRegion ?? model.continentScope;
-  const activeId = escapeHtml(activeScope.id ?? 'world');
   const continentId = escapeHtml(model.continentScope.id ?? '');
   const scopeLabel = escapeHtml(activeScope.label);
   const continentLabel = escapeHtml(model.continentScope.label);
   const domainName = escapeHtml(domainLabel(model.domain));
   const domainTitle = escapeHtml(domainDisplayName(model.domain));
-  const selectedRegionId = model.selectedRegion?.id;
   const parentLabel = `Back to ${domainTitle}`;
-  const map = model.showMap && model.mapAsset
-    ? renderLauncherMap(model.mapAsset, model.domain, selectedRegionId)
-    : '';
 
   return `
     <main class="page page--launcher" data-launcher-domain="${model.domain}" data-launcher-continent="${continentId}">
@@ -114,46 +107,22 @@ export function renderLauncher(model: LauncherModel): string {
       </header>
 
       <section class="launcher" aria-label="${continentLabel} ${domainName} launcher">
-        <div class="launcher__status">
-          ${model.selectedRegion ? `
-            <button
-              class="launcher__all-scope"
-              type="button"
-              data-action="select-continent"
-              data-domain="${model.domain}"
-              data-id="${continentId}"
-            >All ${continentLabel}</button>
-          ` : ''}
-          ${progressStrip(model.stats)}
+        <div class="region-list region-list--continent">
+          ${renderScopeRow(model.domain, model.continentScope, model.stats, model.unitLabel, 'continent')}
         </div>
-
-        <button
-          class="button button--primary launcher__play"
-          type="button"
-          data-action="${actions.play}"
-          data-domain="${model.domain}"
-          data-scope-id="${activeId}"
-        >Play ${scopeLabel}</button>
-
-        ${model.showMap ? `
-          <div
-            class="launcher-map-slot"
-            data-launcher-map-slot
-            data-domain="${model.domain}"
-            data-continent-id="${continentId}"
-          >${map}</div>
-        ` : ''}
 
         <section class="atlas-section launcher__regions" aria-labelledby="launcher-regions-heading">
           <div class="list-heading">
             <h2 id="launcher-regions-heading">Regions</h2>
           </div>
           <div class="region-list">
-            ${model.regions.map((region) => renderRegionRow(
+            ${model.regions.map((region) => renderScopeRow(
               model.domain,
-              region,
+              region.scope,
+              region.stats,
               model.unitLabel,
-              selectedRegionId,
+              'region',
+              { domainMastered: region.domainMastered, complete: region.complete },
             )).join('')}
           </div>
         </section>
@@ -163,8 +132,8 @@ export function renderLauncher(model: LauncherModel): string {
           type="button"
           data-action="${actions.learn}"
           data-domain="${model.domain}"
-          data-scope-id="${activeId}"
-        >Learn ${scopeLabel}</button>
+          data-scope-id="${continentId}"
+        >Learn ${continentLabel}</button>
       </section>
 
       ${model.persisting ? '' : `<p class="storage-notice">${escapeHtml(model.storageNotice)}</p>`}

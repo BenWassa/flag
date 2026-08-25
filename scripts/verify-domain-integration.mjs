@@ -43,12 +43,12 @@ assert.ok(indexHtml.includes('./neighbors.css'), 'Combined production shell incl
 assert.ok(indexHtml.includes('./neighbor-map-runtime.js'), 'Combined production shell includes the lightweight Neighbours map runtime.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Issue #77 shell changes advance the PWA cache to v28.');
-assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
-assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
-assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite integration advances the PWA cache to v29.');
+assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas styling remains in the offline shell.');
+assert.ok(serviceWorker.includes('outline.css') && serviceWorker.includes('neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
+assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
-const app = await readFile('dist/app.js', 'utf8');
+const app = await readFile('src/app.ts', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
   assert.ok(app.includes(marker), `Combined app orchestration retains ${marker}.`);
 }
@@ -103,14 +103,13 @@ const launchers = [
   ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE, achievements)],
 ];
 for (const [name, html] of launchers) {
-  assert.ok(html.includes('Play Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
-  assert.equal((html.match(/data-action="select-region"/g) ?? []).length, 5, `${name} exposes the five Africa regions.`);
-  assert.equal((html.match(/class="region-row__progress"/g) ?? []).length, 5, `${name} exposes progress for all five Africa regions.`);
-  assert.equal((html.match(/data-action="quick-play"/g) ?? []).length, 0, `${name} keeps Play on the active launcher rather than region rows.`);
-  assert.ok(html.includes('data-launcher-map-slot'), `${name} reserves the shared lazy map slot.`);
+  assert.ok(html.includes('All Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);
+  assert.equal((html.match(/class="region-row__progress"/g) ?? []).length, 6, `${name} exposes progress for Africa and all five of its regions.`);
+  assert.equal((html.match(/data-action="quick-play"/g) ?? []).length, 0, `${name} has no separate row-level Play shortcut.`);
+  assert.equal(html.includes('data-launcher-map-slot'), false, `${name} reserves no retired launcher map.`);
   for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend', 'neighbor-policy']) {
     assert.equal(html.includes(deletedSurface), false, `${name} does not restore deleted pre-round ${deletedSurface} UI.`);
   }
 }
 
-console.log('Cross-domain integration verification passed: mode-first Home, full-width continent and region selection, deliberate Africa launchers, v28 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');
+console.log('Cross-domain integration verification passed: mode-first Home, full-width continent and region selection, deliberate Africa launchers, v29 Atlas shell, cached map runtime, and deferred incomplete Neighbours targets.');

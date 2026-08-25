@@ -139,7 +139,7 @@ assert.ok(
 );
 assert.ok(html.includes('./icons/app-icon.svg'), 'The browser favicon points at the regular mark.');
 for (const shellIcon of ['app-icon.svg', 'app-icon-192.png', 'app-icon-512.png', 'app-icon-maskable-512.png', 'apple-touch-icon.png']) {
-  assert.ok(serviceWorker.includes(`./icons/${shellIcon}`), `${shellIcon} is part of the cached offline shell.`);
+  assert.ok(serviceWorker.includes(`icons/${shellIcon}`), `${shellIcon} is part of the cached offline shell.`);
 }
 
 assert.ok(

@@ -2,7 +2,7 @@
 
 ## Objective
 
-Keep the application extremely easy to deploy while preserving clean boundaries for a larger geography-learning product. The project uses TypeScript with zero runtime framework dependencies. This gives the GitHub Pages PWA a small surface area while keeping learning logic and navigation portable.
+Keep the application extremely easy to deploy while preserving clean boundaries for a larger geography-learning product. The browser presentation layer uses React 19 and Vite; the product engine, curriculum, persistence and typed routing remain framework-independent TypeScript.
 
 ## Layers
 
@@ -13,8 +13,10 @@ src/
   infrastructure/   Storage and asset providers
   routing/          Typed routes plus browser routing adapter
   state/            App/session orchestration
-  ui/               Render-only components and views
-  app.ts             Browser composition root and interaction routing
+  react/            React application shell, screens and shared components
+  ui/               Framework-independent formatting and map/icon adapters
+  main.tsx          Browser entry point and render-failure boundary
+  sw.ts             Workbox InjectManifest service-worker policy
 ```
 
 ### Data
@@ -55,19 +57,21 @@ Active-round hard refresh intentionally returns to the round's stable scope rath
 
 ### State
 
-`AppStore` coordinates the four domain sessions, applies domain transitions, persists attempts, and exposes state to views. It passes stable internal `test` activity to the evidence layer as learner-facing Play without hard-coding scoring weights in UI/application code.
+`AppStore` coordinates the four domain sessions, applies domain transitions, persists attempts, and exposes state to the React composition root. It passes stable internal `test` activity to the evidence layer as learner-facing Play without hard-coding scoring weights in UI/application code.
 
 Completed session objects remain in memory so browser Back/Forward can revisit a still-live round/result during the current process. They are not persisted as route state.
 
 ### UI
 
-Views are pure-ish HTML render functions. They consume current state and emit semantic `data-action` attributes; `app.ts` performs interaction routing. This avoids coupling learning rules or raw URL strings to screen templates.
+`src/react/AtlasApp.tsx` adapts the typed hash router, `AppStore` and existing round controllers into React-owned screens. Components own their controls and lifecycle directly. Stable legacy `data-action` values may remain as compatibility metadata, but they are no longer a global event-dispatch mechanism.
+
+Generated geography, projection maths, pan/zoom behaviour and the Neighbours map runtime remain imperative, framework-independent boundaries. React owns when those surfaces are mounted and which application actions they invoke.
 
 Country-level scheduler values remain internal. Routine UI uses Unseen, Learning, Strong evidence and Due for review rather than individual-country Mastered achievements or scheduler `x/y` punch cards.
 
-## Why no runtime framework yet
+## Runtime framework boundary
 
-The application remains small enough that a framework would add installation and bundle complexity without improving the learning engines or router. The key long-term assets are the data/domain/routing boundaries. If product complexity later justifies React, React Native, or Expo, views can be replaced while keeping `data/`, `domain/`, `routing/`, and most infrastructure contracts.
+React is a presentation dependency only. It gives screen state, event ownership, transient feedback and lifecycle cleanup explicit owners without replacing the key long-term assets in `data/`, `domain/`, `routing/`, `state/` and `infrastructure/`. React Router, a third-party state library and CSS-in-JS are intentionally absent.
 
 ## Persistence
 
@@ -98,7 +102,7 @@ Recommended sequence:
 
 ## PWA
 
-The service worker caches the application shell and runtime-fetched same-origin modules/assets, with a network-first application-shell policy and cached `index.html` navigation fallback when offline.
+Vite builds `src/sw.ts` through Workbox InjectManifest. The generated precache list owns the versioned shell, while same-origin runtime assets use network-first caching, FlagCDN uses cache-first caching, and failed navigations fall back to the precached `index.html`. Lazy continent chunks are deliberately excluded from precache and become available offline after first use through runtime caching.
 
 Hash deep links are compatible with GitHub Pages and the PWA because fragments do not alter the server request path. The manifest launches at the canonical `./#/` Home route.
 
@@ -124,7 +128,7 @@ Map/outline/neighbour verification scripts assert their native learning engines,
 - shared Back semantics across domains;
 - PWA hash start route, cache version, and offline navigation fallback.
 
-`npm test` runs `npm run check`, the production build and every verification script. CI executes it under Node 22 before uploading the exact `dist/` production artifact.
+`npm test` runs strict type checks, Vitest/Testing Library component tests, the production Vite/PWA build and every plain-Node verification script. `npm run test:browser` runs the production-preview Playwright desktop/mobile smoke matrix. CI executes the main gate under Node 22 before uploading the exact `dist/` production artifact.
 
 ## Future test strategy
 

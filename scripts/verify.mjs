@@ -193,10 +193,10 @@ assert.ok(
   screens.flagsIndex.includes('data-action="start-test"'),
   'The Flags index keeps its world round.',
 );
-assert.ok(screens.scope.includes('Play Africa') && screens.scope.includes('Learn Africa'), 'The continent launcher exposes its two round choices.');
-assert.ok(!screens.scope.includes('All Africa'), 'The continent launcher does not offer a redundant all-continent selector.');
-assert.ok(screens.region.includes('Play West Africa') && screens.region.includes('Learn West Africa'), 'Selecting a region retargets both round choices.');
-assert.ok(screens.region.includes('All Africa') && screens.region.includes('Selected'), 'The selected region is explicit and can be cleared in place.');
+assert.ok(screens.scope.includes('aria-label="Play All Africa"') && screens.scope.includes('Learn Africa'), 'The continent launcher plays the whole continent from its own row and keeps Learn below.');
+assert.ok(screens.scope.includes('aria-label="Play West Africa"'), 'Every region plays straight from its row.');
+assert.ok(screens.region.includes('aria-label="Play West Africa"') && screens.region.includes('aria-label="Play All Africa"'), 'A region route offers the same one-tap rows.');
+assert.ok(!screens.scope.includes('Selected') && !screens.region.includes('Selected'), 'The launcher has one selection method, so nothing is merely selected.');
 for (const [name, html] of Object.entries({ scope: screens.scope, region: screens.region })) {
   assert.ok(!html.includes('mini-ledger') && !html.includes('stat-legend'), `${name} launcher stays free of the deleted pre-round ledger and legend.`);
 }

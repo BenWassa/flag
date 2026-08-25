@@ -195,20 +195,27 @@ assert.equal(selectionWindow.location.hash, '#/', 'One Back after multiple regio
 
 const roundWindow = new FakeBrowserWindow('https://example.test/flag/#/');
 const roundRouter = createHashRouter(roundWindow);
+// A launcher row now starts its round directly, so the continent launcher the
+// learner came from stays the history entry Back returns to.
 roundRouter.navigate(locationsAfrica);
-roundRouter.navigate(locationsWest, { replace: true });
 roundRouter.navigate(locationsTest);
 assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa/test', 'Starting a round pushes its stable internal activity route.');
 roundWindow.history.back();
-assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa', 'Back from a round returns to the exact selected launcher scope.');
+assert.equal(roundWindow.location.hash, '#/locations/africa', 'Back from a region round returns to the continent launcher it was started from.');
+roundRouter.navigate(locationsWest);
+roundRouter.navigate(locationsTest);
+roundWindow.history.back();
+assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa', 'A round started from a region route still returns to that region launcher.');
 
-const app = await readFile('dist/app.js', 'utf8');
+const app = await readFile('src/app.ts', 'utf8');
 assert.equal(app.includes('viewStack'), false, 'Legacy in-memory viewStack must not remain authoritative.');
 assert.equal(app.includes('historyIndex'), false, 'Legacy numeric history index must be removed.');
 assert.ok(app.includes('createHashRouter'), 'Application must compose through the hash router adapter.');
 assert.ok(app.includes('stableRoute'), 'Active-round refresh fallback must use the stable route.');
 assert.ok(app.includes('normalizeAvailableRoute'), 'Application must canonicalise availability through the exported pure route helper.');
-assert.ok(app.includes('select-region') && app.includes('select-continent'), 'Launcher selection must use explicit replace-only actions.');
+assert.equal(app.includes('select-region') || app.includes('select-continent'), false, 'The retired two-step launcher selection must not return.');
+assert.ok(app.includes('function launcherScope('), 'Launcher rows resolve their own scope rather than depending on a selected route.');
+assert.ok(app.includes('element.dataset.scopeId'), 'A launcher row plays the scope it names.');
 assert.equal(app.includes('quick-play'), false, 'Application has no dead row-level Quick Play dispatch.');
 assert.ok(
   app.includes('review-mistakes')
@@ -256,13 +263,14 @@ for (const [name, scopeSource] of [
 }
 
 const launcher = await readFile('dist/ui/views/launcher.js', 'utf8');
-for (const action of ['launcher-parent', 'select-region', 'select-continent']) {
-  assert.ok(launcher.includes(`data-action="${action}"`), `Shared launcher must expose ${action}.`);
+assert.ok(launcher.includes('data-action="launcher-parent"'), 'Shared launcher must expose launcher-parent.');
+for (const action of ['select-region', 'select-continent', 'quick-play']) {
+  assert.equal(launcher.includes(`data-action="${action}"`), false, `Shared launcher must not restore ${action}.`);
 }
-assert.equal(launcher.includes('data-action="quick-play"'), false, 'Region rows select scope and expose no inline Play shortcut.');
-assert.ok(launcher.includes('region-row__progress'), 'Every launcher region exposes its shared progress strip.');
-assert.ok(launcher.includes('aria-pressed'), 'Region selection must be programmatic as well as visual.');
-assert.ok(launcher.includes('Play ${scopeLabel}') && launcher.includes('Learn ${scopeLabel}'), 'Launcher Play and Learn actions must both name the active scope.');
+assert.ok(launcher.includes('region-row__progress'), 'Every launcher scope row exposes its shared progress strip.');
+assert.equal(launcher.includes('aria-pressed'), false, 'Launcher rows are one-tap actions rather than selection toggles.');
+assert.ok(launcher.includes('aria-label="Play ${label}"'), 'Every launcher row announces that it starts Play for the scope it names.');
+assert.ok(launcher.includes('Learn ${continentLabel}'), 'Launcher Learn names the whole continent it acts on.');
 assert.equal(launcher.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
 assert.equal(launcher.includes('mini-ledger'), false, 'Shared launcher must not restore the deleted country ledger.');
 
@@ -284,11 +292,11 @@ assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canoni
 assert.equal(manifest.lang, 'en-GB', 'Installed PWA declares the British-English product language.');
 
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes("const VERSION = 'flag-atlas-v28'"), 'Atlas brand rollout must invalidate the previous app-shell cache.');
-assert.ok(serviceWorker.includes("'./atlas-theme.css'"), 'The Tactile Atlas stylesheet must be part of the offline shell.');
-assert.ok(serviceWorker.includes("request.mode === 'navigate'"), 'Offline navigation must retain index shell fallback.');
-assert.ok(serviceWorker.includes("'./outline.css'"), 'Outline presentation CSS must be part of the offline shell.');
-assert.ok(serviceWorker.includes("'./neighbors.css'"), 'Neighbour presentation CSS must be part of the offline shell.');
-assert.ok(serviceWorker.includes("'./neighbor-map-runtime.js'"), 'Neighbour map runtime must be part of the offline shell.');
+assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite rollout invalidates the previous app-shell cache.');
+assert.ok(serviceWorker.includes('atlas-theme.css'), 'The Tactile Atlas stylesheet must be part of the offline shell.');
+assert.match(serviceWorker, /mode===.?navigate/, 'Offline navigation must retain index shell fallback.');
+assert.ok(serviceWorker.includes('outline.css'), 'Outline presentation CSS must be part of the offline shell.');
+assert.ok(serviceWorker.includes('neighbors.css'), 'Neighbour presentation CSS must be part of the offline shell.');
+assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbour map runtime must be part of the offline shell.');
 
-console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v28 Atlas PWA shell.');
+console.log('Routing verification passed: simplified launchers, canonical Africa routes, replace-only selection history, Play titles with stable /test routes, result navigation, and v29 Atlas PWA shell.');
