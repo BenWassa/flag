@@ -1,7 +1,8 @@
 import type { SVGProps } from 'react';
-import type { LearningDomain } from '../../domain/models.js';
+import type { ContinentId, LearningDomain } from '../../domain/models.js';
 import { ICON_PATHS, type IconName } from '../../ui/components/icons.js';
 import { CONTINENT_PATHS } from '../../ui/components/continent-icons.js';
+import { CONTINENT_TROPHY_IMAGES } from '../assets/continent-trophies/index.js';
 
 export function Icon({ name, className = '', ...props }: SVGProps<SVGSVGElement> & { name: IconName }) {
   return (
@@ -38,4 +39,11 @@ export function ContinentIcon({ id }: { id: string }) {
       <path d={path} />
     </svg>
   );
+}
+
+/** Earned continent-crest artwork (#34), shown once a continent is complete. */
+export function ContinentTrophy({ id }: { id: ContinentId }) {
+  const src = CONTINENT_TROPHY_IMAGES[id];
+  if (!src) return null;
+  return <img className="continent-trophy" src={src} alt="" aria-hidden="true" />;
 }
