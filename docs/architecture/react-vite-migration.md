@@ -1,293 +1,215 @@
 # React and Vite migration architecture decision
 
-**Status:** Accepted; integrated implementation candidate on `issue-89-react-vite-completion`
+**Status:** Implemented in production as of Atlas `1.0.0`; closeout remains under #89  
 **Parent:** #89  
-**Execution plan:** `docs/open/issue-89-execution-plan.md`  
+**Execution record:** `docs/open/issue-89-execution-plan.md`  
 **Implementation log:** `docs/open/issue-89-implementation-worklog.md`
 
 ## Decision
 
-Atlas will migrate its presentation and build layers incrementally to React, Vite and strict TypeScript while preserving the existing product engine and compatibility contracts.
+Atlas uses React 19 and Vite for the production presentation and browser-build layers while preserving the existing product engine, typed hash router, learning rules, persistence contracts and generated geography.
 
-This is an in-place platform migration, not a rewrite. `main` must remain deployable between phases.
+This was an in-place platform migration, not a product rewrite. The architecture decision remains binding after the migration: React is a presentation dependency, Vite owns browser development/build output, and the framework-independent layers remain authoritative for product semantics.
 
-Use:
+Current production uses:
 
-- React at the supported major selected in the Vite-foundation phase;
-- Vite at a Node 22-compatible supported release;
+- React 19 and React DOM for browser presentation;
+- Vite 8 for development and the browser production build;
 - strict TypeScript and TSX;
-- the existing typed Atlas hash router behind a React subscription adapter;
-- the existing `AppStore` and round controllers behind an observable adapter first;
+- the existing typed Atlas hash router;
+- the existing `AppStore` and four round controllers;
 - plain CSS and the existing Tactile Atlas semantic tokens;
-- Vitest and Testing Library for component-level behaviour;
-- Playwright for critical browser flows against the production build;
-- GitHub Pages as the deployment target;
-- a build-aware custom service-worker integration that preserves Atlas caching semantics.
+- Vitest and Testing Library for React component tests;
+- Playwright for production-preview browser tests;
+- `vite-plugin-pwa` with Workbox InjectManifest for the custom Atlas service worker;
+- GitHub Pages as the production deployment target.
 
-Do not introduce React Router, Redux, Zustand, Tailwind, CSS-in-JS, Next.js, SSR, a server runtime, Firebase, new geography sources or new persistence schemas as part of this migration.
+React Router, Redux, Zustand, Tailwind, CSS-in-JS, Next.js, SSR and a second geography system were not introduced by #89.
 
-## Why React
+## Production architecture at v1.0.0
 
-The product engine is already separated into `data`, `domain`, `infrastructure`, `routing` and `state`. The lifecycle burden is concentrated in `src/app.ts` and the string-rendered UI:
+The browser entry is `src/main.tsx`. It mounts the React error boundary and `src/react/AtlasApp.tsx`.
 
-- full-root `innerHTML` replacement after material state changes;
-- global delegated `data-action` dispatch;
-- manual focus and scroll recovery;
-- manual setup/cleanup for map and input lifecycles;
-- application-shell concerns mixed with route interpretation and round orchestration.
+`AtlasApp` owns the production screen and interaction lifecycle for:
 
-React is adopted to give UI state, component ownership and lifecycle cleanup an explicit owner. It must not become a dependency of the domain, curriculum, persistence or cartography-generation layers.
+- Home and profile;
+- per-domain continent indexes;
+- continent/region launchers;
+- Flags browse-and-reveal Learn;
+- Flags Play and results;
+- Outlines Learn/Play and results;
+- Locations launcher, active map round and results;
+- Neighbours launcher, active map/input round and results;
+- notices, live announcements, document title, install UI, focus intent, keyboard handling, persistence flushing, navigation gestures and service-worker registration.
 
-## Why Vite
+The browser dependency direction is:
 
-The repository currently owns compilation, atomic staging, asset copying, watching and static development serving through `scripts/build.mjs` and `scripts/dev.mjs`. Vite replaces that bespoke web-tooling surface while preserving the meanings of:
+```text
+src/main.tsx
+    |
+    v
+src/react/*
+    |
+    v
+src/state/* + src/routing/* + framework-independent UI/map adapters
+    |
+    v
+src/domain/*
+    |
+    v
+src/data/* + generated geography
 
-- `npm run check` — strict type-check;
-- `npm run build` — complete production `dist/` artifact;
-- `npm test` — type-check, production build and the complete invariant suite;
-- Node 22 CI;
-- GitHub Pages repository-subpath deployment.
+src/infrastructure/* implements persistence, assets and external boundaries
+```
 
-Vite is justified independently of React. The Vite phase lands with the existing vanilla TypeScript UI before the React entry point changes.
+`src/domain`, `src/data`, persistence implementations and cartography generation do not depend on React.
 
-## Preservation boundary
+## Preserved contracts
 
-### Product and learning contracts
+### Product and learning
 
-The migration must not change:
+The migration did not authorise changes to:
 
 - learner-facing product name **Atlas**;
 - British-English learner copy, including **Neighbours** and **Play**;
 - stable internal `neighbors` and `test` identifiers;
 - scoring, evidence, scheduling, mastery and earned-achievement rules;
-- independent per-domain progress ledgers;
-- storage keys, payload versions, migrations or install-dismissal persistence;
-- round-controller timing and outcome semantics;
+- independent per-domain learning ledgers;
+- storage keys, payload versions and migrations;
+- round-controller timing/outcome semantics;
 - active-round refresh policy.
 
-### Routing contracts
+### Routing
 
-Keep `src/routing/routes.ts` as the canonical route model and `src/routing/router.ts` as the browser transport boundary.
+`src/routing/routes.ts` remains the canonical route model and `src/routing/router.ts` remains the browser transport boundary.
 
-Durable URL state remains:
+Durable navigation state remains URL-owned. Active quiz state remains ephemeral process state. A cold activity URL without its matching live round normalises back to the stable launcher without inventing persisted round state. Hash routing remains compatible with GitHub Pages, and browser Back/Forward remains native.
 
-- domain;
-- continent/region scope;
-- activity identity while a live round exists.
-
-Active round internals remain ephemeral process/session state. A cold refresh of an activity URL without the matching in-memory session returns to its stable launcher via replacement, preserving already-persisted evidence.
-
-Hash URLs remain compatible on GitHub Pages. Region selection remains replace-navigation rather than history stacking. Browser Back/Forward remains native.
-
-### Country and geography contracts
+### Country identity and geography
 
 - Canonical country identity remains ISO3.
-- Country naming continues to follow `docs/product/country-naming.md`.
-- Production cartography remains the reproducible pinned Natural Earth 1:10m pipeline in `docs/architecture/cartography.md`.
-- No handwritten country geometry, adjacency table or second topology source may be introduced.
-- Outlines, Locations and Neighbours continue to consume canonical generated geometry/adjacency.
-- Lazy continent modules remain lazy; React must not pull all generated geography into the initial shell.
+- Country naming continues to follow the repository naming policy.
+- Production cartography remains the pinned Natural Earth 1:10m topology pipeline.
+- No handwritten country geometry, adjacency table or second topology source was introduced.
+- Locations, Outlines and Neighbours continue to reuse canonical generated geography.
+- Continent geography remains lazy rather than entering the initial application bundle.
 
-### Design contracts
+### Design
 
-`DESIGN.md`, `.impeccable/design.json` and `src/styles/atlas-theme.css` remain normative.
+The migration preserved the existing Tactile Atlas design system and plain-CSS ownership. React did not create a second visual system.
 
-The migration preserves:
+`DESIGN.md`, `.impeccable/design.json` and `src/styles/atlas-theme.css` remain normative for product presentation.
 
-- system sans-serif typography;
-- cool near-white/graphite base;
-- Atlas Blue ordinary action family;
-- green/red transient answer semantics;
-- purple mastery and scarce gold prestige;
-- Tactile Atlas radius/depth/press physics;
-- mode-first Home → domain continent index → launcher IA;
-- geography-dominant active learning surfaces;
-- visible failure notice versus hidden routine live-announcement split;
-- reduced motion, visible focus, practical touch targets and safe-area behaviour.
+## Actual adapter implementation
 
-A React port is not permission to redesign the product or replace plain CSS.
+The shipped implementation differs in two details from the pre-migration proposal.
 
-## Target dependency direction
+### Router
+
+The architecture proposal preferred a `useSyncExternalStore` adapter. Production instead keeps the existing router instance in the React composition root and subscribes to it through a React effect, updating React-owned route state when the typed router emits.
+
+There is still one route model and one browser-history authority. No React Router or parallel navigation stack was introduced.
+
+### AppStore
+
+The proposal expected an explicit `AppStore.subscribe()/notify()` boundary. Production instead keeps one `AppStore` instance under the React composition root and explicitly invalidates the React tree after store/controller mutations through React-owned revision state.
+
+This is an accepted v1 implementation deviation rather than an incomplete product migration: `AppStore` remains the single application-state authority and no third-party or duplicate store was introduced. A future observable-store API should be added only if asynchronous/external mutation creates a concrete need; it is not required solely to recreate the abandoned migration mechanism.
+
+The four existing round controllers remain the orchestration boundary for active learning flows.
+
+## Build and deployment
+
+### Vite
+
+`vite.config.ts` uses repository-relative output (`base: './'`) for GitHub Pages and retains stable browser entry names where Atlas integration requires them:
+
+- `app.js` from `src/main.tsx`;
+- `map-viewport.js`;
+- `neighbor-map-runtime.js`.
+
+Generated continent geography remains split into lazy Vite chunks.
+
+### CI and Pages
+
+`npm test` runs:
+
+1. strict application/Vite type checks;
+2. Vitest/Testing Library;
+3. the Vite + Workbox production build;
+4. the plain-Node invariant suite.
+
+CI runs that gate on Node 22 and uploads `dist/`. GitHub Pages deploys only after successful CI on `main`, rebuilding the same production inputs under Node 22.
+
+### Current compatibility emit
+
+`npm run build` currently performs:
 
 ```text
-React features / shared UI
-          |
-          v
-application adapters / existing round controllers
-          |
-          v
-domain models and rules
-          |
-          v
-data and generated geography
-
-infrastructure implements storage, asset and PWA boundaries
+vite build
+then
+tsc -p tsconfig.verify.json
 ```
 
-React imports downward. `src/domain`, `src/data`, cartography generation and persistence implementations must not import React.
+The second step exists only to keep the long-standing plain-Node verifier suite working while #100 replaces implementation-coupled assertions. It is not a second browser entry point.
 
-## Application adapters
+However, because `tsconfig.verify.json` emits into `dist/`, verifier-only modules are physically present in the CI and Pages artifacts. Current v1.0.0 evidence shows:
 
-### Router adapter
+- the browser entry graph does not import `src/app.ts` or `src/ui/views/*`;
+- the deployed Pages artifact nevertheless contains 16 compiled `ui/views/*.js` legacy string-renderer fixtures;
+- the compatibility emit also places framework-independent `data/`, `domain/`, `infrastructure/`, `routing/`, `state/` and `ui/` modules into the deployable directory even though the Vite browser graph uses bundled output;
+- `scripts/verify-vite-build.mjs` intentionally asserts the presence of compatibility output, including `dist/ui/views/map-quiz.js`.
 
-Expose the existing typed hash router to React with a tear-safe subscription, preferably `useSyncExternalStore`.
+That is the concrete remaining compatibility boundary owned by #100.
 
-The adapter must not:
+## PWA architecture
 
-- create a second route model;
-- reinterpret stable URLs;
-- replace browser history with an application stack.
+Vite builds `src/sw.ts` with Workbox InjectManifest.
 
-### Store adapter
+The current service-worker policy preserves:
 
-Add an explicit `subscribe`/`notify` boundary to `AppStore` while preserving its current methods and state semantics. The first React phases adapt the store; they do not decompose it.
+- an injected generated precache for the shell;
+- old Atlas cache cleanup;
+- `skipWaiting()` plus `clientsClaim()` update takeover;
+- navigation fallback to the precached `index.html`;
+- network-first same-origin runtime requests;
+- cache-first `flagcdn.com` flags;
+- lazy continent chunks excluded from precache and cached after first successful use.
 
-A post-parity split of `AppStore` is optional and requires demonstrated value. No third-party global state library is part of #89.
+The current cache generation is `flag-atlas-v29`.
 
-### Round controllers
+Static production-artifact verification proves that this policy is built and wired. Runtime offline/update behaviour still requires the production-browser validation retained in #93/#101; source inspection is not recorded as an offline session.
 
-Keep the four existing round controllers as the orchestration boundary during the port. Component handlers call controller methods; controllers continue to own timing, scoring/evidence orchestration and round transitions.
+## CSS strategy and #100 boundary
 
-Temporary render/focus compatibility hooks must be named, documented and removed by Phase 10.
+React components intentionally retained the established semantic class names and Tactile Atlas styles during migration.
 
-## React ownership model
+CSS rationalisation remains deferred until verifier dependence on the legacy string-renderer fixtures is removed. #100 must use production-markup/coverage evidence rather than visual guesswork, preserve `atlas-theme.css` as normative design-system truth unless a dedicated design change says otherwise, and avoid changing learner-facing behaviour while deleting dead compatibility selectors.
 
-React progressively takes ownership in this order:
+Stable `data-action` strings may remain as inert compatibility/test metadata. What has been removed from production is the old global delegated `data-action` dispatcher.
 
-1. stable application shell and lifecycle;
-2. passive navigation and Flags study;
-3. Flags active rounds;
-4. Outlines active rounds;
-5. Locations map surfaces;
-6. Neighbours map/input surfaces.
+## Verification model after v1
 
-Map projection, viewport maths, gesture maths and generated geometry remain framework-independent. React owns their DOM attachment through refs/effects with deterministic setup and cleanup.
+Verification is deliberately separated into five evidence classes:
 
-The completed migration has no production screen rendered through string-template `innerHTML`, no root-wide `innerHTML` replacement and no global `data-action` dispatcher.
+1. **Invariant evidence** — `npm test` plain-Node geography, learning, routing, persistence, language, cartography and product contracts.
+2. **Component evidence** — Vitest + Testing Library for React-owned DOM behaviour and lifecycle boundaries.
+3. **Browser evidence** — Playwright against the production preview for real route, input, map and history interactions.
+4. **Production/PWA evidence** — exact `dist/`/Pages artifact inspection plus service-worker/offline/update runtime checks.
+5. **Physical-device evidence** — Pixel/iPhone/installed-PWA checks owned by #71, never inferred from Playwright device emulation.
 
-## Build and asset strategy
+At v1.0.0 the invariant layer is broad, but component/browser/PWA runtime coverage is not yet sufficient to satisfy #89's final validation definition. #101 owns that final automated/browser hardening; #71 remains the independent physical-device authority.
 
-### Vite base
+## #89 closeout condition
 
-The production build must work under the repository subpath used by GitHub Pages. Asset URLs must not assume `/` is the application root.
+#89 remains open until the reconciled remaining children satisfy their current acceptance criteria. In particular:
 
-Hash routing remains independent of Vite path handling.
+- #100 must retire the verifier compatibility tail so legacy string renderers and the broad compatibility emit are no longer required in the deployable artifact;
+- #101 must provide the missing component/browser/production-PWA evidence across all four learning domains;
+- any earlier child left open after the post-v1 reconciliation must be closed with evidence or an explicit, justified scope transfer.
 
-### Static assets
+Physical Pixel/iPhone/installed-PWA validation is tracked by #71 and must be reported honestly in #89 closeout, but is not duplicated as hidden #89 evidence.
 
-Stable manifest/icon/service-worker identities should not be renamed unless a separately documented migration is necessary. Existing install metadata and iOS metadata remain intact.
+## Historical note
 
-### Lazy geography
-
-Keep dynamic continent imports as the runtime split boundary. Build verification records raw/gzip lazy-continent output and rejects accidental eager inclusion in the shell.
-
-### Complete artifact
-
-`dist/` remains the sole deployable static artifact. Verification inspects the exact generated HTML, asset references, manifest, service worker and lazy chunks.
-
-## PWA strategy
-
-The service worker remains an Atlas-specific policy boundary rather than being replaced by a generic cache recipe.
-
-Preserve:
-
-- versioned shell lifecycle and old-cache cleanup;
-- offline navigation fallback to the built shell;
-- network-first same-origin application/geography requests;
-- cache-first external `flagcdn.com` flags;
-- caching of lazy geography after first successful load;
-- install prompt/dismissal behaviour;
-- mixed-version deployment safety.
-
-The Vite build must generate or inject the current hashed shell-asset list into the custom service worker. The implementation may use a Vite PWA/Workbox InjectManifest path or a small explicit build plugin, but the runtime policy above is the contract.
-
-Service-worker behaviour is verified against the production build, not only the Vite dev server.
-
-## CSS strategy
-
-Do not rewrite CSS during the component port.
-
-Initial React components preserve existing semantic class names and Tactile Atlas markup contracts. CSS deletion/rationalisation occurs only after the corresponding legacy markup is gone.
-
-`atlas-theme.css` remains the normative design-system truth unless a dedicated, reviewable change moves the same tokens/primitives elsewhere.
-
-Dead-selector removal requires production-markup/coverage evidence; visual difference alone is not sufficient.
-
-## Testing strategy
-
-### Existing invariant suite
-
-Plain-Node verifiers remain active for geography, routing, product language, evidence, achievements, map behaviour and generated assets. Verifiers that import `dist/` are adapted deliberately to the Vite output; they are not silently removed.
-
-### Component tests
-
-Use Vitest + Testing Library for React-owned behaviour where DOM semantics matter: controls, visible/hidden feedback, accessible names, focus intent, input interaction and shell lifecycle boundaries.
-
-### Browser tests
-
-Playwright covers at minimum:
-
-- Home → launcher → Learn/Play navigation;
-- Back/Forward, direct hash URL and refresh recovery;
-- complete Flags and Outlines flows;
-- Locations load/answer/pan/zoom/results;
-- Neighbours input/keyboard selection/map feedback/results;
-- unavailable geometry and failed lazy-load feedback;
-- stored progress reload;
-- service-worker/offline production-build smoke tests.
-
-### Manual/device evidence
-
-Physical-device evidence is never inferred from emulation or code inspection. Issue #71 remains open and owns the Pixel/iPhone/installed-PWA physical interaction audit. #89 records that status explicitly at closeout.
-
-## Performance gates
-
-Record before/after:
-
-- initial shell JS/CSS size;
-- each lazy continent module raw/gzip size;
-- geography load behaviour;
-- map interaction responsiveness under browser tests.
-
-Existing cartography budgets remain hard constraints unless a migration-specific build wrapper changes chunk packaging; any budget change requires measured equivalence and an explicit verifier update.
-
-## Rollback model
-
-Each phase is independently revertible because `main` remains deployable after every merge.
-
-- Phase 1 is documentation/evidence only.
-- Phase 2 changes build tooling while keeping the vanilla UI.
-- Phase 3 changes PWA build integration while keeping the vanilla UI.
-- Phase 4 introduces React shell compatibility without requiring screen rewrites.
-- Phases 5–9 migrate bounded surface groups.
-- Phase 10 removes compatibility only after all surfaces are React-owned.
-- Phase 11 hardens and verifies the final production artifact.
-- Phase 12 closes the epic only after merged evidence is reconciled.
-
-A failing phase is reverted or repaired within its own boundary; later phases do not mask an earlier regression.
-
-## Rejected alternatives
-
-### Full rewrite/new scaffold
-
-Rejected because the product engine, data model, storage and router already have strong boundaries. A new app would create unnecessary parity and migration risk.
-
-### React Router
-
-Rejected because Atlas already has a typed URL grammar and GitHub-Pages-compatible hash transport with explicit refresh/Back/Forward semantics.
-
-### Redux/Zustand
-
-Rejected because state semantics already live in `AppStore` and round controllers. Adapt first; decompose only after parity if evidence supports it.
-
-### Tailwind/CSS-in-JS
-
-Rejected because the existing CSS and Tactile Atlas tokens are valuable product assets and do not cause the lifecycle problem motivating React.
-
-### Generic service worker replacement
-
-Rejected because Atlas has deliberate lazy-geography, flag-CDN and mixed-version/offline behaviour that must survive the tooling migration.
-
-### Hosting/storage migration at the same time
-
-Rejected. Issue #46 is sequenced separately so #89 does not combine UI/build migration with Firebase/URL/storage changes.
+The original phase plan proposed Vite first, then Workbox integration, React shell adapters, passive surfaces, four active-domain ports, compatibility removal and final hardening. In practice, PR #103 accumulated the production Vite/React implementation before the tracker was reconciled. Git history and `docs/open/issue-89-implementation-worklog.md` preserve that execution history; this document describes the architecture that actually ships.
