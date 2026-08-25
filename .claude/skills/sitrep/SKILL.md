@@ -159,20 +159,48 @@ about unverified claims and the report must be too.
 
 ## Step 8: report
 
-Structure, in this order:
+Use this exact skeleton every time — fixed sections, fixed order, so repeat
+runs are diffable against each other at a glance. Fill in real values; never
+drop a section for being empty — write `none` so absence is visible
+information, not missing information. No walls of prose anywhere in this
+report; every line should be scannable in isolation.
 
-1. **Baseline** — `origin/main` SHA + subject; local divergence if any.
-2. **Health** — CI/Pages status; `npm test` result (or explicit "not run").
-3. **Open issues** — count, grouped by role per Step 2, not a flat list.
-4. **In flight** — unmerged branches with no PR; open PRs.
-5. **Housekeeping** — concrete proposals, split into:
-   - *safe to delete* (merged/abandoned branches, with the PR number proving it),
-   - *needs a decision* (undelivered branches, unpushed local commits),
-   - *docs moves* (closed issues still in `docs/open/`).
-6. **Recommended next** — what to run now and what can run in parallel.
+Open with a plain-text status block (a code fence, so columns line up):
 
-Keep it tight. Prose over tables unless comparing more than ~6 items on the
-same axes. End with the single highest-value next action.
+```
+ATLAS SIT REP — <YYYY-MM-DD>
+origin/main   <sha7>   <commit subject>
+CI            <pass|fail>        Pages   <deployed|skipped|fail>
+Tests         <pass|fail|not run>  (<node version, or "skipped: --no-test">)
+Local main    <in sync | +N unpushed | -N behind>: <one clause per commit, or "none">
+```
+
+Then markdown sections, in this order:
+
+**Open issues — `<count>`**
+One line per group from Step 2's taxonomy, issue numbers only, parent
+relationships noted inline (`#106 #107 (under #46)`). Omit a group line
+entirely only if it has zero issues — do not pad with "none" here, an absent
+category is self-explanatory. Use a two-column table only if it's genuinely
+easier to scan than a bullet list; usually it isn't for 6 groups.
+
+**In flight**
+Unmerged branches with no PR, and any open PRs. One line each:
+`<branch> — no PR, +N commits, last <date> — <what it contains, ≤10 words>`.
+Write `none` if empty.
+
+**Housekeeping**
+Three labelled sub-lists, each `none` if empty:
+- `Safe to delete:` branch — `PR #N merged` or `superseded by <branch>`.
+- `Needs a decision:` branch/commit — one clause on what's blocking it.
+- `Docs moves:` doc path → `docs/closed/`, with the issue number that closed.
+
+**Next**
+1–3 numbered lines max. First line is the single highest-value action, not a
+menu. Later lines only for things that can run in parallel with it.
+
+Do not add narrative framing before or after the skeleton ("Here's the
+report:", "Let me know if..."). The skeleton is the whole answer.
 
 ---
 
