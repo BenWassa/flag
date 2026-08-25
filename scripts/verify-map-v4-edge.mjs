@@ -126,7 +126,11 @@ for (const config of AFRICA_MAP_SCOPE_CONFIGS) {
   assert.equal(firstFocus, secondFocus, `${config.scope.label} initial framing is independent of the current target country.`);
 }
 
-const viewportSource = await readFile('dist/map-viewport.js', 'utf8');
+// These assertions deliberately inspect the canonical controller source. Vite
+// minifies the browser entry, so source-text implementation guards must not
+// depend on post-bundle symbol spelling while the behavioural tests above keep
+// running against emitted domain/view modules.
+const viewportSource = await readFile('src/map-viewport.ts', 'utf8');
 assert.ok(viewportSource.includes('states.get(sessionId)'), 'Per-session viewport state remains part of the production controller.');
 assert.match(
   viewportSource,
