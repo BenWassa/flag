@@ -45,6 +45,11 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     manifest: true,
+    // CSS is deliberately not optimised in the build-tool phase. Existing
+    // stylesheets are a product/design compatibility boundary and several
+    // invariant checks intentionally assert their semantic token text. CSS
+    // rationalisation belongs to Phase 10 after React owns the markup.
+    cssMinify: false,
     rollupOptions: {
       input: {
         index: resolve(root, 'index.html'),
