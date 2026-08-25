@@ -89,10 +89,66 @@ for (const id of ['CPV', 'STP', 'COM', 'MUS', 'SYC']) {
 const callouts = Object.values(AFRICA_GEOMETRY).filter((item) => item.callout).map((item) => item.countryId).sort();
 assert.deepEqual(callouts, ['GMB', 'TGO'], 'Mainland leader-line contract remains limited to The Gambia and Togo.');
 
-assert.deepEqual(AFRICA_SCOPE_FOCUS.africa, { x: 0, y: 0, width: 835, height: 723 });
+// Issue #112: Togo's leader line drops nearly straight into the Gulf of Guinea,
+// roughly perpendicular to the simplified local coastline, instead of running
+// diagonally across Ghana's coast.
+const togo = AFRICA_GEOMETRY.TGO.callout;
+const togoOffVerticalDeg = Math.atan2(
+  Math.abs(togo.target.cx - togo.anchor.cx),
+  Math.abs(togo.target.cy - togo.anchor.cy),
+) * 180 / Math.PI;
+assert.ok(togo.target.cy > togo.anchor.cy, "Togo's callout sits seaward of its anchor.");
+assert.ok(togoOffVerticalDeg <= 20, `Togo's leader line reads vertically (${togoOffVerticalDeg.toFixed(1)}deg off vertical).`);
+
+// The callout must be unambiguously Togo's, so it stays clearly nearer Togo than
+// to any other country's coast.
+function nearestDistance(path, cx, cy) {
+  let nearest = Infinity;
+  for (const [, x, y] of path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+    nearest = Math.min(nearest, Math.hypot(Number(x) - cx, Number(y) - cy));
+  }
+  return nearest;
+}
+for (const [id, geometry] of Object.entries(AFRICA_GEOMETRY)) {
+  if (id === 'TGO' || !geometry.path) continue;
+  const distance = nearestDistance(geometry.path, togo.target.cx, togo.target.cy);
+  assert.ok(distance >= togo.target.r * 1.5, `Togo's callout stays clear of ${id} (${distance.toFixed(1)} units).`);
+}
+
+// Issue #112: the opening frame is fitted to the scoring geography rather than to
+// the raw canvas, and it must still contain every mark a learner can tap.
+const HIT_SURFACE_FOCUS_RESERVE = 34;
+function focusContainsScoredGeometry(focus, geometryById, ids, label) {
+  assert.ok(focus, `${label} has an initial frame.`);
+  for (const id of ids) {
+    const geometry = geometryById[id];
+    const points = [...(geometry.path ?? geometry.outlinePath ?? '').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)]
+      .map(([, x, y]) => [Number(x), Number(y)]);
+    for (const circle of [geometry.locator, geometry.callout?.target]) {
+      if (!circle) continue;
+      const reach = Math.max(circle.r, HIT_SURFACE_FOCUS_RESERVE);
+      points.push([circle.cx - reach, circle.cy - reach], [circle.cx + reach, circle.cy + reach]);
+    }
+    for (const [x, y] of points) {
+      assert.ok(
+        x >= focus.x && x <= focus.x + focus.width && y >= focus.y && y <= focus.y + focus.height,
+        `${label} opens with ${id} fully in frame.`,
+      );
+    }
+  }
+}
+focusContainsScoredGeometry(AFRICA_SCOPE_FOCUS.africa, AFRICA_GEOMETRY, AFRICA_MAP_COUNTRY_IDS, 'Africa');
+assert.ok(
+  AFRICA_SCOPE_FOCUS.africa.width < 835,
+  'The whole-Africa frame is fitted to the curriculum rather than to the full canvas.',
+);
 for (const region of ['north-africa', 'west-africa', 'central-africa', 'east-africa', 'southern-africa']) {
   const focus = AFRICA_SCOPE_FOCUS[region];
   assert.ok(focus && focus.width < 835 && focus.height < 723, `${region} has a closer initial frame than the full continent.`);
+  assert.ok(
+    focus.width <= AFRICA_SCOPE_FOCUS.africa.width && focus.height <= AFRICA_SCOPE_FOCUS.africa.height,
+    `${region} opens no wider than the whole continent.`,
+  );
 }
 
 const westAsset = await loadMapAsset('west-africa');

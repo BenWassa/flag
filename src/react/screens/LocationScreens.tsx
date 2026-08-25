@@ -19,6 +19,7 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
 }) {
   const actions = useAtlasActions();
   return <div
+    className="map-stage__surface"
     onClick={(event) => {
       if (!interactive) return;
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
