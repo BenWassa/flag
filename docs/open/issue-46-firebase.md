@@ -1,9 +1,9 @@
 # Issue #46 — Firebase reconciliation and remaining execution plan
 
-**Status:** open; historical migration scope reconciled against Atlas 1.0.0  
-**Baseline:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`  
-**Architecture:** [`../architecture/firebase.md`](../architecture/firebase.md)  
-**Cloud-data follow-up:** #106  
+**Status:** open; historical migration scope reconciled against Atlas 1.0.0
+**Baseline:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`
+**Architecture:** [`../architecture/firebase.md`](../architecture/firebase.md)
+**Cloud-data follow-up:** #106
 **Hosting follow-up:** #107
 
 ## Reconciled objective
