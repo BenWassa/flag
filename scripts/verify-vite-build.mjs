@@ -1,0 +1,111 @@
+import assert from 'node:assert/strict';
+import { readdir, readFile, stat } from 'node:fs/promises';
+import { join, relative } from 'node:path';
+
+const DIST = 'dist';
+
+async function exists(path) {
+  try {
+    await stat(path);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+async function walk(directory) {
+  const result = [];
+  for (const entry of await readdir(directory, { withFileTypes: true })) {
+    const path = join(directory, entry.name);
+    if (entry.isDirectory()) result.push(...await walk(path));
+    else result.push(path);
+  }
+  return result;
+}
+
+for (const file of [
+  'index.html',
+  'app.js',
+  'map-viewport.js',
+  'neighbor-map-runtime.js',
+  'styles.css',
+  'map.css',
+  'map-cartography.css',
+  'outline.css',
+  'neighbors.css',
+  'atlas-theme.css',
+  'manifest.webmanifest',
+  'sw.js',
+  'icons/app-icon.svg',
+  'icons/app-icon-192.png',
+  'icons/app-icon-512.png',
+  'icons/app-icon-maskable-512.png',
+  'icons/apple-touch-icon.png',
+  '.vite/manifest.json',
+]) {
+  assert.equal(await exists(join(DIST, file)), true, `Vite production artifact contains ${file}.`);
+}
+
+const indexHtml = await readFile(join(DIST, 'index.html'), 'utf8');
+assert.equal(indexHtml.includes('/src/'), false, 'Production HTML contains no source-module URLs.');
+assert.equal(indexHtml.includes('src="/'), false, 'Production HTML does not assume a domain-root script path.');
+assert.equal(indexHtml.includes('href="/'), false, 'Production HTML does not assume a domain-root asset path.');
+for (const file of ['app.js', 'map-viewport.js', 'neighbor-map-runtime.js']) {
+  assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
+}
+for (const file of ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css']) {
+  assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
+}
+
+const manifest = JSON.parse(await readFile(join(DIST, '.vite/manifest.json'), 'utf8'));
+for (const source of ['src/app.ts', 'src/map-viewport.ts', 'src/neighbor-map-runtime.ts']) {
+  assert.ok(manifest[source], `Vite manifest contains browser entry ${source}.`);
+  assert.equal(manifest[source].isEntry, true, `${source} remains a production entry.`);
+}
+assert.equal(manifest['src/app.ts'].file, 'app.js', 'App entry keeps its stable Phase 2 service-worker filename.');
+assert.equal(manifest['src/map-viewport.ts'].file, 'map-viewport.js', 'Map viewport entry keeps its stable Phase 2 service-worker filename.');
+assert.equal(manifest['src/neighbor-map-runtime.ts'].file, 'neighbor-map-runtime.js', 'Neighbour map runtime keeps its stable Phase 2 service-worker filename.');
+
+// Existing plain-Node invariant scripts intentionally keep importing these
+// emitted modules during the build-tool phase. They are verifier compatibility
+// output, not browser entries, and are removed/adapted in the later legacy
+// cleanup phase rather than silently dropping coverage now.
+for (const file of [
+  'data/countries.js',
+  'data/maps/index.js',
+  'domain/achievements.js',
+  'domain/map-game.js',
+  'routing/routes.js',
+  'state/app-store.js',
+  'ui/views/map-quiz.js',
+]) {
+  assert.equal(await exists(join(DIST, file)), true, `Verifier compatibility output contains ${file}.`);
+}
+
+const files = await walk(DIST);
+const relativeFiles = files.map((file) => relative(DIST, file).replaceAll('\\', '/'));
+for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
+  const pattern = new RegExp(`^assets/${continent}-[^/]+\\.js$`);
+  assert.ok(relativeFiles.some((file) => pattern.test(file)), `Vite keeps ${continent} geography in a lazy browser chunk.`);
+}
+
+const appBytes = (await stat(join(DIST, 'app.js'))).size;
+const lazyChunkRows = [];
+for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
+  const file = relativeFiles.find((candidate) => new RegExp(`^assets/${continent}-[^/]+\\.js$`).test(candidate));
+  assert.ok(file);
+  lazyChunkRows.push(`${file} ${(await stat(join(DIST, file))).size} B`);
+}
+
+const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
+const shellMatch = sw.match(/const SHELL = \[([\s\S]*?)\];/);
+assert.ok(shellMatch, 'Service worker still exposes the Phase 2 shell list.');
+const shellPaths = [...shellMatch[1].matchAll(/['"]\.\/([^'"]*)['"]/g)].map((match) => match[1]);
+for (const shellPath of shellPaths) {
+  const target = shellPath === '' ? 'index.html' : shellPath;
+  assert.equal(await exists(join(DIST, target)), true, `Service-worker shell target ${target} exists in the Vite artifact.`);
+}
+
+console.log(`Verified Vite production artifact: ${relativeFiles.length} files; app.js ${appBytes} B.`);
+for (const row of lazyChunkRows) console.log(`  lazy ${row}`);
+console.log('Vite build verification passed.');
