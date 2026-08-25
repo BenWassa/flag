@@ -76,7 +76,7 @@ for (const file of [
   'domain/achievements.js',
   'domain/map-game.js',
   'routing/routes.js',
-  'state/app-store.js',
+  'state/store.js',
   'ui/views/map-quiz.js',
 ]) {
   assert.equal(await exists(join(DIST, file)), true, `Verifier compatibility output contains ${file}.`);
