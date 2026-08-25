@@ -1,7 +1,7 @@
 # Atlas Design System
 
-**Status:** Tactile Atlas production system for v1.0  
-**Mode:** operate  
+**Status:** Tactile Atlas production system for v1.0
+**Mode:** operate
 **Primary surface:** mobile-first geography learning
 
 ## Design thesis
