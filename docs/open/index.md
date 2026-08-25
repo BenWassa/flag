@@ -29,6 +29,15 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
+- [#90 — keep the Flags question layout stable between flags](https://github.com/BenWassa/flag/issues/90).
+  Different flag aspect ratios must not move the multiple-choice touch targets.
+  The responsive implementation and verification scope is
+  [`issue-90-stable-flag-stage.md`](issue-90-stable-flag-stage.md).
+- [#86 — clip continent context layers to the viewport](https://github.com/BenWassa/flag/issues/86).
+  Reduce lazy map payloads in the shared generator without changing canonical
+  country geometry or adjacency. The execution scope is
+  [`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
+
 ### 4. Platform quality and IA
 
 - [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
@@ -43,6 +52,9 @@ This directory mirrors active product/engineering work that benefits from a dura
   The staged child chain is #91 → #92 → #93 → #94 → #95 → #96 → #97 → #98 →
   #99 → #100 → #101, followed by #89 closeout. Do not skip forward or collapse
   unrelated phases into one long-lived branch.
+  Child issues #92–#101 are intentionally scoped as phase sections in the
+  canonical execution plan rather than duplicated into ten competing issue
+  documents.
 
 #72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
 complete and closed. Their closeout records are
@@ -116,13 +128,14 @@ Africa remains the reference baseline. North America and Oceania still appear
 as shell/navigation states, and unsupported curriculum must never count towards
 mastery/completion.
 
-**Continent payload follow-up.** Physical map context (ocean, coastline, lakes)
+**Continent payload follow-up (#86).** Physical map context (ocean, coastline, lakes)
 is now simplified per continent, which cut Europe by 29% and Asia by 21% of
 gzip. Asia still ships the largest lazy chunk at roughly 478 KB gzip, because
 its canvas spans canonical whole-country geometry. Clipping context layers to
-each continent's viewport is the next available reduction and is tracked
-separately; it needs a generator change and a full four-continent regeneration,
-so it was deliberately not bundled into the v0.7.0 integration.
+each continent's viewport is the next available reduction and is tracked in
+[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md); it needs a
+generator change and a full four-continent regeneration, so it was deliberately
+not bundled into the v0.7.0 integration.
 
 ## Working rules
 
