@@ -32,10 +32,17 @@ This directory mirrors active product/engineering work that benefits from a dura
 ### 4. Platform quality and IA
 
 - [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
-  This is a tracking epic for an incremental presentation/build-layer port,
-  with the existing domain, geography, evidence, persistence and typed routing
-  contracts preserved. See
-  [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md).
+  This is the tracking epic for an incremental presentation/build-layer port.
+  The scope-level epic is [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md);
+  the durable architecture decision is
+  [`../architecture/react-vite-migration.md`](../architecture/react-vite-migration.md);
+  the canonical dependency/order plan is
+  [`issue-89-execution-plan.md`](issue-89-execution-plan.md); and implementation
+  evidence is recorded in
+  [`issue-89-implementation-worklog.md`](issue-89-implementation-worklog.md).
+  The staged child chain is #91 → #92 → #93 → #94 → #95 → #96 → #97 → #98 →
+  #99 → #100 → #101, followed by #89 closeout. Do not skip forward or collapse
+  unrelated phases into one long-lived branch.
 
 #72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
 complete and closed. Their closeout records are
@@ -49,9 +56,11 @@ spun off a focused follow-up issue below.
   and [`issue-71-implementation-notes.md`](issue-71-implementation-notes.md).
   **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
-  not re-run browser checks expecting to close it.
+  not re-run browser checks expecting to close it. #89 must not claim this
+  physical evidence unless #71 actually records it.
 - [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
-  No repository plan yet; read the GitHub issue before starting.
+  Keep this separate from #89 so hosting/storage migration does not change the
+  React/Vite compatibility boundary while the platform port is in flight.
 
 #87 (gamification connective-tissue defects: due-state reporting, Play
 feedback parity, Progress evidence coverage) is complete and closed. Its
@@ -117,11 +126,10 @@ so it was deliberately not bundled into the v0.7.0 integration.
 
 ## Working rules
 
-- Before starting new work, check `gh issue list --state open` against this file and `docs/closed/`: any issue already closed on GitHub whose doc still lives in `docs/open/` should be moved to `docs/closed/` (`git mv`) and this index updated to drop/relink it.
-- Read the GitHub Issue fully before implementation.
-- Read `PRODUCT.md`, `DESIGN.md`, and the relevant durable product/architecture docs.
-- `DESIGN.md` and `.impeccable/design.json` define the locked Tactile Atlas production system; focused issues may resolve previously deferred achievement presentation without creating a second visual language.
-- Preserve stable routing, country identity, storage and cartography contracts.
+- Before starting new work, reconcile GitHub issue state against this file and `docs/closed/`.
+- Read the live GitHub Issue fully before implementation.
+- Read `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, and the relevant durable product/architecture docs.
+- Preserve stable routing, country identity, storage, learning and cartography contracts.
 - Use dedicated branches and focused PRs.
-- Run `npm test`, inspect the exact production artifact and confirm CI before merge.
+- Run `npm test` under Node 22, inspect the exact production artifact and confirm CI before merge.
 - Do not claim physical-device/browser testing that was not performed.
