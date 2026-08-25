@@ -51,8 +51,8 @@ Presentation is deliberately restrained:
 
 - keep the region name and useful count;
 - keep ordinary progress information;
-- keep earned domain Mastery visibly purple;
-- add gold completion treatment;
+- keep earned domain Mastery available through explicit accessible wording without requiring a purple star in compact navigation;
+- add a restrained brushed-metal gold edge rather than a flat yellow stripe;
 - do not add a separate region medal, crest, shield or Crown.
 
 Unsupported curriculum never counts as automatically complete.

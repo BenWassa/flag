@@ -110,7 +110,7 @@ A region is complete only when:
 
 Unsupported geography never counts as automatically complete.
 
-The shipped presentation is deliberately restrained: the region row keeps its useful target/country count and progress strip, earned domain Mastery remains visibly purple, and a complete region gains a gold completion treatment. There is no separate region badge, shield or Crown.
+The shipped presentation is deliberately restrained: the region row keeps its useful target/country count and progress strip, earned domain Mastery remains explicitly available to assistive technology without a repeated purple star in compact navigation, and a complete region gains a brushed-metal gold edge. There is no separate region badge, shield or Crown.
 
 ### Complete continent
 

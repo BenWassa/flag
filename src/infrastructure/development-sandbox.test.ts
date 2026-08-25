@@ -10,6 +10,8 @@ import {
 import { createStorageGuard } from './storage-guard.js';
 import { LEARNER_STORAGE_KEYS, developmentSandboxKey } from './persistence-keys.js';
 import { isDevelopmentSandbox, remoteAccountServicesEnabled } from './runtime-environment.js';
+import { hasSuccessfulRetrieval } from '../domain/evidence.js';
+import type { ProgressState } from '../domain/models.js';
 
 const presets: DevelopmentSandboxPreset[] = [
   'clean',
@@ -48,6 +50,18 @@ describe('development sandbox', () => {
 
     expect(Object.keys(exported.state)).toHaveLength(10);
     expect(parseDevelopmentSandboxImport(JSON.stringify(exported))).toEqual(exported);
+  });
+
+  it('seeds visible progress alongside complete region and continent achievements', () => {
+    const completeRegion = createDevelopmentSandboxPreset('complete-region');
+    const completeContinent = createDevelopmentSandboxPreset('complete-continent');
+    const cleared = (bundle: ReturnType<typeof createDevelopmentSandboxPreset>, key: 'flag-atlas:progress:v1') => {
+      const progress = bundle.state[key] as ProgressState;
+      return Object.values(progress.records).filter((record) => hasSuccessfulRetrieval(record)).length;
+    };
+
+    expect(cleared(completeRegion, 'flag-atlas:progress:v1')).toBe(16);
+    expect(cleared(completeContinent, 'flag-atlas:progress:v1')).toBe(54);
   });
 
   it('resets only sandbox learner data', () => {
