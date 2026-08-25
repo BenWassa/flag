@@ -52,7 +52,7 @@ export default defineConfig({
         'map-viewport': resolve(root, 'src/map-viewport.ts'),
         'neighbor-map-runtime': resolve(root, 'src/neighbor-map-runtime.ts'),
         styles: resolve(root, 'src/styles/styles.css'),
-        'map-style': resolve(root, 'src/styles/map.css'),
+        map: resolve(root, 'src/styles/map.css'),
         'map-cartography': resolve(root, 'src/styles/map-cartography.css'),
         outline: resolve(root, 'src/styles/outline.css'),
         neighbors: resolve(root, 'src/styles/neighbors.css'),
