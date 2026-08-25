@@ -1,59 +1,90 @@
 # Issue #104: Map-first continent launcher
 
-**Status:** Deferred — captured, not scheduled  
+**Status:** DEFERRED PRODUCT EXPLORATION — captured, not scheduled  
 **GitHub:** [#104](https://github.com/BenWassa/flag/issues/104)
 
-## Context
+## Current production baseline
 
-The continent launcher (`/{domain}/{continent}`) previously offered **two ways to choose a scope**: tapping a region row (which only *selected* it) and tapping a region label on the continent map (which also only selected it). Play was then a separate button. That two-method, two-step model is retired in favour of one-tap rows — the whole-continent row and each region row start Play directly, and Learn stays a single subordinate whole-continent action below the list.
+Atlas v1 uses a settled one-tap row launcher after the learner chooses a domain and supported continent:
 
-This issue captures the **more ambitious map-first launcher** that was considered and deliberately deferred, so the reasoning is not lost.
+- whole-continent row starts Play for the continent;
+- each region row starts Play for that region;
+- each row keeps its own ordinary blue progress strip;
+- region rows can show purple Mastery and restrained gold completion;
+- one subordinate `Learn {Continent}` action sits below the list;
+- the old launcher map, separate primary Play button and select-region-then-Play state are retired.
 
-## The deferred idea
+React/Vite production ownership is settled. This issue is **not** blocked on, coupled to or part of the #89 migration. Any future #104 implementation would be a deliberate product redesign against the stable v1 launcher.
 
-Replace the row list with a full-bleed, immersive continent map as the single selection surface:
+## Deferred idea
 
-- clean SVG, country borders present but not hyper-realistic outlines;
-- mainland plus major islands only;
-- each region tinted in a calm, low-saturation colour;
-- progress encoded *into the geography itself* — colour saturation, fill density, or similar — instead of a separate progress bar;
-- possibly the country itself becoming the achievement badge.
+Explore replacing the row list with an immersive continent map as the primary scope-selection surface, potentially using canonical country geometry grouped into learner-facing regions.
 
-## Why it is deferred, not rejected
+Earlier sketches considered:
 
-**1. It contradicts a locked product decision.** `docs/product/colour-system.md` explicitly states: *"no continent colour taxonomy; no region colour taxonomy; no hemisphere theming; geography identity comes from the geography itself."* Tinting regions by identity is a direct reversal of that decision. It may be the right reversal, but it must be a deliberate product decision with its own rationale — not a side effect of a launcher redesign.
+- full-bleed continent geography;
+- tappable region shapes;
+- calm region tinting;
+- progress encoded into map fill/saturation/density;
+- stronger use of geography itself as the achievement/progress object.
 
-**2. Encoding progress as saturation is a legibility and accessibility regression.** The same document requires that *"colour must always reinforce another state cue"*. Saturation-as-progress is colour-only. It also collides with the semantic palette: Atlas Blue is action/selection, so a region filling with blue reads as "selected", not "70% cleared". A learner cannot read "11 of 16 cleared" off a fill density.
+Those are exploration inputs, not accepted requirements.
 
-**3. The current launcher "map" was never a real map.** It was a 48×48 continent *icon* silhouette (`CONTINENT_PATHS`) with absolutely-positioned percentage-offset HTML labels on top. A genuinely region-clickable map is a new component, not a restyle.
+## Why it remains deferred
 
-**4. The geometry does exist, so this is feasible later.** `MapRegionAsset` already carries per-country paths, shared boundary paths, coastlines and a per-continent `viewBox`, generated from the pinned Natural Earth pipeline. A region map can be composed by grouping country geometry by region. No new map source is needed — and per `docs/architecture/cartography.md`, none may be created.
+### 1. It conflicts with the locked semantic-colour system
 
-**5. Timing.** #89 (React/Vite migration) still has phases #92–#101 open, including the React map surfaces. Building a new interactive map component mid-migration means building it twice or blocking the migration.
+Current product policy explicitly rejects a continent/region/hemisphere identity palette. Geography identity comes from shape, name, hierarchy and context.
 
-## What shipped instead
+Tinting each region by identity would reverse that rule. That reversal might be defensible, but only through an explicit product/design decision with a clear accessibility rationale.
 
-One-tap row-wise launcher, as a deliberate interim to test the interaction model:
+### 2. Colour-only geography-encoded progress is insufficient
 
-- whole-continent row at the top, carrying the Atlas Blue action emphasis the retired primary Play button owned, plus its own progress strip;
-- one row per region, each with its own progress strip, mastery mark and completion treatment;
-- one tap on any row starts Play for that scope;
-- a single tertiary "Learn {Continent}" below the list;
-- the launcher map, the separate Play button, the select-then-play step and all `select-region`/`select-continent` dispatch removed.
+Atlas requires state to have a non-colour cue. Saturation/fill density alone cannot communicate precise progress or distinguish it safely from action/selection semantics.
 
-Because a row now starts its round directly, Back from a region round returns to the **continent** launcher it was started from, rather than to an intermediate region selection.
+Atlas Blue already means ordinary action/selection and ordinary progress; purple means durable Mastery; gold means scarce completion. A map-first design must preserve those semantic roles or explicitly replace them through a reviewed system-level decision.
 
-## Open questions for when this is picked up
+### 3. A real interactive launcher map is a new product component
 
-- Does the region-colour reversal earn its keep, and what replaces "geography identity comes from the geography itself"?
-- What is the non-colour progress cue that accompanies any saturation/density encoding?
-- Does the whole-continent Play action survive on a map-first launcher, and where does it live?
-- Where does Learn live when there is no list?
-- How does an honest shell continent (North America, Oceania) render in a map-first launcher without implying coverage it lacks?
+The retired launcher decoration was not the canonical gameplay map. A production map-first launcher must use the existing generated Natural Earth topology/`MapRegionAsset` infrastructure rather than inventing positioned labels, handwritten region geometry or another topology source.
+
+### 4. The current row launcher is coherent and shipped
+
+The one-tap launcher removed the earlier two-method/two-step scope-selection problem and now carries progress, Mastery and completion without a separate selection state.
+
+Replacing it should therefore solve a demonstrated product problem or create a materially better geography-learning experience — not happen merely because a map can be built.
 
 ## Preservation boundaries
 
-- Natural Earth 1:10m remains the sole production source; no second map source or hand-authored geometry.
-- Canonical country ID remains ISO3.
-- Purple stays mastery, gold stays scarce prestige, blue stays action, green/red stay answer feedback.
-- Routing stays typed and durable; Back/Forward and activity-refresh fallback must keep working.
+Any future implementation must preserve unless a separate product decision explicitly changes them:
+
+- Natural Earth 1:10m as the sole production topology source;
+- canonical ISO3 country identity;
+- typed durable routing and native Back/Forward behaviour;
+- activity-refresh fallback;
+- Atlas Blue = ordinary action/progress;
+- green/red = correctness;
+- purple = durable region × domain Mastery;
+- gold = scarce completion/prestige;
+- no colour-only state;
+- honest unsupported continent shells;
+- existing learning evidence, scoring, storage and achievement qualification semantics;
+- mobile-first usability and no horizontal primary-selection dependency.
+
+## Questions that must be answered before scheduling
+
+- What user problem does a map-first launcher solve better than the current one-tap rows?
+- Is region identity tinting still required? If so, is reversing the no-region-colour rule justified?
+- What non-colour progress cue accompanies any geographic fill treatment?
+- How are purple Mastery and gold completion represented without confusing geographic fill with selection?
+- Where does whole-continent Play live?
+- Where does Learn live?
+- How do unavailable North America/Oceania states remain honest without looking like zero progress?
+- What is the keyboard/focus model for region selection?
+- How does the composition work at narrow portrait and short-landscape sizes?
+
+## Scheduling rule
+
+Keep #104 open as **DEFERRED PRODUCT EXPLORATION**. Do not implement it opportunistically during unrelated navigation, cartography, React, colour or achievement work.
+
+Before scheduling, convert the exploration into a focused product/design decision with an explicit problem statement, accessibility model and preservation/acceptance criteria.

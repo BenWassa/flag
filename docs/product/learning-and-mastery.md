@@ -1,277 +1,174 @@
-# Atlas Learning Evidence and Mastery
+# Learning Evidence and Mastery
 
-## Purpose
+**Status:** Atlas v1.0 learning/achievement contract
 
-Atlas separates **live country-level learning evidence** from **earned mastery/completion**.
+Atlas deliberately separates **live country learning evidence** from **persistent learner-facing achievement**.
 
-This distinction keeps the learning engine rich enough to support later scheduler refinement without turning every country into a prestige achievement.
+That separation is the most important rule in this document:
 
-Issue #29 owns live evidence. Issue #34 owns persistent earned mastery.
+> Country records decide what is known, weak, contradictory or due. Region × domain achievements decide what has been earned.
 
-## Country-level live evidence
+Do not use country scheduler state as a prestige label.
 
-Country is the atomic evidence unit inside each learning domain.
+## Shared evidence vocabulary
 
-Every domain retains its native counters and outcome history, while a narrow shared evidence summary normalises the parts that cross domain boundaries:
+The cross-domain evidence layer normalises four activity/outcome concepts while preserving each domain's native counters and task mechanics.
 
-- passive exposure;
-- assisted/corrective retrieval;
-- clean Learn retrieval;
-- clean Play assessment;
-- later review retrieval;
-- legacy scored retrieval whose historical Learn/Play mode is unknowable;
-- contradictory evidence;
-- retention success;
-- timestamps for the latest evidence/scored evidence/strong-evidence state.
+Activities:
 
-The shared summary is deliberately not a replacement for domain-native records. Locations still know about misses and reveals; Neighbours still know about complete sets and wrong guesses; Flags/Outlines still retain recognition/confusion history.
+- `learn`;
+- `play` (stable internal `test` mode maps here);
+- `review`.
 
-## Compatibility scheduler state
+Outcomes:
 
-The current scheduler keeps the stable internal status values:
+- `passive-exposure`;
+- `assisted-retrieval`;
+- `clean-retrieval`;
+- `contradictory`.
 
-- `unseen`
-- `learning`
-- `mastered`
+The four domain ledgers remain independent.
 
-`mastered` is an internal compatibility value meaning the current evidence qualifies as strong. Learner-facing country UI calls this **Strong evidence**.
+## Current compatibility strength model
 
-The compatibility strength-credit rule is currently:
+Internal records retain `unseen`, `learning` and `mastered` compatibility state. Learner-facing product language should treat this as learning evidence; the presentation concept is **Strong evidence**, not an individual-country Mastered achievement.
 
-- clean Learn retrieval: `+1` credit per session;
-- clean Play assessment before any lapse: `+2` credits per session;
-- initial strong-evidence threshold: `3` credits;
-- after contradictory evidence has lapsed a strong record: recovery threshold `2` credits;
-- post-lapse clean Play contributes only `+1`, so one assessment cannot erase contradictory evidence;
-- repeated answers in the same session cannot farm additional strength credit.
+Current weighting in `src/domain/evidence.ts`:
 
-These values are intentionally hidden behind `src/domain/evidence.ts`. They are scheduler implementation details, not product copy.
+- initial strong-evidence goal: 3 credits;
+- clean Learn/Review retrieval: 1 credit;
+- clean Play retrieval before any lapse: 2 credits;
+- at most one strength-credit event per country per session;
+- passive exposure: 0 strength credit;
+- assisted retrieval: 0 clean strength credit;
+- contradictory evidence resets the strength streak;
+- if previously strong, contradictory evidence increments lapse count and returns the record to Learning;
+- after a lapse, recovery goal is 2 credits and Play contributes only 1 credit so one assessment cannot erase contradictory evidence;
+- a clean retrieval while already strong records retention evidence without creating another prestige object.
 
-## Shared evidence events
+This algorithm is replaceable. Do not expose its raw `x/y` mechanics as a durable product promise.
 
-`src/domain/evidence.ts` defines the normalised event vocabulary:
+## Domain evidence mapping
 
-- `passive-exposure`
-- `assisted-retrieval`
-- `clean-retrieval`
-- `contradictory`
+### Flags
 
-with activities:
+Play/review recognition answers map clean correctness to clean retrieval and wrong recognition to contradictory evidence.
 
-- `learn`
-- `play`
-- `review`
+**Flags Learn gallery browsing/reveal creates no evidence at all.** The React study surface only changes ephemeral reveal state; it does not call the progress reducer.
 
-The event reducer updates the shared evidence summary and the compatibility strength state. Domain engines update their richer native counters around that reducer.
+### Locations
 
-### Passive exposure
+- first-try correct → clean retrieval;
+- completion after misses → assisted retrieval;
+- reveal after the retry budget → passive exposure for the resolved target;
+- wrong selections remain contradictory evidence in the domain-native history.
 
-Passive browse/reveal is retained as exposure history but creates no scored retrieval evidence and no strength credit.
+### Outlines
 
-A country may therefore have passive exposure while remaining internally `unseen`, because `unseen` now means **no scored evidence yet**, not literally never displayed.
+- clean recognition → clean retrieval;
+- wrong recognition → contradictory evidence.
 
-This is the contract Issue #30 can use for the future Flags browse/reveal gallery.
+Learn provides immediate feedback; Play remains scored retrieval.
 
-### Assisted retrieval
+### Neighbours
 
-Assisted/corrective retrieval creates learning evidence and moves an `unseen` record into `learning`, but it does not create clean strength credit.
+- complete neighbour set with no wrong guesses → clean retrieval;
+- completed set after wrong guesses → assisted retrieval;
+- exhausted/revealed resolution → passive exposure;
+- wrong guesses remain contradictory evidence.
 
-### Clean retrieval
+A verified empty land-neighbour set is a legitimate learnable answer where the target is supported.
 
-Clean retrieval is the qualifying evidence path. Learn and Play can weight it differently; Play is diagnostic assessment and can calibrate already-known material faster where there is no contradictory history.
+## Ordinary progress
 
-### Contradictory evidence
+The ordinary launcher/Home progress strip uses successful retrieval, not strong/mastered scheduler status. `hasSuccessfulRetrieval(...)` returns true after any clean Learn, Play, Review or migrated legacy scored retrieval.
 
-A wrong scored retrieval is retained rather than overwritten by later success.
+This keeps routine progress understandable without turning every country into a prestige unit.
 
-It:
+## Due for review
 
-- increments contradiction/native confusion history;
-- resets current strength credit;
-- moves a strong record back to `learning`;
-- increments lapse count when the contradiction occurs against a currently strong record.
+Due-state is live evidence, not an achievement state. Flags and Outlines currently have the scheduler fields used by the due selector. Locations and Neighbours do not currently expose equivalent `nextReviewAt` scheduling semantics.
 
-Historical strong evidence remains in the stored evidence history even though the current selector no longer qualifies the country until recovery.
+An earned region achievement may remain earned while one of its countries later becomes due or lapses. That is intentional under the current product model.
 
-### Review / retention
+## Learner-facing region × domain Mastery
 
-A later clean retrieval against an already-strong record is retained separately as review/retention evidence. Flags/Outlines also continue to maintain their current review scheduling timestamps.
+Country evidence does **not** currently qualify region × domain Mastery.
 
-## Domain mappings
+The v1 earned-achievement path is driven by persisted region-scoped Play perfect-run streaks in `src/domain/achievements.ts`, not by aggregating `status === 'mastered'` records or by `qualifiesForRegionMastery(record)`.
 
-The four domains intentionally map native outcomes differently.
+`qualifiesForRegionMastery(record)` remains in `src/domain/evidence.ts` as a compatibility-named country-strength selector, but it is **not the current earned-achievement qualification seam**. New achievement code must not infer current Mastery semantics from that historical function name.
 
-| Domain | Native outcome | Shared evidence |
-| --- | --- | --- |
-| Flags | future browse/reveal | passive exposure |
-| Flags | clean recognition | clean retrieval |
-| Flags | incorrect recognition | contradictory |
-| Locations | first try | clean retrieval |
-| Locations | correct after one/two misses | assisted retrieval |
-| Locations | reveal after misses | passive exposure, with the preceding misses retained as contradictory evidence |
-| Locations | Play incorrect | contradictory |
-| Outlines | clean first-try recognition | clean retrieval |
-| Outlines | incorrect recognition | contradictory |
-| Neighbours | clean complete neighbour set | clean retrieval |
-| Neighbours | complete set after wrong guesses | assisted retrieval, with wrong guesses retained as contradictory evidence |
-| Neighbours | exhausted/revealed set | passive exposure, with wrong guesses retained as contradictory evidence |
+### Current implementation rule
 
-A partial correct Neighbours guess is still retained in the native live session. Shared country-level qualification is decided when the set resolves, because set completeness is the meaningful domain outcome.
+For an unearned region × domain:
 
-## Learn and Play
+1. complete a Play result whose scope kind is `region`;
+2. if the result has no misses, increment that region/domain perfect-run streak;
+3. if it has a miss, reset that streak to zero;
+4. on two consecutive perfect region-scoped Play results, persist the Mastery achievement;
+5. once earned, later evidence or round results do not revoke it.
 
-### Learn
+Learn, Review, continent Play and World Play do not feed this streak.
 
-Learn is familiarisation and corrective practice.
+### Complete-region coverage defect (#108)
 
-It can include passive exposure, assisted retrieval and clean retrieval. Passive exposure alone does not create scored evidence.
+The intended product requirement is that the two qualifying results cover the **entire current supported region target set**.
 
-For Flags and Outlines, a clean correct answer now keeps the learner's focus/thumb in the answer surface: the correct answer becomes the continue control instead of requiring a detached Next button. Wrong answers retain explicit corrective feedback before continuing.
+That is not fully enforced in v1.0:
 
-Flags' eventual browse/reveal gallery remains Issue #30 and is not implemented by #29.
+- Locations normal region Play uses all countries in the loaded selected-scope asset;
+- Flags normal region Play defaults to 10 questions;
+- Outlines normal region Play explicitly defaults to 10 questions;
+- Neighbours normal region Play explicitly defaults to 10 targets;
+- the achievement recorder currently checks region scope + perfect outcome, not target-set completeness.
 
-### Play
+Therefore regions with more than 10 eligible targets can currently earn Flags, Outlines or Neighbours Mastery from two perfect 10-target region Play results. Issue **#108** owns the correction.
 
-Play is scored retrieval and assessment.
+Documentation must preserve both truths: the live v1 behaviour above, and the locked desired full-region qualification that #108 will restore.
 
-A clean Play result is stronger evidence than an ordinary clean Learn result before any lapse, allowing already-known material to calibrate faster. Contradictory evidence remains authoritative enough that one later clean Play result cannot immediately erase a lapse.
+## Perfect round versus Mastery
 
-Stable internal route/activity identifiers may continue to use `test`; learner-facing language is **Play**.
+These are intentionally different concepts.
 
-## Country is not a prestige tier
+**Perfect round**:
 
-Do not tell the learner they have “mastered Ghana” merely because one domain's current evidence is strong.
+- one Play result;
+- no misses under the domain's native scoring rule;
+- shown transiently on Results;
+- not persisted as prestige;
+- can occur at non-region scopes.
 
-Country evidence is operational. Routine country UI should use concepts such as:
+**Region × domain Mastery**:
 
-- Unseen
-- Learning
-- Strong evidence
-- Due for review
+- persistent achievement;
+- region scope only;
+- current engine requires two consecutive perfect region-scoped Play results;
+- intended to represent two consecutive perfect complete-region results once #108 is fixed;
+- shown in purple on region rows.
 
-Do not expose scheduler punch cards such as `1/3`, `2/3` or the post-lapse `0/2` threshold in routine UI.
+Never use the phrases interchangeably.
 
-## Critical contract for earned regional Mastery
+## Higher-tier completion
 
-Issue #34 must not inspect raw storage fields or hard-code today's `record.mastered`/`status` representation.
+A complete region requires all four domain Masteries and genuine four-domain curriculum. A complete continent requires all required learner-facing regions to have complete curriculum and be complete. World completion requires all six continents to have complete curriculum and be complete.
 
-The evidence layer exposes:
+Unsupported/empty curriculum never satisfies a requirement by absence.
 
-```ts
-qualifiesForRegionMastery(record)
-hasSuccessfulRetrieval(record)
-```
-
-`qualifiesForRegionMastery` answers a UI-independent question about one country's accumulated evidence:
-
-> Does this country's current evidence qualify as strong (the compatibility scheduler's multi-exposure threshold)?
-
-It continues to drive per-country scheduling/review (`due-for-review`) and the `strong` bucket of `countryEvidenceState`. It is **not** the region × domain mastery gate (see below).
-
-`hasSuccessfulRetrieval` answers a cheaper, presentation-only question:
-
-> Has this country ever been retrieved correctly at least once?
-
-This is what the ordinary progress bar shows as **cleared** (a single blue fill, no brown/segmented "learning" state, no visible strong/learning/unseen counts). One correct answer is enough to count as cleared; the country's richer evidence state keeps accumulating underneath for scheduling purposes only.
-
-## Region × domain mastery
-
-Learner-facing **Mastery** means the learner has demonstrated one complete domain across an entire region.
-
-Examples:
-
-- West Africa — Flags mastered;
-- West Africa — Outlines mastered;
-- West Africa — Locations mastered;
-- West Africa — Neighbours mastered.
-
-**Mastery is not gated on per-country evidence.** It is earned by **two consecutive 100%-correct full-region Play rounds** in that domain — a single perfect round is not enough, and any non-perfect full-region Play round resets that region × domain's streak to zero. This is deliberately a session-level signal rather than an aggregation of `qualifiesForRegionMastery` across every country in the region: a learner can get one perfect Play round largely through luck/short-term recall, but two in a row is a meaningfully stronger claim, and it gives the achievement a legible, game-like trigger ("West Africa — 17/17. Perfect.") rather than a hidden accumulation of scheduler credit.
-
-`src/domain/achievements.ts` implements this as:
-
-```ts
-recordRegionDomainPlayResult(streakState, regionId, domain, wasPerfect)
-createRegionDomainPerfectRunQualification(streakState)
-```
-
-`recordRegionDomainPlayResult` is called once per finished full-region-scope Play round (never for Learn, and never for a continent/world/custom-scope round) from `src/state/store.ts`'s four session-finish points. The resulting `PerfectRunStreakState` is persisted independently of `EarnedAchievementState` under `flag-atlas:region-domain-perfect-run-streaks:v1` (`src/infrastructure/achievement-storage.ts`), following the same versioned-migration pattern as earned achievements. `awardEligibleAchievements` (below) keeps its existing region-domain → complete-region → continent-crest → world-crown cascade; only the region × domain leaf's qualification source changed.
-
-Per-country evidence (`qualifiesForRegionMastery`) is still collected and still useful — it drives scheduling, review, lapses, and the ordinary "cleared" progress display — it simply no longer gates this achievement.
-
-## Earned state vs live state
-
-Once earned, region/domain mastery remains earned in the current product model.
-
-The live scheduler may later decide that individual countries need review or have lapsed without silently revoking the earned achievement.
-
-This gives Atlas two truths at once:
-
-- **historical achievement:** the learner has previously demonstrated the complete competency;
-- **current learning evidence:** some parts may now deserve review.
-
-A future product decision may introduce explicit revalidation/decay for earned achievements, but the current achievement model does not.
-
-## Aggregation
-
-The achievement hierarchy is:
-
-1. country evidence — live, non-prestige;
-2. region × domain — Mastery;
-3. all required region domains — complete region;
-4. all required regions/domains — complete continent / crest;
-5. complete world — Crown.
-
-Unsupported curriculum must never count as automatically complete.
-
-Africa is currently the first continent capable of reaching the full four-domain model. Region × domain mastery and region completion now have a first learner-facing surface (a purple mark on the mastered region row, a restrained gold outline on a complete region row) attached to the existing region/continent launcher rows; exact continent-crest and world-Crown artwork remains open under #34.
+See `../architecture/earned-achievements.md` for persistence and aggregation details.
 
 ## Persistence and migration
 
-Region × domain mastery's perfect-run streaks are a separate persisted concern from earned achievements, versioned and migrated the same way under `flag-atlas:region-domain-perfect-run-streaks:v1` (`src/infrastructure/achievement-storage.ts`). See "Region × domain mastery" above.
+The four learning ledgers retain their independent stable LocalStorage namespaces and current versioned payloads. Evidence migrations preserve known historical information without inventing whether a legacy retrieval was Learn or Play when that cannot be reconstructed.
 
-Issue #29 changes all four persisted country ledgers to payload schema `version: 2` while deliberately retaining the existing storage-key namespaces:
+Earned achievements and region-perfect-run streaks persist separately from country evidence.
 
-- `flag-atlas:progress:v1`
-- `flag-atlas:outline-progress:v1`
-- `flag-atlas:location-progress:v1`
-- `flag-atlas:neighbor-progress:v1`
+Current product semantics are monotonic for earned achievement: learning evidence can change; historical earned Mastery/completion does not automatically disappear.
 
-The `:v1` suffix is therefore a stable namespace identifier, not the payload schema version.
+## Reset boundary
 
-Loaders accept old payload `version: 1` and new payload `version: 2`; every successful load returns the v2 in-memory shape and the next save persists v2.
+Infrastructure exposes reset helpers for the separate storage namespaces, but the current React UI exposes no learner-facing coordinated full reset.
 
-Migration rules are deterministic and conservative:
+A future reset feature must treat learning ledgers, earned achievements and perfect-run streaks deliberately; silently clearing only one layer would create contradictory product state.
 
-- existing `mastered` records remain strong/qualifying;
-- existing lapse, confusion, correct/incorrect, reveal and completion counts are preserved;
-- old clean scored retrievals are stored as `legacyScoredRetrievals` when their historical Learn/Play mode cannot be known;
-- migration does not fabricate old Play evidence;
-- domain ledgers and attempt namespaces remain independent.
-
-## Verification
-
-`scripts/verify-learning-evidence.mjs` covers:
-
-- passive exposure creates no scored evidence;
-- assisted retrieval differs from clean retrieval;
-- clean Play is stronger before lapse;
-- already-known material can calibrate faster through clean assessment;
-- lapse/contradictory evidence is retained;
-- one post-lapse Play cannot erase a lapse;
-- review/retention evidence is retained;
-- Locations and Neighbours preserve their native outcome semantics;
-- v1 records migrate without loss or invented Learn/Play history;
-- domain ledgers remain independent;
-- `qualifiesForRegionMastery` is deterministic;
-- routine UI does not expose country Mastered language or scheduler x/y punch cards;
-- clean Flags Learn keeps continuation in the answer surface.
-
-`npm test` runs `npm run check`, the production build and the complete verification suite on Node 22 CI.
-
-## Related issues
-
-- #29 — live evidence model and Learn/Play weighting;
-- #34 — persistent earned mastery/completion;
-- #35 — cross-domain competency on the region card;
-- #30 — Flags-specific Learn gallery;
-- #42 — separate Progress redesign; #29 changes only the semantic copy required by this evidence contract.
+No reset feature is specified or implemented by this document.

@@ -1,119 +1,154 @@
-# Earned achievement architecture
+# Earned Achievements Architecture
 
-## Purpose
+**Status:** current Atlas v1.0 achievement architecture
 
-Atlas keeps **live country evidence** and **earned achievement state** separate.
+## Boundary
 
-- Country evidence belongs to each learning domain and may strengthen, lapse or be revalidated.
-- Earned achievements begin at region × domain and are historical milestones. Once earned, they remain earned until the learner explicitly resets progress.
+Earned achievements are a persistence layer **above** live country learning evidence.
 
-Region × domain mastery is **not** gated on per-country evidence at all (see "Qualification seam" below) — country evidence stays entirely a scheduling/review concern, plus the presentation-only "cleared" (blue progress bar) signal.
+Country ledgers may strengthen, lapse or become due. Earned region/domain Mastery and higher completion state are separate, monotonic product achievements under the current model.
 
-## Qualification seam
+The current achievement qualification path is based on **region-scoped Play perfect-run streaks**, not aggregation of country scheduler status.
 
-`src/domain/achievements.ts` depends only on:
+## Persisted state
 
-```ts
-type RegionDomainPerfectRunQualification = (
-  regionId: string,
-  domain: LearningDomain,
-) => boolean;
-```
+`EarnedAchievementState` persists:
 
-This is backed by a session-level **perfect-run streak**, not per-country evidence:
+- `regionDomainMasteries`;
+- `completeRegions`;
+- `completeContinents`;
+- `worldCrown`.
 
-```ts
-interface PerfectRunStreakState {
-  version: 1;
-  streaks: Partial<Record<RegionDomainMasteryKey, number>>;
-}
+`PerfectRunStreakState` separately persists the in-progress perfect-run count for each region × domain.
 
-recordRegionDomainPlayResult(streakState, regionId, domain, wasPerfect): PerfectRunStreakState
-createRegionDomainPerfectRunQualification(streakState): RegionDomainPerfectRunQualification
-```
+Stable namespaces:
 
-`recordRegionDomainPlayResult` increments a region × domain's streak on a 100%-correct full-region Play round and resets it to zero on anything else; `PERFECT_RUN_STREAK_GOAL` (currently `2`) is the streak a region × domain must reach before `createRegionDomainPerfectRunQualification`'s predicate returns true. `AppStore` calls `recordRegionDomainPlayResult` from its four session-finish points (`advance`, `advanceMap`, `advanceOutline`, `advanceNeighbor` in `src/state/store.ts`) whenever `session.scope.kind === 'region'` and `session.mode === 'test'` — Learn rounds and continent/world/custom-scope Play rounds never touch the streak.
+- `flag-atlas:earned-achievements:v1`;
+- `flag-atlas:region-domain-perfect-run-streaks:v1`.
 
-This deliberately replaced an earlier, pre-#56-removal design where the same predicate shape asked whether every country in a region individually qualified via `qualifiesForRegionMastery` (issue #29's scheduler threshold). `src/state/achievement-evidence-adapter.ts`, which adapted the four ledgers to that per-country predicate, has been deleted — it has no remaining purpose now that qualification is session-level. Per-country evidence (`qualifiesForRegionMastery`) is unaffected by this change and keeps doing exactly what #29 specified: scheduling, review and lapse tracking, plus feeding the separate `hasSuccessfulRetrieval()` "cleared" signal used by the ordinary progress bar.
+Persistence sanitises known region/domain keys and known continent IDs. Unknown schema versions start empty rather than fabricating achievements from unrelated country records.
 
-## Persistent state
+## Region × domain qualification
 
-Earned state uses the independent key:
+The canonical engine constant is currently two perfect runs.
 
-`flag-atlas:earned-achievements:v1`
+For a completed **region-scoped Play** result:
 
-Schema v1 persists only the milestone bits needed for the non-revocation contract:
+- perfect → increment the region/domain streak;
+- non-perfect → reset the unearned streak to zero;
+- streak ≥ 2 → that region × domain qualifies;
+- once the achievement is already earned, later evidence/round results do not revoke it.
 
-- earned region × domain mastery keys;
-- complete-region states;
-- complete-continent states;
-- World Crown state.
+Learn, Review, continent Play and World Play do not feed this streak.
 
-Country records, attempts, streaks, scheduler metadata and presentation data are not copied into achievement storage.
+### Known v1 qualification-integrity bug
 
-`migrateAchievementState()` is the versioned load boundary. Missing, malformed or unknown-version state defaults deterministically to an empty v1 state. Valid v1 identifiers are sanitised and deduplicated.
+The achievement recorder currently trusts region scope and a perfect result; it does not verify that the result's target set equals the complete supported region target set.
 
-In-progress perfect-run streaks are a **separate** persisted concern, under their own independent key:
+That matters because current launch behaviour differs by domain:
 
-`flag-atlas:region-domain-perfect-run-streaks:v1`
+- Locations region Play is full-scope;
+- Flags region Play defaults to 10 questions;
+- Outlines region Play defaults to 10 questions;
+- Neighbours region Play defaults to 10 targets.
 
-`migratePerfectRunStreakState()` follows the same versioned-defaults-safely pattern, additionally clamping any stored streak count to a sane non-negative integer range so corrupted storage cannot fabricate an already-earned mastery on the next award pass. Once a region × domain is earned, its streak entry no longer has any effect (the earned bit in `EarnedAchievementState` is what's checked going forward, per the monotonic/idempotent award pass below).
+Accordingly, regions with more than 10 eligible targets can currently earn Flags/Outlines/Neighbours Mastery from two perfect sampled region rounds. Issue **#108** owns the correction so the persistent achievement again requires two consecutive perfect **complete-region** Play results.
 
-## Awarding model
+Do not hide this defect in architecture documentation or work around it in UI presentation.
 
-`awardEligibleAchievements()` is pure, monotonic and idempotent.
+## Country evidence is not the achievement seam
 
-1. For each canonical region × domain, ask the perfect-run-streak qualification predicate whether that region × domain has reached the streak goal.
-2. Add a previously unearned mastery when it qualifies.
-3. Add complete-region prestige only when the region has genuine four-domain curriculum coverage and all four region-domain masteries have been earned.
-4. Add continent completion only when every canonical region in that continent has complete four-domain curriculum and is complete.
-5. Add the World Crown only when every continent has complete curriculum and has been completed.
+`src/domain/evidence.ts` still exports `qualifiesForRegionMastery(record)`, a historical compatibility name for the per-country strong-evidence selector. The current `src/domain/achievements.ts` award path does **not** consume that selector.
 
-Existing earned bits are never re-evaluated against a later streak state, so losing a streak (or the countries within it later lapsing under the scheduler) cannot revoke historical regional mastery.
+New achievement integration must use the canonical perfect-run/achievement state rather than reintroducing direct country-status aggregation.
 
-## Unsupported curriculum guard
+## Complete region
 
-Scope membership and support come from the existing geography/support system:
+A region is eligible for complete-region achievement only if `scopeHasCompleteDomainCoverage(...)` is true: every one of the four learning domains has real, non-empty supported curriculum for that learner-facing region.
 
-- `scopeSupportsDomain()`;
-- `supportedDomainsForScope()`;
-- `countryIdsForSupportedScope()`;
-- `scopeHasCompleteDomainCoverage()`.
+The region is complete when all four corresponding region × domain Mastery achievements are earned.
 
-There is no achievement-specific geography taxonomy.
+The requirement is the fixed product set:
 
-A domain can earn region mastery when that region/domain curriculum is supported. Higher completion tiers make a stronger claim: **all four learning domains must genuinely exist for the scope**. Therefore a Flags-only region outside Africa can earn Flags mastery but cannot become a complete region.
+- Flags;
+- Locations;
+- Outlines;
+- Neighbours.
 
-Africa is currently the only continent that can satisfy the complete four-domain guard. Other continents cannot earn continent completion today, and `worldHasCompleteCurriculum()` is false, so the World Crown is currently unobtainable.
+It is not “all domains that happen to be supported”. Missing curriculum blocks completion.
 
-Neighbours continues to use its canonical supported target set, including the existing coverage exclusions for targets whose full adjacency cannot yet be represented.
+## Complete continent
 
-## Application integration
+A continent is eligible only if it has at least one learner-facing region and **every required learner-facing region** has complete four-domain curriculum.
 
-`AppStore` owns the in-memory earned state and the in-memory streak state. It:
+The continent becomes complete when every required learner-facing region is complete.
 
-- loads and sanitises both achievement storage and streak storage after loading the four independent evidence ledgers;
-- performs a backfill award pass for existing learners;
-- records a full-region Play round's outcome against its streak, then re-runs the award pass, from each of the four session-finish points;
-- persists the streak state whenever a full-region Play round finishes, and persists achievement state only when new milestones are earned;
-- exposes the earned state plus pure region, continent and world read models (`getRegionAchievementReadModel`, `getContinentAchievementReadModel`, `getWorldAchievementReadModel` in `src/domain/achievements.ts`).
+Asia uses the learner-facing scope set from `src/data/learning-scopes.ts`; the compatibility `west-asia` taxonomy scope remains available for migration/canonical purposes but is not a new learner-facing completion requirement where the newer Middle East/Caucasus learning scopes supersede it.
 
-These read models now have a first UI surface: `src/ui/views/scope.ts`, `map-home.ts`, `outline-home.ts` and `neighbor-home.ts` thread the achievement state into their region rows (a purple mark via `isRegionDomainMasteryEarned` for that launcher's domain, a gold outline via `isRegionComplete`), and `src/ui/views/domain.ts` threads it into continent rows (a gold outline via `getContinentAchievementReadModel(...).crestEarned`). This is deliberately attached to the existing region/continent list rows rather than a revived dedicated Progress screen — no such screen exists. Exact continent-crest and world-Crown artwork remains open under #34's original art scope.
+Current complete four-domain geography exists for Africa, South America, Europe and Asia. North America and Oceania do not yet satisfy the curriculum gate.
 
-The four domain ledgers remain independent and retain their existing storage namespaces.
+## World completion
+
+World completion requires:
+
+1. all six continents to have complete curriculum; and
+2. all six continent-completion achievements to be earned.
+
+The `worldCrown` state therefore cannot currently be earned because North America and Oceania are incomplete in Locations/Outlines/Neighbours.
+
+There is no learner-facing React World Crown renderer in v1. The state and read model exist; presentation remains reserved for genuine future world completion.
+
+## Awarding properties
+
+`awardEligibleAchievements(...)` is designed to be:
+
+- monotonic — earned bits are retained;
+- idempotent — re-evaluation does not duplicate awards;
+- support-aware — empty/unsupported curriculum cannot fabricate completion;
+- hierarchy-aware — higher tiers consume persisted lower-tier achievements rather than UI state.
+
+`NewlyEarnedAchievement[]` is returned by the award pass, but current application callers do not surface a dedicated milestone event queue/ceremony. That is optional future product work, not a missing persistence rule.
+
+## React presentation integration
+
+Production presentation is React-owned.
+
+Current learner-facing achievement surfaces are:
+
+- region launcher rows: purple Mastery mark/label;
+- complete region rows: restrained gold completion treatment;
+- domain continent indexes: completed continent row uses the dedicated continent trophy/crest artwork in place of the normal silhouette.
+
+There is no dedicated Progress screen, no separate region badge/crown, no full-screen continent trophy ceremony and no World Crown surface in current v1 production.
+
+Legacy `src/ui/views/*` renderer modules are verifier compatibility fixtures after the React/Vite migration; they are not production achievement surfaces.
+
+## Trophy assets
+
+`src/react/assets/continent-trophies/` contains dedicated artwork for Africa, Asia, Europe, North America, Oceania and South America. `ContinentTrophy` resolves those assets, and completed `ContinentRow` presentation renders the trophy on the domain continent index.
+
+Asset existence and learner-facing rendering are therefore both shipped for completed continents. This should not be confused with a separate ceremony/splash, which does not ship.
 
 ## Reset semantics
 
-There is no learner-facing reset action. **Reset all progress** lived only on the Progress screen; when that screen was retired with no replacement UI, its store path (`AppStore.resetProgress()` and the sibling per-domain reset methods) and the infrastructure `reset*ProgressStorage()` functions were removed as dead code. `resetAchievementStorage()` and the sibling `resetPerfectRunStreakStorage()` remain as tested infrastructure primitives (clearing `flag-atlas:earned-achievements:v1` and `flag-atlas:region-domain-perfect-run-streaks:v1` respectively), but nothing in the shipped app currently calls either.
+Storage infrastructure exposes explicit helpers to remove earned-achievement and perfect-run-streak namespaces. These establish the semantics required by a hypothetical full learner reset.
 
-If Atlas later introduces a domain-only reset, it must not silently reuse this global reset path without a product decision about earned milestones.
+The current React product does **not** expose a learner-facing full reset action. The old Progress-screen reset surface was retired with that screen.
 
-## Presentation contract
+If a future reset is added, it must coordinate all four learning ledgers plus earned achievements and in-progress perfect-run streaks so the product cannot enter contradictory mixed-reset state.
 
-Achievement logic does not contain colours, SVG paths or artwork decisions. The domain exposes:
+## Verification ownership
 
-- `getRegionAchievementReadModel()`;
-- `getContinentAchievementReadModel()`;
-- `getWorldAchievementReadModel()`.
+Achievement verification should cover:
 
-These provide the stable state needed for the locked semantics in `DESIGN.md`: purple region-domain Mastery, restrained gold complete-region treatment, continent crest state using the existing generated continent silhouette infrastructure, and the Crown for genuine world completion only. The region/continent row surface described above consumes exactly these read models; it does not duplicate the underlying eligibility logic.
+- two-perfect streak threshold;
+- reset after a non-perfect qualifying region Play;
+- non-revocation after award;
+- fixed four-domain region completion;
+- continent aggregation across learner-facing regions;
+- current Africa/South America/Europe/Asia curriculum eligibility;
+- North America/Oceania/world incompleteness;
+- persistence sanitisation and idempotency;
+- #108 full-target-set qualification once implemented.
+
+Country evidence weighting/migration remains owned by the learning-evidence tests. The achievement suite must not silently couple itself back to raw country scheduler fields.

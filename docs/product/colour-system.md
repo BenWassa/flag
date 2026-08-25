@@ -1,121 +1,80 @@
 # Atlas Colour System
 
-## Decision
+**Status:** locked v1 semantic palette
 
-Atlas uses one global semantic colour system derived from the aggregate visual vocabulary of the 195 national flags.
+Atlas uses one restrained semantic colour system across all learning domains. Geography does not receive an identity palette by continent, region or hemisphere.
 
-Do not create continent, region or hemisphere theme colours from the study.
+## Locked semantic roles
 
-## Quantitative findings
-
-Approximate equal-country-weighted share of total flag area:
-
-| Colour family | Share |
-| --- | ---: |
-| Red | 30.8% |
-| Blue + cyan | 20.5% |
-| White / near-white | 16.2% |
-| Green | 15.3% |
-| Yellow / gold | 9.8% |
-| Grey | 3.3% |
-| Black / near-black | 2.3% |
-| Orange | 1.8% |
-| Purple | 0.1% |
-
-The important result is the ordering, not false precision in the final decimal place.
-
-## Brand implication
-
-Red is the largest chromatic family but is reserved for wrong/error feedback.
-
-Green is also strongly represented but is reserved for correct/positive immediate feedback.
-
-Blue is the strongest major flag-derived family that remains semantically available, so it becomes the brand/action family.
-
-Purple is exceptionally rare in national flags, which makes it well suited to durable mastery without competing with ordinary geography imagery.
-
-Gold is familiar but materially scarcer than the main flag colours, making it appropriate as a deliberately limited prestige/completeness accent.
-
-## Locked palette
-
-| Role | Token | Colour |
+| Role | Value | Use |
 | --- | --- | --- |
-| Primary action | `action` | `#2563EB` |
-| Pressed / depth | `action-pressed` | `#1749B8` |
-| Action tint | `action-soft` | `#EAF0FF` |
-| Canvas | `canvas` | `#F6F8FB` |
-| Primary text | `text` | `#101318` |
-| Correct | `correct` | `#137A55` |
-| Wrong | `wrong` | `#B42318` |
-| Mastery | `mastery` | `#6D3FC0` |
-| Prestige / completeness | `prestige` | `#E0AF2F` |
+| Canvas | `#F6F8FB` | cool near-white page ground |
+| Primary text | `#101318` | graphite text / strongest neutral |
+| Atlas Blue | `#2563EB` | ordinary action, selection, focus family, ordinary progress |
+| Pressed blue | `#1749B8` | tactile pressed/depth state |
+| Action tint | `#EAF0FF` | quiet action/selected background |
+| Correct | `#137A55` | correct retrieval feedback |
+| Wrong | `#B42318` | incorrect retrieval feedback |
+| Mastery | `#6D3FC0` | durable region × domain Mastery |
+| Prestige | `#E0AF2F` | scarce completion / prestige |
 
-## Why Atlas Blue differs from the measured centroid
+## Rules
 
-The representative measured flag-blue family was approximately `#3A5CA2`.
+### Blue is ordinary
 
-That value describes the dataset well but is too subdued for a primary interactive control.
+Atlas Blue is the workhorse colour. Use it for primary action, focus/selection family and the ordinary successful-retrieval progress strip. Blue must not be mistaken for prestige.
 
-Atlas Blue `#2563EB` remains within the same blue family while increasing chroma and visual energy for interface use.
+### Green and red are feedback
 
-The rule is: **derive the family from the evidence; tune the UI token for usability.**
+Green means correct and red means wrong. They should not become continent/region identity colours or long-lived decorative fills.
 
-## Semantic rules
+Domain-specific corrective mechanics may retain established intermediate/reveal treatments where they communicate outcome quality, but those colours do not create new product-level achievement tiers.
 
-### Blue = act / explore / select / continue
+### Purple is durable Mastery
 
-Use for primary actions, current selection, navigation emphasis, focus and active controls.
+Purple is reserved for learner-facing **region × domain Mastery**. Country-level learning evidence may be strong internally or operationally, but individual countries do not become purple prestige objects merely because their evidence is strong.
 
-### Green = correct
+Purple state must include a non-colour cue such as the current Mastered mark/accessible label.
 
-Use for transient correct-answer and immediate positive task feedback.
+### Gold is scarce
 
-Do not use green as the general brand or durable mastery colour.
+Gold is reserved for genuine prestige/completion:
 
-### Red = wrong
+- transient Perfect round result treatment;
+- complete-region treatment;
+- completed-continent trophy/crest treatment;
+- eventual World Crown presentation.
 
-Use for transient incorrect-answer feedback, errors and genuine destructive states.
+Gold should not appear as a routine progress fill, common button colour or geographic identity theme.
 
-Avoid routine decorative red.
+### Colour is not sufficient by itself
 
-### Purple = mastery
+State must remain understandable without colour. Pair semantic colour with label, icon/mark, geometry, border/treatment, accessible name or another perceivable cue appropriate to the component.
 
-Use for persistent region × domain mastery and related competency marks.
+## Geography has no identity palette
 
-Do not use purple as a generic accent.
-
-### Gold = completeness / prestige
-
-Use sparingly for complete regions, continent crests, the world Crown and genuinely exceptional milestone detail.
-
-Gold should not appear on routine actions, ordinary navigation, generic progress or decorative chrome.
-
-## Accessibility
-
-Reference contrast checks from the study:
-
-- white on `#2563EB`: ~5.17:1;
-- white on `#1749B8`: ~7.83:1;
-- white on `#137A55`: ~5.33:1;
-- white on `#B42318`: ~6.57:1;
-- white on `#6D3FC0`: ~6.73:1;
-- dark text on `#E0AF2F`: ~9.17:1.
-
-Do not use white text on gold by default.
-
-Colour must always reinforce another state cue such as wording, iconography, border/state treatment or layout.
-
-## Geographic findings
-
-Continent differences are real but not stable enough to justify separate semantic palettes. Region-level differences are even less useful because small sample sizes make them noisy. Hemisphere differences largely reflect continent composition.
-
-Therefore:
+Locked decision:
 
 - no continent colour taxonomy;
 - no region colour taxonomy;
 - no hemisphere theming;
-- geography identity comes from the geography itself.
+- do not derive UI identity colours from flag-colour distributions;
+- geography identity comes from shape, name, hierarchy and context.
 
-## Provenance
+Issue #104 deliberately remains a deferred exploration because its map-first proposal includes region tinting and geography-encoded progress. Any future implementation must explicitly revisit this locked decision and provide a non-colour progress cue; the current colour system must not be silently weakened as a side effect of a launcher redesign.
 
-The research work is captured in PR #33, **Research: quantify the world flag colour palette**. The product decisions in this document are the accepted design interpretation of that study.
+## Achievement interaction
+
+The current visual hierarchy is:
+
+`ordinary blue progress → purple Mastery → restrained gold completion → continent trophy/crest → World Crown`
+
+A Perfect round is a one-result gold acknowledgement, not a persistent Mastery state. Completed-continent trophy assets are currently rendered on completed rows in domain continent indexes. The World Crown state exists in the achievement model but has no learner-facing React renderer in v1.
+
+## Accessibility
+
+- preserve sufficient text/control contrast;
+- keep visible focus independent of hover;
+- support forced-colour/high-contrast fallbacks where applicable;
+- never remove the text/icon cue solely because a colour treatment exists;
+- avoid saturation/density as the only encoding of progress.
