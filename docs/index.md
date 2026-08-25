@@ -10,6 +10,9 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
 - [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
 - [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema, qualification seam, support guards and reset semantics.
+- [`architecture/react-vite-migration.md`](architecture/react-vite-migration.md) — #89 platform-migration architecture boundary, adapters, build/PWA strategy and rollback model.
+- [`open/issue-89-execution-plan.md`](open/issue-89-execution-plan.md) — canonical 12-phase #89 delivery plan and acceptance gates.
+- [`open/issue-89-implementation-worklog.md`](open/issue-89-implementation-worklog.md) — staged #89 decisions, deviations and verification evidence.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
 
 ## Sections
@@ -28,7 +31,9 @@ The learner-facing product name is **Atlas** across current product documentatio
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
-Africa remains the only complete production proving ground for Locations, Outlines and Neighbours. Other continent expansion work is tracked under #22–#27.
+Atlas currently ships production geography for Africa, South America, Europe and Asia. North America and Oceania remain open expansion work under #22 and #27.
+
+Issue #89 is an active incremental migration of the presentation/build layers to React and Vite. The existing typed router, product engine, persistence, geography and learning semantics are preservation boundaries; use the architecture decision and canonical execution plan above rather than treating the epic as a rewrite brief.
 
 ## Filing rules
 
