@@ -1,12 +1,41 @@
 # Issue 71 — Mobile Interaction & Native Feel Upgrade
 
-## Status
+## Current status (2026-08-25) — read this before delegating
 
-Open planning specification.
+**Everything below this section is the original planning specification. It
+predates the React/Vite migration (#89) and the removal of the Progress
+screen (2026-08-23), so it references source paths and surfaces that no
+longer exist in production** (`src/app.ts`, `src/ui/views/`,
+`src/ui/components/neighbor-map.ts`, a standalone "Progress" screen). Keep it
+for product-intent/architecture-principle context only — do not hand a
+subagent a task derived from its "Implementation phases" or "Repository
+touch points" sections; those describe unstarted work that has since shipped.
 
-Issue #71 establishes the mobile interaction foundation for Atlas. The objective is not adding isolated gestures; it is making Atlas feel like a purpose-built touch-first geography application across phones, tablets and installed PWA contexts.
+**What has already shipped and been browser-verified** (see
+[`issue-71-implementation-notes.md`](issue-71-implementation-notes.md) for
+full evidence): edge-swipe back navigation with correct gesture-ownership
+priority (controls → maps → scroll → navigation), direct-manipulation
+Locations/Neighbours map interaction, safe-area/viewport/PWA behaviour
+(`overscroll-behavior-y: contain`, `viewport-fit=cover`), and a
+screen-by-screen no-horizontal-overflow audit across four viewports. This has
+been re-verified three times as `main` moved (2026-08-22, 2026-08-23, and
+after South America/Europe/Asia shipped) with zero regressions.
 
-The existing implementation groundwork (`a046c01`) is a starting point only. Completion requires architecture validation, implementation, device testing and the broader interaction audit described below.
+**The only remaining scope for #71 is physical-device validation**:
+
+- physical Pixel-class Android device, Chrome;
+- physical iPhone, Safari and the installed PWA;
+- real notch/Dynamic Island/gesture-bar safe-area behaviour;
+- real software-keyboard interaction with Neighbours (coordinate with #19,
+  already closed).
+
+Chromium DevTools Protocol touch emulation is **not** equivalent to this and
+has already been used as far as it can go. **This cannot be delegated to a
+coding subagent** — it requires a person with the actual hardware running the
+production build and recording what happens. If you're assigning #71 out,
+assign it as a manual QA pass with the exact scenario list from
+`issue-71-implementation-notes.md`'s verification tables, not as an
+implementation task.
 
 ---
 
