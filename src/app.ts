@@ -645,7 +645,7 @@ function replaceLauncherScope(
   router.navigate(route, { replace: true });
   if (expectedKind === 'region') {
     const selector = focusSurface === 'map'
-      ? `.launcher-map-region[data-action="select-region"][data-id="${id}"]`
+      ? `.launcher-map__label[data-action="select-region"][data-id="${id}"]`
       : `.region-row__open[data-action="select-region"][data-id="${id}"]`;
     root.querySelector<HTMLElement | SVGElement>(selector)?.focus({ preventScroll: true });
     announce(`${route.scope.label} selected.`);
@@ -698,7 +698,7 @@ root.addEventListener('click', (event) => {
       element.dataset.domain,
       id,
       'region',
-      element.classList.contains('launcher-map-region') ? 'map' : 'list',
+      element.classList.contains('launcher-map__label') ? 'map' : 'list',
     );
     return;
   }
@@ -800,16 +800,6 @@ root.addEventListener('click', (event) => {
   flagsRound.announceResult();
   outlinesRound.announceResult();
   finishInteraction(selector);
-});
-
-root.addEventListener('keydown', (event) => {
-  if (event.key !== 'Enter' && event.key !== ' ') return;
-  const region = event.target instanceof Element
-    ? event.target.closest<SVGElement>('.launcher-map-region[data-action="select-region"]')
-    : null;
-  if (!region) return;
-  event.preventDefault();
-  replaceLauncherScope(region.dataset.domain, region.dataset.id, 'region', 'map');
 });
 
 root.addEventListener('input', (event) => {

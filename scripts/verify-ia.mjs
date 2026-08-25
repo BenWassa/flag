@@ -402,24 +402,25 @@ for (const launcherCase of launcherCases.filter((item) => item.hasMap)) {
   );
   assert.ok(hydrated.indexOf('launcher__play') < hydrated.indexOf('class="launcher-map"'), `${name} keeps Play above the map.`);
 
-  const listRegionIds = sortedIds(actionTags(hydrated, 'button', 'select-region'));
-  const mapRegionTags = actionTags(hydrated, 'g', 'select-region');
+  const listRegionIds = sortedIds(actionTags(before, 'button', 'select-region'));
+  const mapRegionTags = actionTags(mapHtml, 'button', 'select-region');
   const mapRegionIds = sortedIds(mapRegionTags);
   const mapSvg = openingTags(mapHtml, 'svg').find((tag) => hasClass(tag, 'launcher-map__svg'));
+  const mapGroup = openingTags(mapHtml, 'div').find((tag) => hasClass(tag, 'launcher-map'));
   const labelOverlay = openingTags(mapHtml, 'div').find((tag) => hasClass(tag, 'launcher-map__labels'));
-  const overlayLabels = openingTags(mapHtml, 'span').filter((tag) => hasClass(tag, 'launcher-map__label'));
+  const overlayLabels = openingTags(mapHtml, 'button').filter((tag) => hasClass(tag, 'launcher-map__label'));
   assert.ok(mapSvg, `${name} exposes its SVG selection group.`);
-  assert.equal(attribute(mapSvg, 'role'), 'group', `${name} map has group semantics.`);
-  assert.equal(attribute(mapSvg, 'aria-label'), 'Africa region selector', `${name} map names its purpose.`);
+  assert.equal(attribute(mapGroup, 'role'), 'group', `${name} map has group semantics.`);
+  assert.equal(attribute(mapGroup, 'aria-label'), 'Africa region selector', `${name} map names its purpose.`);
+  assert.equal(attribute(mapSvg, 'aria-hidden'), 'true', `${name} treats the simple silhouette as decorative.`);
   assert.ok(labelOverlay, `${name} renders the direct-label overlay.`);
-  assert.equal(attribute(labelOverlay, 'aria-hidden'), 'true', `${name} avoids duplicating SVG control names.`);
-  assert.equal(overlayLabels.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} overlays five direct labels.`);
+  assert.equal(overlayLabels.length, AFRICA_MAP_REGION_CONFIGS.length, `${name} overlays five direct label buttons.`);
   assert.deepEqual(sortedIds(overlayLabels), africaRegionIds, `${name} labels every canonical region directly.`);
   assert.equal(mapHtml.includes('<text'), false, `${name} labels are HTML overlays rather than scale-dependent SVG text.`);
   assert.deepEqual(listRegionIds, africaRegionIds, `${name} list uses canonical region IDs.`);
   assert.deepEqual(mapRegionIds, listRegionIds, `${name} map and list drive the same region IDs.`);
   const selectedMapRegion = mapRegionTags.find((tag) => attribute(tag, 'data-id') === 'west-africa');
-  assert.ok(selectedMapRegion && hasClass(selectedMapRegion, 'launcher-map-region--selected'), `${name} marks the selected map region.`);
+  assert.ok(selectedMapRegion && hasClass(selectedMapRegion, 'launcher-map__label--selected'), `${name} marks the selected map region.`);
   const selectedOverlayLabel = overlayLabels.find((tag) => attribute(tag, 'data-id') === 'west-africa');
   assert.ok(
     selectedOverlayLabel && hasClass(selectedOverlayLabel, 'launcher-map__label--selected'),
@@ -427,14 +428,13 @@ for (const launcherCase of launcherCases.filter((item) => item.hasMap)) {
   );
   for (const config of AFRICA_MAP_REGION_CONFIGS) {
     const regionTag = mapRegionTags.find((tag) => attribute(tag, 'data-id') === config.scope.id);
-    assert.ok(regionTag, `${name} exposes ${config.scope.label} in the SVG.`);
+    assert.ok(regionTag, `${name} exposes ${config.scope.label} over the silhouette.`);
     assertButtonContract(regionTag, {
-      role: 'button',
-      tabindex: '0',
+      type: 'button',
       'aria-label': `Select ${config.scope.label}`,
       'aria-pressed': String(config.scope.id === 'west-africa'),
     });
-    assert.ok(mapHtml.includes(`>${config.scope.label}</span>`), `${name} directly labels ${config.scope.label}.`);
+    assert.ok(mapHtml.includes(`>${config.scope.label}</button>`), `${name} directly labels ${config.scope.label}.`);
   }
 }
 
@@ -578,35 +578,15 @@ const replaceScopeSource = sourceSection(
   "root.addEventListener('click'",
   'Launcher scope replacement orchestration',
 );
-assert.ok(replaceScopeSource.includes("focusSurface === 'map'"), 'Map selection restores focus to the SVG region surface.');
+assert.ok(replaceScopeSource.includes("focusSurface === 'map'"), 'Map selection restores focus to the region-label surface.');
 assert.ok(
-  replaceScopeSource.includes('.launcher-map-region[data-action="select-region"]'),
-  'Map focus restoration targets the selected SVG region.',
+  replaceScopeSource.includes('.launcher-map__label[data-action="select-region"]'),
+  'Map focus restoration targets the selected region label.',
 );
 assert.equal(
   occurrences(replaceScopeSource, 'focus({ preventScroll: true })'),
   2,
   'Region and All Africa focus restoration both preserve scroll position.',
-);
-
-const mapKeyboardSource = sourceSection(
-  app,
-  "root.addEventListener('keydown'",
-  "root.addEventListener('input'",
-  'Launcher-map keyboard selection handler',
-);
-assert.ok(
-  mapKeyboardSource.includes("event.key !== 'Enter' && event.key !== ' '"),
-  'Launcher map accepts both Enter and Space.',
-);
-assert.ok(
-  mapKeyboardSource.includes('.launcher-map-region[data-action="select-region"]'),
-  'Keyboard handling is scoped to launcher map region controls.',
-);
-assert.ok(mapKeyboardSource.includes('event.preventDefault()'), 'Launcher map Space activation prevents page scrolling.');
-assert.ok(
-  mapKeyboardSource.includes("replaceLauncherScope(region.dataset.domain, region.dataset.id, 'region', 'map')"),
-  'Keyboard activation follows the shared map-selection path.',
 );
 
 const routeSubscriptionSource = sourceSection(

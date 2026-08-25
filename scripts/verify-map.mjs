@@ -220,32 +220,24 @@ for (const config of AFRICA_MAP_REGION_CONFIGS) {
 }
 const africaHomeWithMap = renderMapHome(emptyAfricaProgress, AFRICA_MAP_SCOPE, mapAchievements, true, africaAsset);
 assert.ok(africaHomeWithMap.includes('class="launcher-map"'), 'The resolved Africa asset fills the existing launcher map slot.');
-const launcherRegionTags = [...africaHomeWithMap.matchAll(/<g\b[^>]*class="[^"]*\blauncher-map-region\b[^"]*"[^>]*>/g)].map((match) => match[0]);
-const launcherLabelTags = [...africaHomeWithMap.matchAll(/<span\b[^>]*class="[^"]*\blauncher-map__label\b[^"]*"[^>]*>[\s\S]*?<\/span>/g)].map((match) => match[0]);
-assert.equal(launcherRegionTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one SVG control per Africa region.');
-assert.equal(launcherLabelTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one direct HTML overlay label per Africa region.');
+const launcherLabelTags = [...africaHomeWithMap.matchAll(/<button\b[^>]*class="[^"]*\blauncher-map__label\b[^"]*"[^>]*>[\s\S]*?<\/button>/g)].map((match) => match[0]);
+assert.ok(africaHomeWithMap.includes('class="launcher-map__silhouette"'), 'The launcher reuses the simple continent-selection silhouette.');
+assert.equal(launcherLabelTags.length, AFRICA_MAP_REGION_CONFIGS.length, 'The launcher map exposes one direct HTML button per Africa region.');
 for (const config of AFRICA_MAP_REGION_CONFIGS) {
-  const regionTag = launcherRegionTags.find((tag) => tag.includes(`data-id="${config.scope.id}"`));
-  assert.ok(regionTag, `${config.scope.label} has an SVG launcher-map region control.`);
-  assert.ok(regionTag.includes('role="button"'), `${config.scope.label} exposes button semantics on the SVG map.`);
-  assert.ok(regionTag.includes('tabindex="0"'), `${config.scope.label} is reachable in the SVG map keyboard order.`);
-  assert.ok(regionTag.includes(`aria-label="Select ${config.scope.label}"`), `${config.scope.label} has a direct SVG accessible name.`);
-  assert.ok(regionTag.includes('aria-pressed="false"'), `${config.scope.label} starts unselected on the Africa launcher.`);
-
   const labelTag = launcherLabelTags.find((tag) => tag.includes(`data-id="${config.scope.id}"`));
-  assert.ok(labelTag?.includes(`>${config.scope.label}</span>`), `${config.scope.label} is directly labelled by the HTML map overlay.`);
+  assert.ok(labelTag?.includes(`aria-label="Select ${config.scope.label}"`), `${config.scope.label} has a direct accessible name.`);
+  assert.ok(labelTag?.includes('aria-pressed="false"'), `${config.scope.label} starts unselected on the Africa launcher.`);
+  assert.ok(labelTag?.includes(`>${config.scope.label}</button>`), `${config.scope.label} is directly labelled by the HTML map overlay.`);
 }
 assert.equal(africaHomeWithMap.includes('launcher-map-region__label'), false, 'Launcher labels no longer shrink inside the SVG coordinate system.');
 const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, mapAchievements, true, africaAsset);
 assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
 assert.ok(westHomeHtml.includes('Play West Africa') && westHomeHtml.includes('Learn West Africa'), 'Selecting West Africa retargets both launcher actions.');
 assert.ok(westHomeHtml.includes('All Africa') && westHomeHtml.includes('Selected'), 'West Africa can be cleared without leaving the launcher.');
-assert.ok(westHomeHtml.includes('launcher-map-region--selected'), 'The launcher map mirrors the selected region.');
-const selectedWestRegion = [...westHomeHtml.matchAll(/<g\b[^>]*class="[^"]*\blauncher-map-region--selected\b[^"]*"[^>]*>/g)]
+const selectedWestRegion = [...westHomeHtml.matchAll(/<button\b[^>]*class="[^"]*\blauncher-map__label--selected\b[^"]*"[^>]*>/g)]
   .map((match) => match[0])
   .find((tag) => tag.includes('data-id="west-africa"'));
-assert.ok(selectedWestRegion?.includes('aria-pressed="true"'), 'The selected West Africa SVG control exposes its pressed state.');
-assert.ok(westHomeHtml.includes('launcher-map__label launcher-map__label--selected'), 'The selected West Africa overlay label mirrors the SVG state.');
+assert.ok(selectedWestRegion?.includes('aria-pressed="true"'), 'The selected West Africa label exposes its pressed state.');
 for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
   assert.equal(westHomeHtml.includes(deletedSurface), false, `The pre-round launcher does not restore deleted ${deletedSurface} UI.`);
 }
