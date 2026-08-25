@@ -1,6 +1,6 @@
 # Country Location Learning
 
-**Status:** current Atlas v1 Locations contract  
+**Status:** current Atlas v1 Locations contract
 **Geometry source:** canonical Natural Earth 1:10m production topology pipeline
 
 ## Product skill
