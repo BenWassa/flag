@@ -202,7 +202,7 @@ assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa/test', '
 roundWindow.history.back();
 assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa', 'Back from a round returns to the exact selected launcher scope.');
 
-const app = await readFile('dist/app.js', 'utf8');
+const app = await readFile('src/app.ts', 'utf8');
 assert.equal(app.includes('viewStack'), false, 'Legacy in-memory viewStack must not remain authoritative.');
 assert.equal(app.includes('historyIndex'), false, 'Legacy numeric history index must be removed.');
 assert.ok(app.includes('createHashRouter'), 'Application must compose through the hash router adapter.');

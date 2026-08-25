@@ -48,7 +48,7 @@ assert.ok(serviceWorker.includes('./atlas-theme.css'), 'Tactile Atlas styling re
 assert.ok(serviceWorker.includes('./outline.css') && serviceWorker.includes('./neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('./neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
-const app = await readFile('dist/app.js', 'utf8');
+const app = await readFile('src/app.ts', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
   assert.ok(app.includes(marker), `Combined app orchestration retains ${marker}.`);
 }

@@ -105,7 +105,7 @@ assert.equal(serializeRoutePath(learnRoute), '/flags/africa/learn', 'The Learn r
 assert.equal(serializeRoutePath(parseRoutePath('/flags/africa/test')), '/flags/africa/test', 'Play routing is untouched.');
 assert.equal(serializeRoutePath(parseRoutePath('/flags/africa/review')), '/flags/africa/review', 'Review routing is untouched.');
 
-const appSource = await readFile('dist/app.js', 'utf8');
+const appSource = await readFile('src/app.ts', 'utf8');
 assert.ok(
   appSource.includes('isFlagsStudyRoute'),
   'The Learn route resolves to the study surface without an active session.',
