@@ -1,6 +1,6 @@
 # Issue #111 — Launcher polish
 
-**Status:** In progress
+**Status:** Complete
 
 ## Decision
 
@@ -20,10 +20,19 @@ successful-retrieval evidence. This keeps the ordinary blue progress layer and
 the persistent achievement layer semantically separate while making the visual
 difference between presets obvious.
 
-## Acceptance gates
+## Closeout
 
-- TypeScript checks and focused unit tests.
-- Full production build and verifier suite.
-- Mobile portrait browser inspection at 390 × 844.
-- Keyboard/focus semantics inferred only from automated markup assertions unless
-  separately recorded as manually exercised.
+- Implementation commit: `749976a`.
+- Merge commit on `main`: `4c6f68d`.
+- `npm test` passed on the feature branch and again on merged `main`. This
+  includes TypeScript checks, 16 Vitest tests, the production Vite/PWA build and
+  the complete plain-Node verifier suite.
+- Mobile portrait was visually inspected in a development browser at 390 × 844.
+  The continent and five region rows rendered as one continuous list; counts
+  aligned at the trailing edge; chevrons and the Regions heading were absent.
+- Automated markup assertions cover full-row buttons, accessible Play names,
+  explicit hidden Mastered wording, trailing counts, progress strips and the
+  absence of chevrons/purple star markup.
+- Forced-colours behaviour is covered by the explicit CSS fallback. Keyboard and
+  assistive-technology operation were not manually exercised; the evidence is
+  automated semantic and focus-contract coverage only.

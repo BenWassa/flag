@@ -29,12 +29,9 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
-- [#111 — refine launcher rows, progress demos and metallic completion treatment](https://github.com/BenWassa/flag/issues/111).
-  Consolidates continent and region actions into one compact list, aligns counts
-  at the trailing edge, removes redundant chevrons/stars, makes sandbox progress
-  states meaningful and replaces flat yellow completion outlines with a
-  restrained brushed-metal edge. Scope and evidence:
-  [`issue-111-launcher-polish.md`](issue-111-launcher-polish.md).
+#111 is complete. Its launcher-list, seeded-progress and brushed-metal completion
+treatment decisions and verification evidence are recorded in
+[`issue-111-launcher-polish.md`](../closed/issue-111-launcher-polish.md).
 - [#112 — correct Africa Learn framing and Togo callout geometry](https://github.com/BenWassa/flag/issues/112).
   Owns whole-continent mobile fit plus the generated Togo callout adjustment.
 - [#113 — design a mobile callout-box pattern for distant and fragmented map locations](https://github.com/BenWassa/flag/issues/113).
