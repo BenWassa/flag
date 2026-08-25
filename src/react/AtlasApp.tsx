@@ -26,7 +26,7 @@ import type { RoundContext } from '../state/round-context.js';
 import { AppStore } from '../state/store.js';
 import { AtlasActionsContext, type AtlasActions } from './actions.js';
 import { Icon } from './components/Icon.js';
-import { DomainScreen, FlagsStudyScreen, HomeScreen } from './screens/PassiveScreens.js';
+import { DomainScreen, FlagsStudyScreen, HomeScreen, ProfileScreen } from './screens/PassiveScreens.js';
 import { FlagsLauncherScreen, GeographyLauncherScreen } from './screens/LauncherScreens.js';
 import { FlagsQuizScreen, OutlineQuizScreen, RecognitionResultsScreen } from './screens/RecognitionScreens.js';
 import { LocationQuizScreen, LocationResultsScreen } from './screens/LocationScreens.js';
@@ -131,6 +131,7 @@ export function AtlasApp() {
     }
     currentRoute.current = route;
     if (route.name === 'home') store.navigate({ name: 'home' });
+    if (route.name === 'profile') store.navigate({ name: 'profile' });
     if (route.name === 'learning') {
       if (flagsStudy(route)) store.navigate({ name: 'flags-study', scope: route.scope ?? { kind: 'world', label: 'World' } });
       else if (route.activity !== undefined) {
@@ -214,6 +215,7 @@ export function AtlasApp() {
   const actions = useMemo<AtlasActions>(() => ({
     goHome: () => navigateStable({ name: 'home' }),
     goBack: () => { const parent = parentRoute(currentRoute.current); if (parent) navigateStable(parent); },
+    openProfile: () => navigateStable({ name: 'profile' }),
     openDomain: (domain) => navigateStable({ name: 'learning', domain }),
     openScope: (domain, id) => { const route = routeForScopeId(domain, id); if (route) navigateStable(route); },
     selectRegion: (domain, id, surface = 'list') => replaceScope(domain, id, 'region', surface),
@@ -279,6 +281,7 @@ function createControllers(context: RoundContext) {
 function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolean, revealed: ReadonlySet<string>, revealAll: boolean, launcherMap: { asset: MapRegionAsset | null; failed: boolean }, neighborQuery: string) {
   switch (store.view.name) {
     case 'home': return <HomeScreen ledgers={ledgers} persisting={allPersisting} />;
+    case 'profile': return <ProfileScreen />;
     case 'domain': return <DomainScreen domain={store.view.domain} ledgers={ledgers} achievements={store.achievements} persisting={domainPersisting(store, store.view.domain)} />;
     case 'scope': return <FlagsLauncherScreen progress={store.progress} scope={store.view.scope} achievements={store.achievements} persisting={store.persisting} />;
     case 'flags-study': return <FlagsStudyScreen scope={store.view.scope} revealedIds={revealed} revealAll={revealAll} />;

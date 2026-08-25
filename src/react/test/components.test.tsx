@@ -13,7 +13,7 @@ import { DomainScreen, HomeScreen } from '../screens/PassiveScreens.js';
 
 function actions(): AtlasActions {
   return {
-    goHome: vi.fn(), goBack: vi.fn(), openDomain: vi.fn(), openScope: vi.fn(),
+    goHome: vi.fn(), goBack: vi.fn(), openProfile: vi.fn(), openDomain: vi.fn(), openScope: vi.fn(),
     selectRegion: vi.fn(), selectContinent: vi.fn(), startFlags: vi.fn(),
     startLocations: vi.fn(), startOutlines: vi.fn(), startNeighbors: vi.fn(),
     revealFlag: vi.fn(), toggleAllFlagNames: vi.fn(), answerFlag: vi.fn(),

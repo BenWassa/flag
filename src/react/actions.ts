@@ -4,6 +4,7 @@ import type { LearningDomain } from '../domain/models.js';
 export interface AtlasActions {
   goHome(): void;
   goBack(): void;
+  openProfile(): void;
   openDomain(domain: LearningDomain): void;
   openScope(domain: LearningDomain, scopeId: string): void;
   selectRegion(domain: LearningDomain, scopeId: string, surface?: 'list' | 'map'): void;

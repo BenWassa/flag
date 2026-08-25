@@ -88,6 +88,7 @@ import { appendAttempt, loadProgress, saveProgress, storageIsWritable } from '..
 
 export type ViewState =
   | { name: 'home' }
+  | { name: 'profile' }
   | { name: 'domain'; domain: LearningDomain }
   | { name: 'scope'; scope: StudyScope }
   | { name: 'flags-study'; scope: StudyScope }

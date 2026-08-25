@@ -1,0 +1,58 @@
+rules_version = '2';
+
+// Data model: users/{uid}/state/{stateKey}
+//   stateKey  — one of the fixed keys below, matching the existing
+//               localStorage key names in src/infrastructure/*.ts
+//   data      — opaque JSON envelope (the same versioned shape already
+//               written to localStorage); not deeply validated field-by-field
+//   schemaVersion — positive integer
+//   updatedAt — server-set timestamp, must be recent
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isRecent(time) {
+      return time is timestamp &&
+        time > request.time - duration.value(5, 'm') &&
+        time <= request.time;
+    }
+
+    function isKnownStateKey(stateKey) {
+      return stateKey in [
+        'flag-atlas:progress:v1',
+        'flag-atlas:attempts:v1',
+        'flag-atlas:location-progress:v1',
+        'flag-atlas:location-attempts:v1',
+        'flag-atlas:outline-progress:v1',
+        'flag-atlas:outline-attempts:v1',
+        'flag-atlas:neighbor-progress:v1',
+        'flag-atlas:neighbor-attempts:v1',
+        'flag-atlas:earned-achievements:v1',
+        'flag-atlas:region-domain-perfect-run-streaks:v1'
+      ];
+    }
+
+    function isValidStateDoc(stateKey) {
+      let resourceData = request.resource.data;
+      return isKnownStateKey(stateKey) &&
+        resourceData.keys().hasOnly(['data', 'schemaVersion', 'updatedAt']) &&
+        resourceData.keys().hasAll(['data', 'schemaVersion', 'updatedAt']) &&
+        resourceData.data is map &&
+        resourceData.data.keys().size() < 5000 &&
+        resourceData.schemaVersion is int &&
+        resourceData.schemaVersion > 0 &&
+        isRecent(resourceData.updatedAt);
+    }
+
+    match /users/{userId}/state/{stateKey} {
+      allow read, delete: if isOwner(userId);
+      allow create, update: if isOwner(userId) && isValidStateDoc(stateKey);
+    }
+  }
+}

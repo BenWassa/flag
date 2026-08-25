@@ -19,10 +19,12 @@ import {
 import { countriesInScope } from '../../domain/progress.js';
 import { scopeSupportsDomain } from '../../domain/scope-support.js';
 import { coverageLabel } from '../../ui/format.js';
+import { useState } from 'react';
 import { useAtlasActions } from '../actions.js';
 import { FlagImage } from '../components/FlagImage.js';
-import { ContinentIcon, DomainIcon, Icon } from '../components/Icon.js';
+import { ContinentIcon, ContinentTrophy, DomainIcon, Icon } from '../components/Icon.js';
 import { ProgressStrip } from '../components/ProgressStrip.js';
+import { useAuth } from '../useAuth.js';
 
 export function domainCoverageLabel(summary: DomainProgressSummary): string {
   const names = summary.supportedContinentIds.map((id) => CONTINENTS.find((continent) => continent.id === id)?.name ?? id);
@@ -41,7 +43,10 @@ export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; 
   const actions = useAtlasActions();
   return (
     <main className="page page--home page--atlas">
-      <header className="topbar topbar--atlas"><div className="brand-block"><h1 className="brand-name" tabIndex={-1} data-autofocus>Atlas</h1></div></header>
+      <header className="topbar topbar--atlas">
+        <div className="brand-block"><h1 className="brand-name" tabIndex={-1} data-autofocus>Atlas</h1></div>
+        <button className="icon-button" type="button" onClick={actions.openProfile} aria-label="Profile"><Icon name="profile" /></button>
+      </header>
       {!persisting ? <StorageNotice /> : null}
       <h2 className="atlas-eyebrow">Modes</h2>
       <div className="atlas-card-list">
@@ -54,6 +59,64 @@ export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; 
           </button>;
         })}
       </div>
+    </main>
+  );
+}
+
+export function ProfileScreen() {
+  const actions = useAtlasActions();
+  const { user, loading, signIn, signOut } = useAuth();
+  const [error, setError] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
+
+  const handleSignIn = () => {
+    setError(null);
+    setPending(true);
+    signIn().catch(() => setError("Couldn't sign in. Please try again.")).finally(() => setPending(false));
+  };
+
+  const handleSignOut = () => {
+    setPending(true);
+    void signOut().finally(() => setPending(false));
+  };
+
+  return (
+    <main className="page page--profile">
+      <header className="topbar topbar--detail">
+        <button className="icon-button" type="button" onClick={actions.goBack} aria-label="Back"><Icon name="back" /></button>
+        <div className="screen-title"><h1 tabIndex={-1} data-autofocus>Profile</h1></div>
+      </header>
+
+      {loading ? null : user ? (
+        <div className="profile-card">
+          {user.photoURL
+            ? <img className="profile-card__avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />
+            : <span className="profile-card__avatar profile-card__avatar--fallback" aria-hidden="true"><Icon name="profile" /></span>}
+          <div className="profile-card__identity">
+            <strong>{user.displayName ?? 'Signed in'}</strong>
+            {user.email ? <small>{user.email}</small> : null}
+          </div>
+          <button
+            className={`button button--secondary${pending ? ' is-launching' : ''}`}
+            type="button"
+            onClick={handleSignOut}
+            disabled={pending}
+            aria-busy={pending}
+          >Sign out</button>
+        </div>
+      ) : (
+        <div className="profile-card profile-card--signed-out">
+          <p>Sign in to save your progress to your account. You can keep learning without an account — your progress stays on this device either way.</p>
+          <button
+            className={`button button--primary${pending ? ' is-launching' : ''}`}
+            type="button"
+            onClick={handleSignIn}
+            disabled={pending}
+            aria-busy={pending}
+          >Sign in with Google</button>
+          {error ? <p className="storage-notice" role="status">{error}</p> : null}
+        </div>
+      )}
     </main>
   );
 }
@@ -73,7 +136,7 @@ function ContinentRow({ domain, continent, ledgers, achievements }: {
   return <div className={`continent-row${complete ? ' continent-row--complete' : ''}`}>
     <button className="continent-row__open" type="button" onClick={() => actions.openScope(domain, continent.id)}>
       <span className="continent-row__identity"><strong>{continent.name}</strong></span>
-      <span className="continent-row__mark" aria-hidden="true"><ContinentIcon id={continent.id} /></span>
+      <span className="continent-row__mark" aria-hidden="true">{complete ? <ContinentTrophy id={continent.id} /> : <ContinentIcon id={continent.id} />}</span>
       {summary.due > 0 ? <span className="continent-row__evidence">{summary.due} due</span> : null}
       <span className="continent-row__progress"><ProgressStrip stats={statsFor(summary)} /></span>
       <Icon name="chevron" />

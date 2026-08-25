@@ -1,0 +1,14 @@
+{
+  "firestore": {
+    "database": "atlas",
+    "rules": "firestore.rules"
+  },
+  "auth": {
+    "providers": {
+      "googleSignIn": {
+        "oAuthBrandDisplayName": "Atlas",
+        "supportEmail": "haddonbenjamin@googlemail.com"
+      }
+    }
+  }
+}
