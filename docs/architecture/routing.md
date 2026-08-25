@@ -1,7 +1,7 @@
 # Routing and Product Information Architecture
 
-**Status:** Atlas v1.0 route/product contract  
-**Transport:** hash URLs on GitHub Pages  
+**Status:** Atlas v1.0 route/product contract
+**Transport:** hash URLs on GitHub Pages
 **Source of truth:** `src/routing/routes.ts`
 
 ## Product hierarchy
