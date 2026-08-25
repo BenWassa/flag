@@ -6,56 +6,9 @@ on:
   pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  phase-2-sync:
-    if: github.head_ref == 'issue-92-vite-foundation'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: issue-92-vite-foundation
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm install --package-lock-only --ignore-scripts
-      - name: Move source-text application guards off the minified bundle
-        run: |
-          node --input-type=module <<'NODE'
-          import { readFile, writeFile } from 'node:fs/promises';
-
-          const files = [
-            'scripts/verify-atlas-brand.mjs',
-            'scripts/verify-neighbor-keyboard.mjs',
-            'scripts/verify-flags-study.mjs',
-            'scripts/verify-mobile-gestures.mjs',
-            'scripts/verify-ia.mjs',
-            'scripts/verify-routing.mjs',
-            'scripts/verify-domain-integration.mjs',
-          ];
-
-          for (const file of files) {
-            const source = await readFile(file, 'utf8');
-            const updated = source.replaceAll("readFile('dist/app.js', 'utf8')", "readFile('src/app.ts', 'utf8')");
-            if (source === updated) {
-              throw new Error(`${file} did not contain the expected dist/app.js source-text guard.`);
-            }
-            await writeFile(file, updated);
-          }
-          NODE
-      - name: Commit generated maintenance changes
-        run: |
-          if git diff --quiet -- package-lock.json scripts/verify-atlas-brand.mjs scripts/verify-neighbor-keyboard.mjs scripts/verify-flags-study.mjs scripts/verify-mobile-gestures.mjs scripts/verify-ia.mjs scripts/verify-routing.mjs scripts/verify-domain-integration.mjs; then
-            echo "Phase 2 maintenance files are already current"
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json scripts/verify-atlas-brand.mjs scripts/verify-neighbor-keyboard.mjs scripts/verify-flags-study.mjs scripts/verify-mobile-gestures.mjs scripts/verify-ia.mjs scripts/verify-routing.mjs scripts/verify-domain-integration.mjs
-          git commit -m "test: adapt source guards for Vite output"
-          git push origin HEAD:issue-92-vite-foundation
-
   verify:
     runs-on: ubuntu-latest
     steps:
