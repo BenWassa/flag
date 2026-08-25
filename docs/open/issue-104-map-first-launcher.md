@@ -1,6 +1,6 @@
 # Issue #104: Map-first continent launcher
 
-**Status:** DEFERRED PRODUCT EXPLORATION — captured, not scheduled  
+**Status:** DEFERRED PRODUCT EXPLORATION — captured, not scheduled
 **GitHub:** [#104](https://github.com/BenWassa/flag/issues/104)
 
 ## Current production baseline
