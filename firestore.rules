@@ -9,12 +9,14 @@ rules_version = '2';
 //   updatedAt — server-set timestamp, must be recent
 service cloud.firestore {
   match /databases/{database}/documents {
-    function isAuthenticated() {
-      return request.auth != null;
+    // Solo-use allowlist: only this UID may read/write anything, regardless
+    // of ownership scoping below. Widen this when more users are onboarded.
+    function isAllowedUser() {
+      return request.auth != null && request.auth.uid == '7jSCG8qg6PN5IhibC7zAKblll8m2';
     }
 
     function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
+      return isAllowedUser() && request.auth.uid == userId;
     }
 
     function isRecent(time) {
