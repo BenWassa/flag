@@ -378,3 +378,31 @@ The reconciliation therefore used:
 - PR #105 GitHub CI as the branch verification gate.
 
 No local `npm test`, manual browser session or physical-device session is claimed by this reconciliation task.
+
+## Step 3a — active-round component coverage (2026-08-26)
+
+Branch `claude/open-issues-review-plan-tz6n9e`, under the owner-approved
+re-sequencing recorded in `issue-89-execution-plan.md`.
+
+`src/react/test/active-rounds.test.tsx` adds 13 React/Testing Library tests over
+the four shipped active-round surfaces, built on real domain sessions and the
+real generated assets rather than hand-made fixtures:
+
+- **Flags** — question, choices and round position render; a press calls
+  `answerFlag` with the chosen id; an answered question shows the shared Play
+  outcome (`Not quite` / `Answer: <name>`) and disables every choice; a wrong
+  answer reaches Review on the results screen, driven through a real `AppStore`
+  round rather than a synthesised result.
+- **Outlines** — the silhouette is asked without naming itself: its only
+  accessible name is `Country silhouette to identify`, and the stage's text
+  never contains the answer; a press calls `answerOutline`.
+- **Locations** — the prompt names one target at a time over a rendered map;
+  every scoped country is an answerable target; a missed round reports the miss
+  count and offers Review mistakes; a clean round says so, shows the perfect
+  badge and offers no review.
+- **Neighbours** — the target and task headings render; typing reaches
+  `setNeighborQuery`; the explicit **No land neighbours** claim is present as a
+  deliberate answer; a wrong guess is reported back in the feedback region.
+
+Node 22 `npm run check` and full `npm test` green locally. This is the component
+half of #96–#99; their browser half is step 3c. No production behaviour changed.

@@ -319,6 +319,46 @@ Close #89 only when:
 
 If any condition remains unmet, #89 stays open even though Atlas already ships as `1.0.0`.
 
+## Approved re-sequencing of the remaining closeout (2026-08-26)
+
+The phase ledger above lists the remaining children as #93 → #96 → #97 → #98 →
+#99 → #100 → #101. Executed in that order the closeout runs its browser matrix
+twice, because #93 and #96–#99 would gather their evidence against the current
+artifact while #101 section D explicitly refuses that artifact for final
+acceptance — it "intentionally exposed the #100 debt".
+
+The two halves are also entangled in the other direction. #100's work order step
+2 requires replacing each implementation-coupled verifier assertion with "the
+appropriate framework-independent invariant, React/Testing Library assertion or
+production-browser assertion" — which is exactly the component coverage #96–#99
+owe. Neither can be finished first without redoing part of the other.
+
+The owner approved this order instead. Phase numbering and every exit gate are
+unchanged; only the sequence in which the shared evidence is produced moves.
+
+| Step | Work | Serves |
+| --- | --- | --- |
+| 3a | React/Testing Library coverage for the four active-round surfaces | component half of #96–#99, and supplies #100's replacement assertions |
+| 3b | #100 work-order steps 1–4: retire implementation-coupled assertions, narrow the `tsconfig.verify.json` emit, delete the legacy string renderers | #100 |
+| 3c | One production-browser evidence pass against the cleaned post-#100 preview | browser half of #96–#99, #93, and #101 section C |
+| 3d | #100 step 5 (dead CSS, evidenced from real React markup) and #101 section D artifact inspection | #100, #101 |
+| 3e | #101 sections A/B/E and the final gate, then #89 | #101, #89 |
+
+What this does **not** change:
+
+- no exit gate is weakened, and no verifier coverage is dropped to remove a
+  fixture — #100's step 2 constraint still binds;
+- #71 remains the sole authority for physical-device evidence, and 3c must not
+  be described as satisfying it;
+- each step still owns a focused, separately reviewable commit boundary, so a
+  step can be reverted without unwinding the others;
+- Node 22 `npm test` and exact-artifact inspection still gate the closeout.
+
+The one accepted cost is that 3b lands before the browser evidence for #96–#99,
+so a defect that only a browser would expose is found after the cleanup rather
+than before it. That is the same risk #101 already carries, and 3c precedes
+every close.
+
 ## Discipline for remaining child work
 
 For any remaining child:
