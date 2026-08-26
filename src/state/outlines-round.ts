@@ -1,3 +1,4 @@
+import { FULL_REGION_ROUND_SIZE, isFullRegionPlayLaunch } from '../domain/achievements.js';
 import { COUNTRY_BY_ID } from '../data/countries.js';
 import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { loadOutlineAsset } from '../data/outlines.js';
@@ -66,7 +67,12 @@ export function createOutlinesRound(context: RoundContext): OutlinesRound {
       notify(`${scope.label} silhouettes could not be loaded. Check your connection and try again.`);
       return;
     }
-    const size = targetCountryIds ? Math.max(1, Math.min(10, targetCountryIds.length)) : 10;
+    // #108: an ordinary region Play covers the complete region, because that is
+    // what region x domain Mastery claims the learner demonstrated. Sampled
+    // rounds at other scopes are unchanged.
+    const size = targetCountryIds
+      ? Math.max(1, Math.min(10, targetCountryIds.length))
+      : (isFullRegionPlayLaunch(scope, mode) ? FULL_REGION_ROUND_SIZE : 10);
     if (!store.startOutlineSession(asset, mode, size, targetCountryIds)) {
       notify('No country outlines are available for this round.');
       return;

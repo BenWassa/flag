@@ -115,7 +115,10 @@ export function ProfileScreen() {
         </div>
       ) : (
         <div className="profile-card profile-card--signed-out">
-          <p>Sign in to save your progress to your account. You can keep learning without an account — your progress stays on this device either way.</p>
+          {/* Saying sign-in saves progress to the account would be untrue: no
+              learner state syncs to Firestore yet. #106 owns building that, and
+              owns making this promise again once it is real. */}
+          <p>Your progress is saved on this device, and stays there whether or not you sign in. Saving your progress to your account isn't available yet.</p>
           <button
             className={`button button--primary${pending ? ' is-launching' : ''}`}
             type="button"

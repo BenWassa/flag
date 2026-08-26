@@ -35,13 +35,15 @@ Current v1.0 implementation behaviour:
 - once earned, Mastery is not revoked by later performance;
 - Learn, Review, continent Play and World Play do not award region Mastery.
 
-### Known qualification defect
+### Qualification integrity
 
-The intended product rule is two consecutive perfect **complete-region** Play results. Current implementation does not yet verify complete-region target coverage before recording the streak.
+The product rule is two consecutive perfect **complete-region** Play results, and the implementation now enforces it (issue **#108**).
 
-Locations region Play is full-scope. Flags, Outlines and Neighbours currently default ordinary region Play to 10 targets, so regions with more than 10 eligible targets can earn Mastery from two perfect sampled rounds.
+Ordinary region Play covers the complete region in all four domains. Locations always did; Flags, Outlines and Neighbours used to launch a 10-target sample, so a region with more than 10 eligible targets could earn Mastery from two perfect samples of it. Region Play is therefore longer than it was — a 16-country region asks 16 questions.
 
-Issue **#108** owns restoring qualification integrity. Until it ships, v1 documentation must distinguish the actual region-scoped implementation from the stricter locked product intent.
+Coverage is verified rather than assumed. The achievement layer compares the finished round against the complete supported target set captured at launch, so a round cannot qualify merely by having been launched as a region Play. Sampled, review and repeat-with-targets rounds are not evidence either way: they cannot advance a streak, and they cannot reset one.
+
+Continent and world Play are unchanged, because Mastery is a region unit.
 
 ## Complete region
 

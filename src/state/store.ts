@@ -9,13 +9,17 @@ import {
   awardEligibleAchievements,
   createInitialAchievementState,
   createInitialPerfectRunStreakState,
+  coveredFullRegion,
   createRegionDomainPerfectRunQualification,
+  isFullRegionPlayLaunch,
   recordRegionDomainPlayResult,
   type EarnedAchievementState,
   type NewlyEarnedAchievement,
   type PerfectRunStreakState,
 } from '../domain/achievements.js';
 import { activityForMode } from '../domain/evidence.js';
+import { eligibleNeighborTargets } from '../domain/neighbor-game.js';
+import { countriesInScope } from '../domain/progress.js';
 import {
   advanceMapSession,
   applyMapGuess,
@@ -136,6 +140,15 @@ export class AppStore {
   sessionResult: SessionResult | null = null;
   mapSession: MapSession | null = null;
   mapSessionResult: MapSessionResult | null = null;
+  /**
+   * The complete supported target set for the region Play currently in flight,
+   * per domain. It is captured from the freshly built session rather than
+   * recomputed later, so it is exactly what the domain could offer at launch —
+   * Neighbours, for instance, defers targets whose adjacency is incomplete, and
+   * Mastery must stay reachable in spite of that.
+   */
+  private fullRegionCoverage: Partial<Record<LearningDomain, { scopeId: string; countryIds: string[] }>> = {};
+
   mapAsset: MapRegionAsset | null = null;
   outlineSession: QuizSession | null = null;
   outlineSessionResult: SessionResult | null = null;
@@ -241,8 +254,22 @@ export class AppStore {
    * enough — two consecutive perfect runs are required, and any non-perfect
    * full-region Play run resets the streak to zero.
    */
-  private recordRegionDomainPlayResult(scope: StudyScope, domain: LearningDomain, wasPerfect: boolean): void {
+  private recordRegionDomainPlayResult(
+    scope: StudyScope,
+    domain: LearningDomain,
+    wasPerfect: boolean,
+    coveredCountryIds: readonly string[],
+  ): void {
     if (scope.kind !== 'region' || !scope.id) return;
+    // #108: only a Play that covered the complete supported region may advance
+    // or reset the streak. Flags, Outlines and Neighbours used to launch a
+    // ten-question sample, so in any region with more than ten targets they
+    // could award permanent Mastery on a sample of it. A sampled round is now
+    // simply not evidence either way — it must not reset a streak it could
+    // never have earned.
+    const supported = this.fullRegionCoverage[domain];
+    if (!supported || supported.scopeId !== scope.id) return;
+    if (!coveredFullRegion(supported.countryIds, coveredCountryIds)) return;
     this.perfectRunStreaks = recordRegionDomainPlayResult(this.perfectRunStreaks, scope.id, domain, wasPerfect);
     if (!savePerfectRunStreakState(this.perfectRunStreaks)) this.perfectRunStreakPersisting = false;
     this.refreshAchievements();
@@ -275,6 +302,26 @@ export class AppStore {
     this.neighborLastOutcome = null;
   }
 
+  /**
+   * Captures what a full-region Play launch could actually offer, so the
+   * achievement gate can compare the finished round against it. Any other
+   * launch clears the domain's entry, which is what stops a sampled, review or
+   * repeat round from advancing or resetting a streak.
+   */
+  private trackFullRegionCoverage(
+    domain: LearningDomain,
+    scope: StudyScope,
+    mode: string,
+    targetCountryIds: readonly string[] | undefined,
+    supportedCountryIds: readonly string[],
+  ): void {
+    if (isFullRegionPlayLaunch(scope, mode, targetCountryIds) && scope.id) {
+      this.fullRegionCoverage[domain] = { scopeId: scope.id, countryIds: [...supportedCountryIds] };
+      return;
+    }
+    delete this.fullRegionCoverage[domain];
+  }
+
   startSession(scope: StudyScope, mode: StudyMode, size = 10, reviewIds?: string[]): boolean {
     const id = sessionId();
     const questions = buildQuiz({
@@ -288,6 +335,7 @@ export class AppStore {
     });
 
     if (questions.length === 0) return false;
+    this.trackFullRegionCoverage('flags', scope, mode, reviewIds, countriesInScope(COUNTRIES, scope).map((country) => country.id));
 
     this.session = {
       id,
@@ -348,7 +396,7 @@ export class AppStore {
     const result = this.finishSession();
     this.sessionResult = result;
     if (mode === 'test') {
-      this.recordRegionDomainPlayResult(scope, 'flags', result.missed.length === 0);
+      this.recordRegionDomainPlayResult(scope, 'flags', result.missed.length === 0, result.session.questions.map((question) => question.countryId));
     }
     this.view = { name: 'results', result };
     return result;
@@ -366,6 +414,7 @@ export class AppStore {
   ): boolean {
     const mapSession = buildMapSession(asset, mode, sessionId(), targetCountryIds);
     if (mapSession.countryIds.length === 0) return false;
+    this.trackFullRegionCoverage('locations', asset.scope, mode, targetCountryIds, asset.countries.map((country) => country.countryId));
 
     this.mapAsset = asset;
     this.mapSession = mapSession;
@@ -407,7 +456,7 @@ export class AppStore {
       const result = finishMapSession(this.mapSession);
       this.mapSessionResult = result;
       if (mode === 'test') {
-        this.recordRegionDomainPlayResult(scope, 'locations', result.missedCountryIds.length === 0);
+        this.recordRegionDomainPlayResult(scope, 'locations', result.missedCountryIds.length === 0, result.session.countryIds);
       }
       this.view = { name: 'map-results', result };
       return result;
@@ -438,6 +487,7 @@ export class AppStore {
       targetCountryIds: targetCountryIds ? [...targetCountryIds] : undefined,
     });
     if (questions.length === 0) return false;
+    this.trackFullRegionCoverage('outlines', asset.scope, mode, targetCountryIds, countriesInScope(COUNTRIES.filter((country) => asset.geometries[country.id]), asset.scope).map((country) => country.id));
 
     this.outlineAsset = asset;
     this.outlineSession = {
@@ -496,7 +546,7 @@ export class AppStore {
     const result = finishQuizSession(this.outlineSession);
     this.outlineSessionResult = result;
     if (mode === 'test') {
-      this.recordRegionDomainPlayResult(scope, 'outlines', result.missed.length === 0);
+      this.recordRegionDomainPlayResult(scope, 'outlines', result.missed.length === 0, result.session.questions.map((question) => question.countryId));
     }
     this.view = { name: 'outline-results', result };
     return result;
@@ -523,6 +573,7 @@ export class AppStore {
       targetCountryIds,
     );
     if (session.countryIds.length === 0) return false;
+    this.trackFullRegionCoverage('neighbors', config.scope, mode, targetCountryIds, eligibleNeighborTargets(config.countryIds, adjacency));
 
     this.neighborSession = session;
     this.neighborSessionResult = null;
@@ -558,7 +609,7 @@ export class AppStore {
       const result = finishNeighborSession(this.neighborSession);
       this.neighborSessionResult = result;
       if (mode === 'test') {
-        this.recordRegionDomainPlayResult(scope, 'neighbors', result.missedCountryIds.length === 0);
+        this.recordRegionDomainPlayResult(scope, 'neighbors', result.missedCountryIds.length === 0, result.session.countryIds);
       }
       this.view = { name: 'neighbor-results', result };
       return result;

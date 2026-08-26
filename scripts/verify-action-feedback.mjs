@@ -3,14 +3,13 @@ import { readFile } from 'node:fs/promises';
 import { COUNTRIES } from '../dist/data/countries.js';
 import { createInitialAchievementState } from '../dist/domain/achievements.js';
 import { createInitialProgress } from '../dist/domain/progress.js';
-import { renderDomainIndex } from '../dist/ui/views/domain.js';
-import { renderHome } from '../dist/ui/views/home.js';
 import { createInitialLocationProgress } from '../dist/domain/map-game.js';
 import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
 import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
 import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
 import { CONTINENTS } from '../dist/data/continents.js';
 import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
@@ -86,8 +85,17 @@ const ledgers = {
   outlines: createInitialProgress(COUNTRIES),
   neighbors: createInitialNeighborProgress(Object.keys(AFRICA_LAND_ADJACENCY)),
 };
-const home = renderHome(ledgers);
-const locationsIndex = renderDomainIndex('locations', ledgers, createInitialAchievementState());
+// #100: asserted against the production React screens rather than the retired
+// src/ui/views string renderers, so these invariants describe what a learner is
+// actually served.
+const { DomainScreen, HomeScreen } = await loadScreens('PassiveScreens.js');
+const home = renderScreen(HomeScreen, { ledgers, persisting: true });
+const locationsIndex = renderScreen(DomainScreen, {
+  domain: 'locations',
+  ledgers,
+  achievements: createInitialAchievementState(),
+  persisting: true,
+});
 
 // Polygon and Intersect are not legible at 32px on their own; DESIGN.md accepts
 // them only "paired with the visible ... label", so the label has to be real
@@ -108,13 +116,20 @@ assert.ok(
   supportedLocationContinents.length < CONTINENTS.length,
   'This check is only meaningful while some continent is still an unshipped shell.',
 );
+// A shipped continent is a button; an unshipped one renders the same row class
+// on an inert span, so the element — not just the class — carries the contract.
 assert.equal(
-  (locationsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  (locationsIndex.match(/<button class="continent-row__open"/g) ?? []).length,
   supportedLocationContinents.length,
-  'Locations exposes exactly one navigation row per supported continent.',
+  'Locations exposes exactly one navigation control per supported continent.',
 );
 assert.equal(
-  (locationsIndex.match(/data-action="quick-play"/g) ?? []).length,
+  (locationsIndex.match(/<span class="continent-row__open"/g) ?? []).length,
+  CONTINENTS.length - supportedLocationContinents.length,
+  'Every unshipped continent renders as an inert row rather than a control.',
+);
+assert.equal(
+  (locationsIndex.match(/continent-row__play|quick-play/g) ?? []).length,
   0,
   'The continent index contains no row-level Play shortcut.',
 );
@@ -122,7 +137,7 @@ const shellTags = [...locationsIndex.matchAll(/<(div|button)[^>]*continent-row--
 assert.ok(shellTags.length > 0, 'Locations still marks the continents it has not shipped.');
 for (const [tag, tagName] of shellTags) {
   assert.equal(tagName, 'div', 'An unshipped continent is not a button.');
-  assert.equal(/data-action/.test(tag), false, 'An unshipped continent carries no action.');
+  assert.equal(/onclick|continent-row__open/.test(tag), false, 'An unshipped continent carries no action.');
 }
 assert.ok(
   seenText(locationsIndex).includes('Coming soon'),

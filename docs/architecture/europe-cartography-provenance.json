@@ -52,9 +52,9 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.0020722654680643366,
+    "weightThreshold": 0.004763548300226357,
     "coordinateCountBefore": 125770,
-    "coordinateCountAfter": 90637
+    "coordinateCountAfter": 90578
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
@@ -65,6 +65,7 @@
     "russia": "one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so the SVG viewport can crop eastern geometry without shrinking Europe",
     "france": "one canonical whole-country FRA geometry including French Guiana; excluded from Europe fit/focus so overseas geometry does not distort Europe",
     "norway": "one canonical whole-country NOR geometry; remote multipart source geometry is excluded from Europe fit/focus",
+    "netherlands": "one canonical whole-country NLD geometry including Bonaire, Curacao, Saba and St Eustatius; those Caribbean parts are 0.58% of its projected area but set both the west and south edge of the Western Europe frame, so NLD is excluded from Europe fit/focus exactly as FRA is",
     "microstates": "AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical polygon geometry is retained",
     "turkiyeCyprusCaucasus": "TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum",
     "kosovo": "non-scoring source context; no Atlas application-country target",

@@ -52,9 +52,9 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.00035597811232459603,
+    "weightThreshold": 0.001899343520426115,
     "coordinateCountBefore": 157545,
-    "coordinateCountAfter": 114751
+    "coordinateCountAfter": 114766
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
@@ -66,7 +66,7 @@
     "turkey": "canonical Asia-owned TUR with whole-country geometry and complete cross-Europe adjacency",
     "cyprus": "canonical Asia-owned CYP",
     "kazakhstan": "canonical Asia-owned KAZ with whole-country geometry",
-    "russia": "canonical Europe-owned RUS rendered as non-scoring Asia context; complete adjacency remains global",
+    "russia": "canonical Europe-owned RUS rendered as non-scoring Asia context; excluded from the Asia viewport fit only, so trans-antimeridian geometry cannot scale down the canvas every Asian country is measured against; complete adjacency remains global",
     "caucasus": "ARM, AZE and GEO are learner-facing Caucasus and are excluded from Middle East",
     "taiwan": "non-scoring source context under the current 195-country Atlas catalogue",
     "palestineIsrael": "PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view",
@@ -84,9 +84,9 @@
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
     "canvasUnits": "Asia 835x723 projected canvas units",
     "physicalTolerance": {
-      "ocean": 0.6,
-      "lakes": 0.25,
-      "coastline": 0.5
+      "ocean": 1.4,
+      "lakes": 0.6,
+      "coastline": 1.15
     },
     "precisionSensitiveCountryIds": []
   }

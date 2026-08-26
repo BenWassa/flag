@@ -228,4 +228,111 @@ resetPerfectRunStreakStorage();
 assert.deepEqual(loadPerfectRunStreakState(), initialStreaks, 'Explicit streak reset returns to deterministic empty state.');
 assert.equal(memory.has(PERFECT_RUN_STREAK_STORAGE_KEY), false, 'Explicit streak reset removes the durable streak key.');
 
-console.log('Achievement verification passed: two-consecutive-perfect-run region/domain mastery, guarded region/continent/world completion, and versioned persistence for both earned achievements and in-progress streaks.');
+// Issue #108: qualification integrity. Region x domain Mastery claims a complete
+// region, so a Play that covered only part of one must not advance — or reset —
+// the streak. Flags, Outlines and Neighbours used to launch a ten-question
+// sample, so in any region with more than ten targets they could award
+// permanent Mastery on a sample of it.
+// AppStore writes its learning ledgers through window.localStorage, so the store
+// needs the same in-memory stand-in the persistence checks above already use.
+Object.defineProperty(globalThis, 'window', {
+  configurable: true,
+  value: {
+    localStorage: globalThis.localStorage,
+    addEventListener() {}, removeEventListener() {},
+    setTimeout(fn) { return setTimeout(fn, 0); },
+    clearTimeout(handle) { clearTimeout(handle); },
+  },
+});
+const { AppStore } = await import('../dist/state/store.js');
+const { COUNTRIES } = await import('../dist/data/countries.js');
+const { countriesInScope } = await import('../dist/domain/progress.js');
+const { coveredFullRegion, isFullRegionPlayLaunch, FULL_REGION_ROUND_SIZE } = await import('../dist/domain/achievements.js');
+
+assert.equal(coveredFullRegion(['A', 'B'], ['A', 'B']), true, 'A round covering every supported target qualifies.');
+assert.equal(coveredFullRegion(['A', 'B'], ['A']), false, 'A sampled round does not qualify.');
+assert.equal(coveredFullRegion(['A', 'B'], ['A', 'A', 'B']), true, 'A repeated target does not break an otherwise complete round.');
+assert.equal(coveredFullRegion(['A', 'B'], ['A', 'C']), false, 'Covering a different country does not stand in for a missing one.');
+assert.equal(coveredFullRegion([], []), false, 'An empty supported set never qualifies.');
+
+const regionScope = { kind: 'region', id: 'west-africa', label: 'West Africa' };
+assert.equal(isFullRegionPlayLaunch(regionScope, 'test'), true, 'An ordinary region Play is a full-region launch.');
+assert.equal(isFullRegionPlayLaunch(regionScope, 'learn'), false, 'Learn is not a Play result at all.');
+assert.equal(isFullRegionPlayLaunch(regionScope, 'test', ['SEN']), false, 'A review or repeat round names its own targets and cannot qualify.');
+assert.equal(
+  isFullRegionPlayLaunch({ kind: 'continent', id: 'africa', label: 'Africa' }, 'test'),
+  false,
+  'Mastery is a region unit, so continent Play is not a full-region launch.',
+);
+
+const westAfricaCountryIds = countriesInScope(COUNTRIES, regionScope).map((country) => country.id);
+assert.ok(
+  westAfricaCountryIds.length > 10,
+  'West Africa has more than ten targets, so it is a region where a sampled round used to be able to qualify.',
+);
+
+// A normal region Play now covers the complete region rather than ten of it.
+memory.clear();
+const fullStore = new AppStore();
+assert.equal(fullStore.startSession(regionScope, 'test', FULL_REGION_ROUND_SIZE), true);
+assert.equal(
+  fullStore.session.questions.length,
+  westAfricaCountryIds.length,
+  'A region Play launched at full coverage asks every supported country in the region.',
+);
+
+// Two consecutive perfect full-region rounds earn Mastery.
+// advance() returns the result on the final question and null before it, so the
+// round is driven to completion rather than by watching the session field.
+function playRound(store, size, pickAnswer) {
+  assert.equal(store.startSession(regionScope, 'test', size), true);
+  for (let step = 0; step < store.session.questions.length; step += 1) {
+    const question = store.session.questions[store.session.currentIndex];
+    store.answer(pickAnswer(question));
+    if (store.advance()) return;
+  }
+  throw new Error('Round did not finish.');
+}
+
+const answerCorrectly = (question) => question.countryId;
+const answerWrongly = (question) => question.optionCountryIds.find((id) => id !== question.countryId) ?? question.countryId;
+
+function playPerfectRound(store, size) {
+  playRound(store, size, answerCorrectly);
+}
+
+memory.clear();
+const earning = new AppStore();
+playPerfectRound(earning, FULL_REGION_ROUND_SIZE);
+assert.equal(earning.perfectRunStreaks.streaks['west-africa:flags'], 1, 'One perfect full-region Play advances the streak.');
+playPerfectRound(earning, FULL_REGION_ROUND_SIZE);
+assert.ok(
+  earning.achievements.regionDomainMastery?.['west-africa:flags']
+    ?? regionDomainQualifies('west-africa', 'flags', createRegionDomainPerfectRunQualification(earning.perfectRunStreaks)),
+  'Two consecutive perfect full-region Play rounds earn region x domain Mastery.',
+);
+
+// The bug: a perfect ten-question sample of the same region must not count.
+memory.clear();
+const sampling = new AppStore();
+playPerfectRound(sampling, 10);
+assert.equal(
+  sampling.perfectRunStreaks.streaks['west-africa:flags'] ?? 0,
+  0,
+  'A perfect ten-question sample of a larger region does not advance the streak.',
+);
+
+// A sampled round is not evidence either way, so it must not destroy a streak
+// the learner actually earned.
+memory.clear();
+const preserving = new AppStore();
+playPerfectRound(preserving, FULL_REGION_ROUND_SIZE);
+assert.equal(preserving.perfectRunStreaks.streaks['west-africa:flags'], 1);
+playRound(preserving, 10, answerWrongly);
+assert.equal(
+  preserving.perfectRunStreaks.streaks['west-africa:flags'],
+  1,
+  'A failed sampled round does not reset a streak it could never have earned.',
+);
+
+console.log('Achievement verification passed: two-consecutive-perfect-run region/domain mastery, guarded region/continent/world completion, full-region Play qualification, and versioned persistence for both earned achievements and in-progress streaks.');

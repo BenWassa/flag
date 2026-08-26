@@ -43,6 +43,16 @@ Mediterranean prototype evidence are recorded in
 so the three largest measured wins were split out rather than folded into the
 pattern work. Do these before adding further insets:
 
+**#115, #116 and #86 are implemented together** on
+`claude/open-issues-review-plan-tz6n9e`, because the two framing fixes share one
+four-continent regeneration and #86's clipping is what returns Asia and Europe
+inside their payload budgets afterwards. Measured on-screen linear change:
+Western Europe **4.50x**, whole Europe **1.59x**, every Asian country **2.30x**
+at maximum zoom, with every Asian region's opening frame also improving
+(1.09x-2.30x) because three of them were pinned at the 180x170 focus floor. No
+region on either continent got smaller. Evidence lives in
+[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
+
 - [#115 — focus-exclude the Netherlands' Caribbean parts](https://github.com/BenWassa/flag/issues/115).
   Bonaire and Curaçao are 0.58% of `NLD` and about 1.2 × 1.0 CSS px on screen,
   yet they set both the west and south edge of the Western Europe frame.
@@ -54,6 +64,19 @@ pattern work. Do these before adding further insets:
   because max zoom is relative to the canvas. Also resolves the dead
   `fitContextCountryIds` entry.
 - [#117 — clip locator and callout hit surfaces](https://github.com/BenWassa/flag/issues/117).
+  **Implemented** on the same branch. Rather than build an even-odd exclusion
+  clip per mark — which would add a copy of the scope's paths for every assisted
+  country — the assist discs moved into a `.map-assist-hits` layer beneath every
+  country shape, so a real polygon always wins its own territory and a disc can
+  only claim open water or non-scoring context. The visible locator, callout
+  target and leader line became `pointer-events: none` in the same change: they
+  sit above whatever country they cross, so leaving them hit-testable
+  reintroduced the same theft (Liechtenstein's mark reaches well into eastern
+  Germany). Where two discs still overlap over water the smaller mark wins,
+  which is an explicit precedence rather than array order in `map-scopes.ts`.
+  `tests/browser/map-hit-precedence.spec.ts` samples the points a disc covers
+  inside a neighbour's real polygon and asserts the browser answers the
+  neighbour.
   The 44 CSS px assist discs are unclipped, so an assisted target silently steals
   taps from co-active neighbours. Only the Maldives locator has clean clearance
   across all of Europe and Asia. Likely a prerequisite for wider inset rollout.

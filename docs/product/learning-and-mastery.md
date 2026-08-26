@@ -113,19 +113,14 @@ Learn, Review, continent Play and World Play do not feed this streak.
 
 ### Complete-region coverage defect (#108)
 
-The intended product requirement is that the two qualifying results cover the **entire current supported region target set**.
+The product requirement is that the two qualifying results cover the **entire current supported region target set**, and issue **#108** made that true.
 
-That is not fully enforced in v1.0:
+- Ordinary region Play covers the complete region in every domain. Locations already built its session from the full scope; Flags, Outlines and Neighbours now launch at full coverage instead of 10 targets.
+- "Complete supported target set" is each domain's own answer, captured from the launch: countries in scope for Flags, the loaded asset's countries for Locations, countries in scope with generated geometry for Outlines, and eligible adjacency targets for Neighbours. Neighbours defers targets whose adjacency is incomplete, so measuring against the curriculum instead would have made its Mastery unreachable.
+- The achievement recorder checks region scope, perfect outcome **and** set-equal coverage of that captured set. A round launched at a smaller size is measured against the whole region and does not qualify.
+- A round that is not full-region evidence cannot reset a streak either, so practising a short sample never destroys progress the learner earned.
 
-- Locations normal region Play uses all countries in the loaded selected-scope asset;
-- Flags normal region Play defaults to 10 questions;
-- Outlines normal region Play explicitly defaults to 10 questions;
-- Neighbours normal region Play explicitly defaults to 10 targets;
-- the achievement recorder currently checks region scope + perfect outcome, not target-set completeness.
-
-Therefore regions with more than 10 eligible targets can currently earn Flags, Outlines or Neighbours Mastery from two perfect 10-target region Play results. Issue **#108** owns the correction.
-
-Documentation must preserve both truths: the live v1 behaviour above, and the locked desired full-region qualification that #108 will restore.
+Mastery already awarded under the looser rule stays awarded: earned mastery is persistent under the current model, and #108 changes what qualifies from now on rather than re-auditing history.
 
 ## Perfect round versus Mastery
 

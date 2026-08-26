@@ -130,8 +130,8 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
   // Whole-country polygons stay canonical. Remote or overseas parts are
   // excluded only from Europe viewport fitting/focus; the SVG viewBox crops
   // them visually without creating a second geometry source.
-  fitExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
-  focusExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR']),
+  fitExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR', 'NLD']),
+  focusExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR', 'NLD']),
   // Europe and Asia span far more canvas than the Africa-calibrated baseline,
   // so their non-interactive physical context carries proportionally more
   // detail for no learning value. Simplifying ocean/coastline/lake context
@@ -144,6 +144,7 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
     russia: 'one canonical whole-country RUS geometry; excluded only from Europe viewport fit/focus so the SVG viewport can crop eastern geometry without shrinking Europe',
     france: 'one canonical whole-country FRA geometry including French Guiana; excluded from Europe fit/focus so overseas geometry does not distort Europe',
     norway: 'one canonical whole-country NOR geometry; remote multipart source geometry is excluded from Europe fit/focus',
+    netherlands: 'one canonical whole-country NLD geometry including Bonaire, Curacao, Saba and St Eustatius; those Caribbean parts are 0.58% of its projected area but set both the west and south edge of the Western Europe frame, so NLD is excluded from Europe fit/focus exactly as FRA is',
     microstates: 'AND/LIE/LUX/MCO/SMR/VAT use mainland callouts after phone-scale geometry audit; MLT uses the island locator; canonical polygon geometry is retained',
     turkiyeCyprusCaucasus: 'TUR/CYP/ARM/AZE/GEO are keyed non-scoring context; canonical ownership remains outside Europe curriculum',
     kosovo: 'non-scoring source context; no Atlas application-country target',
@@ -204,7 +205,13 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     Object.freeze({ name: 'Aral Sea', pattern: 'aral', flags: 'i', required: false }),
   ]),
   localContextCountryIds: Object.freeze(['EGY', 'RUS']),
-  fitContextCountryIds: Object.freeze(['EGY']),
+  // Russia is non-scoring Asia context, yet its trans-antimeridian geometry set
+  // the Asia canvas's west edge at Chukotka. Because DEFAULT_MAX_ZOOM is
+  // relative to the canvas, that under-scaled every Asian country by 2.31x even
+  // at full pinch. It is excluded from the fit only: Russia stays in the
+  // rendered context and in every opening frame it borders, and one canonical
+  // whole-country RUS geometry with complete cross-continent adjacency remains.
+  fitExcludeCountryIds: Object.freeze(['RUS']),
   localContextBounds: null,
   extraAdjacencyCountryIds: Object.freeze(['EGY']),
   allowedContextPatterns: Object.freeze([
@@ -225,7 +232,13 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   // so their non-interactive physical context carries proportionally more
   // detail for no learning value. Simplifying ocean/coastline/lake context
   // (never country geometry or adjacency) recovers ~30%/~21% of gzip.
-  physicalTolerance: Object.freeze({ ocean: 0.6, coastline: 0.5, lakes: 0.25 }),
+  // Tolerances are canvas units, so excluding Russia from the fit — which draws
+  // every remaining feature 2.31x larger — made the old values simplify
+  // proportionally less and pushed gzip over budget on a smaller raw asset.
+  // Scaling them by the same factor restores the previous on-screen
+  // simplification of non-interactive context. Country geometry and adjacency
+  // are untouched by these tolerances.
+  physicalTolerance: Object.freeze({ ocean: 1.4, coastline: 1.15, lakes: 0.6 }),
   // West Asia is canonical classification only. Atlas navigates Middle East and
   // Caucasus instead, so West Asia gets no learner-facing map focus.
   hiddenFocusRegionIds: Object.freeze(['west-asia']),
@@ -241,7 +254,7 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     turkey: 'canonical Asia-owned TUR with whole-country geometry and complete cross-Europe adjacency',
     cyprus: 'canonical Asia-owned CYP',
     kazakhstan: 'canonical Asia-owned KAZ with whole-country geometry',
-    russia: 'canonical Europe-owned RUS rendered as non-scoring Asia context; complete adjacency remains global',
+    russia: 'canonical Europe-owned RUS rendered as non-scoring Asia context; excluded from the Asia viewport fit only, so trans-antimeridian geometry cannot scale down the canvas every Asian country is measured against; complete adjacency remains global',
     caucasus: 'ARM, AZE and GEO are learner-facing Caucasus and are excluded from Middle East',
     taiwan: 'non-scoring source context under the current 195-country Atlas catalogue',
     palestineIsrael: 'PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view',
