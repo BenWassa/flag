@@ -1,0 +1,35 @@
+name: Issue 119 MapLibre spike
+
+on:
+  push:
+    branches: [spike/119-maplibre-atlas-runtime]
+
+permissions:
+  contents: read
+
+jobs:
+  measure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install Atlas dependencies
+        run: npm install
+      - name: Install disposable renderer candidate without changing manifests
+        run: npm install --no-save --package-lock=false maplibre-gl@6.6.0
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Execute matched spike and measurements
+        run: node experiments/spatial-maplibre/run-spike.mjs
+      - name: Upload evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-119-maplibre-spike-evidence
+          path: |
+            spike-evidence-maplibre
+            dist-spike-maplibre
+          if-no-files-found: warn
