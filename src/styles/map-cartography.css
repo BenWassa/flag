@@ -13,6 +13,7 @@
 
 .map-stage__surface,
 .map-stage__frame {
+  position: relative;
   width: 100%;
   min-width: 0;
   min-height: 0;
@@ -147,9 +148,99 @@
 .map-viewport-control:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
 .map-viewport-control--label { min-width: 56px; font-size: 11px; font-weight: 750; }
 
+/* Issue 113 — cluster inset panel.
+
+   Screen-space on purpose. A box drawn on the canvas competes with the map for
+   the same room, which caps its magnification: for the Levant that leaves the
+   smallest target near 11 CSS px, well under the 44 px contract. Fixing the
+   panel in CSS pixels decouples its scale from the map's zoom, so every member
+   gets a full touch surface.
+
+   It is shown only while the current question's country is inside it, so it is
+   the question's answer surface rather than persistent chrome. The frame edge
+   and the outlined source window carry the honesty: the cluster has not moved,
+   this is only a closer look, and nothing inside implies adjacency outside. */
+.map-inset {
+  position: absolute;
+  z-index: 2;
+  box-sizing: content-box;
+  width: var(--map-inset-width);
+  height: auto;
+  /* Generated panels are capped at 260px and the supported map stage is at
+     least 380px tall. Do not independently squeeze either axis here: doing so
+     would shrink the derived 44px answer surfaces below their contract. */
+  display: grid;
+  grid-template-rows: var(--map-inset-height) auto;
+  border: 1.5px solid var(--line-strong);
+  border-radius: var(--radius-sm);
+  background: var(--map-ocean);
+  overflow: hidden;
+}
+
+.map-inset--bottom-right { right: var(--space-3); bottom: var(--space-3); }
+.map-inset--bottom-left { left: var(--space-3); bottom: var(--space-3); }
+.map-inset--top-right { right: var(--space-3); top: var(--space-3); }
+.map-inset--top-left { left: var(--space-3); top: var(--space-3); }
+
+.map-inset__svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.map-inset__ground { fill: var(--map-ocean); }
+
+/* Only the panel's own members answer here. Everything else is orientation, so
+   a tap near Syria inside the panel must not resolve as one of the members. */
+.map-inset__context,
+.map-inset__boundaries { pointer-events: none; }
+
+/* The touch surface is the target; the drawn country stays true to its shape. */
+.map-inset__hit {
+  fill: transparent;
+  stroke: none;
+}
+
+.map-inset__hit:focus-visible {
+  outline: none;
+  fill: color-mix(in srgb, var(--action) 18%, transparent);
+  stroke: var(--action);
+  stroke-width: 0.3;
+}
+
+.map-inset__label {
+  margin: 0;
+  padding: 2px 6px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The window the panel magnifies, outlined where it actually is. */
+.map-inset-source {
+  fill: none;
+  stroke: var(--map-context-border);
+  stroke-width: 1.2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+  pointer-events: none;
+}
+
 @media (forced-colors: active) {
   .map-water--ocean path,
   .map-water--lakes path { fill: Canvas; }
+
+  .map-inset { border-color: CanvasText; background: Canvas; }
+  .map-inset__ground { fill: Canvas; }
+  .map-inset-source { stroke: CanvasText; }
+  .map-inset__label { background: Canvas; color: CanvasText; border-top-color: CanvasText; }
 
   .map-coastline,
   .map-shared-boundary { stroke: CanvasText; }

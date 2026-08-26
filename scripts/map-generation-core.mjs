@@ -27,6 +27,16 @@ const {
 // widths instead of being cropped by the frame edge.
 const HIT_SURFACE_FOCUS_RESERVE = 34;
 
+// Inset panel sizing. The panel is measured in CSS pixels because its scale is
+// deliberately independent of the map's zoom.
+const HIT_SURFACE_CSS_PX = 44;
+// Anchors are spaced slightly wider than the touch surface so neighbouring
+// members inside a panel cannot overlap each other's taps.
+const INSET_MARK_SEPARATION_PX = 48;
+const INSET_SOURCE_PADDING = 1.2;
+// A panel larger than this stops being an answer surface and becomes the screen.
+const INSET_MAX_PANEL_PX = 260;
+
 function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -441,6 +451,206 @@ function boundsToFocus(bounds, padding = 26) {
   };
 }
 
+function geometryBounds(geometry) {
+  const bounds = [[Infinity, Infinity], [-Infinity, -Infinity]];
+  for (const [, x, y] of (geometry.path ?? geometry.outlinePath ?? '').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+    bounds[0][0] = Math.min(bounds[0][0], Number(x));
+    bounds[0][1] = Math.min(bounds[0][1], Number(y));
+    bounds[1][0] = Math.max(bounds[1][0], Number(x));
+    bounds[1][1] = Math.max(bounds[1][1], Number(y));
+  }
+  for (const circle of [geometry.locator, geometry.callout?.target]) {
+    if (!circle) continue;
+    bounds[0][0] = Math.min(bounds[0][0], circle.cx - circle.r);
+    bounds[0][1] = Math.min(bounds[0][1], circle.cy - circle.r);
+    bounds[1][0] = Math.max(bounds[1][0], circle.cx + circle.r);
+    bounds[1][1] = Math.max(bounds[1][1], circle.cy + circle.r);
+  }
+  return bounds;
+}
+
+/** Rings of an absolute M/L/Z path, as coordinate arrays. */
+function pathRings(d) {
+  return d.split('M').filter(Boolean).map((subpath) =>
+    [...subpath.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)].map((match) => [Number(match[1]), Number(match[2])]));
+}
+
+function ringContains(ring, px, py) {
+  let contained = false;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [xi, yi] = ring[i];
+    const [xj, yj] = ring[j];
+    if ((yi > py) !== (yj > py) && px < ((xj - xi) * (py - yi)) / (yj - yi) + xi) contained = !contained;
+  }
+  return contained;
+}
+
+function distanceToRing(ring, px, py) {
+  let nearest = Infinity;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i, i += 1) {
+    const [x1, y1] = ring[j];
+    const [x2, y2] = ring[i];
+    const dx = x2 - x1;
+    const dy = y2 - y1;
+    const t = Math.max(0, Math.min(1, ((px - x1) * dx + (py - y1) * dy) / (dx * dx + dy * dy || 1)));
+    nearest = Math.min(nearest, Math.hypot(px - (x1 + t * dx), py - (y1 + t * dy)));
+  }
+  return nearest;
+}
+
+/**
+ * Pole of inaccessibility — the interior point furthest from any edge.
+ *
+ * A polygon centroid can fall outside a crescent or a multipart country, which
+ * would anchor a tap surface in the sea. This grid-refines instead, so the
+ * anchor is always inside real land.
+ */
+function poleOfInaccessibility(rings) {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const ring of rings) {
+    for (const [x, y] of ring) {
+      x0 = Math.min(x0, x); y0 = Math.min(y0, y);
+      x1 = Math.max(x1, x); y1 = Math.max(y1, y);
+    }
+  }
+  let best = { radius: -1, x: (x0 + x1) / 2, y: (y0 + y1) / 2 };
+  let step = Math.max(x1 - x0, y1 - y0) / 40;
+  for (let pass = 0; pass < 7; pass += 1) {
+    const centreX = best.x;
+    const centreY = best.y;
+    for (let i = -20; i <= 20; i += 1) {
+      for (let j = -20; j <= 20; j += 1) {
+        const x = centreX + i * step;
+        const y = centreY + j * step;
+        // SVG country paths use the even-odd relationship between subpaths:
+        // outer rings add land and inner rings remove holes. Testing only
+        // whether any ring contains the point can place an anchor in a lake.
+        const inside = rings.reduce((contained, ring) => ringContains(ring, x, y) ? !contained : contained, false);
+        if (!inside) continue;
+        const radius = Math.min(...rings.map((ring) => distanceToRing(ring, x, y)));
+        if (radius > best.radius) best = { radius, x, y };
+      }
+    }
+    step /= 4;
+  }
+  return best;
+}
+
+/**
+ * A cluster inset is a screen-space panel, so its scale is set in CSS pixels
+ * rather than canvas units. Only that decoupling can satisfy the 44 CSS px
+ * touch contract: a box placed on the canvas competes with the map for the same
+ * room, which caps its magnification far below what these clusters need.
+ *
+ * Configuration names the countries, the label and the corner. The window, the
+ * tap anchors and the pixel size are all derived from generated geometry.
+ */
+export function buildInsets(config, geometry, catalog) {
+  const specs = config.insets ?? [];
+  if (!specs.length) return [];
+
+  // The map never names a selectable country, because the name is the answer.
+  // An inset label therefore names water or a region, never a country.
+  const countryNames = new Set(catalog.map((row) => row.name.toLowerCase()));
+
+  const insetIds = new Set();
+  const assignedCountryIds = new Set();
+  const validAnchors = new Set(['top-left', 'top-right', 'bottom-left', 'bottom-right']);
+
+  return specs.map((spec) => {
+    if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(spec.id) || insetIds.has(spec.id)) {
+      throw new Error(`${config.displayName} inset id "${spec.id}" must be unique lowercase kebab-case.`);
+    }
+    insetIds.add(spec.id);
+    if (!validAnchors.has(spec.anchor)) {
+      throw new Error(`${config.displayName} inset ${spec.id} has unsupported anchor "${spec.anchor}".`);
+    }
+    if (new Set(spec.countryIds).size !== spec.countryIds.length) {
+      throw new Error(`${config.displayName} inset ${spec.id} repeats a country.`);
+    }
+    for (const countryId of spec.countryIds) {
+      if (assignedCountryIds.has(countryId)) {
+        throw new Error(`${config.displayName} inset country ${countryId} belongs to more than one panel.`);
+      }
+      assignedCountryIds.add(countryId);
+    }
+    if (countryNames.has(spec.label.toLowerCase())) {
+      throw new Error(
+        `${config.displayName} inset ${spec.id} is labelled "${spec.label}", which is a country name and would `
+        + 'hand the learner the answer. Label an inset by its water or region.',
+      );
+    }
+    if (spec.countryIds.length < 2) {
+      throw new Error(
+        `${config.displayName} inset ${spec.id} needs at least two members. A lone small country is a locator or `
+        + 'leader-line case; a panel is for clusters that defeat both.',
+      );
+    }
+
+    let x0 = Infinity;
+    let y0 = Infinity;
+    let x1 = -Infinity;
+    let y1 = -Infinity;
+    const marks = spec.countryIds.map((id) => {
+      const member = geometry[id];
+      if (!member) throw new Error(`${config.displayName} inset ${spec.id} names unknown country ${id}.`);
+      const rings = pathRings(member.path ?? member.outlinePath ?? '');
+      if (!rings.length) throw new Error(`${config.displayName} inset ${spec.id} member ${id} has no geometry.`);
+      const bounds = geometryBounds(member);
+      x0 = Math.min(x0, bounds[0][0]); y0 = Math.min(y0, bounds[0][1]);
+      x1 = Math.max(x1, bounds[1][0]); y1 = Math.max(y1, bounds[1][1]);
+      const pole = poleOfInaccessibility(rings);
+      return { countryId: id, cx: Number(pole.x.toFixed(2)), cy: Number(pole.y.toFixed(2)) };
+    });
+
+    // Members must not merely fit — each needs its own 44 px surface, so the
+    // panel is scaled by the closest pair of anchors, not by the cluster bounds.
+    let closest = Infinity;
+    for (let i = 0; i < marks.length; i += 1) {
+      for (let j = i + 1; j < marks.length; j += 1) {
+        closest = Math.min(closest, Math.hypot(marks[i].cx - marks[j].cx, marks[i].cy - marks[j].cy));
+      }
+    }
+    const pxPerUnit = INSET_MARK_SEPARATION_PX / closest;
+    const source = {
+      x: Number((x0 - INSET_SOURCE_PADDING).toFixed(2)),
+      y: Number((y0 - INSET_SOURCE_PADDING).toFixed(2)),
+      width: Number((x1 - x0 + INSET_SOURCE_PADDING * 2).toFixed(2)),
+      height: Number((y1 - y0 + INSET_SOURCE_PADDING * 2).toFixed(2)),
+    };
+    // Round the panel up, then read the scale back off the rounded size. Deriving
+    // the hit radius from the ideal scale instead would ship a surface fractionally
+    // under the contract it exists to guarantee.
+    // The SVG scales by the smaller of the two axes, so the height is rounded up
+    // against the shipped width scale. Rounding each axis independently would let
+    // height win and quietly shrink every touch surface below the contract.
+    const width = Math.ceil(source.width * pxPerUnit);
+    const shippedPxPerUnit = width / source.width;
+    const size = { width, height: Math.ceil(source.height * shippedPxPerUnit) };
+    if (size.width > INSET_MAX_PANEL_PX || size.height > INSET_MAX_PANEL_PX) {
+      throw new Error(
+        `${config.displayName} inset ${spec.id} needs a ${size.width}x${size.height} px panel to give every member a `
+        + `${HIT_SURFACE_CSS_PX} px target, which does not fit a phone stage. Split the cluster, or design a `
+        + 'schematic arrangement rather than a true-scale magnifier.',
+      );
+    }
+
+    return {
+      id: spec.id,
+      label: spec.label,
+      countryIds: [...spec.countryIds],
+      source,
+      marks,
+      size,
+      hitRadius: Number(((HIT_SURFACE_CSS_PX / 2) / shippedPxPerUnit).toFixed(4)),
+      anchor: spec.anchor,
+    };
+  });
+}
+
 function featureName(featureValue) {
   const properties = featureValue?.properties ?? {};
   return String(
@@ -636,6 +846,10 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const scopeFocus = {
     [config.id]: focusForIds(scoredCatalog.map((row) => row.id)),
   };
+  // An inset panel is screen-space, so it changes touch size rather than
+  // framing. Opening frames stay exactly as they are, and every member is still
+  // drawn and tappable in its true place on the map.
+  const insets = buildInsets(config, geometry, scoredCatalog);
   // Canonical classification regions that Atlas deliberately does not expose to
   // learners get no focus entry, so no navigation can resolve to them.
   const hiddenFocusRegions = new Set(config.hiddenFocusRegionIds ?? []);
@@ -710,7 +924,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const output = `// GENERATED FILE. Do not hand-edit geometry.\n`
     + `// Run: npm run maps:generate\n`
     + `// Source/pipeline: scripts/generate-maps.mjs + scripts/map-generation-core.mjs + scripts/map-sources/natural-earth.json\n\n`
-    + `import type { MapCountryGeometry, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';\n\n`
+    + `import type { MapCountryGeometry, MapInset, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';\n\n`
     + `export const ${prefix}_VIEWBOX = '0 0 ${WIDTH} ${HEIGHT}';\n\n`
     + `export const ${prefix}_CARTOGRAPHY_PROVENANCE = ${serializeTs(provenance)} as const;\n\n`
     + `export const ${prefix}_GEOMETRY: Readonly<Record<string, MapCountryGeometry>> = ${serializeTs(geometry)};\n\n`
@@ -719,6 +933,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     + `export const ${prefix}_COASTLINE_PATHS: readonly string[] = ${serializeTs(coastlinePath ? [coastlinePath] : [])};\n\n`
     + `export const ${prefix}_WATER: Readonly<MapWaterLayers> = ${serializeTs({ oceanPath, lakes })};\n\n`
     + `export const ${prefix}_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = ${serializeTs(scopeFocus)};\n\n`
+    + `export const ${prefix}_INSETS: readonly MapInset[] = ${serializeTs(insets)};\n\n`
     + `export const ${prefix}_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = ${serializeTs(adjacency)};\n`;
 
   await writeFile(new URL(config.outputFilename, MAP_OUTPUT_DIR), output);

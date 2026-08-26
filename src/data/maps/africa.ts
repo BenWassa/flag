@@ -2,7 +2,7 @@
 // Run: npm run maps:generate
 // Source/pipeline: scripts/generate-maps.mjs + scripts/map-generation-core.mjs + scripts/map-sources/natural-earth.json
 
-import type { MapCountryGeometry, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
+import type { MapCountryGeometry, MapInset, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
 
 export const AFRICA_VIEWBOX = '0 0 835 723';
 
@@ -56,6 +56,8 @@ export const AFRICA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
     "height": 279.31
   }
 };
+
+export const AFRICA_INSETS: readonly MapInset[] = [];
 
 export const AFRICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   "DZA": [

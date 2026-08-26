@@ -77,6 +77,12 @@ Current interaction principles:
 8. enlarge practical hit targets only through documented geographically honest locators/assists;
 9. make resolved targets inert.
 
+For a dense cluster where ordinary hit expansion would make neighbouring
+answers overlap, a generated closer-view inset may temporarily supplement the
+true map. It must show the same canonical geometry, retain an outlined source
+window, avoid answer-revealing country names, and provide one distinct keyboard
+and touch target per member. The true location remains visible and tappable.
+
 Touch/pointer interaction includes the current pinch/wheel zoom and swipe/drag pan behaviour. Do not reintroduce a second map implementation for a launcher or domain variant.
 
 ## Feedback and colour

@@ -2,7 +2,7 @@
 // Run: npm run maps:generate
 // Source/pipeline: scripts/generate-maps.mjs + scripts/map-generation-core.mjs + scripts/map-sources/natural-earth.json
 
-import type { MapCountryGeometry, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
+import type { MapCountryGeometry, MapInset, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
 
 export const SOUTH_AMERICA_VIEWBOX = '0 0 835 723';
 
@@ -44,6 +44,8 @@ export const SOUTH_AMERICA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus
     "height": 414.64
   }
 };
+
+export const SOUTH_AMERICA_INSETS: readonly MapInset[] = [];
 
 export const SOUTH_AMERICA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   "BOL": [

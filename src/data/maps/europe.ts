@@ -2,7 +2,7 @@
 // Run: npm run maps:generate
 // Source/pipeline: scripts/generate-maps.mjs + scripts/map-generation-core.mjs + scripts/map-sources/natural-earth.json
 
-import type { MapCountryGeometry, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
+import type { MapCountryGeometry, MapInset, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
 
 export const EUROPE_VIEWBOX = '0 0 835 723';
 
@@ -50,6 +50,8 @@ export const EUROPE_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
     "height": 407.45
   }
 };
+
+export const EUROPE_INSETS: readonly MapInset[] = [];
 
 export const EUROPE_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   "DNK": [

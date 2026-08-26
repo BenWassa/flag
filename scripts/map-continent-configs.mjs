@@ -181,6 +181,23 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   ]),
   islandLocatorIds: Object.freeze(['BHR', 'MDV', 'SGP']),
   callouts: Object.freeze({}),
+  // Issue 113 prototype. Lebanon, Israel and Palestine sit within four canvas
+  // units of each other, so no leader line can be placed without its own touch
+  // surface covering a neighbour that is also an answer. Measured at the Middle
+  // East opening view on a 320-wide phone, Palestine's tappable disc is 2.5 CSS
+  // px. The panel gives all three the full 44 px.
+  //
+  // The Gulf cluster (BHR/QAT/KWT/ARE) fails the same clearance test but needs a
+  // 369x325 px panel to stay true-scale, so it needs a schematic arrangement and
+  // is deliberately left to follow-up work rather than forced in here.
+  insets: Object.freeze([
+    Object.freeze({
+      id: 'eastern-mediterranean',
+      label: 'Eastern Mediterranean',
+      countryIds: Object.freeze(['LBN', 'ISR', 'PSE']),
+      anchor: 'bottom-right',
+    }),
+  ]),
   lakes: Object.freeze([
     Object.freeze({ name: 'Caspian Sea', pattern: 'caspian', flags: 'i', required: false }),
     Object.freeze({ name: 'Lake Baikal', pattern: 'baikal', flags: 'i', required: true }),

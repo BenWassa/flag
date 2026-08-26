@@ -61,6 +61,49 @@ export interface MapCountryGeometry {
   callout?: MapCountryCallout;
 }
 
+/** Where a country can actually be tapped inside an inset, in canvas units. */
+export interface MapInsetMark {
+  countryId: string;
+  cx: number;
+  cy: number;
+}
+
+export type MapInsetAnchor = 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right';
+
+/**
+ * A magnified window onto part of the same continent canvas, for clusters of
+ * countries too small and too tightly packed to tap on the map itself.
+ *
+ * The panel is sized in CSS pixels, not canvas units, and that is the whole
+ * point. A box living on the canvas competes with the map for the same space,
+ * so its magnification is capped by the frame it sits in — for the Levant that
+ * caps the smallest target at roughly 11 CSS px, well under the 44 px contract.
+ * Fixing the panel in screen space decouples its scale from the map's, so every
+ * member reaches a full 44 px touch surface.
+ *
+ * The panel is shown only while the current question's country is inside it, so
+ * it is the question's own answer surface rather than persistent chrome. The
+ * source window stays outlined on the map, so the panel never implies the
+ * cluster is somewhere it is not.
+ */
+export interface MapInset {
+  id: string;
+  /** Learner-facing label. Names water or a region — never a country, which would be the answer. */
+  label: string;
+  /** Scored countries answerable inside this panel. */
+  countryIds: string[];
+  /** Canvas-space window the panel magnifies. */
+  source: MapViewportFocus;
+  /** Tap anchors, one per member, in canvas units. */
+  marks: MapInsetMark[];
+  /** Panel size in CSS px, derived so every member clears the 44 px touch contract. */
+  size: { width: number; height: number };
+  /** Hit-surface radius in canvas units, equal to 22 CSS px at the panel's fixed scale. */
+  hitRadius: number;
+  /** Stage corner the panel occupies. */
+  anchor: MapInsetAnchor;
+}
+
 export interface MapRegionAsset {
   scope: StudyScope;
   viewBox: string;
@@ -77,6 +120,8 @@ export interface MapRegionAsset {
   water?: MapWaterLayers;
   /** Preferred first viewport within the full continent canvas. */
   initialFocus?: MapViewportFocus;
+  /** Framed magnified windows for distant or fragmented scoring geography. */
+  insets?: MapInset[];
 }
 
 export interface MapTargetState {
