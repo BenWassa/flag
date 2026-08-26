@@ -107,16 +107,15 @@ describe('Flags active round', () => {
   // Driven through a real AppStore round rather than a hand-built result, so
   // this covers the store/controller lifecycle the screen actually receives.
   it('reports a wrong answer on the results screen', () => {
+    // One question, so the Review list has exactly one row to assert on: a
+    // longer round can draw the same wrong option twice and match ambiguously.
     const store = new AppStore();
-    expect(store.startSession(WEST_AFRICA, 'test', 3)).toBe(true);
-    let wrongName = '';
-    for (let step = 0; step < 3; step += 1) {
-      const question = store.session!.questions[store.session!.currentIndex];
-      const wrong = question.optionCountryIds.find((id) => id !== question.countryId)!;
-      if (step === 0) wrongName = COUNTRY_BY_ID.get(wrong)!.name;
-      store.answer(wrong);
-      store.advance();
-    }
+    expect(store.startSession(WEST_AFRICA, 'test', 1)).toBe(true);
+    const question = store.session!.questions[0];
+    const wrong = question.optionCountryIds.find((id) => id !== question.countryId)!;
+    const wrongName = COUNTRY_BY_ID.get(wrong)!.name;
+    store.answer(wrong);
+    store.advance();
     const result = store.sessionResult!;
     renderWith(actions(), <RecognitionResultsScreen result={result} domain="flags" />);
 

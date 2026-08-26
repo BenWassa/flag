@@ -406,3 +406,55 @@ real generated assets rather than hand-made fixtures:
 
 Node 22 `npm run check` and full `npm test` green locally. This is the component
 half of #96–#99; their browser half is step 3c. No production behaviour changed.
+
+## Step 3b — #100 assertion migration: approach proven, first verifier migrated
+
+### The inventory
+
+19 verifiers are coupled to the retired presentation layer: 17 import
+`dist/ui/views/*` renderers (about 115 call sites) and 7 assert against
+`src/app.ts` source text (about 38 assertions). Those files carry roughly 1,080
+assertions in total, so this is the substantial part of #100 rather than a
+mechanical sweep.
+
+### The approach
+
+The invariants themselves are still worth asserting — British-English copy, IA
+structure, routing labels, accessibility semantics. What is wrong is only what
+they are asserted *against*. `scripts/lib/react-markup.mjs` renders the
+production React screens to static markup for the plain-Node suite, so the same
+invariants can point at what learners are actually served.
+
+Two obstacles were resolved:
+
+- the screens import PNG assets that Vite resolves and plain Node cannot, so
+  `scripts/lib/asset-stub-loader.mjs` redirects static asset specifiers to a
+  URL-shaped stub;
+- the screens call `useAtlasActions()`, so the helper wraps each screen in an
+  `AtlasActionsContext` provider whose every action is a no-op. Behaviour is
+  covered by the component and browser layers; these assertions are about
+  rendered output.
+
+This keeps the plain-Node verifier architecture intact. Moving the whole suite
+into vitest was the alternative and would have been far more disruptive.
+
+### What the migration is not
+
+It is not find-and-replace. React expresses an action through the control it
+renders, while the legacy renderers emitted `data-action` attributes, so each
+assertion needs re-expressing against the real markup. `verify-action-feedback`
+is migrated as the worked example, and doing it exposed that its continent-row
+check counted a class rather than an element: React renders a shipped continent
+as `<button class="continent-row__open">` and an unshipped one as an inert
+`<span>` carrying the same class. The replacement asserts both, which is
+stronger than what it replaced.
+
+### State
+
+- `verify-action-feedback.mjs`: migrated, passing.
+- 18 verifiers remain, plus the `tsconfig.verify.json` emit narrowing (#100
+  step 3) and the legacy source removal (step 4), which cannot start until no
+  verifier imports `dist/ui/views/*`.
+
+Node 22 `npm run check`, full `npm test` (twice, for flake) and the 15-test
+Chromium suite are green.
