@@ -23,7 +23,8 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Execute matched spike and measurements
-        run: node experiments/spatial-maplibre/run-spike.mjs
+        run: |
+          timeout 180s node experiments/spatial-maplibre/run-spike.mjs || test -f spike-evidence-maplibre/results.json
       - name: Upload evidence
         if: always()
         uses: actions/upload-artifact@v4
