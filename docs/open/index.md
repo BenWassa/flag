@@ -32,8 +32,9 @@ This directory mirrors active product/engineering work that benefits from a dura
 #111 is complete. Its launcher-list, seeded-progress and brushed-metal completion
 treatment decisions and verification evidence are recorded in
 [`issue-111-launcher-polish.md`](../closed/issue-111-launcher-polish.md).
-- [#112 — correct Africa Learn framing and Togo callout geometry](https://github.com/BenWassa/flag/issues/112).
-  Owns whole-continent mobile fit plus the generated Togo callout adjustment.
+#112 is complete. Its Africa opening-frame and generated Togo-callout decisions
+and verification evidence are recorded in
+[`issue-112-africa-framing-togo-callout.md`](../closed/issue-112-africa-framing-togo-callout.md).
 - [#113 — design a mobile callout-box pattern for distant and fragmented map locations](https://github.com/BenWassa/flag/issues/113).
   Audits Europe and Asia outliers and defines a reusable inset pattern before
   continent-specific rollout.
