@@ -378,3 +378,83 @@ The reconciliation therefore used:
 - PR #105 GitHub CI as the branch verification gate.
 
 No local `npm test`, manual browser session or physical-device session is claimed by this reconciliation task.
+
+## Step 3a — active-round component coverage (2026-08-26)
+
+Branch `claude/open-issues-review-plan-tz6n9e`, under the owner-approved
+re-sequencing recorded in `issue-89-execution-plan.md`.
+
+`src/react/test/active-rounds.test.tsx` adds 13 React/Testing Library tests over
+the four shipped active-round surfaces, built on real domain sessions and the
+real generated assets rather than hand-made fixtures:
+
+- **Flags** — question, choices and round position render; a press calls
+  `answerFlag` with the chosen id; an answered question shows the shared Play
+  outcome (`Not quite` / `Answer: <name>`) and disables every choice; a wrong
+  answer reaches Review on the results screen, driven through a real `AppStore`
+  round rather than a synthesised result.
+- **Outlines** — the silhouette is asked without naming itself: its only
+  accessible name is `Country silhouette to identify`, and the stage's text
+  never contains the answer; a press calls `answerOutline`.
+- **Locations** — the prompt names one target at a time over a rendered map;
+  every scoped country is an answerable target; a missed round reports the miss
+  count and offers Review mistakes; a clean round says so, shows the perfect
+  badge and offers no review.
+- **Neighbours** — the target and task headings render; typing reaches
+  `setNeighborQuery`; the explicit **No land neighbours** claim is present as a
+  deliberate answer; a wrong guess is reported back in the feedback region.
+
+Node 22 `npm run check` and full `npm test` green locally. This is the component
+half of #96–#99; their browser half is step 3c. No production behaviour changed.
+
+## Step 3b — #100 assertion migration: approach proven, first verifier migrated
+
+### The inventory
+
+19 verifiers are coupled to the retired presentation layer: 17 import
+`dist/ui/views/*` renderers (about 115 call sites) and 7 assert against
+`src/app.ts` source text (about 38 assertions). Those files carry roughly 1,080
+assertions in total, so this is the substantial part of #100 rather than a
+mechanical sweep.
+
+### The approach
+
+The invariants themselves are still worth asserting — British-English copy, IA
+structure, routing labels, accessibility semantics. What is wrong is only what
+they are asserted *against*. `scripts/lib/react-markup.mjs` renders the
+production React screens to static markup for the plain-Node suite, so the same
+invariants can point at what learners are actually served.
+
+Two obstacles were resolved:
+
+- the screens import PNG assets that Vite resolves and plain Node cannot, so
+  `scripts/lib/asset-stub-loader.mjs` redirects static asset specifiers to a
+  URL-shaped stub;
+- the screens call `useAtlasActions()`, so the helper wraps each screen in an
+  `AtlasActionsContext` provider whose every action is a no-op. Behaviour is
+  covered by the component and browser layers; these assertions are about
+  rendered output.
+
+This keeps the plain-Node verifier architecture intact. Moving the whole suite
+into vitest was the alternative and would have been far more disruptive.
+
+### What the migration is not
+
+It is not find-and-replace. React expresses an action through the control it
+renders, while the legacy renderers emitted `data-action` attributes, so each
+assertion needs re-expressing against the real markup. `verify-action-feedback`
+is migrated as the worked example, and doing it exposed that its continent-row
+check counted a class rather than an element: React renders a shipped continent
+as `<button class="continent-row__open">` and an unshipped one as an inert
+`<span>` carrying the same class. The replacement asserts both, which is
+stronger than what it replaced.
+
+### State
+
+- `verify-action-feedback.mjs`: migrated, passing.
+- 18 verifiers remain, plus the `tsconfig.verify.json` emit narrowing (#100
+  step 3) and the legacy source removal (step 4), which cannot start until no
+  verifier imports `dist/ui/views/*`.
+
+Node 22 `npm run check`, full `npm test` (twice, for flake) and the 15-test
+Chromium suite are green.

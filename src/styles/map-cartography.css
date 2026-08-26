@@ -74,6 +74,17 @@
   stroke: none;
 }
 
+/* Issue 117: the visible assist marks are decoration — the tappable surface is the
+   disc in .map-assist-hits, which paints beneath every country shape. Leaving
+   these hit-testable would reintroduce the bug the layer order fixes, because a
+   callout target and its leader line sit above whatever country they cross:
+   Liechtenstein's mark reaches well into eastern Germany. */
+.map-country__locator,
+.map-country__callout-target,
+.map-country__callout-line {
+  pointer-events: none;
+}
+
 /* Coastline and shared political borders are source/topology-derived and
    rendered once, so adjoining country polygons cannot double-stroke. */
 .map-coastline,

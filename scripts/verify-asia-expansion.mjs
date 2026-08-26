@@ -211,6 +211,45 @@ assert.equal(
   false,
   'Asia generation configuration introduces no river layer or abstraction.',
 );
+// Issue #116. Asia had no fitExcludeCountryIds, so its canvas was fitted around
+// Russia's trans-antimeridian geometry even though Russia is non-scoring Asia
+// context. Because max zoom is defined relative to the canvas, that under-scaled
+// every Asian country by 2.31x even at full pinch. Russia leaves the fit only —
+// it stays rendered as context and inside every frame it borders.
+const asiaConfig = generatorConfig.slice(generatorConfig.indexOf('ASIA_MAP_GENERATION_CONFIG'));
+const asiaFitExclude = asiaConfig.match(/fitExcludeCountryIds: Object\.freeze\(\[([^\]]*)\]/);
+assert.ok(asiaFitExclude, 'Asia declares fitExcludeCountryIds.');
+assert.match(asiaFitExclude[1], /'RUS'/, 'Asia excludes Russia from its viewport fit.');
+assert.doesNotMatch(
+  asiaConfig,
+  /focusExcludeCountryIds/,
+  'Russia leaves the Asia fit only; opening frames still include the context it borders.',
+);
+assert.doesNotMatch(
+  generatorConfig,
+  /fitContextCountryIds/,
+  'The unread fitContextCountryIds entry stays removed rather than implying behaviour the generator never had.',
+);
+
+// The gain is only real if it survives into the generated geometry, so the
+// scored small-country floor is asserted against measured canvas extents.
+const SMALL_COUNTRY_FLOOR = {
+  CYP: 3.5, LBN: 7.0, QAT: 5.0, ISR: 7.5, KWT: 10.0, ARM: 15.0, BHR: 2.5,
+};
+for (const [id, floor] of Object.entries(SMALL_COUNTRY_FLOOR)) {
+  const path = ASIA_GEOMETRY[id]?.path ?? ASIA_GEOMETRY[id]?.outlinePath ?? '';
+  let minX = Infinity; let minY = Infinity; let maxX = -Infinity; let maxY = -Infinity;
+  for (const [, x, y] of path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+    minX = Math.min(minX, Number(x)); maxX = Math.max(maxX, Number(x));
+    minY = Math.min(minY, Number(y)); maxY = Math.max(maxY, Number(y));
+  }
+  const smallest = Math.min(maxX - minX, maxY - minY);
+  assert.ok(
+    smallest >= floor,
+    `${id} keeps the canvas extent the Asia fit policy buys it (${smallest.toFixed(1)} < ${floor}).`,
+  );
+}
+
 const moduleStat = await stat('dist/data/maps/asia.js');
 const moduleBytes = await readFile('dist/data/maps/asia.js');
 const gzipBytes = gzipSync(moduleBytes, { level: 9 }).byteLength;

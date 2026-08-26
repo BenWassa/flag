@@ -25,7 +25,14 @@ const caboVerde = asset.countries.find((item) => item.countryId === 'CPV');
 assert.ok(caboVerde?.locator, 'Cabo Verde remains a single island dot target.');
 const cpvHtml = renderMapQuiz(asset, buildMapSession(asset, 'learn', 'cpv-dot-edge', ['CPV']), null);
 const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
-assert.ok(cpvGroup.includes('map-country__locator-hit'), 'Cabo Verde dot has a larger invisible touch surface.');
+// #117 moved assist discs into their own layer beneath the country shapes, so
+// the touch surface is asserted by the answer it resolves rather than by which
+// group it sits in.
+assert.match(
+  cpvHtml,
+  /<g class="map-assist-hits">[\s\S]*data-id="CPV"><circle class="map-country__locator-hit"/,
+  'Cabo Verde dot has a larger invisible touch surface that answers Cabo Verde.',
+);
 assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not duplicate the dot with a line/callout target.');
 
 // Play feedback is target-neutral until the tap, then explicit in the same render.

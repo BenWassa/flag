@@ -30,7 +30,7 @@ const sizes = await verifyContinentContract({
   expectedNeighborCountryIds: EXPECTED_COUNTRY_IDS,
   runtimeModulePath: 'dist/data/maps/europe.js',
   maxRawBytes: 1_750_000,
-  maxGzipBytes: 450_000,
+  maxGzipBytes: 440_000,
 });
 
 const mapScopes = await import('../dist/data/map-scopes.js');
@@ -127,6 +127,7 @@ const loaderSource = await readFile('src/data/maps/index.ts', 'utf8');
 assert.match(loaderSource, /europe: async \(\) =>/);
 assert.match(loaderSource, /import\('\.\/europe\.js'\)/, 'Europe map data remains lazy-loaded.');
 
+const generatorConfig = await readFile('scripts/map-continent-configs.mjs', 'utf8');
 const provenance = JSON.parse(await readFile('docs/architecture/europe-cartography-provenance.json', 'utf8'));
 assert.equal(provenance.boundaryPolicy.scoredCountries, 44);
 assert.match(provenance.boundaryPolicy.russia, /one canonical whole-country RUS geometry/i);
@@ -135,6 +136,35 @@ assert.match(provenance.boundaryPolicy.microstates, /canonical polygon geometry 
 assert.match(provenance.boundaryPolicy.kosovo, /no Atlas application-country target/i);
 assert.match(provenance.boundaryPolicy.crossContinentAdjacency, /complete RUS/i);
 
+// Issue #115. Bonaire, Curacao, Saba and St Eustatius are 0.58% of the
+// Netherlands' projected area yet used to set both the west and south edge of
+// the Western Europe frame, costing that round 3.34x linearly. NLD now leaves
+// Europe's viewport fit and focus exactly as FRA and NOR already do. Framing on
+// mainland geography is asserted through the generated focus, so a regenerated
+// canvas cannot quietly reach back across the Atlantic.
+const europeConfig = generatorConfig.slice(
+  generatorConfig.indexOf('EUROPE_MAP_GENERATION_CONFIG'),
+  generatorConfig.indexOf('ASIA_MAP_GENERATION_CONFIG'),
+);
+for (const list of ['fitExcludeCountryIds', 'focusExcludeCountryIds']) {
+  const declared = europeConfig.match(new RegExp(`${list}: Object\\.freeze\\(\\[([^\\]]*)\\]`));
+  assert.ok(declared, `Europe declares ${list}.`);
+  assert.match(declared[1], /'NLD'/, `Europe excludes the Netherlands' Caribbean parts from its ${list}.`);
+}
+
+const { EUROPE_SCOPE_FOCUS } = await import('../dist/data/maps/europe.js');
+const westernEuropeFocus = EUROPE_SCOPE_FOCUS['western-europe'];
+const europeFocus = EUROPE_SCOPE_FOCUS.europe;
+assert.ok(
+  westernEuropeFocus.x > 0,
+  'Western Europe no longer frames from the canvas edge, which is where the Caribbean parts sat.',
+);
+assert.ok(
+  westernEuropeFocus.width < europeFocus.width * 0.45,
+  'Western Europe frames its mainland rather than most of the continent '
+  + `(${westernEuropeFocus.width} of ${europeFocus.width} canvas units).`,
+);
+
 console.log(
-  `Europe expansion verified: 44 countries, 10/9/10/15 regions, audited microstate assistance, ${sizes.rawBytes} raw bytes / ${sizes.gzipBytes} gzip bytes.`,
+  `Europe expansion verified: 44 countries, 10/9/10/15 regions, audited microstate assistance, mainland Western Europe framing, ${sizes.rawBytes} raw bytes / ${sizes.gzipBytes} gzip bytes.`,
 );

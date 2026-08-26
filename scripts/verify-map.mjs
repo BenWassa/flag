@@ -102,8 +102,30 @@ const cpvSession = buildMapSession(westAsset, 'learn', 'island-dot-target', ['CP
 const cpvHtml = renderMapQuiz(westAsset, cpvSession, null);
 const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
 assert.ok(cpvGroup.includes('map-country__locator'), 'Cabo Verde locator is visibly rendered in its own country group.');
-assert.ok(cpvGroup.includes('map-country__locator-hit'), 'Cabo Verde locator receives an enlarged invisible touch area.');
 assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not render a redundant callout line.');
+
+// Issue #117: the enlarged touch area still exists and still answers CPV, but it
+// now paints in a layer beneath every country shape instead of inside CPV's own
+// group. That ordering is the fix: a 44px assist disc is much larger than the
+// mark it serves, so while the discs painted with their country a disc could
+// cover a co-active neighbour's real polygon and steal its tap, with the winner
+// decided by array order in src/data/map-scopes.ts.
+const assistLayer = cpvHtml.match(/<g class="map-assist-hits">[\s\S]*?<\/g>\s*<\/g>/)?.[0] ?? '';
+assert.ok(assistLayer, 'Assisted touch surfaces render in their own layer.');
+assert.match(
+  assistLayer,
+  /data-action="map-answer" data-id="CPV"><circle class="map-country__locator-hit"/,
+  'Cabo Verde keeps an enlarged invisible touch area that answers Cabo Verde.',
+);
+assert.ok(
+  cpvHtml.indexOf('map-assist-hits') < cpvHtml.indexOf('map-active-countries'),
+  'Assist discs paint beneath the country shapes, so a real polygon always wins its own territory.',
+);
+assert.equal(
+  cpvHtml.slice(cpvHtml.indexOf('map-active-countries')).includes('map-country__locator-hit'),
+  false,
+  'No assist disc is left painting above a country shape.',
+);
 
 let progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 let learn = buildMapSession(westAsset, 'learn', 'learn-three-strikes', ['GHA']);

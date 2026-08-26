@@ -310,14 +310,27 @@ button:focus-visible,
 .round-score__item { display: flex; align-items: baseline; gap: 4px; }
 .round-score__value { color: var(--text); font-size: 15px; font-weight: 800; font-variant-numeric: tabular-nums; }
 .round-score__item--streak .round-score__value { color: var(--action); }
-.flag-stage { min-height: 230px; display: grid; place-items: center; padding: var(--space-6) var(--space-3); }
+/* A determined block-size, not a floor. The stage used to reserve a minimum and
+   let the flag's intrinsic ratio decide the used height, so on desktop a
+   near-square flag pushed the answer buttons 178px further down the screen than
+   a wide one did — the touch targets moved between questions. These three
+   values are the single source of truth for the stage box: the breakpoints
+   below re-declare the first two, and the stage height, the flag's height cap
+   and the frame's width all follow. svh rather than dvh, so a retracting mobile
+   URL bar cannot resize it either. #90. */
+.flag-stage {
+  --flag-stage-height: min(300px, 46svh);
+  --flag-stage-inset: var(--space-6);
+  --flag-stage-cap: calc(var(--flag-stage-height) - 2 * var(--flag-stage-inset));
+  height: var(--flag-stage-height);
+  display: grid;
+  place-items: center;
+  padding: var(--flag-stage-inset) var(--space-3);
+}
 .flag-frame { position: relative; display: grid; place-items: center; min-width: 0; }
 .flag-image {
   display: block;
   width: min(100%, 470px);
-  /* Dynamic, not large: with a visible mobile URL bar a vh-sized flag pushed the
-     answers below the fold at the exact moment they are needed. */
-  max-height: 46dvh;
   object-fit: contain;
   border: 1px solid var(--flag-line);
 }
@@ -336,7 +349,19 @@ button:focus-visible,
 }
 .flag-frame--failed .flag-image { display: none; }
 .flag-frame--failed .flag-fallback { display: grid; }
-.flag-frame--stage { width: min(100%, 470px); min-height: 150px; }
+/* Taking the width as the smaller of the width cap and (height cap x ratio) is
+   what lets one box both scale up to fill the stage and stay inside its height
+   without ever letterboxing: aspect-ratio then derives a height that is capped
+   by construction. Capping the image's height directly instead would leave the
+   box at full width, and the flag's border would frame empty space beside it.
+   --flag-ratio is published by FlagImage once the flag has loaded. */
+.flag-frame--stage {
+  --flag-ratio: 1.5;
+  width: min(100%, 470px, calc(var(--flag-ratio) * var(--flag-stage-cap)));
+  aspect-ratio: var(--flag-ratio);
+  min-height: 0;
+}
+.flag-stage .flag-image { width: 100%; height: 100%; }
 
 /* Flags Learn: a scan-friendly gallery. Comparing related flag patterns is
    itself the study, so the grid stays wide-first and never scrolls sideways. */
@@ -560,6 +585,13 @@ button:focus-visible,
 .empty-state strong { font-size: 16px; }
 .empty-state span { color: var(--text-muted); font-size: 14px; }
 
+/* A tall, wide viewport has the room to show the flag at the size it had before
+   the stage was pinned, so the stability fix does not cost desktop presentation:
+   the cap clears a 3:2 flag at the full 470px frame width. */
+@media (min-width: 700px) and (min-height: 800px) {
+  .flag-stage { --flag-stage-height: min(380px, 46svh); }
+}
+
 @media (hover: hover) and (pointer: fine) {
   .icon-button:hover,
   .text-icon-button:hover,
@@ -619,8 +651,7 @@ button:focus-visible,
 @media (max-height: 720px) {
   .quiz-shell { --feedback-clearance: 80px; }
   .question-stage { padding-top: 8px; }
-  .flag-stage { min-height: 180px; padding-block: 12px; }
-  .flag-image { max-height: 38dvh; }
+  .flag-stage { --flag-stage-height: min(220px, 38svh); --flag-stage-inset: 12px; }
   .answer-button { min-height: 52px; }
   .answer-feedback { min-height: 48px; padding: 10px 14px; }
 }
@@ -654,7 +685,7 @@ button:focus-visible,
   .answer-panel { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; align-content: center; }
   .test-advance,
   .quiz-hint { grid-column: 1; }
-  .flag-image { max-height: 60dvh; }
+  .flag-stage { --flag-stage-height: 60svh; }
   /* Still above the 44px minimum target, but four choices plus feedback have to
      fit in 375px of height on a phone held sideways. */
   .answer-button { min-height: 46px; }

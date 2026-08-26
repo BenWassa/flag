@@ -204,7 +204,7 @@ export function renderMapSvg(
 
   // While a panel is open it owns the keyboard stop for its members, so a
   // learner tabs each country once. The true location stays tappable.
-  const countryMarkup = (geometry: MapCountryGeometry, focusable: boolean): string => {
+  const countryMarkup = (geometry: MapCountryGeometry, focusable: boolean, withAssistHits = true): string => {
     const state = session.targets[geometry.countryId];
     const learnCurrentCorrect = interactive
       && showFeedback
@@ -227,13 +227,59 @@ export function renderMapSvg(
         ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
         ${geometry.locator ? `
           <circle class="map-country__locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />
-          ${selectable ? `<circle class="map-country__locator-hit" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${Math.max(geometry.locator.r, 22)}" data-map-hit data-map-hit-min="${geometry.locator.r}" />` : ''}
+          ${selectable && withAssistHits ? `<circle class="map-country__locator-hit" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${Math.max(geometry.locator.r, 22)}" data-map-hit data-map-hit-min="${geometry.locator.r}" />` : ''}
         ` : ''}
         ${geometry.callout ? `
           <line class="map-country__callout-line" x1="${geometry.callout.anchor.cx}" y1="${geometry.callout.anchor.cy}" x2="${geometry.callout.target.cx}" y2="${geometry.callout.target.cy}" />
           <circle class="map-country__callout-target" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${geometry.callout.target.r}" />
-          ${selectable ? `<circle class="map-country__callout-hit" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${Math.max(geometry.callout.target.r, 22)}" data-map-hit data-map-hit-min="${geometry.callout.target.r}" />` : ''}
+          ${selectable && withAssistHits ? `<circle class="map-country__callout-hit" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${Math.max(geometry.callout.target.r, 22)}" data-map-hit data-map-hit-min="${geometry.callout.target.r}" />` : ''}
         ` : ''}
+      </g>
+    `;
+  };
+
+  // Issue #117. A 44 CSS px assist disc is far larger than the mark it serves,
+  // so in Europe and Asia almost every one of them overlaps a co-active
+  // neighbour — only the Maldives locator has clean clearance. While the discs
+  // sat inside their country's own group, SVG hit-testing awarded the tap to
+  // whichever painted last, which made the winner an artefact of array order in
+  // src/data/map-scopes.ts: a tap on eastern Germany within 22px of
+  // Liechtenstein's callout answered Liechtenstein.
+  //
+  // The discs now paint beneath every country shape, so a real polygon always
+  // wins its own territory and a disc can only claim open water or non-scoring
+  // context. This costs no extra geometry — the alternative, an even-odd
+  // exclusion clip per mark, would add a full copy of the scope's paths for
+  // every assisted country.
+  //
+  // Where two discs still overlap over water, the smaller mark paints last and
+  // wins. That is an explicit precedence — the country that is harder to hit
+  // takes the contested point — rather than whatever order the scope lists.
+  const assistHitLayer = (): string => {
+    const discs = asset.countries.flatMap((geometry) => {
+      // Inset members keep a main-map disc as well as their panel one: the panel
+      // is a closer view, not a relocation, so the true location stays tappable.
+      if (!isSelectable(geometry.countryId)) return [];
+      const marks: { r: number; markup: string }[] = [];
+      if (geometry.locator) {
+        marks.push({
+          r: geometry.locator.r,
+          markup: `<circle class="map-country__locator-hit" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${Math.max(geometry.locator.r, 22)}" data-map-hit data-map-hit-min="${geometry.locator.r}" />`,
+        });
+      }
+      if (geometry.callout) {
+        marks.push({
+          r: geometry.callout.target.r,
+          markup: `<circle class="map-country__callout-hit" cx="${geometry.callout.target.cx}" cy="${geometry.callout.target.cy}" r="${Math.max(geometry.callout.target.r, 22)}" data-map-hit data-map-hit-min="${geometry.callout.target.r}" />`,
+        });
+      }
+      return marks.map((mark) => ({ ...mark, countryId: geometry.countryId }));
+    });
+    if (!discs.length) return '';
+    discs.sort((a, b) => (b.r - a.r) || a.countryId.localeCompare(b.countryId));
+    return `
+      <g class="map-assist-hits">
+        ${discs.map((disc) => `<g data-action="map-answer" data-id="${disc.countryId}">${disc.markup}</g>`).join('')}
       </g>
     `;
   };
@@ -257,8 +303,9 @@ export function renderMapSvg(
               ${(asset.contextCountries ?? []).map(renderContextCountry).join('')}
             </g>
           ` : ''}
+          ${assistHitLayer()}
           <g class="map-active-countries">
-            ${asset.countries.map((geometry) => countryMarkup(geometry, !activeInset?.countryIds.includes(geometry.countryId))).join('')}
+            ${asset.countries.map((geometry) => countryMarkup(geometry, !activeInset?.countryIds.includes(geometry.countryId), false)).join('')}
           </g>
           ${renderInlandWater(asset)}
           ${renderBoundaries(asset)}

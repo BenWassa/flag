@@ -1,3 +1,4 @@
+import { FULL_REGION_ROUND_SIZE, isFullRegionPlayLaunch } from '../domain/achievements.js';
 import { COUNTRY_BY_ID } from '../data/countries.js';
 import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { NO_LAND_NEIGHBORS_ID, NO_LAND_NEIGHBORS_LABEL } from '../domain/neighbor-game.js';
@@ -59,7 +60,11 @@ export function createNeighborsRound(context: RoundContext): NeighborsRound {
     replaceRoute = false,
   ): void {
     cancelAllPending();
-    const size = targetCountryIds?.length ?? 10;
+    // #108: an ordinary region Play covers the complete region, because that is
+    // what region x domain Mastery claims the learner demonstrated. Sampled
+    // rounds at other scopes are unchanged.
+    const size = targetCountryIds?.length
+      ?? (isFullRegionPlayLaunch(scope, mode) ? FULL_REGION_ROUND_SIZE : 10);
     if (!store.startNeighborSession(scope, mode, size, targetCountryIds)) {
       notify(`${scope.label} has no land-neighbour targets to practise right now.`);
       return;

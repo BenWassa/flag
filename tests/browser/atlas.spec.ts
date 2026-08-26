@@ -66,7 +66,14 @@ for (const viewport of AFRICA_LEARN_VIEWPORTS) {
       const scroll = document.querySelector('[data-map-viewport]')!.getBoundingClientRect();
       const cropped: string[] = [];
       let left = Infinity, top = Infinity, right = -Infinity, bottom = -Infinity;
-      for (const country of document.querySelectorAll('.map-country')) {
+      // #117 moved the assisted touch surfaces into .map-assist-hits, beneath the
+      // country shapes. They are still part of the answer surface the generated
+      // frame reserves room for (HIT_SURFACE_FOCUS_RESERVE), so framing is still
+      // measured across both layers.
+      const answerSurfaces = document.querySelectorAll(
+        '.map-country, .map-assist-hits > [data-action="map-answer"]',
+      );
+      for (const country of answerSurfaces) {
         const box = country.getBoundingClientRect();
         left = Math.min(left, box.left); top = Math.min(top, box.top);
         right = Math.max(right, box.right); bottom = Math.max(bottom, box.bottom);
