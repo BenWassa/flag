@@ -1,0 +1,209 @@
+// Issue 113 — the reusable cluster-inset pattern.
+//
+// A cluster inset is a screen-space panel: fixed CSS pixel size, scale
+// deliberately independent of the map's zoom, shown only while the current
+// question's country is inside it. These assertions guard the pattern itself,
+// so the mechanism is proven before wider continent rollout.
+
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import { buildInsets } from './map-generation-core.mjs';
+import { ASIA_GEOMETRY, ASIA_INSETS } from '../dist/data/maps/asia.js';
+import { loadMapAsset } from '../dist/data/maps/index.js';
+import { buildMapSession } from '../dist/domain/map-game.js';
+import { renderMapSvg } from '../dist/ui/components/map.js';
+
+const CATALOG = [
+  { id: 'AAA', name: 'Alphaland', region: 'test-region' },
+  { id: 'BBB', name: 'Betaland', region: 'test-region' },
+  { id: 'CCC', name: 'Gammaland', region: 'test-region' },
+];
+
+// Two tiny neighbours a few canvas units apart, plus a large mainland body.
+const GEOMETRY = {
+  AAA: { countryId: 'AAA', path: 'M500,360L502,360L502,362L500,362Z' },
+  BBB: { countryId: 'BBB', path: 'M500,366L502,366L502,368L500,368Z' },
+  CCC: { countryId: 'CCC', path: 'M440,200L560,200L560,320L440,320Z' },
+};
+
+const config = {
+  displayName: 'Testland',
+  insets: [{ id: 'test-sea', label: 'Test Sea', countryIds: ['AAA', 'BBB'], anchor: 'bottom-right' }],
+};
+
+/* --- Derivation: the panel is sized by the touch contract, not by taste --- */
+
+const [inset] = buildInsets(config, GEOMETRY, CATALOG);
+assert.equal(inset.id, 'test-sea');
+assert.deepEqual(inset.countryIds, ['AAA', 'BBB']);
+assert.deepEqual(inset.marks.map((mark) => mark.countryId), ['AAA', 'BBB']);
+
+for (const mark of inset.marks) {
+  const bounds = GEOMETRY[mark.countryId].path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g);
+  const points = [...bounds].map(([, x, y]) => [Number(x), Number(y)]);
+  const insideX = mark.cx >= Math.min(...points.map((p) => p[0])) && mark.cx <= Math.max(...points.map((p) => p[0]));
+  const insideY = mark.cy >= Math.min(...points.map((p) => p[1])) && mark.cy <= Math.max(...points.map((p) => p[1]));
+  assert.ok(insideX && insideY, `${mark.countryId}'s tap anchor sits inside its own geometry, not in the sea.`);
+}
+
+const pxPerUnit = inset.size.width / inset.source.width;
+assert.ok(
+  Math.abs(inset.hitRadius * pxPerUnit - 22) < 0.05,
+  `The hit radius is exactly 22 CSS px at the panel's fixed scale (got ${(inset.hitRadius * pxPerUnit).toFixed(2)}).`,
+);
+// Two 44 px surfaces must not overlap, or the panel recreates the very
+// tap-stealing that made a leader line unusable here.
+for (let i = 0; i < inset.marks.length; i += 1) {
+  for (let j = i + 1; j < inset.marks.length; j += 1) {
+    const apart = Math.hypot(inset.marks[i].cx - inset.marks[j].cx, inset.marks[i].cy - inset.marks[j].cy) * pxPerUnit;
+    assert.ok(apart >= 43.99, `${inset.marks[i].countryId} and ${inset.marks[j].countryId} are ${apart.toFixed(1)} px apart, so their touch surfaces do not overlap.`);
+  }
+}
+assert.ok(inset.size.width <= 260 && inset.size.height <= 260, 'The panel stays small enough to be an answer surface, not the screen.');
+
+/* --- Refusals: an inset must never cost more than it buys --- */
+
+assert.throws(
+  () => buildInsets({ ...config, insets: [{ ...config.insets[0], label: 'Alphaland' }] }, GEOMETRY, CATALOG),
+  /would hand the learner the answer/,
+  'A country-named label is refused, because the map never names a selectable country.',
+);
+
+assert.throws(
+  () => buildInsets({ ...config, insets: [{ ...config.insets[0], countryIds: ['AAA'] }] }, GEOMETRY, CATALOG),
+  /needs at least two members/,
+  'A lone small country is a locator or leader-line case, not a panel.',
+);
+
+assert.throws(
+  () => buildInsets({ ...config, insets: [{ ...config.insets[0], countryIds: ['AAA', 'ZZZ'] }] }, GEOMETRY, CATALOG),
+  /unknown country ZZZ/,
+  'An inset cannot name geography the continent does not have.',
+);
+
+assert.throws(
+  () => buildInsets({ ...config, insets: [{ ...config.insets[0], anchor: 'middle' }] }, GEOMETRY, CATALOG),
+  /unsupported anchor/,
+  'A panel cannot silently ship with an unpositioned CSS anchor.',
+);
+
+assert.throws(
+  () => buildInsets({ ...config, insets: [{ ...config.insets[0], countryIds: ['AAA', 'AAA'] }] }, GEOMETRY, CATALOG),
+  /repeats a country/,
+  'A panel cannot expose duplicate answer surfaces for one country.',
+);
+
+assert.throws(
+  () => buildInsets({
+    ...config,
+    insets: [config.insets[0], { ...config.insets[0], id: 'second-sea', countryIds: ['AAA', 'CCC'] }],
+  }, GEOMETRY, CATALOG),
+  /belongs to more than one panel/,
+  'A country belongs to only one active inset.',
+);
+
+// A cluster spread too wide to magnify truthfully is refused rather than shipped
+// at an unreadable scale. The Gulf is the real instance: Bahrain and Qatar sit
+// under four canvas units apart while the UAE is twenty-seven away, so a true-
+// scale panel giving Bahrain 44 px would be wider than the phone.
+assert.throws(
+  () => buildInsets(
+    {
+      displayName: 'Asia',
+      insets: [{ id: 'gulf', label: 'Persian Gulf', countryIds: ['BHR', 'QAT', 'KWT', 'ARE'], anchor: 'bottom-left' }],
+    },
+    ASIA_GEOMETRY,
+    CATALOG,
+  ),
+  /does not fit a phone stage/,
+  'A cluster needing an oversized panel is refused, pointing at a schematic instead.',
+);
+
+/* --- The shipped Levant prototype --- */
+
+const [levant] = ASIA_INSETS;
+assert.equal(ASIA_INSETS.length, 1, 'Asia ships exactly the one prototype cluster.');
+assert.deepEqual([...levant.countryIds].sort(), ['ISR', 'LBN', 'PSE']);
+// The panel's SVG scales by the smaller axis, so the honest scale is the min.
+const levantPxPerUnit = Math.min(
+  levant.size.width / levant.source.width,
+  levant.size.height / levant.source.height,
+);
+const levantTouchPx = levant.hitRadius * 2 * levantPxPerUnit;
+assert.ok(
+  levantTouchPx >= 43.99,
+  `Every Levant member reaches the 44 CSS px touch contract inside the panel (got ${levantTouchPx.toFixed(2)}).`,
+);
+assert.deepEqual(
+  levant.marks.map((mark) => mark.countryId).sort(),
+  ['ISR', 'LBN', 'PSE'],
+  'Every member has its own tap anchor.',
+);
+
+/* --- Rendering: shown only for its own question --- */
+
+const asset = await loadMapAsset('middle-east');
+assert.ok(asset, 'The Middle East scope loads.');
+assert.equal(asset.insets?.length, 1, 'The Middle East scope carries the panel, because it scores every member.');
+
+const southAsia = await loadMapAsset('south-asia');
+assert.equal(southAsia.insets?.length ?? 0, 0, 'A scope that scores none of the members gets no panel.');
+
+const away = buildMapSession(asset, 'learn', 'inset-away', ['SAU']);
+const awayHtml = renderMapSvg(asset, away);
+assert.ok(!awayHtml.includes('data-map-inset'), 'No panel while the question is somewhere else — it is not standing chrome.');
+assert.ok(!awayHtml.includes('map-inset-source'), 'The source outline appears only with its panel.');
+
+const near = buildMapSession(asset, 'learn', 'inset-near', ['PSE']);
+const nearHtml = renderMapSvg(asset, near);
+assert.ok(nearHtml.includes('data-map-inset="eastern-mediterranean"'), 'The panel opens when its own member is asked.');
+assert.ok(nearHtml.includes('map-inset-source'), 'The magnified window is outlined in place on the map.');
+assert.ok(nearHtml.includes('aria-label="Eastern Mediterranean, closer view"'), 'The panel is named by its place for assistive technology.');
+
+// The panel must sit outside the gesture surface, or dragging it would pan the map.
+assert.ok(
+  nearHtml.indexOf('data-map-inset') > nearHtml.indexOf('</svg>'),
+  'The panel is a sibling of the gesture surface, so panning and pinching stay on the map.',
+);
+
+// Interaction parity, and no answer leak.
+for (const id of ['LBN', 'ISR', 'PSE']) {
+  assert.ok(
+    new RegExp(`class="map-inset__hit"[^>]*data-id="${id}"[^>]*tabindex="0"`, 's').test(nearHtml)
+    || new RegExp(`<circle\\s+class="map-inset__hit"[\\s\\S]{0,200}?data-id="${id}"[\\s\\S]{0,80}?tabindex="0"`).test(nearHtml),
+    `${id} is keyboard-operable inside the panel.`,
+  );
+}
+const insetLabels = [...nearHtml.matchAll(/class="map-inset__hit"[\s\S]{0,240}?aria-label="([^"]+)"/g)].map((match) => match[1]);
+assert.equal(new Set(insetLabels).size, 3, 'Inset keyboard stops have distinct non-answer labels.');
+assert.ok(insetLabels.every((label) => /Selectable inset area \d of 3/.test(label)), 'Inset labels identify position without naming the answer.');
+assert.ok(!nearHtml.includes('aria-label="Palestine"'), 'No surface names an unresolved country.');
+assert.ok(!nearHtml.includes('>Palestine<'), 'The panel label never leaks a member country name.');
+
+// One keyboard stop per country: the open panel owns it, the true location stays tappable.
+for (const id of ['LBN', 'ISR', 'PSE']) {
+  const stops = (nearHtml.match(new RegExp(`data-id="${id}"[^>]*tabindex="0"`, 'g')) ?? []).length;
+  assert.equal(stops, 1, `${id} has exactly one keyboard stop while the panel is open.`);
+  assert.ok((nearHtml.match(new RegExp(`data-id="${id}"`, 'g')) ?? []).length >= 2, `${id} is still answerable in its true place.`);
+}
+// With the panel shut, the mainland copy takes its keyboard stop back.
+assert.equal((awayHtml.match(/data-id="PSE"[^>]*tabindex="0"/g) ?? []).length, 1, 'With no panel, the map keeps the keyboard stop.');
+
+/* --- Presentation is generated, and the frame is a shape not a colour --- */
+
+const cartographyCss = await readFile('src/styles/map-cartography.css', 'utf8');
+assert.ok(/\.map-inset\s*\{[^}]*position: absolute/.test(cartographyCss), 'The panel is positioned over the stage, not inside the canvas.');
+assert.ok(/\.map-inset\s*\{[^}]*border:/.test(cartographyCss), 'The panel boundary is drawn as an edge, not a colour fill.');
+assert.ok(
+  /forced-colors: active[\s\S]*\.map-inset\b/.test(cartographyCss),
+  'The panel survives forced-colours mode, so its boundary never depends on colour alone.',
+);
+assert.ok(/\.map-inset__context[\s\S]{0,80}pointer-events: none/.test(cartographyCss), 'Only the panel members answer inside the panel.');
+
+const configSource = await readFile('scripts/map-continent-configs.mjs', 'utf8');
+assert.ok(
+  !/insets:[\s\S]{0,600}?(source|marks|hitRadius):/.test(configSource),
+  'Windows, anchors and sizes stay derived from generated geometry rather than hand-authored.',
+);
+
+console.log('Map inset verification passed: contract-derived panel size, non-overlapping 44 px surfaces, curriculum-safe refusals, non-leaking labels, target-triggered display and one keyboard stop per country.');

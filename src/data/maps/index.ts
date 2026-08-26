@@ -7,6 +7,7 @@ import type {
 } from '../../domain/models.js';
 import type {
   MapCountryGeometry,
+  MapInset,
   MapNamedPath,
   MapRegionAsset,
   MapViewportFocus,
@@ -21,6 +22,7 @@ interface ContinentMapData {
   coastlinePaths: readonly string[];
   water: Readonly<MapWaterLayers>;
   scopeFocus: Readonly<Record<string, MapViewportFocus>>;
+  insets: readonly MapInset[];
 }
 
 type ContinentMapLoader = () => Promise<ContinentMapData>;
@@ -36,6 +38,7 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       coastlinePaths: data.AFRICA_COASTLINE_PATHS,
       water: data.AFRICA_WATER,
       scopeFocus: data.AFRICA_SCOPE_FOCUS,
+      insets: data.AFRICA_INSETS,
     };
   },
   'south-america': async () => {
@@ -48,6 +51,7 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       coastlinePaths: data.SOUTH_AMERICA_COASTLINE_PATHS,
       water: data.SOUTH_AMERICA_WATER,
       scopeFocus: data.SOUTH_AMERICA_SCOPE_FOCUS,
+      insets: data.SOUTH_AMERICA_INSETS,
     };
   },
   europe: async () => {
@@ -60,6 +64,7 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       coastlinePaths: data.EUROPE_COASTLINE_PATHS,
       water: data.EUROPE_WATER,
       scopeFocus: data.EUROPE_SCOPE_FOCUS,
+      insets: data.EUROPE_INSETS,
     };
   },
   asia: async () => {
@@ -72,6 +77,7 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       coastlinePaths: data.ASIA_COASTLINE_PATHS,
       water: data.ASIA_WATER,
       scopeFocus: data.ASIA_SCOPE_FOCUS,
+      insets: data.ASIA_INSETS,
     };
   },
 };
@@ -148,5 +154,16 @@ export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | nu
       lakes: (data.water.lakes ?? []).map(cloneNamedPath),
     },
     initialFocus: data.scopeFocus[scopeId],
+    // A panel only belongs to a scope that scores every one of its members;
+    // otherwise it would offer an answer the round cannot accept.
+    insets: data.insets
+      .filter((inset) => inset.countryIds.every((countryId) => activeIds.has(countryId)))
+      .map((inset) => ({
+        ...inset,
+        countryIds: [...inset.countryIds],
+        source: { ...inset.source },
+        marks: inset.marks.map((mark) => ({ ...mark })),
+        size: { ...inset.size },
+      })),
   };
 }

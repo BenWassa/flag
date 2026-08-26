@@ -179,6 +179,32 @@ Issue #9 preserves the proven gameplay policy rather than deriving tap behavior 
 
 Do not add new callouts solely because a polygon is small. Actual phone play is the decision criterion.
 
+### Magnified cluster insets (Issue #113)
+
+An inset is a screen-space closer view of two or more scoring countries that
+are too tightly packed for separate 44 CSS px answer surfaces on the ordinary
+map. It is not replacement geometry and does not move, simplify or relabel the
+canonical polygons.
+
+- generator configuration names only the inset ID, non-answer place label,
+  member IDs and one of four supported stage corners;
+- the generator derives the source window, interior land anchors, panel size and
+  hit radius from canonical projected geometry;
+- the panel is shown only while the current question belongs to it;
+- the source window is outlined in its true position, and the panel redraws the
+  same geometry at a fixed CSS-pixel scale;
+- each keyboard stop has a distinct positional label but never exposes a country
+  name before selection;
+- a scope receives the panel only when it scores every member, so an inset cannot
+  introduce an invalid answer;
+- a panel that would exceed 260px is refused. Wider clusters need a separately
+  designed schematic arrangement rather than a misleading true-scale magnifier.
+
+Use a locator for a tiny island, a leader line for one narrow mainland country
+with clear surrounding water, a viewport crop for remote non-scoring components,
+and an inset only for a dense multi-country scoring cluster that defeats those
+mechanisms.
+
 ### Leader-line direction (Issue #112)
 
 A callout offset is configuration, not decoration. Each leader line must make its

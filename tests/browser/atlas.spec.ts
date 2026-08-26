@@ -37,8 +37,10 @@ async function settleMapViewport(page: Page) {
   await page.waitForFunction(() => {
     const viewport = document.querySelector<HTMLElement>('[data-map-viewport]');
     const svg = document.querySelector('.map-svg');
+    const normalisedHit = document.querySelector('[data-id="TGO"] .map-country__callout-hit')?.getBoundingClientRect();
     return viewport?.dataset.mapPositioned === 'true'
-      && svg?.getAttribute('viewBox') !== viewport.dataset.mapViewbox;
+      && svg?.getAttribute('viewBox') !== viewport.dataset.mapViewbox
+      && (!normalisedHit || Math.min(normalisedHit.width, normalisedHit.height) >= 43.5);
   });
 }
 

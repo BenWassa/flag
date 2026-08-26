@@ -2,7 +2,7 @@
 // Run: npm run maps:generate
 // Source/pipeline: scripts/generate-maps.mjs + scripts/map-generation-core.mjs + scripts/map-sources/natural-earth.json
 
-import type { MapCountryGeometry, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
+import type { MapCountryGeometry, MapInset, MapViewportFocus, MapWaterLayers } from '../../domain/map-models.js';
 
 export const ASIA_VIEWBOX = '0 0 835 723';
 
@@ -62,6 +62,47 @@ export const ASIA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
     "height": 170
   }
 };
+
+export const ASIA_INSETS: readonly MapInset[] = [
+  {
+    "id": "eastern-mediterranean",
+    "label": "Eastern Mediterranean",
+    "countryIds": [
+      "LBN",
+      "ISR",
+      "PSE"
+    ],
+    "source": {
+      "x": 493.76,
+      "y": 353.19,
+      "width": 7.69,
+      "height": 18.84
+    },
+    "marks": [
+      {
+        "countryId": "LBN",
+        "cx": 498.83,
+        "cy": 355.97
+      },
+      {
+        "countryId": "ISR",
+        "cx": 496.78,
+        "cy": 366.18
+      },
+      {
+        "countryId": "PSE",
+        "cx": 497.47,
+        "cy": 362.32
+      }
+    ],
+    "size": {
+      "width": 95,
+      "height": 233
+    },
+    "hitRadius": 1.7808,
+    "anchor": "bottom-right"
+  }
+];
 
 export const ASIA_LAND_ADJACENCY: Readonly<Record<string, readonly string[]>> = {
   "KAZ": [
