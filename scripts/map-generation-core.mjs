@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
-import { geoNaturalEarth1, geoPath } from 'd3-geo';
+import { geoIdentity, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature, merge, mesh, neighbors } from 'topojson-client';
 import { topology } from 'topojson-server';
 import { presimplify, quantile, simplify } from 'topojson-simplify';
@@ -765,6 +765,14 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const afterPoints = simplifiedCollection.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);
 
   const planarPath = geoPath().digits(PATH_DIGITS);
+  // #86: the runtime viewBox is clamped to the continent canvas, so any
+  // coordinate outside it can never be displayed. Non-interactive context is
+  // therefore serialised through a planar clip. Scored country geometry is NOT:
+  // `src/domain/outline.ts` falls back to the map `path` for its silhouette, so
+  // cropping a scored country would crop the shape Outlines teaches. Centroids,
+  // bounds and focus rects keep using the unclipped path so locator and callout
+  // placement is unchanged.
+  const clippedPath = geoPath(geoIdentity().clipExtent([[0, 0], [WIDTH, HEIGHT]])).digits(PATH_DIGITS);
   const simplifiedById = new Map(
     simplifiedCollection.features
       .filter((item) => item.properties?.countryId)
@@ -772,6 +780,15 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   );
 
   const islandLocators = new Set(config.islandLocatorIds ?? []);
+  // A country carries role 'country' even when this continent only renders it as
+  // context, so scoring membership — not the feature role — decides whether its
+  // path may be clipped. Derived focus scopes are folded in because they score
+  // countries this continent's own catalogue does not own (Egypt through the
+  // Middle East), and Outlines teaches every scored shape whole.
+  const answerableIds = new Set([
+    ...scoredCatalog.map((row) => row.id),
+    ...Object.values(config.derivedFocusScopes ?? {}).flatMap((ids) => [...ids]),
+  ]);
   const geometry = {};
   for (const item of simplifiedCollection.features.filter((featureValue) => featureValue.properties?.countryId)) {
     const id = item.properties.countryId;
@@ -787,7 +804,9 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
         r: 7,
       };
     } else {
-      countryGeometry.path = countryPath;
+      countryGeometry.path = answerableIds.has(id)
+        ? countryPath
+        : (clippedPath(item) || countryPath);
     }
     if (item.properties?.role === 'country') {
       const callout = calloutFor(config, id, planarPath.centroid(item));
@@ -801,12 +820,12 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   }
 
   const contextFeatures = simplifiedCollection.features.filter((item) => item.properties?.role === 'context');
-  const contextPaths = contextFeatures.map((item) => planarPath(item)).filter(Boolean);
+  const contextPaths = contextFeatures.map((item) => clippedPath(item)).filter(Boolean);
 
   const sharedMesh = mesh(simplifiedTopology, simplifiedTopology.objects.areas, (a, b) => a !== b);
   const coastlineMesh = mesh(simplifiedTopology, simplifiedTopology.objects.areas, (a, b) => a === b);
-  const sharedBoundaryPath = planarPath(sharedMesh);
-  const coastlinePath = planarPath(coastlineMesh);
+  const sharedBoundaryPath = clippedPath(sharedMesh);
+  const coastlinePath = clippedPath(coastlineMesh);
 
   const adjacency = config.adjacencyMode === 'global'
     ? sliceGlobalAdjacency(globalGraph.adjacency, scoredCatalog, globalGraph.representedIds, config)

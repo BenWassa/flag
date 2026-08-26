@@ -195,6 +195,46 @@ const africaModulePath = 'dist/data/maps/africa.js';
 const africaModule = await stat(africaModulePath);
 const africaModuleBytes = await readFile(africaModulePath);
 const africaGzipBytes = gzipSync(africaModuleBytes, { level: 9 }).byteLength;
+// Issue #86. The runtime viewBox is clamped to the continent canvas, so a
+// coordinate outside it can never be displayed. Non-interactive context is
+// therefore clipped at generation. Scored country geometry is deliberately NOT:
+// src/domain/outline.ts falls back to the map path for its silhouette, so
+// cropping a scored country would crop the shape Outlines teaches.
+const CANVAS_EPSILON = 0.5;
+function outsideCanvasCount(path, width, height) {
+  let outside = 0;
+  for (const [, x, y] of String(path ?? '').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+    if (Number(x) < -CANVAS_EPSILON || Number(x) > width + CANVAS_EPSILON
+      || Number(y) < -CANVAS_EPSILON || Number(y) > height + CANVAS_EPSILON) outside += 1;
+  }
+  return outside;
+}
+
+for (const continentId of ['africa', 'south-america', 'europe', 'asia']) {
+  const generated = await import(`../dist/data/maps/${continentId}.js`);
+  const prefix = continentId.replace(/-/g, '_').toUpperCase();
+  const [minX, minY, spanX, spanY] = generated[`${prefix}_VIEWBOX`].split(/\s+/).map(Number);
+  const canvasWidth = minX + spanX;
+  const canvasHeight = minY + spanY;
+  const contextLayers = {
+    ocean: [generated[`${prefix}_WATER`]?.oceanPath],
+    coastline: generated[`${prefix}_COASTLINE_PATHS`] ?? [],
+    sharedBoundary: generated[`${prefix}_SHARED_BOUNDARY_PATHS`] ?? [],
+    extraContext: generated[`${prefix}_EXTRA_CONTEXT_PATHS`] ?? [],
+  };
+  for (const [layer, paths] of Object.entries(contextLayers)) {
+    const outside = [].concat(paths).reduce(
+      (sum, path) => sum + outsideCanvasCount(path, canvasWidth, canvasHeight),
+      0,
+    );
+    assert.equal(
+      outside,
+      0,
+      `${continentId} ${layer} context is clipped to the canvas the runtime can display (${outside} stray coordinates).`,
+    );
+  }
+}
+
 assert.ok(africaModule.size < 1_000_000, `Lazy Africa runtime asset stays below 1 MB raw (${africaModule.size} bytes).`);
 assert.ok(africaGzipBytes < 300_000, `Lazy Africa runtime asset stays below 300 KB gzip (${africaGzipBytes} bytes).`);
 

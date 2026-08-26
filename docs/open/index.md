@@ -43,6 +43,16 @@ Mediterranean prototype evidence are recorded in
 so the three largest measured wins were split out rather than folded into the
 pattern work. Do these before adding further insets:
 
+**#115, #116 and #86 are implemented together** on
+`claude/open-issues-review-plan-tz6n9e`, because the two framing fixes share one
+four-continent regeneration and #86's clipping is what returns Asia and Europe
+inside their payload budgets afterwards. Measured on-screen linear change:
+Western Europe **4.50x**, whole Europe **1.59x**, every Asian country **2.30x**
+at maximum zoom, with every Asian region's opening frame also improving
+(1.09x-2.30x) because three of them were pinned at the 180x170 focus floor. No
+region on either continent got smaller. Evidence lives in
+[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
+
 - [#115 — focus-exclude the Netherlands' Caribbean parts](https://github.com/BenWassa/flag/issues/115).
   Bonaire and Curaçao are 0.58% of `NLD` and about 1.2 × 1.0 CSS px on screen,
   yet they set both the west and south edge of the Western Europe frame.
