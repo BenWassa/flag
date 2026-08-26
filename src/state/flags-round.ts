@@ -1,3 +1,4 @@
+import { FULL_REGION_ROUND_SIZE, isFullRegionPlayLaunch } from '../domain/achievements.js';
 import { COUNTRY_BY_ID } from '../data/countries.js';
 import type { LearningActivity, SessionResult, StudyMode, StudyScope } from '../domain/models.js';
 import { getRecord, masteryGoal } from '../domain/progress.js';
@@ -71,8 +72,12 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
     activity: LearningActivity = mode,
     replaceRoute = false,
   ): void {
+    // #108: an ordinary region Play covers the complete region, because that is
+    // what region x domain Mastery claims the learner demonstrated. Sampled
+    // rounds at other scopes are unchanged.
     cancelAllPending();
-    if (!store.startSession(scope, mode, size, reviewIds)) {
+    const roundSize = isFullRegionPlayLaunch(scope, mode, reviewIds) ? FULL_REGION_ROUND_SIZE : size;
+    if (!store.startSession(scope, mode, roundSize, reviewIds)) {
       notify(`${scope.label} has no flags to practise right now.`);
       return;
     }

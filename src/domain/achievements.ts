@@ -57,6 +57,46 @@ export function createInitialPerfectRunStreakState(): PerfectRunStreakState {
 }
 
 /** Records one full-region Play result. `wasPerfect` means every question in that run was correct. */
+/**
+ * Region x domain Mastery claims the learner demonstrated a complete region, so
+ * an ordinary region Play must cover every supported target rather than the
+ * ten-question sample Flags, Outlines and Neighbours used to launch (#108).
+ * Locations already built its session from the full scope.
+ *
+ * This is the one place that decides what "full region" means. Round launch
+ * sizes the round with it, and the achievement layer re-checks the finished
+ * result against it, so a round cannot qualify merely by having asked.
+ */
+export const FULL_REGION_ROUND_SIZE = Number.MAX_SAFE_INTEGER;
+
+/**
+ * True when a launch is an ordinary, complete region Play. Review and repeat
+ * rounds name their own targets, and Learn is not a Play result at all, so
+ * neither can advance or reset a streak.
+ */
+export function isFullRegionPlayLaunch(
+  scope: { kind: string; id?: string },
+  mode: string,
+  targetCountryIds?: readonly string[],
+): boolean {
+  return mode === 'test' && scope.kind === 'region' && Boolean(scope.id) && !targetCountryIds?.length;
+}
+
+/**
+ * True when a finished round actually covered the complete supported target set
+ * for its region and domain. Set equality rather than a count, so a round that
+ * repeated a target or dropped one cannot pass.
+ */
+export function coveredFullRegion(
+  supportedCountryIds: readonly string[],
+  coveredCountryIds: readonly string[],
+): boolean {
+  if (supportedCountryIds.length === 0) return false;
+  const covered = new Set(coveredCountryIds);
+  return covered.size === supportedCountryIds.length
+    && supportedCountryIds.every((id) => covered.has(id));
+}
+
 export function recordRegionDomainPlayResult(
   state: PerfectRunStreakState,
   regionId: string,
