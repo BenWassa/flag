@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import maplibregl from 'maplibre-gl';
+import * as maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import type { Destination } from './main';
 
@@ -56,7 +56,7 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
       const canvas = map.getCanvas();
       canvas.addEventListener('webglcontextlost', () => { m.contextLost += 1; });
       canvas.addEventListener('webglcontextrestored', () => { m.contextRestored += 1; });
-      canvas.addEventListener('pointerdown', (event) => m.canvasPointerDowns.push({ x: event.clientX, y: event.clientY, pointerType: event.pointerType }));
+      canvas.addEventListener('pointerdown', (event: PointerEvent) => m.canvasPointerDowns.push({ x: event.clientX, y: event.clientY, pointerType: event.pointerType }));
       (window as any).__spatialMapLibreMap = map;
       (window as any).__spatialMapLibreProject = (lng: number, lat: number) => map.project([lng, lat]);
     });
@@ -66,11 +66,11 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
       m.lastCamera = { lng: c.lng, lat: c.lat, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
       m.projection = map.getProjection();
     });
-    map.on('error', (event) => m.errors.push(String((event as any).error?.message ?? (event as any).error ?? 'unknown map error')));
-    map.on('click', 'areas', (event) => {
+    map.on('error', (event: any) => m.errors.push(String(event.error?.message ?? event.error ?? 'unknown map error')));
+    map.on('click', 'areas', (event: any) => {
       const desired = destinationRef.current === 'world' ? 'africa' : destinationRef.current === 'africa' ? 'west-africa' : null;
       if (!desired) return;
-      if (event.features?.some((feature) => feature.properties?.scope === desired)) onNavigate(desired);
+      if (event.features?.some((feature: any) => feature.properties?.scope === desired)) onNavigate(desired);
     });
 
     return () => {
