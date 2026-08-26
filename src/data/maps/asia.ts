@@ -20,10 +20,10 @@ export const ASIA_WATER: Readonly<MapWaterLayers> = {"oceanPath":"M578.5,630.3L5
 
 export const ASIA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
   "asia": {
-    "x": 0,
-    "y": 0,
-    "width": 835,
-    "height": 723
+    "x": 440.67,
+    "y": 264.39,
+    "width": 394.33,
+    "height": 259.72
   },
   "central-asia": {
     "x": 476.68,
@@ -41,7 +41,7 @@ export const ASIA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
     "x": 521.29,
     "y": 316.45,
     "width": 180,
-    "height": 175.47
+    "height": 195.26
   },
   "southeast-asia": {
     "x": 625.43,
@@ -50,7 +50,7 @@ export const ASIA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
     "height": 176.27
   },
   "middle-east": {
-    "x": 431.48,
+    "x": 431.95,
     "y": 293.39,
     "width": 180,
     "height": 170

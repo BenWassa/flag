@@ -179,12 +179,34 @@ Issue #9 preserves the proven gameplay policy rather than deriving tap behavior 
 
 Do not add new callouts solely because a polygon is small. Actual phone play is the decision criterion.
 
+### Leader-line direction (Issue #112)
+
+A callout offset is configuration, not decoration. Each leader line must make its
+owner unambiguous:
+
+- the line reads predominantly vertically — within **20° of vertical** — rather
+  than cutting diagonally across a neighbour;
+- where the target is offshore, the line runs roughly perpendicular to a
+  simplified local coastline direction, so it reads as "this country, out to sea";
+- the target circle keeps clear water around it. Togo's target sits **22 canvas
+  units** from Ghana, its nearest other country. The superseded south-west offset
+  sat 5.2 units from Ghana and 29 from Togo, so it read as Ghana's marker.
+
+`scripts/verify-cartography.mjs` asserts Togo's verticality and its clearance
+from every other Africa polygon.
+
 ## Viewport contract
 
 The production map uses native SVG `viewBox` handling rather than a runtime pan/zoom library.
 
 - minimum view fits the complete parent continent including island locators;
 - region rounds initially use generated regional focus bounds;
+- whole-continent rounds also use a generated focus box, fitted to the **scoring
+  geography** rather than to the raw canvas. The canvas is fitted to every source
+  feature, so it carries non-scoring context and projection slack; framing the
+  opening view on it wasted phone viewport. Every focus box reserves room for
+  locator dots and leader-line targets — including the ~44 CSS px touch surface
+  the runtime grows around them — so no tappable mark opens cropped;
 - pinch-out returns toward the complete-continent minimum; the regional frame is
   used for the opening view rather than exposed as persistent toolbar chrome;
 - max map zoom is 5.5×;
@@ -197,6 +219,24 @@ The production map uses native SVG `viewBox` handling rather than a runtime pan/
   visual focus and the map never competes with scoring targets for tap space.
 
 An earlier overlay toolbar was rejected because it could cover Madagascar/Mauritius-area targets. The later dedicated toolbar row is also intentionally absent on mobile: pinch-out supplies the natural return toward the full-continent frame.
+
+### The stage box is the viewport (Issue #112)
+
+`src/map-viewport.ts` reads its aspect ratio from the `[data-map-viewport]`
+element, so that element **must** fill `.map-stage`, which is the clip box.
+
+Every layer between them therefore stretches rather than relying on percentage
+heights: a percentage height resolves to `auto` under any ancestor whose own
+height is `auto`, and the chain then collapses to the SVG's intrinsic 835:723
+ratio. When that happened the viewport fitted the wrong box — Africa Learn used
+about 65% of the stage height in portrait, and in short landscape the SVG grew
+taller than the stage and `overflow: hidden` cut off eight southern countries
+(`ZAF`, `LSO`, `SWZ`, `NAM`, `BWA`, `MOZ`, `MDG`, `MUS`).
+
+Grid stretch survives an extra wrapper; percentage height does not. Adding a new
+element between `.map-stage` and the SVG means giving it the same stretch
+treatment. `tests/browser/atlas.spec.ts` asserts that the viewport fills the
+stage and that no scoring country is cropped at 320×568, 390×844 and 740×360.
 
 ## Runtime loading and PWA behavior
 

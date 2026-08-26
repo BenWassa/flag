@@ -20,9 +20,9 @@ export const SOUTH_AMERICA_WATER: Readonly<MapWaterLayers> = {"oceanPath":"M787.
 
 export const SOUTH_AMERICA_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
   "south-america": {
-    "x": 0,
+    "x": 73.52,
     "y": 0,
-    "width": 835,
+    "width": 687.92,
     "height": 723
   },
   "andean": {

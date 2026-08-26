@@ -25,7 +25,11 @@ export const AFRICA_MAP_GENERATION_CONFIG = Object.freeze({
   islandLocatorIds: Object.freeze(['CPV', 'STP', 'COM', 'MUS', 'SYC']),
   callouts: Object.freeze({
     GMB: Object.freeze({ dx: -36, dy: -8, r: 10 }),
-    TGO: Object.freeze({ dx: -25, dy: 34, r: 10 }),
+    // Togo's leader line drops nearly straight into the Gulf of Guinea, roughly
+    // perpendicular to the simplified local coastline (~16° off horizontal). The
+    // earlier south-west offset landed the target 5 canvas units from Ghana and
+    // 29 from Togo, which read as Ghana's marker.
+    TGO: Object.freeze({ dx: 9, dy: 42, r: 10 }),
   }),
   lakes: Object.freeze([
     Object.freeze({ name: 'Lake Victoria', pattern: 'victoria', flags: 'i', required: true }),

@@ -22,6 +22,11 @@ const {
   pathDigits: PATH_DIGITS,
 } = MAP_CANVAS;
 
+// Canvas units an opening frame reserves around a locator dot or leader-line
+// target, so the runtime's ~44 CSS px touch surface stays on screen at phone
+// widths instead of being cropped by the frame edge.
+const HIT_SURFACE_FOCUS_RESERVE = 34;
+
 function stableJson(value) {
   return `${JSON.stringify(value, null, 2)}\n`;
 }
@@ -597,9 +602,6 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     ? sliceGlobalAdjacency(globalGraph.adjacency, scoredCatalog, globalGraph.representedIds, config)
     : deriveLocalAdjacency(simplifiedTopology);
 
-  const scopeFocus = {
-    [config.id]: { x: 0, y: 0, width: WIDTH, height: HEIGHT },
-  };
   const regionIds = new Map();
   for (const row of scoredCatalog) {
     const ids = regionIds.get(row.region) ?? [];
@@ -611,7 +613,28 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
     const focusIds = preferredIds.length ? preferredIds : ids;
     const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);
-    return boundsToFocus(planarPath.bounds(featureCollection(regionFeatures)));
+    const bounds = planarPath.bounds(featureCollection(regionFeatures));
+    // A locator dot or leader-line target can sit outside its own polygon, and
+    // the runtime grows its invisible touch surface to roughly 44 CSS px. A
+    // frame derived from polygons alone therefore crops the very thing the
+    // learner taps, so reserve the touch surface rather than the drawn radius.
+    for (const id of focusIds) {
+      for (const circle of [geometry[id]?.locator, geometry[id]?.callout?.target]) {
+        if (!circle) continue;
+        const reach = Math.max(circle.r, HIT_SURFACE_FOCUS_RESERVE);
+        bounds[0][0] = Math.min(bounds[0][0], circle.cx - reach);
+        bounds[0][1] = Math.min(bounds[0][1], circle.cy - reach);
+        bounds[1][0] = Math.max(bounds[1][0], circle.cx + reach);
+        bounds[1][1] = Math.max(bounds[1][1], circle.cy + reach);
+      }
+    }
+    return boundsToFocus(bounds);
+  };
+  // The whole-continent opening view is fitted to the scoring geography, not to
+  // the raw canvas. The canvas carries non-scoring context and projection slack,
+  // so framing on it left phone portrait stages with a dead band instead of map.
+  const scopeFocus = {
+    [config.id]: focusForIds(scoredCatalog.map((row) => row.id)),
   };
   // Canonical classification regions that Atlas deliberately does not expose to
   // learners get no focus entry, so no navigation can resolve to them.

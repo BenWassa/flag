@@ -21,9 +21,9 @@ export const EUROPE_WATER: Readonly<MapWaterLayers> = {"oceanPath":"M183.9,704.5
 export const EUROPE_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
   "europe": {
     "x": 0,
-    "y": 0,
-    "width": 835,
-    "height": 723
+    "y": 110.95,
+    "width": 765.38,
+    "height": 501.1
   },
   "eastern-europe": {
     "x": 537.94,
@@ -39,15 +39,15 @@ export const EUROPE_SCOPE_FOCUS: Readonly<Record<string, MapViewportFocus>> = {
   },
   "southern-europe": {
     "x": 265.28,
-    "y": 279.47,
+    "y": 254.24,
     "width": 434.3,
-    "height": 207.23
+    "height": 232.46
   },
   "western-europe": {
     "x": 0,
-    "y": 218.14,
-    "width": 625.96,
-    "height": 393.91
+    "y": 204.6,
+    "width": 637.69,
+    "height": 407.45
   }
 };
 

@@ -1,13 +1,21 @@
 /* Issue #9 production cartography + explicit viewport contract.
    Loaded after map.css so the established map/gameplay visual states remain intact. */
 
+/* The stage box is the clip box, so every layer down to the SVG must stretch to
+   it. Percentage heights break on any intermediate wrapper with an auto height,
+   which silently sized the viewport to the SVG's own 835:723 ratio and clipped
+   southern Africa in short landscape. Grid stretch survives extra wrappers. */
 .map-stage {
   position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
 }
 
+.map-stage__surface,
 .map-stage__frame {
   width: 100%;
-  height: 100%;
+  min-width: 0;
+  min-height: 0;
   display: grid;
   grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
@@ -15,7 +23,6 @@
 
 .map-stage__scroll {
   width: 100%;
-  height: auto;
   min-height: 0;
   overflow: hidden;
   overscroll-behavior: contain;
