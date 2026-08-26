@@ -8,3 +8,5 @@ graphify-out/
 test-results/
 playwright-report/
 .firebase/
+*firebase-adminsdk*.json
+*.serviceaccount.json
