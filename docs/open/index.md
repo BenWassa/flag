@@ -64,6 +64,19 @@ region on either continent got smaller. Evidence lives in
   because max zoom is relative to the canvas. Also resolves the dead
   `fitContextCountryIds` entry.
 - [#117 — clip locator and callout hit surfaces](https://github.com/BenWassa/flag/issues/117).
+  **Implemented** on the same branch. Rather than build an even-odd exclusion
+  clip per mark — which would add a copy of the scope's paths for every assisted
+  country — the assist discs moved into a `.map-assist-hits` layer beneath every
+  country shape, so a real polygon always wins its own territory and a disc can
+  only claim open water or non-scoring context. The visible locator, callout
+  target and leader line became `pointer-events: none` in the same change: they
+  sit above whatever country they cross, so leaving them hit-testable
+  reintroduced the same theft (Liechtenstein's mark reaches well into eastern
+  Germany). Where two discs still overlap over water the smaller mark wins,
+  which is an explicit precedence rather than array order in `map-scopes.ts`.
+  `tests/browser/map-hit-precedence.spec.ts` samples the points a disc covers
+  inside a neighbour's real polygon and asserts the browser answers the
+  neighbour.
   The 44 CSS px assist discs are unclipped, so an assisted target silently steals
   taps from co-active neighbours. Only the Maldives locator has clean clearance
   across all of Europe and Asia. Likely a prerequisite for wider inset rollout.
