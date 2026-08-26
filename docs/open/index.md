@@ -39,6 +39,25 @@ and verification evidence are recorded in
 Mediterranean prototype evidence are recorded in
 [`issue-113-mobile-inset-pattern.md`](../closed/issue-113-mobile-inset-pattern.md).
 
+**#113's audit found that plain viewport framing buys more than any new mark**,
+so the three largest measured wins were split out rather than folded into the
+pattern work. Do these before adding further insets:
+
+- [#115 — focus-exclude the Netherlands' Caribbean parts](https://github.com/BenWassa/flag/issues/115).
+  Bonaire and Curaçao are 0.58% of `NLD` and about 1.2 × 1.0 CSS px on screen,
+  yet they set both the west and south edge of the Western Europe frame.
+  Excluding them makes that round **3.34× larger linearly, 11.2× by area**.
+- [#116 — fit-exclude Russia from the Asia canvas](https://github.com/BenWassa/flag/issues/116).
+  Asia has no `fitExcludeCountryIds`, so its canvas is fitted around Russia's
+  trans-antimeridian geometry even though Russia is non-scoring Asia context.
+  Every Asian country is **2.31× under-scaled, including at maximum zoom**,
+  because max zoom is relative to the canvas. Also resolves the dead
+  `fitContextCountryIds` entry.
+- [#117 — clip locator and callout hit surfaces](https://github.com/BenWassa/flag/issues/117).
+  The 44 CSS px assist discs are unclipped, so an assisted target silently steals
+  taps from co-active neighbours. Only the Maldives locator has clean clearance
+  across all of Europe and Asia. Likely a prerequisite for wider inset rollout.
+
 - [#90 — keep the Flags question layout stable between flags](https://github.com/BenWassa/flag/issues/90).
   Different flag aspect ratios must not move the multiple-choice touch targets.
   The responsive implementation and verification scope is
