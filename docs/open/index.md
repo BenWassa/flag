@@ -35,10 +35,9 @@ treatment decisions and verification evidence are recorded in
 #112 is complete. Its Africa opening-frame and generated Togo-callout decisions
 and verification evidence are recorded in
 [`issue-112-africa-framing-togo-callout.md`](../closed/issue-112-africa-framing-togo-callout.md).
-- [#113 — design a mobile callout-box pattern for distant and fragmented map locations](https://github.com/BenWassa/flag/issues/113).
-  Audits Europe and Asia outliers and defines a reusable inset pattern before
-  continent-specific rollout. Scope, audit and prototype evidence:
-  [`issue-113-mobile-inset-pattern.md`](issue-113-mobile-inset-pattern.md).
+#113 is complete. Its Europe/Asia audit, generated inset contract and Eastern
+Mediterranean prototype evidence are recorded in
+[`issue-113-mobile-inset-pattern.md`](../closed/issue-113-mobile-inset-pattern.md).
 
 - [#90 — keep the Flags question layout stable between flags](https://github.com/BenWassa/flag/issues/90).
   Different flag aspect ratios must not move the multiple-choice touch targets.

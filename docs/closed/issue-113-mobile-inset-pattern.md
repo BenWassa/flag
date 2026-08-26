@@ -1,6 +1,6 @@
 # Issue #113 — Mobile map inset pattern
 
-**Status:** In progress
+**Status:** Complete
 
 ## Decision
 
@@ -44,22 +44,34 @@ Europe therefore needs no inset in this rollout.
 ## Generated contract
 
 Configuration owns only the stable inset ID, place label, member country IDs and
-corner. The shared generator derives the window, land-safe tap anchors, panel
-size and hit radius. It rejects country-name labels, unknown/duplicate members,
-overlapping panel membership, unsupported corners and panels too large for the
-phone stage.
+corner. The shared generator derives the window, compound-path land-safe tap
+anchors, panel size and hit radius. It rejects country-name labels,
+unknown/duplicate members, overlapping panel membership, unsupported corners
+and panels too large for the phone stage.
 
 The panel is attached only to scopes containing every member. This prevents a
 regional round from exposing an answer outside its curriculum.
 
-## Acceptance gates
+## Closeout
 
-- reproducible four-continent generation;
-- focused generator/rendering verifier;
-- 44 CSS px target measurements in mobile portrait and 740 × 360 short
-  landscape browser layouts;
-- panel containment, distinct keyboard stops, Enter/Space activation, no answer
-  leakage, forced-colours fallback and unchanged pan/zoom ownership;
-- complete `npm test` and `npm run test:browser` before merge.
+- Implementation commit: `66e9bd0`.
+- Merge commit on `main`: `f7ddf68`.
+- `npm run maps:generate` reproduced all four generated continent assets from
+  the pinned Natural Earth sources.
+- `npm test` passed on the feature branch and merged `main`: TypeScript, 16
+  Vitest tests, production Vite/PWA build and 30 plain-Node verifiers including
+  the new inset contract verifier.
+- `npm run test:browser` passed on merged `main`: 18 tests across desktop and
+  mobile Chromium. The inset is contained and retains three independent 44 CSS
+  px targets at 390 × 844 and 740 × 360; unique non-answer accessible labels,
+  keyboard focus/Enter activation and source-window presence are asserted.
+- A parallel-suite race in the #112 viewport readiness gate was reproduced and
+  fixed by waiting for CSS-pixel hit normalisation, not merely the first viewBox
+  update.
+- Forced-colours behaviour is automated through the explicit CSS contract. No
+  physical-device or manual assistive-technology testing is claimed.
 
-Physical iPhone/Android testing is not claimed by this issue.
+## Deferred
+
+The Persian Gulf cluster needs a schematic rather than true-scale inset if it is
+pursued. It is not silently approximated by this issue.
