@@ -1,16 +1,11 @@
 rules_version = '2';
 
-// Data model: users/{uid}/state/{stateKey}
-//   stateKey  — one of the fixed keys below, matching the existing
-//               localStorage key names in src/infrastructure/*.ts
-//   data      — opaque JSON envelope (the same versioned shape already
-//               written to localStorage); not deeply validated field-by-field
-//   schemaVersion — positive integer
-//   updatedAt — server-set timestamp, must be recent
+// Canonical cloud model: users/{uid}/state/{stateKey}.
+// Atlas remains single-account/private for now. Local attempt histories and
+// resettable perfect-run streaks are intentionally device-local; only durable
+// learning ledgers and monotonic earned achievements are accepted here.
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Solo-use allowlist: only this UID may read/write anything, regardless
-    // of ownership scoping below. Widen this when more users are onboarded.
     function isAllowedUser() {
       return request.auth != null && request.auth.uid == '7jSCG8qg6PN5IhibC7zAKblll8m2';
     }
@@ -25,19 +20,58 @@ service cloud.firestore {
         time <= request.time;
     }
 
-    function isKnownStateKey(stateKey) {
+    function isProgressKey(stateKey) {
       return stateKey in [
         'flag-atlas:progress:v1',
-        'flag-atlas:attempts:v1',
         'flag-atlas:location-progress:v1',
-        'flag-atlas:location-attempts:v1',
         'flag-atlas:outline-progress:v1',
-        'flag-atlas:outline-attempts:v1',
-        'flag-atlas:neighbor-progress:v1',
-        'flag-atlas:neighbor-attempts:v1',
-        'flag-atlas:earned-achievements:v1',
-        'flag-atlas:region-domain-perfect-run-streaks:v1'
+        'flag-atlas:neighbor-progress:v1'
       ];
+    }
+
+    function isAchievementKey(stateKey) {
+      return stateKey == 'flag-atlas:earned-achievements:v1';
+    }
+
+    function isKnownStateKey(stateKey) {
+      return isProgressKey(stateKey) || isAchievementKey(stateKey);
+    }
+
+    function isValidProgressPayload(data) {
+      return data is map &&
+        data.keys().hasOnly(['version', 'records']) &&
+        data.keys().hasAll(['version', 'records']) &&
+        data.version == 2 &&
+        data.records is map &&
+        data.records.keys().size() <= 300;
+    }
+
+    function isValidAchievementPayload(data) {
+      return data is map &&
+        data.keys().hasOnly([
+          'version',
+          'regionDomainMasteries',
+          'completeRegions',
+          'completeContinents',
+          'worldCrown'
+        ]) &&
+        data.keys().hasAll([
+          'version',
+          'regionDomainMasteries',
+          'completeRegions',
+          'completeContinents',
+          'worldCrown'
+        ]) &&
+        data.version == 1 &&
+        data.regionDomainMasteries is list && data.regionDomainMasteries.size() <= 500 &&
+        data.completeRegions is list && data.completeRegions.size() <= 200 &&
+        data.completeContinents is list && data.completeContinents.size() <= 6 &&
+        data.worldCrown is bool;
+    }
+
+    function isValidStatePayload(stateKey, data) {
+      return (isProgressKey(stateKey) && isValidProgressPayload(data)) ||
+        (isAchievementKey(stateKey) && isValidAchievementPayload(data));
     }
 
     function isValidStateDoc(stateKey) {
@@ -45,15 +79,13 @@ service cloud.firestore {
       return isKnownStateKey(stateKey) &&
         resourceData.keys().hasOnly(['data', 'schemaVersion', 'updatedAt']) &&
         resourceData.keys().hasAll(['data', 'schemaVersion', 'updatedAt']) &&
-        resourceData.data is map &&
-        resourceData.data.keys().size() < 5000 &&
-        resourceData.schemaVersion is int &&
-        resourceData.schemaVersion > 0 &&
-        isRecent(resourceData.updatedAt);
+        resourceData.schemaVersion == 1 &&
+        isRecent(resourceData.updatedAt) &&
+        isValidStatePayload(stateKey, resourceData.data);
     }
 
     match /users/{userId}/state/{stateKey} {
-      allow read, delete: if isOwner(userId);
+      allow read, delete: if isOwner(userId) && isKnownStateKey(stateKey);
       allow create, update: if isOwner(userId) && isValidStateDoc(stateKey);
     }
   }
