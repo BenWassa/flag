@@ -1,4 +1,4 @@
-name: Issue 22 production QA
+name: Issue 22 pointer fix and production QA
 
 on:
   push:
@@ -6,17 +6,85 @@ on:
       - issue-22-north-america-expansion
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  focused-browser:
+  harden:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Apply shared pointer-capture and lazy-PWA fixes
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('src/map-viewport.ts')
+          s = p.read_text()
+          old = """  } else {
+            resetPinchStart(viewport, gesture);
+          }
+          viewport.setPointerCapture?.(event.pointerId);
+        }
+          """.replace('        ', '')
+          new = """  } else {
+            resetPinchStart(viewport, gesture);
+            // A second pointer establishes a pinch. Capture both pointers only
+            // once the multi-pointer gesture exists; capturing the first tap
+            // retargets Chromium's later click away from SVG answer marks.
+            for (const pointerId of gesture.pointers.keys()) {
+              try { viewport.setPointerCapture?.(pointerId); } catch { /* Pointer may already have ended. */ }
+            }
+          }
+        }
+          """.replace('        ', '')
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif 'viewport.setPointerCapture?.(event.pointerId);\n}' in s:
+              raise SystemExit('Unexpected pointerdown capture shape')
+
+          old = """    if (Math.hypot(dx, dy) > 4) gesture.dragged = true;
+            if (gesture.dragged) {
+          """.replace('        ', '')
+          new = """    if (!gesture.dragged && Math.hypot(dx, dy) > 4) {
+              gesture.dragged = true;
+              // Start capture only once movement has crossed the established
+              // drag threshold. Sub-threshold movement remains an ordinary tap.
+              try { viewport.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have ended. */ }
+            }
+            if (gesture.dragged) {
+          """.replace('        ', '')
+          if old in s:
+              s = s.replace(old, new, 1)
+          elif '!gesture.dragged && Math.hypot(dx, dy) > 4' not in s:
+              raise SystemExit('Unexpected drag threshold shape')
+          p.write_text(s)
+
+          p = Path('vite.config.ts')
+          s = p.read_text()
+          if "'assets/north-america-*.js'" not in s:
+              anchor = "          'assets/asia-*.js',\n"
+              if anchor not in s:
+                  raise SystemExit('PWA lazy geography exclusion anchor missing')
+              s = s.replace(anchor, anchor + "          'assets/north-america-*.js',\n", 1)
+              p.write_text(s)
+          PY
+      - name: Commit source fixes when needed
+        run: |
+          if git diff --quiet -- src/map-viewport.ts vite.config.ts; then
+            echo "Source fixes already committed."
+          else
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add src/map-viewport.ts vite.config.ts
+            git commit -m "fix(#22): preserve map answer taps during gestures"
+            git push origin HEAD:issue-22-north-america-expansion
+          fi
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
