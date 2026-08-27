@@ -5,42 +5,20 @@ on:
     branches: [issue-22-north-america-expansion]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   verify:
-    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
-      - name: Calibrate measured North America gzip budget
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/verify-north-america.mjs')
-          s = p.read_text()
-          old = 'maxGzipBytes: 400_000,'
-          new = 'maxGzipBytes: 425_000,'
-          if s.count(old) != 1:
-              raise SystemExit('North America gzip budget anchor not found exactly once')
-          p.write_text(s.replace(old, new, 1))
-          PY
       - run: node scripts/build-verifier-output.mjs
       - run: node scripts/verify-north-america.mjs
       - name: Measure verifier payload
         run: |
           echo "VERIFY_RAW=$(wc -c < .verify-dist/data/maps/north-america.js)"
           echo "VERIFY_GZIP=$(gzip -9 -c .verify-dist/data/maps/north-america.js | wc -c)"
-      - name: Commit calibrated verifier budget
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/verify-north-america.mjs
-          git commit -m "test(#22): calibrate North America payload budget" || exit 0
-          git push origin HEAD:issue-22-north-america-expansion
