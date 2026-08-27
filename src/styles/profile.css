@@ -1,0 +1,80 @@
+/* Profile account lifecycle hardening. Keep this surface quiet and local-first:
+   layout/focus/error resilience only, with no separate visual system. */
+
+.profile-card > .button,
+.profile-card__identity,
+.profile-card__account-actions,
+.profile-card__delete-confirmation,
+.profile-card__error {
+  width: 100%;
+  min-width: 0;
+}
+
+.profile-card__identity strong,
+.profile-card__identity small,
+.profile-card__delete-confirmation p,
+.profile-card__error {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.profile-card__identity strong {
+  line-height: 1.25;
+}
+
+.profile-card__account-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.profile-card__account-actions .button {
+  min-width: 0;
+}
+
+.profile-card__delete-confirmation {
+  display: grid;
+  gap: 12px;
+  padding-top: 14px;
+  border-top: 1px solid var(--line);
+}
+
+.profile-card__delete-confirmation p,
+.profile-card--loading p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.profile-card__destructive-action {
+  border-color: var(--wrong-line);
+  color: var(--wrong);
+}
+
+.profile-card__error {
+  margin: 0;
+  border: 1px solid var(--wrong-line);
+  background: var(--wrong-soft);
+  color: var(--wrong);
+  text-align: left;
+  line-height: 1.45;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .profile-card__destructive-action:not(:disabled):hover {
+    border-color: var(--wrong);
+    background: var(--wrong-soft);
+  }
+}
+
+@media (max-width: 360px) {
+  .profile-card {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .profile-card__account-actions {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
