@@ -52,7 +52,9 @@ That matters because current launch behaviour differs by domain:
 - Outlines region Play defaults to 10 questions;
 - Neighbours region Play defaults to 10 targets.
 
-Accordingly, regions with more than 10 eligible targets can currently earn Flags/Outlines/Neighbours Mastery from two perfect sampled region rounds. Issue **#108** owns the correction so the persistent achievement again requires two consecutive perfect **complete-region** Play results.
+Issue **#108** closed the former sampled-round defect. Flags, Outlines,
+Locations and Neighbours now require two perfect complete-region Play results,
+with exact supported-target coverage verified before the streak advances.
 
 Do not hide this defect in architecture documentation or work around it in UI presentation.
 
@@ -149,6 +151,6 @@ Achievement verification should cover:
 - current Africa/South America/Europe/Asia curriculum eligibility;
 - North America/Oceania/world incompleteness;
 - persistence sanitisation and idempotency;
-- #108 full-target-set qualification once implemented.
+- #108 full-target-set qualification, shipped in `046bd93`.
 
 Country evidence weighting/migration remains owned by the learning-evidence tests. The achievement suite must not silently couple itself back to raw country scheduler fields.

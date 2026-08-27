@@ -45,7 +45,10 @@ Locations Play gives one scored tap per target. The current React surface provid
 
 A miss-free Play result receives transient **Perfect round** treatment on Results.
 
-Normal region Play uses the full selected-scope map target set. Accordingly Locations already supplies complete-region result coverage to the current region-Mastery streak path; #108 is primarily required to bring Flags, Outlines and Neighbours to equivalent qualification integrity and to make the completeness guard explicit/canonical across domains.
+Normal region Play uses the full selected-scope map target set. Locations and
+the other three domains now supply complete-region result coverage to the
+region-Mastery streak path, with the explicit canonical completeness guard
+shipped under #108.
 
 ## Results and review
 

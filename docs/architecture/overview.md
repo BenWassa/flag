@@ -35,7 +35,9 @@ Locations, Outlines and Neighbours reuse the generated production geography foun
 
 `qualifiesForRegionMastery(record)` remains in `evidence.ts` under a historical compatibility name for per-country strong-evidence qualification; it is **not** the current earned-achievement integration seam.
 
-Issue #108 tracks the current qualification-integrity defect where Flags, Outlines and Neighbours can record region perfect-run events from 10-target sampled rounds instead of verified complete-region target sets. Locations region Play is currently full-scope.
+Issue #108 closed the qualification-integrity defect: all domains now launch
+complete-region Play and verify the exact supported target set before recording
+a region perfect-run event.
 
 `progress.ts` owns Flags/Outlines country-record transitions. Locations and Neighbours retain domain-native session/progress models because their retrieval mechanics are not equivalent to multiple-choice recognition.
 
@@ -133,7 +135,7 @@ Product-semantics ownership is split intentionally:
 
 - learning-evidence verification owns country evidence weighting, lapse/recovery, migration and domain mappings;
 - achievement verification owns perfect-run streaks, support guards, persistence and region/continent/world aggregation;
-- #108 must add explicit complete-target-set qualification coverage without coupling achievements back to raw country scheduler fields;
+- #108 added explicit complete-target-set qualification coverage without coupling achievements back to raw country scheduler fields;
 - routing/IA verification owns the current one-tap launcher contract and unavailable-scope fallback;
 - browser smoke tests cover production-preview desktop/mobile flows.
 
