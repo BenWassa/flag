@@ -406,12 +406,16 @@ function normalizeStandardContinent(countriesSource, catalog, scoredCatalog, con
   const contextPatterns = (config.allowedContextPatterns ?? []).map(
     (spec) => new RegExp(spec.pattern, spec.flags ?? 'i'),
   );
+  const excludedContextPatterns = (config.excludedContextPatterns ?? []).map(
+    (spec) => new RegExp(spec.pattern, spec.flags ?? 'i'),
+  );
   const unexpected = [];
   for (const sourceFeature of countriesSource.features) {
     if (String(sourceFeature.properties?.CONTINENT ?? '').toLowerCase() !== config.sourceContinent.toLowerCase()) continue;
     const id = sourceCountryId(sourceFeature, allIds);
     if (id && (scoredIds.has(id) || localContextIds.has(id))) continue;
     const name = sourceName(sourceFeature) || '(unnamed)';
+    if (excludedContextPatterns.some((pattern) => pattern.test(name))) continue;
     if (contextPatterns.length && !contextPatterns.some((pattern) => pattern.test(name))) {
       unexpected.push(name);
       continue;
@@ -435,12 +439,12 @@ function normalizeContinent(countriesSource, catalog, scoredCatalog, config) {
   return normalizeStandardContinent(countriesSource, catalog, scoredCatalog, config);
 }
 
-function boundsToFocus(bounds, padding = 26) {
+function boundsToFocus(bounds, padding = 26, minimum = {}) {
   const [[x0, y0], [x1, y1]] = bounds;
   let width = Math.max(1, x1 - x0) + padding * 2;
   let height = Math.max(1, y1 - y0) + padding * 2;
-  width = Math.max(width, 180);
-  height = Math.max(height, 170);
+  width = Math.max(width, minimum.width ?? 180);
+  height = Math.max(height, minimum.height ?? 170);
   const x = Math.max(0, Math.min(WIDTH - width, (x0 + x1) / 2 - width / 2));
   const y = Math.max(0, Math.min(HEIGHT - height, (y0 + y1) / 2 - height / 2));
   return {
@@ -459,7 +463,7 @@ function geometryBounds(geometry) {
     bounds[1][0] = Math.max(bounds[1][0], Number(x));
     bounds[1][1] = Math.max(bounds[1][1], Number(y));
   }
-  for (const circle of [geometry.locator, geometry.callout?.target]) {
+  for (const circle of [geometry.locator, geometry.hitAssist, geometry.callout?.target]) {
     if (!circle) continue;
     bounds[0][0] = Math.min(bounds[0][0], circle.cx - circle.r);
     bounds[0][1] = Math.min(bounds[0][1], circle.cy - circle.r);
@@ -739,9 +743,22 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);
   const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);
   const fitExcludedIds = new Set(config.fitExcludeCountryIds ?? []);
-  const fitCollection = featureCollection(normalized.features.filter((item) => {
+  const fitCountryBounds = config.fitCountryBounds ?? {};
+  const fitExcludedContextPatterns = (config.fitExcludeContextPatterns ?? []).map(
+    (spec) => new RegExp(spec.pattern, spec.flags ?? 'i'),
+  );
+  const fitCollection = featureCollection(normalized.features.flatMap((item) => {
     const countryId = item.properties?.countryId;
-    return !countryId || !fitExcludedIds.has(countryId);
+    if (countryId && fitExcludedIds.has(countryId)) return [];
+    if (item.properties?.role === 'context'
+      && fitExcludedContextPatterns.some((pattern) => pattern.test(sourceName(item)))) return [];
+    const bounds = countryId ? fitCountryBounds[countryId] : undefined;
+    if (!bounds) return [item];
+    const geometry = filterGeometryByBounds(item.geometry, bounds);
+    if (!geometry) {
+      throw new Error(`${config.displayName} viewport-fit bounds removed every component of ${countryId}.`);
+    }
+    return [{ ...item, geometry }];
   }));
   if (!fitCollection.features.length) throw new Error(`${config.displayName} viewport-fit policy removed every feature.`);
 
@@ -780,6 +797,12 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   );
 
   const islandLocators = new Set(config.islandLocatorIds ?? []);
+  const hitAssistIds = new Set(config.hitAssistIds ?? []);
+  for (const id of hitAssistIds) {
+    if (islandLocators.has(id)) {
+      throw new Error(`${config.displayName} ${id} cannot use both a visible locator and invisible hit assistance.`);
+    }
+  }
   // A country carries role 'country' even when this continent only renders it as
   // context, so scoring membership — not the feature role — decides whether its
   // path may be clipped. Derived focus scopes are folded in because they score
@@ -797,16 +820,27 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     const countryGeometry = { countryId: id };
     if (item.properties?.role === 'country' && islandLocators.has(id)) {
       const centroid = planarPath.centroid(item);
+      const anchor = config.locatorAnchorMode === 'pole'
+        ? poleOfInaccessibility(pathRings(countryPath))
+        : { x: centroid[0], y: centroid[1] };
       countryGeometry.outlinePath = countryPath;
       countryGeometry.locator = {
-        cx: Number(centroid[0].toFixed(2)),
-        cy: Number(centroid[1].toFixed(2)),
+        cx: Number(anchor.x.toFixed(2)),
+        cy: Number(anchor.y.toFixed(2)),
         r: 7,
       };
     } else {
       countryGeometry.path = answerableIds.has(id)
         ? countryPath
         : (clippedPath(item) || countryPath);
+    }
+    if (item.properties?.role === 'country' && hitAssistIds.has(id)) {
+      const anchor = poleOfInaccessibility(pathRings(countryPath));
+      countryGeometry.hitAssist = {
+        cx: Number(anchor.x.toFixed(2)),
+        cy: Number(anchor.y.toFixed(2)),
+        r: 7,
+      };
     }
     if (item.properties?.role === 'country') {
       const callout = calloutFor(config, id, planarPath.centroid(item));
@@ -838,17 +872,34 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     regionIds.set(row.region, ids);
   }
   const focusExcludedIds = new Set(config.focusExcludeCountryIds ?? []);
-  const focusForIds = (ids) => {
+  const focusCountryBounds = config.focusCountryBounds ?? {};
+  const focusProjectedById = new Map(
+    normalized.features
+      .filter((item) => item.properties?.countryId && focusCountryBounds[item.properties.countryId])
+      .map((item) => {
+        const id = item.properties.countryId;
+        const filtered = filterGeometryByBounds(item.geometry, focusCountryBounds[id]);
+        if (!filtered) throw new Error(`${config.displayName} focus bounds removed every component of ${id}.`);
+        return [id, {
+          type: 'Feature',
+          properties: { ...item.properties },
+          geometry: projectGeometry(filtered, projection),
+        }];
+      }),
+  );
+  const focusForIds = (ids, scopeId) => {
     const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
     const focusIds = preferredIds.length ? preferredIds : ids;
-    const regionFeatures = focusIds.map((id) => simplifiedById.get(id)).filter(Boolean);
+    const regionFeatures = focusIds
+      .map((id) => focusProjectedById.get(id) ?? simplifiedById.get(id))
+      .filter(Boolean);
     const bounds = planarPath.bounds(featureCollection(regionFeatures));
     // A locator dot or leader-line target can sit outside its own polygon, and
     // the runtime grows its invisible touch surface to roughly 44 CSS px. A
     // frame derived from polygons alone therefore crops the very thing the
     // learner taps, so reserve the touch surface rather than the drawn radius.
     for (const id of focusIds) {
-      for (const circle of [geometry[id]?.locator, geometry[id]?.callout?.target]) {
+      for (const circle of [geometry[id]?.locator, geometry[id]?.hitAssist, geometry[id]?.callout?.target]) {
         if (!circle) continue;
         const reach = Math.max(circle.r, HIT_SURFACE_FOCUS_RESERVE);
         bounds[0][0] = Math.min(bounds[0][0], circle.cx - reach);
@@ -857,13 +908,13 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
         bounds[1][1] = Math.max(bounds[1][1], circle.cy + reach);
       }
     }
-    return boundsToFocus(bounds);
+    return boundsToFocus(bounds, 26, config.focusMinimumByScope?.[scopeId]);
   };
   // The whole-continent opening view is fitted to the scoring geography, not to
   // the raw canvas. The canvas carries non-scoring context and projection slack,
   // so framing on it left phone portrait stages with a dead band instead of map.
   const scopeFocus = {
-    [config.id]: focusForIds(scoredCatalog.map((row) => row.id)),
+    [config.id]: focusForIds(scoredCatalog.map((row) => row.id), config.id),
   };
   // An inset panel is screen-space, so it changes touch size rather than
   // framing. Opening frames stay exactly as they are, and every member is still
@@ -874,7 +925,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   const hiddenFocusRegions = new Set(config.hiddenFocusRegionIds ?? []);
   for (const [region, ids] of [...regionIds.entries()].sort()) {
     if (hiddenFocusRegions.has(region)) continue;
-    scopeFocus[region] = focusForIds(ids);
+    scopeFocus[region] = focusForIds(ids, region);
   }
   // Learner-facing scopes may deliberately overlap the canonical region
   // taxonomy (Issue #28 Middle East, and Caucasus). They own no country

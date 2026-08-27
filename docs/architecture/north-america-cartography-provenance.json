@@ -52,9 +52,9 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.0002460715807133835,
-    "coordinateCountBefore": 152270,
-    "coordinateCountAfter": 109969
+    "weightThreshold": 0.001215166431192698,
+    "coordinateCountBefore": 152519,
+    "coordinateCountAfter": 110143
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
@@ -63,18 +63,30 @@
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
     "scoredCountries": 23,
+    "canadaUnitedStates": "canonical whole-country CAN/USA; USA remote multipart components are excluded from viewport fit/focus only, never from scored geometry or Outlines",
     "southAmericaContext": "COL and VEN are keyed non-scoring context; PAN-COL adjacency remains global",
-    "dependenciesAndTerritories": "non-scoring; explicit source-feature audit required before release",
-    "maritimeAdjacency": "none; land adjacency only"
+    "franceNetherlandsContext": "FRA and NLD are keyed non-scoring context clipped to Caribbean overseas geometry; metropolitan Europe is not loaded into this viewport",
+    "greenland": "non-scoring Danish context; rendered when visible but excluded from projection fit",
+    "bermuda": "non-scoring British dependency context; rendered when visible but excluded from projection fit",
+    "saintPierreAndMiquelon": "non-scoring French dependency context near Canada",
+    "puertoRico": "non-scoring United States dependency context in the Caribbean",
+    "britishCaribbean": "Anguilla, British Virgin Islands, Cayman Islands, Montserrat and Turks and Caicos Islands are non-scoring context",
+    "frenchCaribbean": "Saint Barthelemy and Saint Martin are non-scoring source context; FRA Caribbean geometry is keyed non-scoring context",
+    "dutchCaribbean": "Aruba, Curacao and Sint Maarten are non-scoring source context; NLD Caribbean geometry is keyed non-scoring context",
+    "disputedBanks": "Bajo Nuevo Bank and Serranilla Bank remain non-scoring Natural Earth indeterminate context",
+    "guantanamo": "Natural Earth Guantanamo Bay lease remains non-scoring context and is not promoted to an Atlas country",
+    "usMinorOutlyingIslands": "explicitly excluded from North America runtime context because remote Pacific dependencies are irrelevant to this learner viewport",
+    "maritimeAdjacency": "none; topology-derived land adjacency only, including explicit empty sets",
+    "assistance": "real polygons first; invisible hit assistance for BHS/BLZ/DOM/HTI/JAM/SLV/TTO; true-scale insets for KNA+ATG, DMA+LCA and VCT+GRD+BRB; no leader-line callouts or schematic relocation"
   },
   "runtimeOptimization": {
     "pathDigits": 1,
     "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
     "canvasUnits": "North America 835x723 projected canvas units",
     "physicalTolerance": {
-      "ocean": 0.4,
-      "lakes": 0.15,
-      "coastline": 0
+      "ocean": 1.4,
+      "lakes": 0.6,
+      "coastline": 1.15
     },
     "precisionSensitiveCountryIds": []
   }
