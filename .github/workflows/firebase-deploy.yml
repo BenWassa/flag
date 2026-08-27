@@ -50,4 +50,14 @@ jobs:
       - name: Verify live Firebase Hosting origin
         env:
           ATLAS_FIREBASE_ORIGIN: https://atlas-3c48a.web.app
-        run: npx playwright test --config=playwright.firebase.config.ts
+        run: |
+          set -o pipefail
+          npx playwright test --config=playwright.firebase.config.ts 2>&1 | tee "$RUNNER_TEMP/firebase-acceptance.log"
+          status=${PIPESTATUS[0]}
+          {
+            echo '## Firebase Hosting acceptance'
+            echo '```text'
+            tail -n 120 "$RUNNER_TEMP/firebase-acceptance.log"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
