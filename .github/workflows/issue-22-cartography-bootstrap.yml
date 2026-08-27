@@ -1,67 +1,71 @@
-name: Issue 22 production QA
+name: Issue 22 deterministic evidence
 
 on:
   push:
     branches:
       - issue-22-north-america-expansion
+    paths:
+      - .github/workflows/issue-22-cartography-bootstrap.yml
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  focused-browser:
-    if: github.actor != 'github-actions[bot]'
+  evidence:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-      - name: Fix neighbour host lifecycle and Play feedback harness
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-
-          p = Path('src/react/screens/NeighborScreens.tsx')
-          s = p.read_text()
-          old = '<div className="neighbor-map-host" data-neighbor-map-host data-neighbor-map-key={mapKey}'
-          new = '<div key={mapKey} className="neighbor-map-host" data-neighbor-map-host data-neighbor-map-key={mapKey}'
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif new not in s:
-              raise SystemExit('Neighbour host anchor not found')
-          p.write_text(s)
-
-          p = Path('tests/browser/north-america.spec.ts')
-          s = p.read_text()
-          old = "      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();\n      await answerCurrentLocationCorrectly(page, targetId);\n      sawWrong = true;"
-          new = "      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();\n      // Play resolves the target on the first scored tap; a wrong answer is not retryable.\n      // The normal dwell/advance is asserted by the prompt transition below.\n      sawWrong = true;"
-          if old in s:
-              s = s.replace(old, new, 1)
-          elif 'Play resolves the target on the first scored tap' not in s:
-              raise SystemExit('Central America feedback anchor not found')
-          p.write_text(s)
-          PY
-      - name: Commit runtime and QA corrections
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/react/screens/NeighborScreens.tsx tests/browser/north-america.spec.ts
-          git commit -m "fix(#22): reset neighbour map host between targets"
-          git push origin HEAD:issue-22-north-america-expansion
       - run: npm ci
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
-      - name: North America production browser gate
-        run: >-
-          npx playwright test
-          tests/browser/north-america.spec.ts
-          tests/browser/map-pointer-capture.spec.ts
-          tests/browser/production-matrix.spec.ts
-          tests/browser/map-hit-precedence.spec.ts
-          tests/browser/map-insets.spec.ts
-          tests/browser/atlas.spec.ts
-          --project=chromium
+      - name: Regenerate every shipped continent deterministically
+        run: |
+          npm run maps:generate
+          git diff --exit-code
+      - name: Run continent and shared cartography verifiers
+        run: |
+          npm run build:verify
+          node scripts/verify-map.mjs
+          node scripts/verify-cartography.mjs
+          node scripts/verify-continent-foundation.mjs
+          node scripts/verify-south-america.mjs
+          node scripts/verify-europe.mjs
+          node scripts/verify-asia-expansion.mjs
+          node scripts/verify-north-america.mjs
+          node scripts/verify-map-insets.mjs
+          node scripts/verify-neighbors.mjs
+          node scripts/verify-neighbor-map.mjs
+          node scripts/verify-zero-neighbours.mjs
+          npm run verify:clean
+      - name: Build exact production artifact
+        run: npm run build
+      - name: Measure and inspect production artifact
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFile, readdir } from 'node:fs/promises';
+          import { gzipSync } from 'node:zlib';
+          const sourcePath = 'src/data/maps/north-america.ts';
+          const source = await readFile(sourcePath);
+          const assets = await readdir('dist/assets');
+          const chunks = assets.filter((name) => /^north-america-.*\.js$/.test(name));
+          if (chunks.length !== 1) throw new Error(`Expected one North America production chunk, found ${chunks.length}: ${chunks.join(', ')}`);
+          const chunkPath = `dist/assets/${chunks[0]}`;
+          const chunk = await readFile(chunkPath);
+          const sw = await readFile('dist/sw.js', 'utf8');
+          const verifierLeaks = [];
+          for (const name of await readdir('dist')) if (name.includes('verify')) verifierLeaks.push(name);
+          console.log(`NORTH_AMERICA_SOURCE_RAW=${source.length}`);
+          console.log(`NORTH_AMERICA_SOURCE_GZIP=${gzipSync(source).length}`);
+          console.log(`NORTH_AMERICA_CHUNK=${chunks[0]}`);
+          console.log(`NORTH_AMERICA_CHUNK_RAW=${chunk.length}`);
+          console.log(`NORTH_AMERICA_CHUNK_GZIP=${gzipSync(chunk).length}`);
+          console.log(`NORTH_AMERICA_PRECACHE_REFERENCED=${sw.includes(chunks[0])}`);
+          console.log(`DIST_VERIFIER_LEAKS=${JSON.stringify(verifierLeaks)}`);
+          if (sw.includes(chunks[0])) throw new Error('North America lazy chunk leaked into service-worker precache.');
+          if (verifierLeaks.length) throw new Error(`Verifier output leaked into dist: ${verifierLeaks.join(', ')}`);
+          NODE
+          grep -q "assets/north-america-" dist/.vite/manifest.json
+          ! grep -q "NORTH_AMERICA_MAP_ASSET" dist/app.js
+          git status --short
