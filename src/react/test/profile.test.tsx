@@ -46,6 +46,13 @@ beforeEach(() => {
 });
 
 describe('Profile cloud account states', () => {
+  it('shows a restrained status instead of a blank surface while sign-in state resolves', async () => {
+    auth.current.loading = true;
+    await renderProfile();
+    expect(screen.getByRole('status').textContent).toContain('Checking sign-in');
+    expect(screen.queryByRole('button', { name: 'Sign in with Google' })).toBeNull();
+  });
+
   it('keeps signed-out copy honest and local-first', async () => {
     await renderProfile();
     expect(screen.getByText(/progress is saved on this device/i)).toBeTruthy();
@@ -75,6 +82,16 @@ describe('Profile cloud account states', () => {
     expect(screen.queryByRole('button', { name: 'Delete account' })).toBeNull();
   });
 
+  it('moves focus to the safe action when destructive confirmation opens', async () => {
+    auth.current.user = { uid: 'allowed', displayName: 'Atlas Learner', email: 'learner@example.com', photoURL: null };
+    auth.current.cloudStatus = 'synced';
+    await renderProfile();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Delete account' }));
+    expect(screen.getByRole('group', { name: 'Confirm account deletion' })).toBeTruthy();
+    expect(document.activeElement).toBe(screen.getByRole('button', { name: 'Cancel' }));
+  });
+
   it('confirms account deletion and surfaces partial deletion failure precisely', async () => {
     auth.current.user = { uid: 'allowed', displayName: 'Atlas Learner', email: 'learner@example.com', photoURL: null };
     auth.current.cloudStatus = 'synced';
@@ -87,7 +104,8 @@ describe('Profile cloud account states', () => {
     expect(screen.getByText(/Progress on this device stays here/i)).toBeTruthy();
     await userEvent.click(screen.getByRole('button', { name: 'Delete' }));
 
-    expect(await screen.findByText(/Cloud progress was deleted, but Google requires a recent sign-in/i)).toBeTruthy();
+    const alert = await screen.findByRole('alert');
+    expect(alert.textContent).toContain('Cloud progress was deleted, but Google requires a recent sign-in');
     expect(auth.current.deleteAccount).toHaveBeenCalledTimes(1);
   });
 });
