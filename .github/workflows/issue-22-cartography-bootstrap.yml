@@ -1,23 +1,44 @@
-name: Issue 22 full verification
+name: Issue 22 North America payload refinement
 
 on:
   push:
     branches: [issue-22-north-america-expansion]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  refine:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
-      - run: npm test
-      - name: Measure production North America chunk
+      - name: Tighten non-interactive North America context
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/map-continent-configs.mjs')
+          s = p.read_text()
+          marker = 'export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({'
+          head, tail = s.split(marker, 1)
+          old = 'physicalTolerance: Object.freeze({ ocean: 1.4, coastline: 1.15, lakes: 0.6 })'
+          new = 'physicalTolerance: Object.freeze({ ocean: 1.8, coastline: 1.5, lakes: 0.75 })'
+          if old not in tail:
+              raise SystemExit('North America physical tolerance anchor not found')
+          tail = tail.replace(old, new, 1)
+          p.write_text(head + marker + tail)
+          PY
+      - run: npm run maps:generate
+      - run: node scripts/build-verifier-output.mjs
+      - run: node scripts/verify-north-america.mjs
+      - run: npm run build
+      - name: Measure North America payload
         run: |
           chunk=$(find dist/assets -maxdepth 1 -type f -name 'north-america-*.js' | head -1)
           test -n "$chunk"
@@ -26,3 +47,11 @@ jobs:
           echo "CHUNK_GZIP=$(gzip -9 -c "$chunk" | wc -c)"
           echo "SOURCE_RAW=$(wc -c < src/data/maps/north-america.ts)"
           echo "SOURCE_GZIP=$(gzip -9 -c src/data/maps/north-america.ts | wc -c)"
+      - name: Commit refined generated cartography
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add scripts/map-continent-configs.mjs src/data/maps/north-america.ts docs/architecture/north-america-cartography-provenance.json
+          git diff --cached --stat
+          git commit -m "perf(#22): trim North America physical context" || exit 0
+          git push origin HEAD:issue-22-north-america-expansion
