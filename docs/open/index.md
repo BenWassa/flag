@@ -89,11 +89,8 @@ spun off a focused follow-up issue below.
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it. #89 must not claim this
   physical evidence unless #71 actually records it.
-- [#46 — Firebase Hosting/Firestore completion](https://github.com/BenWassa/flag/issues/46).
-  Firebase Hosting configuration and automatic live deployment have shipped,
-  but #107 remains open for Firebase-origin acceptance, explicit host cutover
-  and rollback. #106 still owns actual account-backed cloud progress and account
-  lifecycle. Keep both separate from #89's React/Vite compatibility boundary.
+
+The Firebase programme (#46) is complete. #106 shipped optional local-first cloud progress/account lifecycle and #107 accepted Firebase Hosting as a live secondary target while GitHub Pages remains primary. Durable production architecture is [`../architecture/firebase.md`](../architecture/firebase.md); final programme and Hosting evidence are [`../closed/issue-46-firebase.md`](../closed/issue-46-firebase.md) and [`../closed/issue-107-firebase-hosting.md`](../closed/issue-107-firebase-hosting.md).
 
 #87 (gamification connective-tissue defects: due-state reporting, Play
 feedback parity, Progress evidence coverage) is complete and closed. Its
@@ -136,21 +133,18 @@ four learning domains, together with the Middle East cross-continental scope
 [`issue-26-asia-expansion.md`](../closed/issue-26-asia-expansion.md) and
 [`issue-28-middle-east-region.md`](../closed/issue-28-middle-east-region.md).
 
-Atlas now ships five production continents — Africa, South America, Europe,
-Asia and North America — each with a dedicated verifier gating curriculum,
-territory/context policy, adjacency and runtime payload budget.
+Atlas now ships four production continents — Africa, South America, Europe and
+Asia — each with a dedicated verifier gating curriculum, territory/context
+policy, adjacency and runtime payload budget.
 
-#22 North America is implemented and production-browser verified on its existing
-branch; it remains listed here only until PR/CI/deployment closeout is complete.
-Its durable evidence is in [`issue-22-north-america-expansion.md`](issue-22-north-america-expansion.md).
-#23 remains superseded/closed by the parent North America implementation.
+Still outstanding:
 
-Still outstanding after #22 closes:
-
+- [#22 — North America](https://github.com/BenWassa/flag/issues/22) (also owns Central America; #23 is superseded/closed — see [`issue-23-central-america-expansion.md`](../closed/issue-23-central-america-expansion.md))
 - [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
 
-Africa remains the reference baseline. Oceania remains an honest shell, and
-unsupported curriculum must never count towards mastery/completion.
+Africa remains the reference baseline. North America and Oceania still appear
+as shell/navigation states, and unsupported curriculum must never count towards
+mastery/completion.
 
 **Continent payload follow-up (#86).** Context clipping is complete. Europe is
 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a
