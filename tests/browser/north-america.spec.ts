@@ -296,7 +296,8 @@ test('keeps Central America dense targets usable and preserves correct/wrong fee
       await wrong.focus();
       await wrong.press('Enter');
       await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
-      await answerCurrentLocationCorrectly(page, targetId);
+      // Play resolves the target on the first scored tap; a wrong answer is not retryable.
+      // The normal dwell/advance is asserted by the prompt transition below.
       sawWrong = true;
     } else {
       await answerCurrentLocationCorrectly(page, targetId);
