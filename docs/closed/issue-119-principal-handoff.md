@@ -1,5 +1,10 @@
 # Issue #119 — Principal-model handoff
 
+> **Superseded by [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+>
+> Its entry gate is superseded: the renderer comparison it marked GREEN has been downgraded to AMBER, and two repair tasks now precede the principal session. See [`../open/issue-119-renderer-comparison.md`](../open/issue-119-renderer-comparison.md).
+
+
 **Audience:** Claude Opus / GPT Sol high-effort principal session  
 **Current status:** **GREEN FOR PRINCIPAL EVIDENCE REVIEW — support runtime evidence is reconciled; no renderer has been selected**
 **Exploration branch:** `explore/spatial-atlas-moonshot`  

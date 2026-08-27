@@ -290,9 +290,24 @@ The prototype must not regenerate/change production 2D assets merely to create s
 
 ## 10. Visual/product acceptance
 
-This is intentionally not reducible to automated tests.
+This is intentionally not reducible to automated tests — and it is also not
+reducible to an agent review.
 
-The principal review should answer:
+**Gate G is decided by Ben on a physical phone**, running the fixed seven-step
+script in [`issue-119-plan.md` §2](issue-119-plan.md#2-who-decides-and-how)
+against production Atlas first and the prototype second, and recording the
+verdict *before* the independent F6 review runs. F6 reviews architecture and
+evidence; it does not decide whether the thing feels better, because it can
+only see screenshots and CI logs — the evidence class §12 below forbids
+treating as physical-device proof.
+
+Step 6 of that script — reaching a region five separate times, as a returning
+learner would — carries the most weight and is the easiest to skip. Camera
+choreography that delights on the first traversal is the classic thing that
+becomes friction on the fifteenth. A prototype that wins the first traversal
+and loses the fifth has failed.
+
+The review should answer:
 
 - Is the Earth immediately legible as Atlas rather than an embedded map product?
 - Does selecting Africa explain hierarchy through movement rather than spectacle?
@@ -355,6 +370,7 @@ Before F6, collect one concise packet containing:
 9. known compromises/hacks;
 10. code architecture summary;
 11. current branch diff against then-current `main`;
-12. explicit recommendation from the builder, separated from the independent reviewer's final judgement.
+12. explicit recommendation from the builder, separated from the independent reviewer's architecture judgement;
+13. **the recorded Gate G device verdict** — faster/same/slower, clearer/same/less clear, would-use-daily, and the single worst moment, for both production and prototype. Collected before F6 opens, not derived from it.
 
 F6 should be able to reject the moonshot cleanly without requiring sunk-cost justification.

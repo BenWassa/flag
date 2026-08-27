@@ -1,7 +1,12 @@
 # Issue #119 — Renderer comparison gate
 
-**Status:** runtime evidence reconciled; **GREEN for the protected principal evidence review**. This is not a renderer selection, production go-ahead, or a finding that either candidate has passed an integrated Atlas prototype.
-**Owner:** support tier until the table is complete; final selection belongs to Opus/Sol
+**Status:** **AMBER — not decision-ready.** Runtime evidence is recorded but is
+not comparable between candidates. Downgraded from GREEN on review; see
+[`issue-119-plan.md` §3](issue-119-plan.md#3-correction-to-the-evidence-position)
+and "Comparability defects" below. This is not a renderer selection, a
+production go-ahead, or a finding that either candidate has passed an
+integrated Atlas prototype.
+**Owner:** support tier until the two repair tasks below land; final selection belongs to the principal session
 
 This file exists to prevent two failure modes:
 
@@ -11,7 +16,7 @@ This file exists to prevent two failure modes:
 ## Reconciliation basis
 
 The two reports use the exact common semantic sequence required by
-[`issue-119-renderer-spike-prep.md`](issue-119-renderer-spike-prep.md):
+[`../closed/issue-119-renderer-spike-prep.md`](../closed/issue-119-renderer-spike-prep.md):
 
 ```text
 World → Africa → West Africa → Back Africa → Back World
@@ -38,6 +43,63 @@ Every mandatory row is now a fact, **PASS**, **FAIL**, or **UNCLEAR**. The
 remaining `UNCLEAR` values are evidence gaps for the principal to weigh, not
 silent passes.
 
+## Comparability defects — read before the tables
+
+The two tables below are recorded honestly but **must not be read as a
+like-for-like scoreboard.** Three defects, in severity order.
+
+### D1 — The spikes did not attempt the same task
+
+The R3F spike rendered **one centre mesh and no geography whatsoever** (its own
+report: "no geography dataset was included in this renderer measurement"). The
+MapLibre spike attempted **real local GeoJSON through a real style**. The row
+`Feature/geography picking → same action` therefore scores R3F **PASS** for
+picking a sphere and MapLibre **FAIL** for not picking country polygons. Those
+are different tests. The `(minimal mesh)` qualifier does not carry the weight a
+summary reader will place on it.
+
+### D2 — MapLibre's failures are environment-confounded, and known to be
+
+Every MapLibre FAIL traces to one cause: the local source/style stayed unloaded
+under headless SwiftShader, in dev and preview, **with no MapLibre error
+emitted**. The source report explicitly instructed reproducing this "in a headed
+desktop browser and physical Android/iOS hardware before treating it as a
+MapLibre product constraint rather than a SwiftShader/headless limitation."
+That instruction was recorded and then not followed; the gate was marked GREEN
+with the caveat noted rather than resolved. A silently blank canvas in
+software-rasterised headless Chromium is a routine headless artifact.
+
+The runs also differ in Node version (22.23.2 vs 24.11.1), runner (GitHub
+Actions vs local) and base SHA.
+
+### D3 — The bundle figures flatter R3F
+
+243,166 vs 248,535 gzip bytes is not like-for-like. MapLibre's figure
+**includes** GeoJSON source/layer handling, feature picking, projection and a
+camera system. R3F's **excludes** all of it — Atlas would still add the
+spherical geometry payload (~53–82 KB gzip envelope for four continents, per
+[`issue-119-geometry-lod-experiment.md`](issue-119-geometry-lod-experiment.md))
+plus its own tessellation, picking, label anchoring and LOD switching. MapLibre
+separately carries 10,456 gzip bytes of CSS. **R3F's true delivered cost is not
+yet measured**, and the gap is not 5 KB.
+
+### D4 — One over-read
+
+R3F issue #3863 is scored PASS on a single 1.4-second headless observation
+window. Read it as *did not reproduce in one narrow observation*. The source
+report is appropriately hedged; this table was not.
+
+## Repair tasks required before the gate can return to GREEN
+
+1. **Re-run the MapLibre spike headed** — a real Chromium window, or headless
+   with hardware/ANGLE GL — and either reproduce the blank source or clear it.
+   Blocking. Roughly an hour of support work.
+2. **Extend the R3F spike to load real Africa geography** and pick a real
+   country polygon, so the picking and payload rows compare like with like.
+
+Until both land, no renderer decision may cite the MapLibre FAIL rows or the
+near-parity bundle figures.
+
 ## Current neutral evidence
 
 | Dimension | R3F / Three | MapLibre GL JS | Current evidence state |
@@ -62,7 +124,7 @@ silent passes.
 
 ## Mandatory comparable runtime rows
 
-Populate from the two disposable spikes defined in `issue-119-renderer-spike-prep.md`.
+Populate from the two disposable spikes defined in [`../closed/issue-119-renderer-spike-prep.md`](../closed/issue-119-renderer-spike-prep.md).
 
 | Property | R3F result | MapLibre result | Notes/evidence |
 | --- | --- | --- | --- |
@@ -89,13 +151,20 @@ Populate from the two disposable spikes defined in `issue-119-renderer-spike-pre
 
 ## Gate statement
 
-**GREEN for the protected principal evidence review.** Both support spikes are
-recorded, their common sequences are verified, and every mandatory comparison
-row is resolved as a fact, PASS, FAIL or UNCLEAR. The GREEN state does not
-erase the MapLibre headless-runtime blocker, untested physical gestures, the
-R3F left-edge ownership gap, or the lack of an integrated Atlas fallback. It
-only means the evidence packet is complete enough for the principal session to
-make the explicitly reserved renderer and architecture decisions.
+**AMBER — not decision-ready.** Both support spikes are recorded and every
+mandatory row is resolved as a fact, PASS, FAIL or UNCLEAR, so the packet is
+*complete*. It is not *comparable*: defects D1–D3 above mean the two candidates
+were not measured against the same task, in the same environment, or on the
+same cost basis.
+
+The earlier GREEN was an error of the specific kind this file was written to
+prevent — a support-tier reconciliation turning an environment artifact into a
+scored FAIL against one candidate. The two repair tasks above are cheap. Run
+them, then this returns to GREEN.
+
+Independently of the repairs, the following remain open and are not waived:
+untested physical gestures on both candidates, the R3F left-edge Back ownership
+gap, and the absence of an integrated Atlas fallback on either.
 
 ## Support reconciliation rule
 

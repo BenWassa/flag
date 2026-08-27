@@ -5,6 +5,12 @@
 **Exploration branch:** `explore/spatial-atlas-moonshot`  
 **Production status:** current v1 launcher remains authoritative until a prototype explicitly passes the gates below
 
+> **Plan of record:** this file remains the canonical *scope* — product vision,
+> preservation boundaries, gates and outcomes. Sequencing, budget, the
+> judgement protocol and the current evidence position live in
+> [`issue-119-plan.md`](issue-119-plan.md), which supersedes this document
+> wherever the two disagree on *how* the work proceeds.
+
 ## 1. Purpose
 
 This document scopes a possible future Atlas presentation architecture in which the application no longer *feels* like a sequence of discrete screens.
@@ -997,13 +1003,21 @@ Add only restrained earned milestone spatial treatments.
 
 ### Phase 9 — Locations engine decision
 
-Separately assess whether the Locations 2D runtime should:
+> **Amended:** a provisional answer is now required in F1, not Phase 9. See
+> [`issue-119-plan.md` §5.1](issue-119-plan.md#51-locations-vs-the-globe--belongs-in-f1-not-phase-9).
+> Locations is the one domain whose own dominant learning object is already a
+> map, so a persistent globe behind it is two maps at once. Whether Locations
+> eventually merges into the globe determines whether the world/continent LOD
+> needs country-accurate picking — which changes the F3 geometry contract.
+> Phase 9 remains the place to *finish* the decision, not to start it.
+
+Assess whether the Locations 2D runtime should:
 
 - remain an optimised 2D learning surface;
 - reuse parts of the spherical renderer;
 - or gain a dedicated globe mode.
 
-Do not bundle this decision into the navigation shell by default.
+Do not bundle the full implementation into the navigation shell by default.
 
 ### Phase 10 — hardening
 
@@ -1210,6 +1224,13 @@ Is startup, manipulation, idle behaviour and memory acceptable on target mobile 
 
 After actual use, is this materially better than the current one-tap launcher rather than merely more impressive?
 
+**Gate G is a human verdict, not an agent review.** It is decided by Ben on a
+physical phone, running a fixed script against production Atlas and the
+prototype in that order, and recorded before the independent F6 architecture
+review runs. The protocol — judge, devices, seven-step script, recorded verdict
+— is in [`issue-119-plan.md` §2](issue-119-plan.md#2-who-decides-and-how).
+Screenshots, CI logs and Playwright mobile viewports cannot satisfy this gate.
+
 Only after all seven gates pass should Atlas plan a production migration epic/child PR sequence.
 
 ## 28. Alternative outcomes
@@ -1230,6 +1251,12 @@ World-level globe works beautifully, but region/activity continuity adds too muc
 
 The continuity concept is excellent but WebGL cost is not. Reproduce the hierarchy with animated canonical 2D geography.
 
+**Amended:** Outcome C is no longer only an end-state. A throwaway 2D
+continuity probe is now the *first* experiment (plan Stage 1), because it tests
+the load-bearing claim — that continuity beats screen replacement — using
+existing production geography and no renderer at all. If that claim fails, no
+globe can rescue it and the exploration ends cheaply.
+
 ### Outcome D — #104-style continent launcher only
 
 The broader shell is unnecessary, but map-first region selection is still a net win.
@@ -1242,12 +1269,20 @@ A disciplined exploration regards Outcome E as a valid success if it prevents an
 
 ## 29. Immediate next action
 
-Use `explore/spatial-atlas-moonshot` to build the smallest credible Africa vertical slice.
+**Amended.** The next action is no longer the Africa vertical slice.
 
-Do **not** start by converting current production navigation wholesale.
+1. **Stage 0 — baseline.** Run the fixed device script against *production*
+   Atlas on physical hardware and record it, so the prototype has something
+   honest to be compared against later. Share the device session with #71.
+2. **Stage 1 — continuity probe.** Build a throwaway continuous-navigation
+   prototype from existing 2D production geography. No globe, no renderer, no
+   generator work. Then run the same script on it.
 
-The first useful artefact should answer one question:
+Stage 1 answers the question everything else rests on:
 
-> On an actual mobile-sized Atlas experience, does domain → world → Africa → West Africa → Back feel so natural and coherent that it justifies a new presentation architecture?
+> Does moving through geography, rather than replacing screens, actually feel
+> better on a phone — independently of whether the surface is a sphere?
 
-Everything after that depends on the answer.
+The Africa vertical slice remains the decisive experiment for the *globe*, but
+it is Stage 5, after Stage 1 has justified spending a renderer on the idea.
+Full sequence, budget and kill criteria: [`issue-119-plan.md`](issue-119-plan.md).

@@ -1,5 +1,10 @@
 # Issue #119 — Renderer spike preparation
 
+> **Archived. The spikes it specifies are complete (#122, #123).**
+>
+> Results are in [`../open/issue-119-r3f-spike-results.md`](../open/issue-119-r3f-spike-results.md) and [`../open/issue-119-maplibre-spike-results.md`](../open/issue-119-maplibre-spike-results.md); reconciliation in [`../open/issue-119-renderer-comparison.md`](../open/issue-119-renderer-comparison.md). Note that the comparison gate has since been downgraded to AMBER and both spikes require a repair run.
+
+
 **Status:** support-tier research complete; package-dependent runtime executions remain  
 **Purpose:** remove library archaeology and define disposable evidence-gathering spikes before Opus/Sol owns architecture
 
