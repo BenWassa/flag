@@ -45,3 +45,9 @@ jobs:
           export GOOGLE_APPLICATION_CREDENTIALS="$RUNNER_TEMP/firebase-sa.json"
           npx firebase-tools@latest deploy --only firestore:rules --project atlas-3c48a --non-interactive
           rm -f "$RUNNER_TEMP/firebase-sa.json"
+      - name: Install Chromium for Firebase acceptance
+        run: npx playwright install --with-deps chromium
+      - name: Verify live Firebase Hosting origin
+        env:
+          ATLAS_FIREBASE_ORIGIN: https://atlas-3c48a.web.app
+        run: npx playwright test --config=playwright.firebase.config.ts
