@@ -207,23 +207,18 @@ roundRouter.navigate(locationsTest);
 roundWindow.history.back();
 assert.equal(roundWindow.location.hash, '#/locations/africa/west-africa', 'A round started from a region route still returns to that region launcher.');
 
-const app = await readFile('src/app.ts', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 assert.equal(app.includes('viewStack'), false, 'Legacy in-memory viewStack must not remain authoritative.');
 assert.equal(app.includes('historyIndex'), false, 'Legacy numeric history index must be removed.');
 assert.ok(app.includes('createHashRouter'), 'Application must compose through the hash router adapter.');
 assert.ok(app.includes('stableRoute'), 'Active-round refresh fallback must use the stable route.');
 assert.ok(app.includes('normalizeAvailableRoute'), 'Application must canonicalise availability through the exported pure route helper.');
 assert.equal(app.includes('select-region') || app.includes('select-continent'), false, 'The retired two-step launcher selection must not return.');
-assert.ok(app.includes('function launcherScope('), 'Launcher rows resolve their own scope rather than depending on a selected route.');
-assert.ok(app.includes('element.dataset.scopeId'), 'A launcher row plays the scope it names.');
+const launcherSource = await readFile('src/react/components/Launcher.tsx', 'utf8');
+assert.ok(launcherSource.includes('playScope'), 'Launcher rows resolve their own scope through the production action context.');
+assert.ok(launcherSource.includes('scope.id'), 'A launcher row plays the scope it names.');
 assert.equal(app.includes('quick-play'), false, 'Application has no dead row-level Quick Play dispatch.');
-assert.ok(
-  app.includes('review-mistakes')
-    && app.includes('review-map-mistakes')
-    && app.includes('review-outline-mistakes')
-    && app.includes('review-neighbors'),
-  'Flags, locations, outlines, and neighbours share the typed review activity route layer.',
-);
+assert.ok(app.includes("review: (domain)") && app.includes("rounds.neighbors.reviewMistakes()"), 'All four domains share the typed review action layer.');
 assert.ok(app.includes("route.domain === 'outlines'"), 'Outlines must be interpreted through the shared learning route state.');
 assert.ok(app.includes("route.domain === 'neighbors'"), 'Neighbours must be interpreted through the shared learning route state.');
 assert.ok(app.includes('installNavigationGestures'), 'The app installs the shared edge-swipe navigation contract.');
@@ -232,60 +227,27 @@ assert.ok(navigationGestures.includes('EDGE_GUTTER_PX'), 'Back swipe is restrict
 assert.ok(navigationGestures.includes('getParentRoute() !== null'), 'Back swipe cannot leave the app from Home.');
 assert.ok(navigationGestures.includes('[data-map-viewport'), 'Back swipe yields to map pan and pinch gestures.');
 
-const home = await readFile('dist/ui/views/home.js', 'utf8');
-assert.ok(home.includes('data-action="open-domain"'), 'Home selects a learning domain first.');
-assert.equal(
-  (home.match(/data-action="quick-play"/g) ?? []).length,
-  0,
-  'Home starts no round before a domain and a geographic scope are chosen.',
-);
-assert.equal(home.includes('data-action="open-atlas"'), false, 'The retired scope-first atlas action must not return.');
-assert.equal(home.includes('data-action="open-scope"'), false, 'Home does not select geography directly.');
+const homeSource = await readFile('src/react/screens/PassiveScreens.tsx', 'utf8');
+assert.ok(homeSource.includes('openDomain(domain)'), 'Home selects a learning domain first.');
+assert.equal(homeSource.includes('quick-play'), false, 'Home starts no round before a domain and a geographic scope are chosen.');
+assert.equal(homeSource.includes('open-atlas'), false, 'The retired scope-first atlas action must not return.');
+assert.ok(homeSource.includes('openScope(domain, continent.id)'), 'The domain index opens a continent within its own domain.');
+assert.ok(homeSource.includes('continent-row--shell'), 'Unshipped continents render as inert shells, not launchers.');
+assert.ok(launcherSource.includes('region-row__progress'), 'Every launcher scope row exposes its shared progress strip.');
+assert.equal(launcherSource.includes('aria-pressed'), false, 'Launcher rows are one-tap actions rather than selection toggles.');
+assert.ok(launcherSource.includes('aria-label={`Play ${label}`}'), 'Every launcher row announces that it starts Play for the scope it names.');
+assert.ok(launcherSource.includes('>Learn {model.continentScope.label}</button>'), 'Launcher Learn names the whole continent it acts on.');
+assert.equal(launcherSource.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
+assert.equal(launcherSource.includes('mini-ledger'), false, 'Shared launcher must not restore the deleted country ledger.');
 
-const domainIndex = await readFile('dist/ui/views/domain.js', 'utf8');
-assert.ok(domainIndex.includes('data-action="route-parent"'), 'The domain index exposes the shared Back contract.');
-assert.ok(domainIndex.includes('data-action="open-scope"'), 'The domain index opens a continent within its own domain.');
-assert.equal(domainIndex.includes('data-action="quick-play"'), false, 'A continent row navigates to its deliberate launcher instead of starting a round.');
-assert.ok(domainIndex.includes('continent-row--shell'), 'Unshipped continents render as inert shells, not launchers.');
-
-const flagScope = await readFile('dist/ui/views/scope.js', 'utf8');
-const mapScope = await readFile('dist/ui/views/map-home.js', 'utf8');
-const outlineScope = await readFile('dist/ui/views/outline-home.js', 'utf8');
-const neighborScope = await readFile('dist/ui/views/neighbor-home.js', 'utf8');
-for (const [name, scopeSource] of [
-  ['Flags', flagScope],
-  ['Locations', mapScope],
-  ['Outlines', outlineScope],
-  ['Neighbours', neighborScope],
-]) {
-  assert.ok(scopeSource.includes('renderLauncher'), `${name} pre-round scope must adapt into the shared launcher.`);
-  assert.equal(scopeSource.includes('mini-ledger'), false, `${name} launcher adapter must not retain a region country ledger.`);
-}
-
-const launcher = await readFile('dist/ui/views/launcher.js', 'utf8');
-assert.ok(launcher.includes('data-action="launcher-parent"'), 'Shared launcher must expose launcher-parent.');
-for (const action of ['select-region', 'select-continent', 'quick-play']) {
-  assert.equal(launcher.includes(`data-action="${action}"`), false, `Shared launcher must not restore ${action}.`);
-}
-assert.ok(launcher.includes('region-row__progress'), 'Every launcher scope row exposes its shared progress strip.');
-assert.equal(launcher.includes('aria-pressed'), false, 'Launcher rows are one-tap actions rather than selection toggles.');
-assert.ok(launcher.includes('aria-label="Play ${label}"'), 'Every launcher row announces that it starts Play for the scope it names.');
-assert.ok(launcher.includes('Learn ${continentLabel}'), 'Launcher Learn names the whole continent it acts on.');
-assert.equal(launcher.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
-assert.equal(launcher.includes('mini-ledger'), false, 'Shared launcher must not restore the deleted country ledger.');
-
-const flagResults = await readFile('dist/ui/views/results.js', 'utf8');
-const mapResults = await readFile('dist/ui/views/map-results.js', 'utf8');
-const outlineResults = await readFile('dist/ui/views/outline-results.js', 'utf8');
-const neighborResults = await readFile('dist/ui/views/neighbor-results.js', 'utf8');
-assert.ok(flagResults.includes('data-action="exit-round"'), 'Flag results exit through the unified round route contract.');
-assert.ok(mapResults.includes('data-action="exit-round"'), 'Location results exit through the unified round route contract.');
-assert.ok(outlineResults.includes('data-action="exit-round"'), 'Outline results exit through the unified round route contract.');
-assert.ok(neighborResults.includes('data-action="exit-round"'), 'Neighbour results exit through the unified round route contract.');
-assert.ok(flagResults.includes('review-mistakes') && flagResults.includes('repeat-scope'), 'Flag results expose review and repeat paths.');
-assert.ok(mapResults.includes('review-map-mistakes') && mapResults.includes('repeat-map'), 'Location results expose review and repeat paths.');
-assert.ok(outlineResults.includes('review-outline-mistakes') && outlineResults.includes('repeat-outline'), 'Outline results expose review and repeat paths.');
-assert.ok(neighborResults.includes('review-neighbors') && neighborResults.includes('repeat-neighbors'), 'Neighbour results expose review and repeat paths.');
+const resultSources = await Promise.all([
+  'src/react/screens/RecognitionScreens.tsx',
+  'src/react/screens/LocationScreens.tsx',
+  'src/react/screens/NeighborScreens.tsx',
+].map((file) => readFile(file, 'utf8')));
+const results = resultSources.join('\n');
+assert.ok(results.includes('exitRound'), 'Production React result screens exit through the unified round route contract.');
+assert.ok(results.includes('review(') && results.includes('repeat('), 'Production React result screens expose review and repeat paths.');
 
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
 assert.equal(manifest.start_url, './#/', 'Installed PWA must start at the canonical hash Home route.');

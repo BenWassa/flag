@@ -4,8 +4,8 @@ import { parseRoutePath, routeTitle } from '../dist/routing/routes.js';
 
 const index = await readFile('dist/index.html', 'utf8');
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
-const app = await readFile('src/app.ts', 'utf8');
-const appSource = await readFile('src/app.ts', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
+const appSource = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
 
 assert.match(index, /<title>Atlas<\/title>/, 'The initial browser title uses the learner-facing Atlas brand.');
