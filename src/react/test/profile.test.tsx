@@ -59,8 +59,9 @@ describe('Profile cloud account states', () => {
     const view = await renderProfile();
     expect(screen.getByRole('status')).toHaveTextContent('Checking cloud progress');
 
+    view.unmount();
     auth.current.cloudStatus = 'degraded';
-    view.rerender(<AtlasActionsContext value={actions()}><(await import('../screens/PassiveScreens.js')).ProfileScreen /></AtlasActionsContext>);
+    await renderProfile();
     expect(screen.getByRole('status')).toHaveTextContent('Progress is still saved on this device');
     expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
   });
