@@ -1,0 +1,88 @@
+name: Issue 22 final clean gate
+
+on:
+  push:
+    branches:
+      - issue-22-north-america-expansion
+    paths:
+      - .github/workflows/issue-22-final-clean-gate.yml
+
+permissions:
+  contents: write
+
+jobs:
+  final-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-22-north-america-expansion
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Remove temporary closeout workflow and establish clean candidate
+        run: |
+          git rm .github/workflows/issue-22-final-clean-gate.yml
+          if find scripts .github/workflows tests/browser -maxdepth 2 -type f -iname '*issue-22*' | grep -q .; then
+            echo 'Unexpected Issue #22 temporary artifact remains:'
+            find scripts .github/workflows tests/browser -maxdepth 2 -type f -iname '*issue-22*'
+            exit 1
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(#22): establish Java 21 final verification candidate"
+          git push origin HEAD:issue-22-north-america-expansion
+          echo "FINAL_CLEAN_SHA=$(git rev-parse HEAD)"
+          git status --porcelain
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Deterministic regeneration regression
+        run: |
+          npm run maps:generate
+          git diff --exit-code
+      - name: Type-check explicitly
+        run: npm run check
+      - name: Complete Node 22 repository gate
+        run: npm test
+      - name: Full Chromium production-browser regression suite
+        run: npx playwright test --project=chromium
+      - name: PWA runtime verification
+        run: npm run test:pwa-runtime
+      - name: Rebuild and inspect exact final production artifact
+        run: |
+          npm run build
+          node --input-type=module <<'NODE'
+          import { readFile, readdir } from 'node:fs/promises';
+          import { gzipSync } from 'node:zlib';
+          const source = await readFile('src/data/maps/north-america.ts');
+          const assets = await readdir('dist/assets');
+          const chunks = assets.filter((name) => /^north-america-.*\.js$/.test(name));
+          if (chunks.length !== 1) throw new Error(`Expected exactly one North America chunk, found ${chunks.length}`);
+          const chunk = await readFile(`dist/assets/${chunks[0]}`);
+          const sw = await readFile('dist/sw.js', 'utf8');
+          const topLevel = await readdir('dist');
+          const leaks = topLevel.filter((name) => name.includes('verify'));
+          console.log(`FINAL_SOURCE_RAW=${source.length}`);
+          console.log(`FINAL_SOURCE_GZIP=${gzipSync(source).length}`);
+          console.log(`FINAL_CHUNK=${chunks[0]}`);
+          console.log(`FINAL_CHUNK_RAW=${chunk.length}`);
+          console.log(`FINAL_CHUNK_GZIP=${gzipSync(chunk).length}`);
+          console.log(`FINAL_PRECACHE_REFERENCED=${sw.includes(chunks[0])}`);
+          console.log(`FINAL_VERIFIER_LEAKS=${JSON.stringify(leaks)}`);
+          if (sw.includes(chunks[0])) throw new Error('North America chunk is precached; lazy-loading contract broken.');
+          if (leaks.length) throw new Error('Verifier-only output leaked into dist.');
+          NODE
+          grep -q 'assets/north-america-' dist/.vite/manifest.json
+          ! grep -q 'NORTH_AMERICA_MAP_ASSET' dist/app.js
+          test ! -e .github/workflows/issue-22-final-clean-gate.yml
+          test ! -e .github/workflows/issue-22-cartography-bootstrap.yml
+          test ! -e scripts/issue-22-refine.py
+          test ! -e scripts/issue-22-integrate.py
+          git diff --exit-code
+          git status --porcelain
