@@ -1,93 +1,31 @@
-name: Issue 22 map interaction fix
+name: Issue 22 production QA
 
 on:
   push:
-    branches: [issue-22-north-america-expansion]
+    branches:
+      - issue-22-north-america-expansion
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  fix:
-    if: github.actor != 'github-actions[bot]'
+  focused-browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Preserve answer taps until a gesture actually begins
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('src/map-viewport.ts')
-          s = p.read_text()
-          old = """  } else {
-    resetPinchStart(viewport, gesture);
-  }
-  viewport.setPointerCapture?.(event.pointerId);
-}
-"""
-          new = """  } else {
-    resetPinchStart(viewport, gesture);
-    // A second pointer proves this is a pinch rather than a tap. Capture both
-    // pointers only now; capturing on the first pointerdown retargets the
-    // browser's later click to the viewport and makes SVG answer marks untappable.
-    for (const pointerId of gesture.pointers.keys()) {
-      try { viewport.setPointerCapture?.(pointerId); } catch { /* Pointer may already have ended. */ }
-    }
-  }
-}
-"""
-          if old not in s:
-            raise SystemExit('pointerdown capture anchor not found')
-          s = s.replace(old, new, 1)
-          old = """    if (Math.hypot(dx, dy) > 4) gesture.dragged = true;
-    if (gesture.dragged) {
-"""
-          new = """    if (!gesture.dragged && Math.hypot(dx, dy) > 4) {
-      gesture.dragged = true;
-      // Capture only after crossing the drag threshold so ordinary country
-      // taps keep their original SVG target and delegated answer semantics.
-      try { viewport.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have ended. */ }
-    }
-    if (gesture.dragged) {
-"""
-          if old not in s:
-            raise SystemExit('drag capture anchor not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s)
-          PY
-      - name: Make North America lazy-PWA exclusion explicit
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('vite.config.ts')
-          s = p.read_text()
-          old = """          'assets/europe-*.js',
-          'assets/asia-*.js',
-"""
-          new = """          'assets/europe-*.js',
-          'assets/asia-*.js',
-          'assets/north-america-*.js',
-"""
-          if old not in s:
-            raise SystemExit('geography PWA globIgnore anchor not found')
-          s = s.replace(old, new, 1)
-          p.write_text(s)
-          PY
-      - name: Commit runtime fixes
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/map-viewport.ts vite.config.ts
-          git diff --cached --stat
-          git commit -m "fix(#22): preserve map answer taps during gestures"
-          git push origin HEAD:issue-22-north-america-expansion
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Run focused map interaction and North America browser QA
-        run: npx playwright test tests/browser/north-america.spec.ts tests/browser/map-hit-precedence.spec.ts tests/browser/map-insets.spec.ts tests/browser/atlas.spec.ts --project=chromium
+      - name: North America production browser gate
+        run: >-
+          npx playwright test
+          tests/browser/north-america.spec.ts
+          tests/browser/production-matrix.spec.ts
+          tests/browser/map-hit-precedence.spec.ts
+          tests/browser/map-insets.spec.ts
+          tests/browser/atlas.spec.ts
+          --project=chromium
