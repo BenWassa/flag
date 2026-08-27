@@ -1,3 +1,4 @@
+import { dispatchLearnerStorageWrite } from './learner-storage-events.js';
 import { developmentSandboxKey, isLearnerStorageKey } from './persistence-keys.js';
 import { isDevelopmentSandbox } from './runtime-environment.js';
 
@@ -48,6 +49,7 @@ export function createStorageGuard(): StorageGuard {
     writeRaw(key, value) {
       try {
         localStorage.setItem(resolveKey(key), value);
+        if (!isDevelopmentSandbox && isLearnerStorageKey(key)) dispatchLearnerStorageWrite(key, 'write');
         return true;
       } catch {
         writable = false;
@@ -57,6 +59,7 @@ export function createStorageGuard(): StorageGuard {
     removeRaw(key) {
       try {
         localStorage.removeItem(resolveKey(key));
+        if (!isDevelopmentSandbox && isLearnerStorageKey(key)) dispatchLearnerStorageWrite(key, 'remove');
       } catch {
         writable = false;
       }

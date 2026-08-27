@@ -1,333 +1,189 @@
 # Firebase architecture
 
-**Status:** partially implemented on Atlas 1.0.0
-**Reconciled against:** `d8f52ec94105043f3105f79209da6e4c62745b4a`
-**Tracking issue:** #46
-**Remaining cloud-data work:** #106
-**Remaining Hosting work:** #107
+**Status:** implemented on Atlas 1.1.0  
+**Tracking:** #46, #106, #107  
+**Primary production host:** GitHub Pages  
+**Secondary production host:** `https://atlas-3c48a.web.app/`
 
-## Purpose
+## Architecture boundary
 
-Atlas has a real Firebase client boundary and a live Firebase Hosting deployment
-target, but Firebase does not currently own learner progress or the declared
-primary production host.
+Atlas remains a local-first React/Vite PWA. Firebase is an optional infrastructure layer for account-backed backup/restore and a secondary static deployment target; it does not own learning rules, routing, cartography, scoring, evidence or Mastery qualification.
 
-The declared primary production host remains GitHub Pages, while the same
-React/Vite PWA is also deployed automatically to Firebase Hosting at
-`https://atlas-3c48a.web.app/`. Local browser persistence remains the
-authoritative runtime persistence path. Firebase also provides client
-configuration, Google authentication plumbing, a named Firestore database
-handle, a generic document helper and deployed Firestore rules. The Firestore
-helper is not wired into `AppStore`, so no learning state is currently uploaded,
-downloaded, reconciled or restored from Firestore.
-
-This document describes the implementation that exists. It is not a Firebase setup tutorial and does not treat repository configuration as proof of remote Firebase-console state.
-
-## Responsibility boundary
+Learning state is still updated locally first. A Firebase outage, sign-out or unauthorised account cannot block a learning session.
 
 ```text
-React UI
-  |
-  | Profile only
-  v
-src/react/useAuth.ts
+React learning UI
   |
   v
-src/infrastructure/firebase.ts
-  |-- Firebase Auth: Google popup sign-in, auth-state observation, sign-out
-  `-- Firestore: named database `atlas`
-
-Learning sessions
+AppStore + local persistence adapters  <--- immediate learner state
+  |
+  | learner-storage write event
+  v
+cloud-sync-service (optional, asynchronous)
+  |
+  +--> migration/sanitisation + deterministic reconciliation
   |
   v
-src/state/AppStore
-  |
-  v
-local persistence adapters
-  |-- Flags progress + attempts
-  |-- Locations progress + attempts
-  |-- Outlines progress + attempts
-  |-- Neighbours progress + attempts
-  |-- earned achievements
-  `-- region/domain perfect-run streaks
-
-src/infrastructure/firestore-sync.ts
-  `-- generic get/set helper exists, but has no production caller
+Firestore exact documents
+users/{uid}/state/{stateKey}
 ```
 
-Firebase must remain an infrastructure concern. Domain rules, evidence, mastery, routing, geography and React presentation do not depend on Firestore APIs.
+## Firebase project and authentication
 
-## Firebase project and client configuration
+The repository selects Firebase project `atlas-3c48a`; the client uses the named Firestore database `atlas` and Google popup authentication.
 
-The repository selects Firebase project `atlas-3c48a` in `.firebaserc`.
+Cloud backup remains deliberately restricted to the single allow-listed owner UID encoded consistently in `cloud-sync-service.ts` and `firestore.rules`. Other Google accounts may authenticate, but the Profile surface reports that cloud backup is unavailable and the sync service does not attempt Firestore access for them.
 
-`src/infrastructure/firebase.ts` embeds the ordinary Firebase Web application configuration and initialises:
+Authentication is optional. Signed-out learning remains fully local.
 
-- one Firebase application;
-- Firebase Auth;
-- Firestore database `atlas` rather than `(default)`.
+## Canonical cloud data contract
 
-The browser Firebase Web configuration is intentionally client-visible. Those identifiers are not an access-control boundary and must not be treated as secrets. Access control belongs to Firebase Auth, Firestore Security Rules and any future server-side policy.
+Only five durable learner states sync:
 
-Repository state alone does **not** prove remote project settings. The successful
-post-merge deployment run for `d8f52ec` proves that Hosting deployed and the
-checked-in Firestore rules compiled and were released to project `atlas-3c48a`.
-Provider enablement, authorised domains and other console-side settings still
-require explicit verification under #106/#107.
-
-## Authentication
-
-### Shipped client behaviour
-
-`src/react/useAuth.ts` observes Firebase Auth state and exposes Google sign-in and sign-out to the React Profile screen.
-
-The Profile screen currently supports:
-
-- signed-out state;
-- Google popup sign-in;
-- signed-in display name, email and avatar where supplied by the provider;
-- sign-out;
-- a generic sign-in failure message.
-
-Authentication is optional for learning. `AppStore` is constructed and local progress is loaded independently of Auth, so a learner can use Atlas while signed out.
-
-### Incomplete account lifecycle
-
-Current main does not implement:
-
-- account deletion;
-- deletion of Firestore learner data;
-- an anonymous-account upgrade path;
-- a documented retention policy for Firebase-backed data;
-- a documented relationship between local data and account deletion;
-- a production sync lifecycle tied to sign-in/sign-out.
-
-The current Profile copy says signing in saves progress to the account. That describes the intended feature, not current behaviour, because Firestore sync is not connected to application state.
-
-## Local persistence is the current source of truth
-
-The production learning path remains local-first and, today, local-only.
-
-`AppStore` loads and persists state through the existing local adapters:
-
-| State | Stable local namespace |
+| Cloud state | Stable key |
 | --- | --- |
 | Flags progress | `flag-atlas:progress:v1` |
-| Flags attempts | `flag-atlas:attempts:v1` |
 | Locations progress | `flag-atlas:location-progress:v1` |
-| Locations attempts | `flag-atlas:location-attempts:v1` |
 | Outlines progress | `flag-atlas:outline-progress:v1` |
-| Outlines attempts | `flag-atlas:outline-attempts:v1` |
 | Neighbours progress | `flag-atlas:neighbor-progress:v1` |
-| Neighbours attempts | `flag-atlas:neighbor-attempts:v1` |
 | Earned achievements | `flag-atlas:earned-achievements:v1` |
-| Perfect-run streaks | `flag-atlas:region-domain-perfect-run-streaks:v1` |
 
-The four progress ledgers keep their stable namespace suffix while their payloads have their own schema/migration boundary. Current ledger loaders accept version 1 or 2 payloads, sanitise records and produce version 2 in-memory state. Achievement and perfect-run state have their own versioned migration/sanitisation boundaries.
+The following remain intentionally device-local:
 
-Attempt logs are local arrays, capped at 2,000 entries and written on a short debounce with page-hide flushing.
+- Flags, Locations, Outlines and Neighbours attempt histories;
+- `flag-atlas:region-domain-perfect-run-streaks:v1`.
 
-### Development sandbox boundary
+Attempt histories are append-style diagnostic/session history without a global event identity. Merging arrays across independently advanced devices would duplicate or discard events, and the old array payload also conflicted with the Firestore map-envelope rules.
 
-`npm run dev` is deliberately isolated from both production learner storage and Firebase. Vite compiles the development server with a fixed `development-sandbox` capability; it is not enabled by a URL parameter, browser preference or persisted value.
+Perfect-run streaks are resettable qualification state for #108's consecutive-perfect region Mastery semantics. Naively unioning or maxing them across devices could award Mastery incorrectly. Earned achievements themselves are monotonic and therefore safe to union in the cloud.
 
-In that mode, the shared storage guard maps only the ten learner namespaces above to `flag-atlas:dev-sandbox:*`. It never reads, writes, migrates or removes the corresponding production keys. Install-prompt dismissal remains ordinary browser UI state and is not remapped. The Profile screen exposes development-only seed, reset and JSON import/export tools for the sandbox dataset; these validate data through the existing persistence sanitisers and are removed from the production bundle.
+No compatibility path pretends that ten learner namespaces sync.
 
-Firebase is also a hard build-time boundary in development: the Auth module is loaded dynamically only when remote account services are enabled, so the development Profile neither registers an Auth listener nor permits sign-in/sign-out. Firestore already has no application-level caller. Future cloud-sync work under #106 must preserve this rule: a development build must not initialise or contact production account services.
+## Remote trust boundary and reconciliation
 
-Production and plain-Node verifier builds retain the stable `flag-atlas:*` namespaces and existing optional Auth behaviour unchanged.
+Firestore data is never trusted merely because it came from an authenticated account. Remote payloads pass the same existing migration/sanitisation functions as local persisted state before reconciliation.
 
-These existing loaders/sanitisers remain the trust boundary for persisted learner data. Future Firestore data must not bypass them merely because it came from an authenticated account.
+For each progress ledger, reconciliation is deterministic per country. It preserves valid learned evidence from independently advanced copies rather than applying whole-document last-write-wins. Durable counters and evidence are merged monotonically; scheduler/current state and timestamps are selected without regressing stronger/newer valid evidence; confusion evidence is preserved. Domain-specific sanitisation remains owned by the existing persistence adapters.
 
-## Firestore data model
+Earned achievements reconcile monotonically by set union / boolean OR. A device cannot remove an already-earned cloud or local achievement through reconciliation.
 
-`src/infrastructure/firestore-sync.ts` defines the intended document path:
+If a remote document is missing, the valid local state becomes the merged state and is backfilled. If remote data is malformed or cannot be loaded safely, Atlas enters a degraded cloud state and leaves local learner data untouched.
+
+When reconciliation changes local persisted state, Atlas emits one restore signal and reconstructs `AppStore` through the ordinary local loaders. The cloud path therefore does not bypass migration boundaries or create a second application-state implementation.
+
+## First sign-in and cross-context restore
+
+On an authorised sign-in the service reconciles all five states, writes the merged result locally, then persists the merged result to Firestore.
+
+This preserves progress that existed before the learner first enabled cloud backup. The cross-context test covers a legacy local payload being migrated/backfilled, a second clean local persistence context signing in with the same UID, restoration through the normal sanitisation path, and continued local use after cloud writes subsequently become unavailable.
+
+## Write, retry and offline behaviour
+
+Local persistence is synchronous with the learning flow; cloud persistence is not.
+
+Cloud writes are:
+
+- triggered only for the five canonical learner-state keys;
+- debounced for 750 ms;
+- recorded in persisted pending metadata (`flag-atlas:cloud-sync-pending:v1`);
+- idempotent exact-document `setDoc` writes;
+- retried after failure and on browser `online` recovery;
+- guarded by an Auth generation token so stale reads/writes from a previous user/session cannot mutate current sync state.
+
+A duplicate learner-write notification cannot create duplicate concurrent writes. Pending metadata survives reload for the same authorised UID. A failed cloud read or write produces `degraded`; learning and local persistence continue.
+
+The learner-storage event hook is best-effort by design. If DOM event APIs are unavailable, an already-successful local write remains successful; cloud notification can never turn local persistence into a reported failure.
+
+## Account lifecycle
+
+### Sign out
+
+Sign-out stops cloud reconciliation/writes but does not erase local progress.
+
+### Delete cloud copy
+
+Atlas suspends sync, deletes all five cloud documents, then signs out. Local browser progress remains. If Firestore deletion fails, Atlas reports failure and does not claim deletion.
+
+### Delete account
+
+Atlas first suspends writes and deletes the five cloud documents, then requests Firebase Auth account deletion. Local browser progress remains in every case.
+
+If Firestore deletion fails, Auth deletion is not attempted. If cloud deletion succeeds but Auth deletion fails (including `auth/requires-recent-login`), sync remains suspended so a later local write cannot recreate the deleted cloud data. Atlas reports the partial result precisely and signs out where possible rather than displaying false success.
+
+## Profile states
+
+The learner-facing Profile surface deliberately exposes only useful states:
+
+- signed out;
+- checking sign-in / reconciling;
+- saving;
+- synced;
+- degraded/offline;
+- unauthorised;
+- deletion confirmation and failure.
+
+It does not expose Firebase internals. Degraded and unauthorised copy explicitly states that progress remains saved on the device. Destructive confirmation defaults focus to the safe Cancel action; long account/error text wraps on narrow screens; actual failures use alert semantics.
+
+## Firestore document and rules contract
+
+Path:
 
 ```text
 users/{uid}/state/{stateKey}
 ```
 
-and an allow-list matching the ten stable local namespaces above.
-
-Each helper write currently proposes this envelope:
+Envelope:
 
 ```text
 {
-  data: <opaque state>,
+  data: <validated state payload>,
   schemaVersion: 1,
-  updatedAt: server timestamp
+  updatedAt: <server timestamp>
 }
 ```
 
-`saveState()` performs one `setDoc`; `loadState()` performs one `getDoc`. Both convert Firebase errors to `false`/`null` rather than throwing to callers.
+`firestore.rules` permits only:
 
-### What actually syncs
+- authenticated requests from the single allow-listed UID;
+- the authenticated user's own path;
+- the five canonical state keys;
+- schema version 1 envelopes with exactly `data`, `schemaVersion`, `updatedAt`;
+- recent timestamps;
+- versioned progress or earned-achievement payload shapes within documented bounds.
 
-**Nothing on current main.**
+Unknown keys, all attempt-history keys, perfect-run streaks, malformed envelopes and invalid payload versions/types are rejected. Owner deletion is allowed only for known cloud-state keys.
 
-No production module calls `saveState()` or `loadState()`. `AppStore` does not import the Firestore helper, and its learning/update paths continue to use only the local persistence adapters.
+The Firebase Emulator Suite executes the checked-in `firestore.rules` itself. CI provisions Java 21 because current `firebase-tools` requires it; Atlas application/test execution remains Node 22. The suite covers all five valid writes plus unauthenticated, non-allowlisted, cross-user read/write/delete, excluded/unknown-key, malformed-envelope, invalid-schema/payload and owner-delete cases.
 
-The helper therefore proves that a Firestore boundary was started; it does not prove cloud backup, cross-device restore, write retry, conflict handling or migration/backfill.
+No Firestore composite index is required because the implementation uses exact-document reads/writes/deletes rather than queries.
 
-## Security boundary
+## Development sandbox
 
-`firestore.rules` is scoped to `users/{uid}/state/{stateKey}` and currently requires:
+Development sandbox builds remain isolated from production account services and production learner storage. Cloud sync starts only when remote account services are enabled. The Firebase feature does not alter the established `flag-atlas:dev-sandbox:*` separation.
 
-- an authenticated request;
-- the path UID to match the authenticated UID;
-- the authenticated UID to equal one specifically allow-listed account;
-- a known state key;
-- exactly `data`, `schemaVersion` and `updatedAt` on create/update;
-- positive integer schema version;
-- a recent timestamp;
-- `data` to be a map with a bounded top-level key count.
+## PWA and Hosting
 
-This is deliberately narrower than "any signed-in Google user" and is a meaningful least-privilege boundary for the present solo-use intent. It also creates a product mismatch: the Profile screen permits any Google account to authenticate, while the checked-in rules permit Firestore access only for the allow-listed account.
+GitHub Pages remains Atlas's declared primary production host. Firebase Hosting is an automatically deployed live secondary target using the same tested production `dist/`.
 
-There is also a schema mismatch to resolve before attempts can be mirrored directly: local attempt histories are arrays, while the checked-in rules require `data` to be a map. #106 must either define an explicit attempt envelope/schema or intentionally exclude attempt histories from cloud state.
+After successful `main` CI, the Firebase deployment workflow checks out that exact SHA, builds under Node 22, deploys Hosting and checked-in Firestore rules, then runs live-origin Playwright acceptance. Deployment concurrency is scoped to the actual deploy job so skipped PR-triggered workflow runs cannot cancel a valid main deployment.
 
-The presence of `firestore.rules` does not prove that those exact rules are deployed. Current main also has no Firebase Emulator Suite/rules-unit-testing configuration or tests. Rule deployment and rule behaviour remain verification work under #106.
+#107 final acceptance used main SHA `13b63871d4e48caab46b64ce6562cc52ca27b996`:
 
-## Sync, queueing and conflict behaviour
+- main CI `33081243731` — success;
+- GitHub Pages `33081333037` — success;
+- Firebase `33081333094` — success;
+- Hosting version `6eff68d4478619d3`;
+- Firestore rules compiled/released;
+- live Firebase-origin Playwright matrix — 3/3 passed.
 
-Current main has no application-level cloud synchronisation protocol.
+The live matrix covers root/static assets, hash deep-link + refresh, manifest, service-worker control, lazy Africa geography, cached offline revisit, Google provider-popup reachability without an unauthorised-domain error, and local learning with Firebase service requests blocked.
 
-Specifically, it does not currently define or implement:
+## Hosting rollback
 
-- first-sign-in upload/backfill of existing local data;
-- cloud-to-local restore;
-- a persistent cloud write queue;
-- retry scheduling after Firestore failures;
-- conflict resolution between divergent devices;
-- merge semantics for achievements or perfect-run streaks;
-- attempt-log reconciliation;
-- deletion propagation;
-- remote schema migration beyond the unused helper's envelope version.
+Firebase Hosting remains secondary, so GitHub Pages is independently available during a bad Firebase release. The normal rollback is to revert the offending `main` change and allow Node 22 CI plus the post-CI workflows to rebuild/redeploy that known-good state. Hosting logs retain concrete remote version IDs as an additional release trail.
 
-Firebase SDK internals must not be confused with an Atlas application contract for these behaviours. #106 owns defining and verifying the product-level semantics.
+No canonical-host migration or History-routing change is required by Firebase.
 
-## Degraded and offline behaviour
+## Verification ownership
 
-### Shipped local behaviour
-
-Learning does not depend on Firebase. Quiz updates are applied to in-memory state and local persistence directly. If Firebase is unavailable while the learner is signed out—or because the unused Firestore helper never runs—the learning loop continues normally.
-
-The existing storage guards also expose when browser local storage itself is unavailable, allowing the UI to warn that progress will be lost after the tab closes.
-
-### Incomplete cloud behaviour
-
-Because cloud sync is not connected, Atlas has no meaningful cloud-offline queue, reconnect, conflict or recovery behaviour to validate yet. The Firestore helper merely converts individual failures to `false`/`null`.
-
-Once #106 wires cloud state, the preservation contract is:
-
-1. update in-memory/local learning state immediately;
-2. never require network availability to start or complete a learning session;
-3. reconcile cloud state asynchronously and deterministically;
-4. never allow a failed cloud request to regress valid local progress silently.
-
-## PWA and service-worker interaction
-
-The service worker is generated from `src/sw.ts` through Workbox InjectManifest.
-
-Current policy includes:
-
-- generated shell precaching;
-- navigation fallback to precached `index.html`;
-- network-first same-origin runtime requests;
-- cache-first FlagCDN assets;
-- lazy geography runtime caching after first use;
-- old Atlas cache cleanup and immediate update takeover.
-
-The React application registers `./sw.js`; the manifest uses relative scope and `./#/` as its start URL. Firebase Auth/Firestore network requests are not intentionally cached by Atlas's service-worker routes.
-
-Generic production-browser offline/update evidence belongs to #93 and #101. Physical Pixel/iPhone/installed-PWA evidence belongs to #71. #106/#107 should add only Firebase-specific evidence such as cloud-service failure while local learning remains usable and service-worker/Auth behaviour on the Firebase Hosting origin.
-
-## Hosting
-
-### Current production host
-
-GitHub Pages remains the declared primary production host.
-`.github/workflows/pages.yml` deploys a Node 22 Vite build after successful main
-CI. Main commit `d8f52ec` passed CI and deployed successfully to GitHub Pages.
-
-### Firebase Hosting status
-
-Firebase Hosting is configured in `firebase.json` for `dist/`, with an SPA
-fallback to `index.html`. `.github/workflows/firebase-deploy.yml` runs after a
-successful `main` CI build and deploys both Hosting and the checked-in Firestore
-rules to project `atlas-3c48a` using a repository secret.
-
-The [post-merge run for `d8f52ec`](https://github.com/BenWassa/flag/actions/runs/33025732947)
-completed successfully on 2026-08-26, deployed Hosting version
-`8f3c77e24df97f29`, and reported `https://atlas-3c48a.web.app/` as the Hosting
-origin. It also compiled and released `firestore.rules` to the named project.
-This is deployment evidence,
-not the complete #107 acceptance gate: no checked-in evidence yet covers the
-Firebase-origin browser matrix, Google Auth authorised-domain behaviour,
-degraded cloud-service behaviour, or an exercised rollback. GitHub Pages remains
-the stated primary host, so no production-host cutover decision has been made.
-
-The Vite build is already host-portable:
-
-- `base: './'` produces relative asset URLs;
-- service-worker registration is relative;
-- manifest scope/start URLs are relative;
-- the typed router already uses hash URLs.
-
-Hash routing should remain the #46 preservation boundary. Fragments are not sent to the host, so moving the same static artifact to Firebase Hosting does not require a History-path migration. Clean paths are a separate routing/product decision, not a Hosting prerequisite.
-
-#107 now owns the remaining Firebase-origin verification, explicit host decision,
-and rollback exercise. Configuration and repeatable live deployment have shipped.
-
-## Relationship to #100
-
-`npm run build` now keeps the temporary `tsconfig.verify.json` output in
-ignored `.verify-dist/`, not deployable `dist/`. The #100 cleanup removed the
-16 legacy renderer fixtures and asserts the Vite/Workbox artifact has no
-verifier-only directory trees. The Firebase target therefore receives the same
-lean production artifact inspected locally (33 files / 7,281,623 bytes).
-
-This is a cutover-sequencing relationship, not a reason to make #107 implement #100.
-
-## Indexes
-
-No `firestore.indexes.json` exists. The current helper addresses exact document paths with `getDoc`/`setDoc` and therefore does not require a custom composite index.
-
-The old #46 blanket requirement to add indexes is superseded for the current exact-document model. If #106 introduces queries that require indexes, those indexes should be added because of that concrete query design rather than as ceremonial Firebase setup.
-
-## Privacy and retention
-
-Current main has no durable Firebase privacy/data-retention/account-deletion documentation. Before cloud backup can be considered complete, Atlas must document at minimum:
-
-- which learner state is uploaded;
-- what identity data Firebase Auth exposes to the application;
-- how long cloud learner state is retained;
-- what sign-out does and does not delete;
-- how account/cloud-data deletion works;
-- what happens to local browser data after account deletion;
-- whether any allow-list or single-user restriction remains part of the product.
-
-#106 owns implementing and verifying those account/data semantics. This documentation branch does not change Auth, rules or stored data.
-
-## Current completion summary
-
-| Area | Current state |
-| --- | --- |
-| Firebase SDK + app initialisation | Shipped |
-| Project/client configuration in repository | Shipped; deployment target verified, Auth console state not verified |
-| Google Auth client integration | Partially shipped |
-| Account deletion/privacy lifecycle | Remaining |
-| Firestore handle + generic get/set helper | Shipped as infrastructure only |
-| Actual learner-state cloud sync | Remaining; zero production callers today |
-| Local-first persistence | Shipped |
-| Cloud queue/retry/conflict/backfill | Remaining |
-| Checked-in least-privilege rules | Deployed; Emulator/rules tests still missing |
-| Emulator/rules tests | Remaining |
-| Custom Firestore indexes | Not required by current exact-document design |
-| Firebase Hosting | Configured and deployed; origin acceptance/cutover/rollback remain |
-| GitHub Pages hosting | Shipped and verified |
-| Hash routing | Shipped and retained |
-| Clean History paths | Superseded as a #46 requirement |
-| Generic Workbox PWA integration | Shipped; runtime evidence continues in #93/#101 |
-
-Issue #46 remains open until #106 and #107, plus their required Firebase-specific verification, satisfy the reconciled closeout criteria.
+Firebase-specific verification belongs to #106/#107. Generic PWA/browser validation remains with the existing platform tests, and physical-device claims remain separate. Repository configuration is not treated as proof of unobserved Firebase Console state; the programme records only remote behaviour that was actually exercised by deployment/browser evidence.

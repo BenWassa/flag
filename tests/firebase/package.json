@@ -1,0 +1,13 @@
+{
+  "name": "atlas-firestore-rules-tests",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@firebase/rules-unit-testing": "5.0.2",
+    "firebase": "^12.18.0",
+    "firebase-tools": "15.28.1"
+  },
+  "scripts": {
+    "test": "firebase emulators:exec --config ../../firebase.json --project atlas-3c48a --only firestore \"node firestore-rules.test.mjs\""
+  }
+}
