@@ -1,9 +1,9 @@
 # Issue #119 — Principal-model handoff
 
 **Audience:** Claude Opus / GPT Sol high-effort principal session  
-**Current status:** **NOT YET GREEN TO START — two support renderer executions remain**  
+**Current status:** **GREEN FOR PRINCIPAL EVIDENCE REVIEW — support runtime evidence is reconciled; no renderer has been selected**
 **Exploration branch:** `explore/spatial-atlas-moonshot`  
-**Current production base reconciled into branch:** `main` SHA `046bd935d9be08f4ab561b8f060c66da5b3cecad`
+**Current production base reconciled into branch:** `main` SHA `d8f52ec`
 
 ## 1. Principal mission
 
@@ -117,12 +117,14 @@ Before starting F1/F2 principal work, all boxes should be true.
 - [x] Small-country/precision exception risk identified.
 - [x] Common prototype verification plan defined.
 - [x] Candidate library versions / live ecosystem risks researched.
-- [ ] **R3F disposable runtime spike executed and `issue-119-r3f-spike-results.md` populated.**
-- [ ] **MapLibre disposable runtime spike executed and `issue-119-maplibre-spike-results.md` populated.**
-- [ ] Support layer reconciles those two reports into a short neutral comparison.
-- [ ] Recheck `main` for drift immediately before principal start and merge/rebase semantically if required.
+- [x] **R3F disposable runtime spike executed and `issue-119-r3f-spike-results.md` populated** — source report `e481633`.
+- [x] **MapLibre disposable runtime spike executed and `issue-119-maplibre-spike-results.md` populated** — source report `f57c276`; its headless SwiftShader blank-source blocker is recorded, not waived.
+- [x] Support layer reconciles those two reports into a short neutral comparison with every mandatory row PASS, FAIL or UNCLEAR.
+- [x] Rechecked `main` for drift and semantically reconciled `d8f52ec` into the exploration evidence branch before this handoff.
 
-If the three unchecked renderer/comparison items are absent, do not burn the principal session installing libraries and generating baseline measurements. Finish them with a strong support model first.
+The support entry gate is **GREEN**: the principal should read the completed
+comparison rather than recreate package/runtime measurements. This does not
+preselect a renderer or waive its recorded failures/unknowns.
 
 ## 5. Read order for the principal session
 
