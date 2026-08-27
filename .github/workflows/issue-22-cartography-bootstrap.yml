@@ -37,15 +37,8 @@ jobs:
 
           p = Path('tests/browser/north-america.spec.ts')
           s = p.read_text()
-          old = """      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
-                await answerCurrentLocationCorrectly(page, targetId);
-                sawWrong = true;
-          """.replace('      ', '')
-          new = """      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
-                // Play resolves the target on the first scored tap; a wrong answer
-                // is not retryable. Wait for the normal dwell/advance below.
-                sawWrong = true;
-          """.replace('      ', '')
+          old = "      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();\n      await answerCurrentLocationCorrectly(page, targetId);\n      sawWrong = true;"
+          new = "      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();\n      // Play resolves the target on the first scored tap; a wrong answer is not retryable.\n      // The normal dwell/advance is asserted by the prompt transition below.\n      sawWrong = true;"
           if old in s:
               s = s.replace(old, new, 1)
           elif 'Play resolves the target on the first scored tap' not in s:
