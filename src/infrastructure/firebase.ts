@@ -1,6 +1,7 @@
 import { initializeApp } from 'firebase/app';
 import {
   GoogleAuthProvider,
+  deleteUser,
   getAuth,
   onAuthStateChanged,
   signInWithPopup,
@@ -31,6 +32,10 @@ export function signInWithGoogle(): Promise<User> {
 
 export function signOutUser(): Promise<void> {
   return signOut(auth);
+}
+
+export function deleteSignedInUser(user: User): Promise<void> {
+  return deleteUser(user);
 }
 
 export function onAuthChange(callback: (user: User | null) => void): () => void {
