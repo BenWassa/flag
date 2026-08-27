@@ -68,11 +68,21 @@ export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; 
   );
 }
 
+function cloudStatusCopy(status: ReturnType<typeof useAuth>['cloudStatus']): string {
+  if (status === 'reconciling') return 'Checking cloud progress…';
+  if (status === 'saving') return 'Saving cloud backup…';
+  if (status === 'synced') return 'Cloud backup is up to date.';
+  if (status === 'degraded') return 'Cloud backup is unavailable right now. Progress is still saved on this device.';
+  if (status === 'unauthorised') return "Cloud backup isn't available for this account. Progress is still saved on this device.";
+  return 'Progress is saved on this device.';
+}
+
 export function ProfileScreen() {
   const actions = useAtlasActions();
-  const { user, loading, signIn, signOut } = useAuth();
+  const { user, loading, cloudStatus, signIn, signOut, deleteCloudCopy, deleteAccount } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<'cloud' | 'account' | null>(null);
 
   const handleSignIn = () => {
     setError(null);
@@ -81,9 +91,22 @@ export function ProfileScreen() {
   };
 
   const handleSignOut = () => {
+    setError(null);
     setPending(true);
-    void signOut().finally(() => setPending(false));
+    void signOut().catch(() => setError("Couldn't sign out. Please try again.")).finally(() => setPending(false));
   };
+
+  const handleDelete = (kind: 'cloud' | 'account') => {
+    setError(null);
+    setPending(true);
+    const operation = kind === 'cloud' ? deleteCloudCopy() : deleteAccount();
+    void operation.catch(() => setError(kind === 'account'
+      ? "Couldn't delete the account. Sign out, sign in again, then try once more."
+      : "Couldn't delete the cloud backup. Please try again."
+    )).finally(() => { setPending(false); setConfirmDelete(null); });
+  };
+
+  const cloudAvailable = cloudStatus !== 'unauthorised';
 
   return (
     <main className="page page--profile">
@@ -104,6 +127,7 @@ export function ProfileScreen() {
           <div className="profile-card__identity">
             <strong>{user.displayName ?? 'Signed in'}</strong>
             {user.email ? <small>{user.email}</small> : null}
+            <small role="status">{cloudStatusCopy(cloudStatus)}</small>
           </div>
           <button
             className={`button button--secondary${pending ? ' is-launching' : ''}`}
@@ -112,13 +136,24 @@ export function ProfileScreen() {
             disabled={pending}
             aria-busy={pending}
           >Sign out</button>
+          {cloudAvailable && confirmDelete === null ? <div className="profile-card__account-actions">
+            <button className="button button--secondary" type="button" onClick={() => setConfirmDelete('cloud')} disabled={pending}>Delete cloud copy</button>
+            <button className="button button--secondary" type="button" onClick={() => setConfirmDelete('account')} disabled={pending}>Delete account</button>
+          </div> : null}
+          {confirmDelete ? <div className="profile-card__delete-confirmation">
+            <p>{confirmDelete === 'cloud'
+              ? 'This deletes the cloud backup and signs you out. Progress on this device stays here.'
+              : 'This deletes the cloud backup and sign-in account. Progress on this device stays here.'}</p>
+            <div className="profile-card__account-actions">
+              <button className="button button--secondary" type="button" onClick={() => setConfirmDelete(null)} disabled={pending}>Cancel</button>
+              <button className="button button--secondary" type="button" onClick={() => handleDelete(confirmDelete)} disabled={pending} aria-busy={pending}>Delete</button>
+            </div>
+          </div> : null}
+          {error ? <p className="storage-notice" role="status">{error}</p> : null}
         </div>
       ) : (
         <div className="profile-card profile-card--signed-out">
-          {/* Saying sign-in saves progress to the account would be untrue: no
-              learner state syncs to Firestore yet. #106 owns building that, and
-              owns making this promise again once it is real. */}
-          <p>Your progress is saved on this device, and stays there whether or not you sign in. Saving your progress to your account isn't available yet.</p>
+          <p>Your progress is saved on this device. The authorised Atlas account can also keep an optional cloud backup.</p>
           <button
             className={`button button--primary${pending ? ' is-launching' : ''}`}
             type="button"
