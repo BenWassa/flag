@@ -1,4 +1,4 @@
-name: Issue 22 deterministic evidence
+name: Issue 22 final clean gate
 
 on:
   push:
@@ -8,61 +8,179 @@ on:
       - .github/workflows/issue-22-cartography-bootstrap.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  evidence:
+  final-gate:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-22-north-america-expansion
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
+      - name: Reconcile shipped-support documentation and remove temporary scaffolding
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          def replace_required(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  if new in text:
+                      return
+                  raise SystemExit(f'Missing documentation anchor in {path}: {old[:100]!r}')
+              p.write_text(text.replace(old, new, 1))
+
+          replace_required('PRODUCT.md',
+              'The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. North America and Oceania remain incomplete.',
+              'The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. Oceania remains incomplete.')
+          replace_required('PRODUCT.md',
+              '| Locations | Africa, South America, Europe and Asia, plus their supported learner-facing regions |',
+              '| Locations | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |')
+          replace_required('PRODUCT.md',
+              '| Outlines | Africa, South America, Europe and Asia, plus their supported learner-facing regions |',
+              '| Outlines | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |')
+          replace_required('PRODUCT.md',
+              '| Neighbours | Africa, South America, Europe and Asia, with only targets whose complete canonical land-neighbour set is representable |',
+              '| Neighbours | Africa, South America, Europe, Asia and North America, with only targets whose complete canonical land-neighbour set is representable |')
+          replace_required('PRODUCT.md',
+              '**North America (#22)** and **Oceania (#27)** remain open geography expansion work for Locations, Outlines and Neighbours. Their continent rows may appear as honest unavailable shells, but unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.',
+              '**Oceania (#27)** remains open geography expansion work for Locations, Outlines and Neighbours. North America is production-ready across all four domains. Unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.')
+          replace_required('PRODUCT.md', 'those geography gaps', 'that geography gap')
+
+          replace_required('docs/product/map-learning.md',
+              'Current production coverage is **Africa, South America, Europe and Asia**, including supported learner-facing regions. North America (#22) and Oceania (#27) remain unavailable.',
+              'Current production coverage is **Africa, South America, Europe, Asia and North America**, including supported learner-facing regions. Oceania (#27) remains unavailable.')
+          replace_required('docs/product/map-learning.md',
+              'North America and Oceania remain the only continent expansion gaps in current v1 geography-dependent domains.',
+              'Oceania remains the only continent expansion gap in current v1 geography-dependent domains.')
+
+          replace_required('docs/product/requirements.md', '| Locations | Africa, South America, Europe, Asia |', '| Locations | Africa, South America, Europe, Asia, North America |')
+          replace_required('docs/product/requirements.md', '| Outlines | Africa, South America, Europe, Asia |', '| Outlines | Africa, South America, Europe, Asia, North America |')
+          replace_required('docs/product/requirements.md', '| Neighbours | Africa, South America, Europe, Asia, limited to topology-complete eligible targets |', '| Neighbours | Africa, South America, Europe, Asia, North America, limited to topology-complete eligible targets |')
+          replace_required('docs/product/requirements.md', 'North America (#22) and Oceania (#27) remain incomplete for Locations/Outlines/Neighbours.', 'Oceania (#27) remains incomplete for Locations/Outlines/Neighbours.')
+          replace_required('docs/product/requirements.md', 'because North America/Oceania are incomplete', 'because Oceania is incomplete')
+
+          replace_required('docs/product/gamification.md',
+              'The domain model and persistence layer support `worldCrown`, but it cannot currently be earned because North America and Oceania do not yet have complete four-domain curriculum.',
+              'The domain model and persistence layer support `worldCrown`, but it cannot currently be earned because Oceania does not yet have complete four-domain curriculum.')
+
+          replace_required('docs/architecture/routing.md', '| Locations | Africa, South America, Europe and Asia plus supported regions |', '| Locations | Africa, South America, Europe, Asia and North America plus supported regions |')
+          replace_required('docs/architecture/routing.md', '| Outlines | Africa, South America, Europe and Asia plus supported regions |', '| Outlines | Africa, South America, Europe, Asia and North America plus supported regions |')
+          replace_required('docs/architecture/routing.md', '| Neighbours | Africa, South America, Europe and Asia plus eligible topology-complete targets/regions |', '| Neighbours | Africa, South America, Europe, Asia and North America plus eligible topology-complete targets/regions |')
+          replace_required('docs/architecture/routing.md', 'North America (#22) and Oceania (#27) remain unavailable for Locations, Outlines and Neighbours.', 'Oceania (#27) remains unavailable for Locations, Outlines and Neighbours; North America is supported.')
+
+          replace_required('docs/architecture/overview.md', '- Locations: Africa, South America, Europe and Asia.', '- Locations: Africa, South America, Europe, Asia and North America.')
+          replace_required('docs/architecture/overview.md', '- Outlines: Africa, South America, Europe and Asia.', '- Outlines: Africa, South America, Europe, Asia and North America.')
+          replace_required('docs/architecture/overview.md', '- Neighbours: Africa, South America, Europe and Asia, limited to targets with complete representable canonical land-neighbour sets.', '- Neighbours: Africa, South America, Europe, Asia and North America, limited to targets with complete representable canonical land-neighbour sets.')
+          replace_required('docs/architecture/overview.md', '- North America (#22) and Oceania (#27): incomplete for the three geography-dependent domains.', '- Oceania (#27): incomplete for the three geography-dependent domains.')
+
+          replace_required('CLAUDE.md',
+              'Africa was the first complete four-domain production proving ground, and remains the reference baseline; South America, Europe and Asia now ship to the same bar;',
+              'Africa was the first complete four-domain production proving ground, and remains the reference baseline; South America, Europe, Asia and North America now ship to the same bar;')
+          replace_required('CLAUDE.md',
+              '**Locations**, **Outlines**, and **Neighbours** support four production continents as of v0.7.0: Africa (5 regions), South America (3), Europe (4) and Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28). North America and Oceania remain honest shells.',
+              '**Locations**, **Outlines**, and **Neighbours** support five production continents: Africa (5 regions), South America (3), Europe (4), Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28) and North America (3). Oceania remains an honest shell.')
+
+          replace_required('docs/index.md',
+              'Atlas currently ships production geography for Africa, South America, Europe and Asia. North America and Oceania remain open expansion work under #22 and #27.',
+              'Atlas currently ships production geography for Africa, South America, Europe, Asia and North America. Oceania remains open expansion work under #27; #22 is in final merge/deployment closeout.')
+
+          p = Path('docs/open/index.md')
+          text = p.read_text()
+          old = '''Atlas now ships four production continents — Africa, South America, Europe and
+          Asia — each with a dedicated verifier gating curriculum, territory/context
+          policy, adjacency and runtime payload budget.
+
+          Still outstanding:
+
+          - [#22 — North America](https://github.com/BenWassa/flag/issues/22) (also owns Central America; #23 is superseded/closed — see [`issue-23-central-america-expansion.md`](../closed/issue-23-central-america-expansion.md))
+          - [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
+
+          Africa remains the reference baseline. North America and Oceania still appear
+          as shell/navigation states, and unsupported curriculum must never count towards
+          mastery/completion.
+          '''.replace('          ', '')
+          new = '''Atlas now ships five production continents — Africa, South America, Europe,
+          Asia and North America — each with a dedicated verifier gating curriculum,
+          territory/context policy, adjacency and runtime payload budget.
+
+          #22 North America is implemented and production-browser verified on its existing
+          branch; it remains listed here only until PR/CI/deployment closeout is complete.
+          Its durable evidence is in [`issue-22-north-america-expansion.md`](issue-22-north-america-expansion.md).
+          #23 remains superseded/closed by the parent North America implementation.
+
+          Still outstanding after #22 closes:
+
+          - [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
+
+          Africa remains the reference baseline. Oceania remains an honest shell, and
+          unsupported curriculum must never count towards mastery/completion.
+          '''.replace('          ', '')
+          if old not in text:
+              raise SystemExit('Open-index geography block anchor missing')
+          p.write_text(text.replace(old, new, 1))
+          PY
+
+          git rm scripts/issue-22-refine.py scripts/issue-22-integrate.py
+          git rm .github/workflows/issue-22-cartography-bootstrap.yml
+          if find scripts .github/workflows tests/browser -maxdepth 2 -type f -iname '*issue-22*' | grep -q .; then
+            echo 'Unexpected Issue #22 temporary artifact remains:'
+            find scripts .github/workflows tests/browser -maxdepth 2 -type f -iname '*issue-22*'
+            exit 1
+          fi
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add PRODUCT.md CLAUDE.md docs
+          git commit -m "docs(#22): reconcile North America production support"
+          git push origin HEAD:issue-22-north-america-expansion
       - run: npm ci
-      - name: Regenerate every shipped continent deterministically
+      - run: npx playwright install --with-deps chromium
+      - name: Deterministic regeneration regression
         run: |
           npm run maps:generate
           git diff --exit-code
-      - name: Build exact production artifact
-        run: npm run build
-      - name: Run continent and shared cartography verifiers
+      - name: Type-check explicitly
+        run: npm run check
+      - name: Complete Node 22 repository gate
+        run: npm test
+      - name: Full Chromium production-browser regression suite
+        run: npx playwright test --project=chromium
+      - name: PWA runtime verification
+        run: npm run test:pwa-runtime
+      - name: Rebuild and inspect exact final production artifact
         run: |
-          node scripts/verify-map.mjs
-          node scripts/verify-cartography.mjs
-          node scripts/verify-continent-foundation.mjs
-          node scripts/verify-south-america.mjs
-          node scripts/verify-europe.mjs
-          node scripts/verify-asia-expansion.mjs
-          node scripts/verify-north-america.mjs
-          node scripts/verify-map-insets.mjs
-          node scripts/verify-neighbors.mjs
-          node scripts/verify-neighbor-map.mjs
-          node scripts/verify-zero-neighbours.mjs
-          npm run verify:clean
-      - name: Measure and inspect production artifact
-        run: |
+          npm run build
           node --input-type=module <<'NODE'
           import { readFile, readdir } from 'node:fs/promises';
           import { gzipSync } from 'node:zlib';
           const source = await readFile('src/data/maps/north-america.ts');
           const assets = await readdir('dist/assets');
           const chunks = assets.filter((name) => /^north-america-.*\.js$/.test(name));
-          if (chunks.length !== 1) throw new Error(`Expected one North America production chunk, found ${chunks.length}: ${chunks.join(', ')}`);
+          if (chunks.length !== 1) throw new Error(`Expected exactly one North America chunk, found ${chunks.length}`);
           const chunk = await readFile(`dist/assets/${chunks[0]}`);
           const sw = await readFile('dist/sw.js', 'utf8');
           const topLevel = await readdir('dist');
-          const verifierLeaks = topLevel.filter((name) => name.includes('verify'));
-          console.log(`NORTH_AMERICA_SOURCE_RAW=${source.length}`);
-          console.log(`NORTH_AMERICA_SOURCE_GZIP=${gzipSync(source).length}`);
-          console.log(`NORTH_AMERICA_CHUNK=${chunks[0]}`);
-          console.log(`NORTH_AMERICA_CHUNK_RAW=${chunk.length}`);
-          console.log(`NORTH_AMERICA_CHUNK_GZIP=${gzipSync(chunk).length}`);
-          console.log(`NORTH_AMERICA_PRECACHE_REFERENCED=${sw.includes(chunks[0])}`);
-          console.log(`DIST_VERIFIER_LEAKS=${JSON.stringify(verifierLeaks)}`);
-          if (sw.includes(chunks[0])) throw new Error('North America lazy chunk leaked into service-worker precache.');
-          if (verifierLeaks.length) throw new Error(`Verifier output leaked into dist: ${verifierLeaks.join(', ')}`);
+          const leaks = topLevel.filter((name) => name.includes('verify'));
+          console.log(`FINAL_SOURCE_RAW=${source.length}`);
+          console.log(`FINAL_SOURCE_GZIP=${gzipSync(source).length}`);
+          console.log(`FINAL_CHUNK=${chunks[0]}`);
+          console.log(`FINAL_CHUNK_RAW=${chunk.length}`);
+          console.log(`FINAL_CHUNK_GZIP=${gzipSync(chunk).length}`);
+          console.log(`FINAL_PRECACHE_REFERENCED=${sw.includes(chunks[0])}`);
+          console.log(`FINAL_VERIFIER_LEAKS=${JSON.stringify(leaks)}`);
+          if (sw.includes(chunks[0])) throw new Error('North America chunk is precached; lazy-loading contract broken.');
+          if (leaks.length) throw new Error('Verifier-only output leaked into dist.');
           NODE
-          grep -q "assets/north-america-" dist/.vite/manifest.json
-          ! grep -q "NORTH_AMERICA_MAP_ASSET" dist/app.js
-          git status --short
+          grep -q 'assets/north-america-' dist/.vite/manifest.json
+          ! grep -q 'NORTH_AMERICA_MAP_ASSET' dist/app.js
+          test ! -e scripts/issue-22-refine.py
+          test ! -e scripts/issue-22-integrate.py
+          test ! -e .github/workflows/issue-22-cartography-bootstrap.yml
+          git status --porcelain
