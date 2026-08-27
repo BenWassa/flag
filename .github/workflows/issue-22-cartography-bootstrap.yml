@@ -24,9 +24,10 @@ jobs:
         run: |
           npm run maps:generate
           git diff --exit-code
+      - name: Build exact production artifact
+        run: npm run build
       - name: Run continent and shared cartography verifiers
         run: |
-          npm run build:verify
           node scripts/verify-map.mjs
           node scripts/verify-cartography.mjs
           node scripts/verify-continent-foundation.mjs
@@ -39,23 +40,19 @@ jobs:
           node scripts/verify-neighbor-map.mjs
           node scripts/verify-zero-neighbours.mjs
           npm run verify:clean
-      - name: Build exact production artifact
-        run: npm run build
       - name: Measure and inspect production artifact
         run: |
           node --input-type=module <<'NODE'
           import { readFile, readdir } from 'node:fs/promises';
           import { gzipSync } from 'node:zlib';
-          const sourcePath = 'src/data/maps/north-america.ts';
-          const source = await readFile(sourcePath);
+          const source = await readFile('src/data/maps/north-america.ts');
           const assets = await readdir('dist/assets');
           const chunks = assets.filter((name) => /^north-america-.*\.js$/.test(name));
           if (chunks.length !== 1) throw new Error(`Expected one North America production chunk, found ${chunks.length}: ${chunks.join(', ')}`);
-          const chunkPath = `dist/assets/${chunks[0]}`;
-          const chunk = await readFile(chunkPath);
+          const chunk = await readFile(`dist/assets/${chunks[0]}`);
           const sw = await readFile('dist/sw.js', 'utf8');
-          const verifierLeaks = [];
-          for (const name of await readdir('dist')) if (name.includes('verify')) verifierLeaks.push(name);
+          const topLevel = await readdir('dist');
+          const verifierLeaks = topLevel.filter((name) => name.includes('verify'));
           console.log(`NORTH_AMERICA_SOURCE_RAW=${source.length}`);
           console.log(`NORTH_AMERICA_SOURCE_GZIP=${gzipSync(source).length}`);
           console.log(`NORTH_AMERICA_CHUNK=${chunks[0]}`);
