@@ -240,8 +240,12 @@ function handlePointerDown(event: PointerEvent): void {
     gesture.dragOriginBox = currentBox(viewport) ?? continentBox(viewport) ?? undefined;
   } else {
     resetPinchStart(viewport, gesture);
+    // A second pointer establishes a pinch. Capturing only once the
+    // multi-pointer gesture exists preserves the original SVG target for taps.
+    for (const pointerId of gesture.pointers.keys()) {
+      try { viewport.setPointerCapture?.(pointerId); } catch { /* Pointer may already have ended. */ }
+    }
   }
-  viewport.setPointerCapture?.(event.pointerId);
 }
 
 function handlePointerMove(event: PointerEvent): void {
@@ -284,7 +288,12 @@ function handlePointerMove(event: PointerEvent): void {
   if (gesture.pointers.size === 1 && gesture.dragStart && gesture.dragOriginBox) {
     const dx = event.clientX - gesture.dragStart.x;
     const dy = event.clientY - gesture.dragStart.y;
-    if (Math.hypot(dx, dy) > 4) gesture.dragged = true;
+    if (!gesture.dragged && Math.hypot(dx, dy) > 4) {
+      gesture.dragged = true;
+      // Capture only after movement crosses the established drag threshold so
+      // taps and slight movement retain normal delegated answer semantics.
+      try { viewport.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have ended. */ }
+    }
     if (gesture.dragged) {
       panBy(viewport, dx, dy, gesture.dragOriginBox);
       event.preventDefault();

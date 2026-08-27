@@ -268,9 +268,84 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   }),
 });
 
+export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
+  id: 'north-america',
+  displayName: 'North America',
+  sourceContinent: 'North America',
+  exportPrefix: 'NORTH_AMERICA',
+  outputFilename: 'north-america.ts',
+  provenanceFilename: 'north-america-cartography-provenance.json',
+  expectedCountryCount: 23,
+  regionIds: Object.freeze([
+    'northern-america',
+    'central-america',
+    'caribbean',
+  ]),
+  islandLocatorIds: Object.freeze([]),
+  hitAssistIds: Object.freeze(['BHS', 'BLZ', 'DOM', 'HTI', 'JAM', 'SLV', 'TTO']),
+  callouts: Object.freeze({}),
+  insets: Object.freeze([
+    Object.freeze({ id: 'northern-lesser-antilles', label: 'Northern Lesser Antilles', countryIds: Object.freeze(['KNA', 'ATG']), anchor: 'top-right' }),
+    Object.freeze({ id: 'windward-islands-north', label: 'Windward Islands', countryIds: Object.freeze(['DMA', 'LCA']), anchor: 'top-right' }),
+    Object.freeze({ id: 'windward-islands-south', label: 'Southern Windward Islands', countryIds: Object.freeze(['VCT', 'GRD', 'BRB']), anchor: 'top-right' }),
+  ]),
+  lakes: Object.freeze([
+    Object.freeze({ name: 'Lake Superior', pattern: 'superior', flags: 'i', required: true }),
+    Object.freeze({ name: 'Lake Michigan', pattern: 'michigan', flags: 'i', required: true }),
+    Object.freeze({ name: 'Lake Huron', pattern: 'huron', flags: 'i', required: true }),
+    Object.freeze({ name: 'Lake Erie', pattern: '\\berie\\b', flags: 'i', required: true }),
+    Object.freeze({ name: 'Lake Ontario', pattern: 'ontario', flags: 'i', required: true }),
+  ]),
+  localContextCountryIds: Object.freeze(['COL', 'VEN', 'FRA', 'NLD']),
+  localContextBounds: Object.freeze({ minLon: -90, maxLon: -55, minLat: 0, maxLat: 30 }),
+  allowedContextPatterns: Object.freeze([
+    Object.freeze({ pattern: '(anguilla|aruba|bajo nuevo|bermuda|british virgin|cayman|cura|greenland|montserrat|puerto rico|saint barthelemy|saint martin|saint pierre|serranilla|sint maarten|turks and caicos|united states virgin|guantanamo)', flags: 'i' }),
+  ]),
+  excludedContextPatterns: Object.freeze([
+    Object.freeze({ pattern: 'united states minor outlying islands', flags: 'i' }),
+  ]),
+  fitExcludeContextPatterns: Object.freeze([
+    Object.freeze({ pattern: 'greenland', flags: 'i' }),
+    Object.freeze({ pattern: 'bermuda', flags: 'i' }),
+  ]),
+  fitCountryBounds: Object.freeze({
+    USA: Object.freeze({ minLon: -170, maxLon: -50, minLat: 24, maxLat: 75 }),
+  }),
+  focusCountryBounds: Object.freeze({
+    USA: Object.freeze({ minLon: -170, maxLon: -50, minLat: 24, maxLat: 75 }),
+  }),
+  focusMinimumByScope: Object.freeze({
+    'central-america': Object.freeze({ width: 120, height: 110 }),
+    caribbean: Object.freeze({ width: 105, height: 105 }),
+  }),
+  physicalTolerance: Object.freeze({ ocean: 1.4, coastline: 1.15, lakes: 0.6 }),
+  adjacencyMode: 'global',
+  policy: 'standard-v1',
+  boundaryPolicy: Object.freeze({
+    naturalEarthView: 'default de-facto',
+    scoredCountries: 'exact Atlas 23-country North America curriculum only',
+    canadaUnitedStates: 'canonical whole-country CAN/USA; USA remote multipart components are excluded from viewport fit/focus only, never from scored geometry or Outlines',
+    southAmericaContext: 'COL and VEN are keyed non-scoring context; PAN-COL adjacency remains global',
+    franceNetherlandsContext: 'FRA and NLD are keyed non-scoring context clipped to Caribbean overseas geometry; metropolitan Europe is not loaded into this viewport',
+    greenland: 'non-scoring Danish context; rendered when visible but excluded from projection fit',
+    bermuda: 'non-scoring British dependency context; rendered when visible but excluded from projection fit',
+    saintPierreAndMiquelon: 'non-scoring French dependency context near Canada',
+    puertoRico: 'non-scoring United States dependency context in the Caribbean',
+    britishCaribbean: 'Anguilla, British Virgin Islands, Cayman Islands, Montserrat and Turks and Caicos Islands are non-scoring context',
+    frenchCaribbean: 'Saint Barthelemy and Saint Martin are non-scoring source context; FRA Caribbean geometry is keyed non-scoring context',
+    dutchCaribbean: 'Aruba, Curacao and Sint Maarten are non-scoring source context; NLD Caribbean geometry is keyed non-scoring context',
+    disputedBanks: 'Bajo Nuevo Bank and Serranilla Bank remain non-scoring Natural Earth indeterminate context',
+    guantanamo: 'Natural Earth Guantanamo Bay lease remains non-scoring context and is not promoted to an Atlas country',
+    usMinorOutlyingIslands: 'explicitly excluded from North America runtime context because remote Pacific dependencies are irrelevant to this learner viewport',
+    maritimeAdjacency: 'none; topology-derived land adjacency only, including explicit empty sets',
+    assistance: 'real polygons first; invisible hit assistance for BHS/BLZ/DOM/HTI/JAM/SLV/TTO; true-scale insets for KNA+ATG, DMA+LCA and VCT+GRD+BRB; no leader-line callouts or schematic relocation',
+  }),
+});
+
 export const MAP_GENERATION_CONFIGS = Object.freeze([
   AFRICA_MAP_GENERATION_CONFIG,
   SOUTH_AMERICA_MAP_GENERATION_CONFIG,
   EUROPE_MAP_GENERATION_CONFIG,
   ASIA_MAP_GENERATION_CONFIG,
+  NORTH_AMERICA_MAP_GENERATION_CONFIG,
 ]);

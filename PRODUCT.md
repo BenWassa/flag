@@ -129,7 +129,7 @@ There is no separate full-screen continent trophy ceremony in v1.0.
 
 World completion is the highest and final prestige tier. The persisted achievement model contains a `worldCrown` state and exposes it through the achievement read model.
 
-The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. North America and Oceania remain incomplete. There is also **no current React learner-facing World Crown renderer or ceremony**. The Crown remains the reserved eventual presentation for genuine world completion; do not invent a tier above it.
+The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. Oceania remains incomplete. There is also **no current React learner-facing World Crown renderer or ceremony**. The Crown remains the reserved eventual presentation for genuine world completion; do not invent a tier above it.
 
 ## Persistence and reset
 
@@ -160,13 +160,13 @@ The richer cross-domain Progress composition from the former screen is historica
 | Domain | Production-ready coverage |
 | --- | --- |
 | Flags | full 195-country curriculum; World, all six continents and learner-facing regions |
-| Locations | Africa, South America, Europe and Asia, plus their supported learner-facing regions |
-| Outlines | Africa, South America, Europe and Asia, plus their supported learner-facing regions |
-| Neighbours | Africa, South America, Europe and Asia, with only targets whose complete canonical land-neighbour set is representable |
+| Locations | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |
+| Outlines | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |
+| Neighbours | Africa, South America, Europe, Asia and North America, with only targets whose complete canonical land-neighbour set is representable |
 
-**North America (#22)** and **Oceania (#27)** remain open geography expansion work for Locations, Outlines and Neighbours. Their continent rows may appear as honest unavailable shells, but unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.
+**Oceania (#27)** remains open geography expansion work for Locations, Outlines and Neighbours. North America is production-ready across all four domains. Unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.
 
-Flags remains globally available independently of those geography gaps.
+Flags remains globally available independently of that geography gap.
 
 ## Locked product and design constraints
 

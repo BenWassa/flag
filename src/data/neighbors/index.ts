@@ -22,6 +22,10 @@ import {
   ASIA_LAND_ADJACENCY,
   ASIA_ZERO_LAND_NEIGHBOR_IDS,
 } from './asia.js';
+import {
+  NORTH_AMERICA_LAND_ADJACENCY,
+  NORTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+} from './north-america.js';
 
 export {
   AFRICA_LAND_ADJACENCY,
@@ -32,6 +36,8 @@ export {
   EUROPE_ZERO_LAND_NEIGHBOR_IDS,
   ASIA_LAND_ADJACENCY,
   ASIA_ZERO_LAND_NEIGHBOR_IDS,
+  NORTH_AMERICA_LAND_ADJACENCY,
+  NORTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
 };
 
 export interface NeighborContinentData {
@@ -71,6 +77,11 @@ const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData
   asia: {
     continentId: 'asia',
     adjacency: ASIA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
+  },
+  'north-america': {
+    continentId: 'north-america',
+    adjacency: NORTH_AMERICA_LAND_ADJACENCY,
     coverageExcludedIds: [],
   },
 };

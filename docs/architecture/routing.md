@@ -41,11 +41,11 @@ This one-tap launcher contract supersedes the older Issue #77 select-then-play c
 | Domain | Production-ready geography |
 | --- | --- |
 | Flags | World, all six continents, all learner-facing regions in the 195-country curriculum |
-| Locations | Africa, South America, Europe and Asia plus supported regions |
-| Outlines | Africa, South America, Europe and Asia plus supported regions |
-| Neighbours | Africa, South America, Europe and Asia plus eligible topology-complete targets/regions |
+| Locations | Africa, South America, Europe, Asia and North America plus supported regions |
+| Outlines | Africa, South America, Europe, Asia and North America plus supported regions |
+| Neighbours | Africa, South America, Europe, Asia and North America plus eligible topology-complete targets/regions |
 
-North America (#22) and Oceania (#27) remain unavailable for Locations, Outlines and Neighbours.
+Oceania (#27) remains unavailable for Locations, Outlines and Neighbours; North America is supported.
 
 The route grammar can parse canonical continent/region identity independently of whether a domain currently ships that scope. `normalizeAvailableRoute(...)` owns availability: an unsupported scoped route falls back to that **domain's continent index**, not to Africa and not to an invented substitute continent.
 

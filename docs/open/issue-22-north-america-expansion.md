@@ -1,231 +1,250 @@
 # Issue #22 — North America full four-domain expansion
 
-**Status:** scoped and ready to consume the shared global expansion foundation shipped by #57.
+**Status:** implementation and complete integrated technical acceptance are complete on `issue-22-north-america-expansion`. Accepted candidate `00cf20c4f132403e91325a4e8c90fa7032e92b05` passed the final clean gate in GitHub Actions run `33117435601`; only PR/merge/deployment closeout remains before Issue #22 is closed.
 
-## Goal
+## Outcome
 
-Ship North America to the Africa quality bar across the complete learner-facing continent and all of its regions, using the shared continent-expansion architecture and canonical Natural Earth topology.
+North America is implemented through Atlas's existing shared continent-expansion architecture across Flags, Locations, Outlines and Neighbours. The work adds no second topology source, handwritten country geometry, handwritten neighbour table or North-America-specific map runtime.
 
-This issue owns the full North America parent asset and its three current learner-facing regions:
+The continent has one canonical 23-country curriculum and three learner-facing regions:
 
-- Northern America;
-- Central America;
-- Caribbean.
+- **Northern America — 2:** Canada (`CAN`), United States (`USA`).
+- **Central America — 8:** Belize (`BLZ`), Costa Rica (`CRI`), El Salvador (`SLV`), Guatemala (`GTM`), Honduras (`HND`), Mexico (`MEX`), Nicaragua (`NIC`), Panama (`PAN`).
+- **Caribbean — 13:** Antigua and Barbuda (`ATG`), Bahamas (`BHS`), Barbados (`BRB`), Cuba (`CUB`), Dominica (`DMA`), Dominican Republic (`DOM`), Grenada (`GRD`), Haiti (`HTI`), Jamaica (`JAM`), Saint Kitts and Nevis (`KNA`), Saint Lucia (`LCA`), Saint Vincent and the Grenadines (`VCT`), Trinidad and Tobago (`TTO`).
 
-Issue #23's former standalone Central America cartography work is superseded by this parent-continent expansion. Central America remains a first-class learner-facing region, not a separate topology/map implementation.
+The same shared scope membership is consumed by all four domains. Central America remains a region of the North America asset; #23 is not a separate topology/runtime subsystem.
 
-See `docs/architecture/continent-expansion.md` for the shared completion contract.
+## Canonical cartography and source audit
 
-## Canonical scored curriculum
+Production geography is generated from the pinned Natural Earth 1:10m pipeline documented in `docs/architecture/north-america-cartography-provenance.json`.
 
-North America currently contains 23 application countries.
+The North America source audit reconciled all 42 relevant Natural Earth source features. The scored curriculum remains the 23 Atlas application countries above. Territories and dependencies are never promoted merely because Natural Earth places them in North America.
 
-### Northern America — 2
+Important policy decisions:
 
-- Canada (`CAN`)
-- United States (`USA`)
+- Greenland is non-scoring Danish context and excluded from projection fitting.
+- Bermuda is non-scoring British context and excluded from projection fitting.
+- Saint Pierre and Miquelon and Puerto Rico remain non-scoring geographic context.
+- Anguilla, British Virgin Islands, Cayman Islands, Montserrat, Turks and Caicos Islands, Saint Barthelemy, Saint Martin, Aruba, Curacao and Sint Maarten remain non-scoring dependency/source context.
+- Caribbean French and Dutch sovereign geometry is represented through keyed `FRA`/`NLD` non-scoring context where appropriate; metropolitan Europe is explicitly excluded from this viewport.
+- `COL` and `VEN` are keyed South America context where useful. Colombia remains available to the global adjacency graph so Panama's land border is truthful.
+- remote US Minor Outlying Islands are explicitly excluded from the North America runtime context because Pacific dependency geometry is irrelevant to this learner viewport.
+- disputed banks and the Guantanamo Bay lease remain non-scoring Natural Earth context and are not Atlas countries.
 
-### Central America — 8
+The provenance JSON remains strictly generator-owned. Final QA, browser, CI and deployment evidence belongs in this worklog and is not manually appended to generated provenance.
 
-- Belize (`BLZ`)
-- Costa Rica (`CRI`)
-- El Salvador (`SLV`)
-- Guatemala (`GTM`)
-- Honduras (`HND`)
-- Mexico (`MEX`)
-- Nicaragua (`NIC`)
-- Panama (`PAN`)
+### Viewport component filtering
 
-### Caribbean — 13
+Issue #22 generalised the generator so viewport fitting can exclude remote multipart components without mutating canonical scored geometry.
 
-- Antigua and Barbuda (`ATG`)
-- Bahamas (`BHS`)
-- Barbados (`BRB`)
-- Cuba (`CUB`)
-- Dominica (`DMA`)
-- Dominican Republic (`DOM`)
-- Grenada (`GRD`)
-- Haiti (`HTI`)
-- Jamaica (`JAM`)
-- Saint Kitts and Nevis (`KNA`)
-- Saint Lucia (`LCA`)
-- Saint Vincent and the Grenadines (`VCT`)
-- Trinidad and Tobago (`TTO`)
+The United States keeps its complete canonical whole-country path for scoring, rendering and Outlines. Remote components west of the documented fit threshold are excluded only from fit/focus calculations. This prevents Aleutian/remote geometry from destroying useful North America and regional framing while preserving country identity.
 
-Do not add non-application territories as scored targets merely because Natural Earth classifies them geographically within North America.
+The same principle applies to explicit context exclusion: omit irrelevant context components from a learner viewport rather than altering the canonical country polygon or building a parallel geometry source.
 
-## Four-domain support matrix
+## Physical context
 
-| Scope | Flags | Locations | Outlines | Neighbours |
-| --- | --- | --- | --- | --- |
-| North America | required | required | required | required |
-| Northern America | required | required | required | required |
-| Central America | required | required | required | required |
-| Caribbean | required | required | required | required |
+North America retains restrained orientation context:
 
-Flags already has country coverage; this issue must verify that Flags consumes the same shared scope memberships rather than maintaining an independent region list.
+- Great Lakes: Erie, Huron, Michigan, Ontario and Superior;
+- source-derived ocean/coastline context;
+- **no rivers**.
 
-For Neighbours, zero-land-neighbour island countries remain accurate and use the explicit **No land neighbours** retrieval introduced by #58. They are part of the Caribbean curriculum rather than evidence-free exclusions.
+A controlled payload experiment increased simplification only for non-interactive ocean/coast/lake context. It saved roughly 1 kB gzip while reducing physical detail, so it was rejected. Scored country geometry was not degraded to chase an arbitrary round-number budget.
 
-## Required policy decisions
+## Adjacency and Neighbours
 
-### Greenland and nearby territories
+Adjacency is derived from the global canonical Natural Earth topology, not from continent-local or handwritten tables.
 
-Greenland is not one of Atlas's canonical application countries. Treat it as non-scoring geographic context unless a separate future product decision changes the application-country catalogue.
+Explicitly verified cases include:
 
-Explicitly audit at minimum:
+- `CAN ↔ USA`;
+- `USA ↔ MEX`;
+- Mexico's Central American land connections;
+- `PAN ↔ COL` across the North America/South America learner-continent boundary;
+- `HTI ↔ DOM` on Hispaniola;
+- no invented `CUB ↔ JAM` maritime edge.
 
-- Greenland;
-- Bermuda;
-- Saint Pierre and Miquelon;
-- Puerto Rico;
-- other Natural Earth-administered Caribbean territories relevant to map context.
+The following 11 Caribbean countries correctly have empty land-neighbour sets and remain playable through the #58 explicit **No land neighbours** path: `ATG`, `BHS`, `BRB`, `CUB`, `DMA`, `GRD`, `JAM`, `KNA`, `LCA`, `VCT`, `TTO`.
 
-For each, record the source feature, owning sovereign geometry relationship where relevant, and whether it is context or excluded from the runtime asset. Do not silently convert territories into scored targets.
+### Neighbour-map host lifecycle fix
 
-### Cross-continent adjacency
+Production browser QA exposed a shared React/runtime lifecycle defect. A zero-neighbour target intentionally left the neighbour-map host in `data-neighbor-map-status="error"`; React reused the same host DOM node for the next target, so the runtime refused to hydrate a later non-zero target such as Haiti because the stale error status survived.
 
-The full build-time adjacency graph must preserve at minimum:
+The host is now keyed by `session.id:targetId`, forcing a fresh host between questions while preserving same-question runtime shell updates. Browser-independent `HTI↔DOM` and `PAN↔COL` neighbour models were already correct; canonical adjacency was not changed to fix the runtime issue.
 
-- Mexico ↔ United States;
-- Panama ↔ Colombia.
+## Small-island interaction assistance
 
-Panama's Colombia relationship must not disappear merely because Colombia belongs to the South America learner continent.
+Production-scale QA deliberately started from true geometry and added only the minimum assistance needed.
 
-### Multipart sovereign geometry
+### Invisible 44 CSS px hit assistance
 
-Audit application-country geometry that includes remote/non-contiguous pieces. Locations, Outlines and Neighbours must follow the shared transcontinental/multipart policy from the expansion playbook rather than inventing North-America-only exceptions.
+Seven countries use invisible hit assistance while keeping the real geography visible and authoritative:
 
-## Cartography
+- `BHS`
+- `BLZ`
+- `DOM`
+- `HTI`
+- `JAM`
+- `SLV`
+- `TTO`
 
-Use the generic canonical production generator only.
+These hit surfaces are dynamically kept at approximately 44 CSS px.
 
-Required North America asset output:
+### True-scale question-specific insets
 
-- all 23 scored country geometries;
-- required non-scoring context geometry;
-- one topology-derived shared political-border mesh;
-- one coastline mesh;
-- source-derived ocean context;
-- selected useful lakes/reservoirs only;
-- no rivers;
-- generated focus bounds for North America and each region;
-- complete build-time land adjacency;
-- locator/callout metadata justified by visual QA.
+Three dense Caribbean clusters use generated true-scale insets only when a member is the current target:
 
-### Inland water
+- `KNA` + `ATG`
+- `DMA` + `LCA`
+- `VCT` + `GRD` + `BRB`
 
-Determine a restrained set of major lakes/reservoirs that materially help orientation, especially where the US/Canada boundary and regional recognition benefit. Do not treat every Natural Earth lake as mandatory.
+Insets reuse canonical geometry, preserve an outlined source window, avoid answer-revealing labels, expose one keyboard/touch target per country, and disappear when not relevant.
 
-### Framing
+No permanent visible locator discs or leader-line callouts are required for North America. Real polygons retain precedence over assistance surfaces, including around Hispaniola and dense island clusters.
 
-Verify:
+## Shared pointer-capture defect and fix
 
-- full continent fits with all required island locators;
-- Northern America framing remains useful despite Canada/US scale;
-- Central America is large enough to play accurately on phone portrait;
-- Caribbean framing does not reduce small islands to unusable specks;
-- region views can return to full North America;
-- short landscape remains usable.
+Production mouse QA exposed a pre-existing shared map gesture defect rather than a North America geometry defect.
 
-## Small-country / island QA
+Before the fix, `map-viewport.ts` called `setPointerCapture` on every initial `pointerdown`. Chromium then retargeted the eventual click from a correct SVG answer surface to `.map-stage__scroll`. In the diagnostic case, `elementFromPoint(...)` correctly identified the Bahamas `BHS` hit target, but the physical mouse click reached the scroll container and did not score; dispatching a click directly on the same SVG circle scored immediately.
 
-The Caribbean is the primary stress case.
+The shared fix is deliberately generic:
 
-Do not pre-author a large locator/callout table. Generate canonical geometry first, inspect at realistic phone scale, then record the minimum assistance required.
+1. a single initial pointerdown is **not** captured;
+2. movement of 4 CSS px or less remains ordinary tap/slight-movement behaviour;
+3. once movement exceeds the established 4 px drag threshold, the pointer is captured and the gesture becomes a pan;
+4. the dragged click is suppressed so panning cannot answer a country;
+5. when a second pointer establishes a pinch, the active pointers are captured for the multi-pointer gesture.
 
-Apply the shared policy:
+Permanent browser regression coverage proves initial-down and sub-threshold movement are not captured, established drags are captured, panning does not answer, sub-threshold movement on an assisted target still scores, physical polygon clicks score, and the existing #117 real-polygon-over-assistance precedence contract remains green.
 
-- island locator when the actual polygon cannot provide a practical target at ordinary framing;
-- larger invisible hit area;
-- mainland callouts exceptional only;
-- no redundant locator + callout treatment.
-
-The final locator/callout inventory must be documented and regression-tested.
+During final verifier cleanup, the pointer regression was corrected to target the unique `tabindex="0"` keyboard answer stop for inset countries. An intermediate test-harness reconstruction mistake was also removed, restoring the proven launcher-based setup. No production pointer or inset behaviour changed in that cleanup.
 
 ## Outlines
 
-All 23 country silhouettes must derive from the same canonical production geometry.
+Outlines derives the same canonical country geometry used by Locations.
 
-Audit especially:
+Browser QA explicitly covers multipart Caribbean silhouettes including Bahamas, Antigua and Barbuda, Saint Kitts and Nevis, Saint Vincent and the Grenadines and Trinidad and Tobago at phone portrait and short landscape. The United States keeps complete canonical multipart geometry for Outlines; fit/focus filtering is not an outline mutation.
 
-- archipelagic/multipart Caribbean states;
-- Bahamas;
-- Antigua and Barbuda;
-- Saint Kitts and Nevis;
-- Saint Vincent and the Grenadines;
-- Trinidad and Tobago;
-- large Canada/US/Mexico normalisation so scale is not an answer cue.
+## Mastery and completion
 
-## Neighbours
+North America regions participate in the shipped #108 complete-region qualification rules. Browser QA verifies the Northern America presentation with all four region × domain Masteries present. Ordinary sampled/incomplete rounds cannot award Mastery; existing achievement semantics and storage namespaces were not changed by #22.
 
-Validate representative complete adjacency including:
+## Final integrated acceptance — authoritative
 
-- Canada / United States;
-- United States / Mexico;
-- Mexico's Central American connections;
-- Guatemala/Belize/Honduras density;
-- Panama / Colombia cross-continent edge;
-- Haiti / Dominican Republic;
-- zero-land-neighbour island states.
+GitHub Actions run `33117435601` established and tested accepted candidate:
 
-Do not add maritime adjacency for island countries.
+`00cf20c4f132403e91325a4e8c90fa7032e92b05`
 
-## Routing / progress / achievements
+Environment:
 
-Use shared typed scopes and stable route architecture.
+- Node `22.23.2`;
+- Java `21`.
 
-Requirements:
+The clean integrated gate passed:
 
-- North America and each region appear in the existing continent/region surfaces;
-- browser Back/Forward and direct routes work;
-- no duplicate North-America-specific router;
-- existing Flags progress is preserved;
-- new geography-domain progress remains domain-specific;
-- support selectors recognise all four domains honestly;
-- #34 completion logic can eventually treat North America as complete only when all required supported regional domain mastery exists.
+- complete deterministic `npm run maps:generate`;
+- `git diff --exit-code` after generation — byte-clean;
+- `npm run check`;
+- complete `npm test`;
+- **54/54 Vitest tests**;
+- **12/12 Firebase Emulator / Firestore rules tests**;
+- all shared and continent cartography verifiers;
+- deterministic North America verifier;
+- **56/56 Chromium production-browser tests**;
+- #117 polygon-precedence regressions;
+- pointer-capture regressions;
+- complete North America browser matrix;
+- PWA runtime verification;
+- exact final production build/artifact inspection.
 
-## Verification
+The temporary final-verifier workflow removed itself before establishing the accepted candidate. No temporary Issue #22 workflow or verifier scaffolding remains in the tested tree.
 
-In addition to the common playbook gates, add focused assertions for:
+No physical-device testing is claimed. Browser evidence is automated Chromium against the production build in GitHub Actions.
 
-- exact 23-country continent membership;
-- exact 2/8/13 region membership;
-- territory/context exclusions;
-- complete Panama ↔ Colombia adjacency;
-- Haiti ↔ Dominican Republic adjacency;
-- zero-neighbour Caribbean targets;
-- no rivers;
-- final locator/callout inventory;
-- lazy `north-america` runtime asset loading;
-- runtime asset size.
+## Final payload and lazy-loading evidence
 
-Visual QA must inspect at minimum:
+The final accepted run recorded three distinct measurement paths. They intentionally differ because they measure different artefacts/reporting implementations.
 
-- full North America;
-- Northern America;
-- dense Central America;
-- the Caribbean at usable phone scale;
-- representative island Locations targets;
-- multipart Outlines;
-- Panama and Hispaniola Neighbours cases;
-- phone portrait and short landscape.
+| Measure | Raw | gzip |
+| --- | ---: | ---: |
+| generator/runtime source `src/data/maps/north-america.ts` | **1,874,879 B** | **411,137 B** via Node `gzipSync` |
+| deterministic North America verifier model | **1,875,784 B** | **412,240 B** |
+| production lazy chunk `north-america-DT6OqdvP.js` | **1,872,522 B** | **410,389 B** via Node `gzipSync` |
+| Vite reporter | **1,872.52 kB** | **435.28 kB** |
 
-## Acceptance criteria
+The deterministic verifier ceiling remains an evidence-based **425,000 gzip bytes** and is tied to the verifier's own 412,240-byte measurement.
 
-- [ ] North America uses the shared global expansion architecture, not copied Africa-only infrastructure.
-- [ ] The 23-country curriculum and 2/8/13 region split above are exact and test-covered.
-- [ ] #23 is not implemented as a separate Central America topology/runtime subsystem.
-- [ ] All four domains consume the intended shared scopes.
-- [ ] Canonical Natural Earth geometry is the sole production geography source.
-- [ ] Locations works for continent + all three regions.
-- [ ] Outlines derives every supported country from canonical geometry.
-- [ ] Neighbours uses complete topology-derived adjacency including Panama ↔ Colombia.
-- [ ] Zero-land-neighbour island countries remain accurate, learnable empty sets rather than receiving invented maritime neighbours.
-- [ ] Territory/context policy is explicit and documented.
-- [ ] River-free map policy is preserved; useful lakes/ocean remain subordinate context.
-- [ ] Small-island locator/callout inventory is based on actual phone-scale review and regression-tested.
-- [ ] Routes, persistence, support selectors and achievement eligibility remain coherent.
-- [ ] Exact production artifact passes the common visual release gate.
-- [ ] `npm run check` and `npm test` pass under Node 22.
-- [ ] CI is green on the final commit before merge.
+Final artifact inspection proves:
+
+- exactly one North America JS geography chunk is emitted;
+- `north-america-DT6OqdvP.js` remains dynamically/lazily loaded;
+- the North America chunk is **not** referenced by the service-worker precache;
+- `assets/north-america-*.js` remains explicitly excluded from precache generation;
+- no verifier-only output leaked into `dist/`.
+
+## Shared generator regression evidence
+
+The accepted gate regenerated Africa, South America, Europe, Asia and North America from the canonical source pipeline and then passed `git diff --exit-code`. The tracked geography therefore remained byte-clean after complete regeneration.
+
+The same integrated verifier chain confirmed:
+
+- Africa: 54-country coverage, nine lakes, no rivers;
+- South America: 12 countries and the established 5/3/4 split;
+- Europe: 44 countries with existing microstate assistance/framing intact;
+- Asia: existing canonical membership, learner regions and framing intact;
+- North America: 23 countries and 2/8/13 regional split;
+- shared inset, adjacency, neighbour-map, zero-neighbour, routing, outline, achievement and British-English contracts all green.
+
+Because regeneration is byte-clean, existing country IDs/membership, canonical scored geometry, adjacency, focus/framing, assistance inventories and physical-context policy for the four previously shipped continents are unaffected.
+
+## Production browser QA
+
+The accepted integrated gate passed the complete Chromium suite, **56/56**, against the production build.
+
+The North America matrix covers:
+
+- 320 × 568 narrow phone portrait;
+- 390 × 844 modern phone portrait;
+- 768 × 1024 tablet portrait;
+- 844 × 390 short landscape;
+- 1280 × 800 desktop.
+
+Across those viewports it verifies North America, Northern America, Central America and Caribbean framing; all 13 Caribbean learner targets; all seven invisible assisted-hit targets; all three inset groups; clipping and overlap; real polygon precedence; Central America density; real mouse answer interaction; correct/wrong Play feedback; wheel zoom and pointer pan; multipart Outlines; `PAN↔COL`; `HTI↔DOM`; all 11 zero-neighbour Caribbean states and the #58 map-unavailable path; typed navigation; lazy loading; PWA runtime; and complete-region Mastery presentation.
+
+Existing #117 Germany/Liechtenstein and France/Luxembourg precedence tests stayed green, so the shared pointer fix did not weaken the real-polygon-first interaction contract.
+
+## Lessons for Oceania
+
+Issue #27 should reuse these findings before adding new interaction machinery.
+
+1. **Dense small-island assistance:** start with canonical polygons at realistic phone scale. Use invisible ~44 CSS px hit assistance when a small target merely needs a larger practical touch surface. Use a true-scale question-specific inset when nearby islands would otherwise create ambiguous overlap. Do not add permanent locator discs or callouts unless production QA proves they are necessary.
+2. **Pointer interaction:** never capture the first pointer merely because it landed on a pannable map. Capture only after movement establishes a drag, and capture active pointers once a real multi-pointer pinch exists.
+3. **Hit precedence:** canonical real polygons must beat invisible assistance surfaces wherever they overlap. Keep the #117 precedence regressions active when adding dense Pacific assistance.
+4. **Viewport fitting:** preserve complete canonical scored country geometry. Filter remote components only for fit/focus calculations when they destroy useful framing.
+5. **Multipart Outlines:** preserve full canonical country identity and meaningful subpaths rather than replacing archipelagos with handwritten silhouettes.
+6. **Context optimisation:** optimise non-scoring physical context first while protecting scored geometry; stop when measured savings do not justify visible degradation.
+7. **Payload budgets:** set verifier ceilings from measured final output plus deliberate regression margin. Record deterministic verifier bytes and exact production lazy-chunk impact separately.
+8. **Generator reuse:** reuse shared viewport-component filtering, explicit context exclusion, global adjacency derivation, keyed non-scoring context, dynamic 44 px hits and canonical true-scale inset machinery. Do not create an Oceania-specific topology or island interaction subsystem.
+
+## Closeout gates
+
+- [x] exact 23-country / 2+8+13 curriculum verified;
+- [x] all four domains consume shared scopes;
+- [x] canonical Natural Earth geometry is the sole geography source;
+- [x] Locations and Outlines production coverage verified;
+- [x] global topology-derived Neighbours including `PAN↔COL` and `HTI↔DOM` verified;
+- [x] 11 zero-land-neighbour Caribbean targets verified;
+- [x] territory/context and USA fit/focus policy documented;
+- [x] five Great Lakes / no-rivers policy verified;
+- [x] assistance/inset inventory production-tested;
+- [x] pointer-capture root cause fixed and permanent regression tests added;
+- [x] shared generator regeneration is byte-clean for existing continents;
+- [x] exact production artifact and lazy/precache behaviour inspected;
+- [x] complete integrated Node 22 / Java 21 acceptance green on `00cf20c4f132403e91325a4e8c90fa7032e92b05` in run `33117435601`;
+- [x] complete Chromium browser matrix green, 56/56;
+- [x] PWA runtime verification green;
+- [x] temporary Issue #22 verifier scaffolding removed before final candidate acceptance;
+- [ ] one focused PR green in normal CI and current with `main`;
+- [ ] merged `main`, GitHub Pages and Firebase deployment health verified;
+- [ ] durable record moved to `docs/closed/`, open-work truth reconciled and GitHub Issue #22 closed with exact PR/SHA/run evidence.

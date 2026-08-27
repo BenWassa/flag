@@ -80,6 +80,19 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       insets: data.ASIA_INSETS,
     };
   },
+  'north-america': async () => {
+    const data = await import('./north-america.js');
+    return {
+      viewBox: data.NORTH_AMERICA_VIEWBOX,
+      geometry: data.NORTH_AMERICA_GEOMETRY,
+      contextPaths: data.NORTH_AMERICA_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.NORTH_AMERICA_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.NORTH_AMERICA_COASTLINE_PATHS,
+      water: data.NORTH_AMERICA_WATER,
+      scopeFocus: data.NORTH_AMERICA_SCOPE_FOCUS,
+      insets: data.NORTH_AMERICA_INSETS,
+    };
+  },
 };
 
 const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();

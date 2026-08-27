@@ -8,7 +8,7 @@
 
 Outlines teaches recognition of a country from its silhouette. The silhouette is the dominant visual object; the surrounding quiz chrome stays quiet and consistent with the shared Atlas learning system.
 
-Current production coverage is **Africa, South America, Europe and Asia**, including their supported learner-facing regions. North America (#22) and Oceania (#27) remain unavailable until their canonical production geography is onboarded.
+Current production coverage is **Africa, South America, Europe, Asia and North America**, including their supported learner-facing regions. Oceania (#27) remains unavailable until its canonical production geography is onboarded.
 
 ## Geometry contract
 
@@ -67,7 +67,7 @@ The answer controls provide the country-name choices. Keyboard selection, visibl
 
 ## Current limits
 
-- North America and Oceania are not yet available.
+- Oceania is not yet available.
 - Shape plausibility remains transparent/heuristic rather than machine-learned.
 - Active round internals are not restored across a hard refresh; the shared routing fallback applies.
 - Physical-device QA remains a release-confidence task when behaviour changes; this document does not claim device testing.

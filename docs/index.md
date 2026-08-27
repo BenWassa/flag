@@ -34,7 +34,7 @@ The learner-facing product name is **Atlas** across current product documentatio
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
-Atlas currently ships production geography for Africa, South America, Europe and Asia. North America and Oceania remain open expansion work under #22 and #27.
+Atlas currently ships production geography for Africa, South America, Europe, Asia and North America. Oceania remains open expansion work under #27; #22 is in final merge/deployment closeout.
 
 Issue #89 is an active incremental migration of the presentation/build layers to React and Vite. The existing typed router, product engine, persistence, geography and learning semantics are preservation boundaries; use the architecture decision and canonical execution plan above rather than treating the epic as a rewrite brief.
 
