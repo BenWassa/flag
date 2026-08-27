@@ -76,9 +76,13 @@ smaller.
   [`issue-89-execution-plan.md`](issue-89-execution-plan.md); and implementation
   evidence is recorded in
   [`issue-89-implementation-worklog.md`](issue-89-implementation-worklog.md).
-  The staged child chain is #91 → #92 → #93 → #94 → #95 → #96 → #97 → #98 →
-  #99 → #100 → #101, followed by #89 closeout. Do not skip forward or collapse
-  unrelated phases into one long-lived branch.
+  Local closeout implementation is complete for #93 and #96–#101 on
+  `project-closeout-housekeeping`. The complete post-#100 artifact passes the
+  invariant, component, desktop/mobile browser and PWA runtime matrices. Those
+  issues and #89 remain open until the local commits are intentionally
+  published, merged-main CI passes, and evidence comments/closeout documents
+  are reachable from `origin/main`. No release or push is part of this local
+  checkpoint.
   Child issues #92–#101 are intentionally scoped as phase sections in the
   canonical execution plan rather than duplicated into ten competing issue
   documents.

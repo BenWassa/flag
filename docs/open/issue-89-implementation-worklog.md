@@ -208,7 +208,7 @@ The downloaded deploy tree contained:
 - separate lazy continent chunks;
 - `sw.js` with `flag-atlas-v29`.
 
-### Exact remaining compatibility tail
+### Exact compatibility tail at the reconciliation baseline (historical)
 
 Current build command:
 
@@ -329,15 +329,15 @@ Playwright Pixel 7 emulation is not physical Pixel evidence. Code inspection, re
 | Issue | Classification | Tracker state after reconciliation | Evidence / remaining work |
 | --- | --- | --- | --- |
 | #92 | complete and closable | **closed** | Vite dev/build/CI foundation live; current CI/Pages and exact artifacts confirm it. |
-| #93 | partially complete; re-scope | **open, re-scoped** | Workbox integration ships; production-browser offline/update runtime evidence remains. |
+| #93 | implementation complete locally | **open; tracker closeout pending** | Persistent-context production-output offline/update evidence passes; publication and merged-main CI remain. |
 | #94 | materially complete; closeout documentation | **closed** | React shell/global lifecycle ships; actual router/store adaptation documented. |
 | #95 | complete and closable | **closed** | Passive React surfaces/Flags study ship with routing/IA/action/component evidence. |
-| #96 | partially complete; re-scope | **open, re-scoped** | React Flags ships; complete active-round component/browser evidence remains. |
-| #97 | partially complete; re-scope | **open, re-scoped** | React Outlines ships; complete component/browser evidence remains. |
-| #98 | partially complete; re-scope | **open, re-scoped** | React Locations ships; browser answer/pan/zoom/results evidence remains. |
-| #99 | partially complete; re-scope | **open, re-scoped** | React Neighbours ships; active input/map component/browser evidence remains. |
-| #100 | partially complete; re-scope | **open, re-scoped** | Runtime React ownership is complete; verifier emit/legacy source/CSS compatibility tail remains. |
-| #101 | genuinely still open | **open, re-scoped** | Final cross-domain browser, PWA/offline and React lifecycle hardening remains. |
+| #96 | implementation complete locally | **open; tracker closeout pending** | Flags component and deterministic browser matrix pass. |
+| #97 | implementation complete locally | **open; tracker closeout pending** | Outlines component, keyboard/focus and deterministic browser matrix pass. |
+| #98 | implementation complete locally | **open; tracker closeout pending** | Locations answer/pan/zoom/results/review/persistence browser matrix passes. |
+| #99 | implementation complete locally | **open; tracker closeout pending** | Neighbours input/map/results/review/persistence/zero-neighbour browser matrix passes. |
+| #100 | implementation complete locally | **open; tracker closeout pending** | Verifier emit is isolated and cleaned; obsolete coordinator/renderers are removed from source and artifact. |
+| #101 | implementation complete locally | **open; tracker closeout pending** | Final invariant, component, exact-artifact, desktop/mobile browser and PWA matrices pass locally. |
 
 ### GitHub tracker administration applied
 
@@ -366,7 +366,7 @@ Close only after:
 
 Atlas `1.0.0` is evidence that the platform migration shipped. It is not, by itself, evidence that the whole #89 closeout definition is satisfied.
 
-### Reconciliation execution-environment limitation
+### Historical reconciliation execution-environment limitation
 
 The documentation/tracker reconciliation container could not resolve `github.com` from its local shell, so a local repository clone and local Node 22 `npm test` were not available.
 
@@ -377,7 +377,9 @@ The reconciliation therefore used:
 - downloaded exact CI and Pages artifacts for production inspection;
 - PR #105 GitHub CI as the branch verification gate.
 
-No local `npm test`, manual browser session or physical-device session is claimed by this reconciliation task.
+No local `npm test`, manual browser session or physical-device session was
+claimed by that earlier reconciliation task. Later sections below supersede the
+local-test limitation; physical-device evidence remains absent.
 
 ## Step 3a — active-round component coverage (2026-08-26)
 
@@ -407,7 +409,7 @@ real generated assets rather than hand-made fixtures:
 Node 22 `npm run check` and full `npm test` green locally. This is the component
 half of #96–#99; their browser half is step 3c. No production behaviour changed.
 
-## Step 3b — #100 assertion migration: approach proven, first verifier migrated
+## Step 3b intermediate milestone — #100 assertion migration approach proven
 
 ### The inventory
 
@@ -449,7 +451,7 @@ as `<button class="continent-row__open">` and an unshipped one as an inert
 `<span>` carrying the same class. The replacement asserts both, which is
 stronger than what it replaced.
 
-### State
+### Intermediate state at this milestone
 
 - `verify-action-feedback.mjs`: migrated, passing.
 - 18 verifiers remain, plus the `tsconfig.verify.json` emit narrowing (#100
@@ -535,3 +537,43 @@ correctly served by the old cache-first precache until that update check occurs.
 This is automation evidence only. It does not claim an installed PWA,
 physical Android Chrome, iOS Safari, actual deployment origin/CDN behaviour,
 or #71's device/safe-area/keyboard/gesture gates.
+
+## Steps 3c–3e — final local acceptance checkpoint (2026-08-26)
+
+Local branch `project-closeout-housekeeping` now contains the complete #89
+closeout implementation. Material checkpoints, in execution order:
+
+- `174a85d`, `dcf3950`, `a46f396` — move all plain-Node presentation assertions
+  onto production React markup;
+- `d38f289` — isolate verifier output, remove the obsolete coordinator/string
+  renderers and protect the deployable artifact boundary;
+- `daab0af`, `52d2f19`, `a98c7e8`, `b045c16` — add the Flags, Outlines,
+  Locations, Neighbours and post-migration production browser matrices, including
+  the zero-neighbour runtime fix found by that evidence;
+- `dc69058` — add the production PWA runtime/update matrix;
+- `ae1e355` — make the existing flag-stage geometry evidence deterministic by
+  isolating its network fixture from service-worker/cache state.
+
+Final local evidence on the post-#100 artifact:
+
+- full `npm test`: 29 Vitest tests plus every plain-Node verifier passed;
+- full `npm run test:browser -- --workers=1`: **67 passed, 1 intentionally
+  skipped**, desktop Chromium and Pixel-class mobile emulation;
+- focused flag-stage matrix after stabilisation: **6/6 passed**;
+- manual production-preview inspection in the in-app Chromium browser: Home →
+  Flags → Africa → West Africa opened a real 16-question Play round with the
+  progressbar, score, flag and four keyboard-numbered answer controls present;
+- exact deployable artifact: 33 Vite/Workbox files, with no verifier-only tree,
+  legacy renderer or coordinator output.
+
+No production release or push was run. Consequently #93, #96–#101 and #89 stay
+open: these commits are not yet reachable from `origin/main`, merged-main CI has
+not evaluated them, and GitHub closeout comments cannot cite a reachable closing
+commit. Publication should be one deliberate follow-up sequence: push the local
+branch, review/merge it, rerun final Node 22 CI on merged `main`, move the issue
+documents to `docs/closed/` with the merged SHA and CI evidence, fix inbound
+links, then close the child issues and finally #89.
+
+Issue #71 remains independent. Its repository notes now contain a ready-to-run
+physical Pixel, iPhone Safari and installed-iPhone-PWA schedule. None of those
+physical checks is claimed here.

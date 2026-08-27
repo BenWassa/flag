@@ -193,3 +193,25 @@ changes.
 **Still not verified.** No physical device was used. The acceptance criteria
 requiring physical Pixel/Android Chrome, iPhone/iOS Safari and installed-PWA
 validation remain genuinely open, and are the only reason #71 stays open.
+
+---
+
+## Independent physical-device pass schedule (prepared 2026-08-26)
+
+Run this pass independently after the #89 closeout candidate is published to a
+stable HTTPS preview. Do not substitute localhost, Playwright's Pixel profile,
+Chrome DevTools emulation or the Firebase configuration-only state for physical
+evidence. Record the deployed origin and exact reachable commit before starting.
+
+| Pass | Required target | Scenarios | Evidence to record |
+| --- | --- | --- | --- |
+| A | Pixel-class Android device, current Chrome | portrait and short landscape; edge-back versus vertical scroll; Locations pan/pinch/tap; Neighbours input and software keyboard; notch/gesture-area spacing; offline reopen | device/model, OS/browser versions, origin/SHA, screenshots or recording, result per scenario |
+| B | Physical iPhone, current Safari | portrait and landscape; browser edge-back ownership; Locations pan/pinch/tap; Neighbours keyboard/focus; safe-area behaviour at notch/Dynamic Island and home indicator | device/model, iOS/Safari versions, origin/SHA, screenshots or recording, result per scenario |
+| C | Same iPhone with Atlas installed to Home Screen | launch/relaunch; standalone safe areas; active-round interruption/reopen; populated-shell offline reopen; update from one published candidate to the next | installed build/origin/SHA before and after update, network conditions, screenshots or recording, result per scenario |
+
+Execution dependency: publish one immutable #89 candidate and keep it available
+for all three passes. If a defect is found, record reproduction steps against
+that SHA and fix it in a focused branch; rerun the affected pass on the new SHA.
+If all rows pass, add the evidence to GitHub #71, update both #71 documents, move
+them to `docs/closed/`, and close #71 only after that documentation commit is
+reachable from `origin/main`.

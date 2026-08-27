@@ -1,6 +1,6 @@
 # Issue #89 React/Vite migration — reconciled closeout plan
 
-**Status:** Active closeout plan after Atlas `1.0.0`
+**Status:** Local closeout gates complete; publication and merged-main gates pending
 **Parent:** #89
 **Architecture decision:** `docs/architecture/react-vite-migration.md`
 **Implementation log:** `docs/open/issue-89-implementation-worklog.md`
@@ -17,16 +17,16 @@ Historical phase numbering remains so the child issues continue to map to the or
 | --- | --- | --- | --- |
 | 1 | #91 | complete | already closed before this reconciliation |
 | 2 | #92 | complete and closable | closed during PR #105 reconciliation |
-| 3 | #93 | partially complete; needs re-scope | kept open and re-scoped to production PWA runtime validation |
+| 3 | #93 | implementation complete locally | keep open until the evidence commit is published and merged-main CI passes |
 | 4 | #94 | materially complete; closeout documentation required | implementation deviation documented; closed during reconciliation |
 | 5 | #95 | complete and closable | closed during reconciliation |
-| 6 | #96 | partially complete; needs re-scope | kept open and re-scoped to Flags verification tail |
-| 7 | #97 | partially complete; needs re-scope | kept open and re-scoped to Outlines verification tail |
-| 8 | #98 | partially complete; needs re-scope | kept open and re-scoped to Locations browser-interaction evidence |
-| 9 | #99 | partially complete; needs re-scope | kept open and re-scoped to Neighbours browser/component evidence |
-| 10 | #100 | partially complete; needs re-scope | kept open and re-scoped to verifier/legacy/CSS compatibility cleanup |
-| 11 | #101 | genuinely still open | kept open as the final integrated validation gate |
-| 12 | #89 | open | keep open until all required closeout gates are satisfied |
+| 6 | #96 | implementation complete locally | keep open until the evidence commit is published and merged-main CI passes |
+| 7 | #97 | implementation complete locally | keep open until the evidence commit is published and merged-main CI passes |
+| 8 | #98 | implementation complete locally | keep open until the evidence commit is published and merged-main CI passes |
+| 9 | #99 | implementation complete locally | keep open until the evidence commit is published and merged-main CI passes |
+| 10 | #100 | implementation complete locally | keep open until the cleanup commit is published and merged-main CI passes |
+| 11 | #101 | implementation complete locally | keep open until the final evidence is published and merged-main CI passes |
+| 12 | #89 | local acceptance complete | keep open until child tracker closeout and merged-main publication gates are satisfied |
 
 ## Production foundation already shipped
 
@@ -220,7 +220,7 @@ artifact is 33 files / 7,281,623 bytes; no renderer source or compatibility
 module is deployable. Only two obsolete reduced-motion selectors for retired
 Play cells were removed; shared CSS remains deliberately retained.
 
-### Exact remaining compatibility tail
+### Historical reconciliation baseline (superseded by the result above)
 
 Current `npm run build` performs:
 
@@ -237,7 +237,7 @@ The exact reconciliation Pages artifact therefore contains:
 - verifier expectations such as `scripts/verify-vite-build.mjs` deliberately requiring compatibility output;
 - source-side `src/app.ts` and `src/ui/views/*` fixtures still used by implementation-coupled verification.
 
-### Current #100 work order
+### Executed #100 work order
 
 1. inventory every verifier coupled to `src/app.ts`, `src/ui/views/*` or verifier-only compiled markup;
 2. replace each implementation-coupled assertion with the correct framework-independent invariant, React component assertion or production-browser assertion without weakening coverage;
@@ -262,7 +262,8 @@ this implementation does not itself run a release or push.
 
 ## Phase 11 / #101 — final integrated validation
 
-#101 remains the final gate after #100.
+#101 is the final gate after #100. Its local gate is complete; publication and
+merged-main evidence remain before tracker closure.
 
 Evidence must remain separated by class rather than collapsed into “tests pass”.
 
@@ -274,13 +275,15 @@ Required on the final tree:
 - full `npm test`;
 - geography, routing, learning, persistence, language, achievement and cartography verifiers.
 
-Reconciliation baseline status: green in CI #401.
+Local closeout status: `npm run check` and full `npm test` are green on the
+post-#100 tree. Merged-main CI remains pending publication.
 
 ### B. Vitest / Testing Library
 
 Required: component evidence for material React lifecycle/interaction boundaries, especially assertions replacing legacy implementation fixtures.
 
-Reconciliation baseline: only three passive/launcher tests; active-round coverage is incomplete.
+Local closeout status: 29 Vitest tests pass, including 13 active-round tests
+over Flags, Outlines, Locations and Neighbours.
 
 ### C. Playwright / browser
 
@@ -295,7 +298,11 @@ Required against the production preview:
 - stored-progress reload;
 - practical responsive/accessibility checks in automated browsers.
 
-Reconciliation baseline: three smoke tests configured for desktop Chromium and Pixel 7 emulation; current CI does not run `npm run test:browser`.
+Local closeout status: the complete Playwright run passed 67 tests with one
+intentional skip across desktop Chromium and Pixel-class mobile emulation. It
+includes the four domain matrices, navigation/recovery, responsive/accessibility
+checks, lazy-load failure/retry and the PWA runtime scenario. This remains
+emulation, not #71 physical-device evidence.
 
 ### D. Exact production artifact
 
@@ -316,6 +323,10 @@ Required against production output:
 - offline shell fallback;
 - previously loaded geography offline;
 - deployment/update recovery satisfying #93.
+
+Local closeout status: the persistent-context two-artifact runtime matrix
+passes and covers each item above. It is localhost production-output evidence,
+not Firebase-origin, installed-PWA or physical-device evidence.
 
 ### F. Physical-device boundary
 
