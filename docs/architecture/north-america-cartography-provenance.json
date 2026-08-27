@@ -41,7 +41,10 @@
   },
   "projection": {
     "name": "d3.geoNaturalEarth1",
-    "canvas": [835, 723],
+    "canvas": [
+      835,
+      723
+    ],
     "fitPadding": 22,
     "pathDigits": 2
   },
@@ -86,28 +89,5 @@
       "coastline": 1.15
     },
     "precisionSensitiveCountryIds": []
-  },
-  "closeoutEvidence": {
-    "deterministicRun": 33096069045,
-    "browserRun": 33095555689,
-    "regeneration": "npm run maps:generate followed by git diff --exit-code produced no tracked changes across Africa, South America, Europe, Asia and North America",
-    "verifierPayload": {
-      "rawBytes": 1875784,
-      "gzipBytes": 412240,
-      "gzipBudgetBytes": 425000
-    },
-    "trackedSourcePayload": {
-      "rawBytes": 1874879,
-      "gzipSyncBytes": 411137
-    },
-    "productionChunk": {
-      "filename": "north-america-DT6OqdvP.js",
-      "rawBytes": 1872522,
-      "gzipSyncBytes": 410389,
-      "viteReporter": "1,872.52 kB / 435.28 kB gzip",
-      "precacheReferenced": false
-    },
-    "distVerifierLeaks": false,
-    "physicalDeviceTesting": false
   }
 }
