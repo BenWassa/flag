@@ -100,9 +100,11 @@ export function ProfileScreen() {
     setError(null);
     setPending(true);
     const operation = kind === 'cloud' ? deleteCloudCopy() : deleteAccount();
-    void operation.catch(() => setError(kind === 'account'
-      ? "Couldn't delete the account. Sign out, sign in again, then try once more."
-      : "Couldn't delete the cloud backup. Please try again."
+    void operation.catch((cause: unknown) => setError(cause instanceof Error
+      ? cause.message
+      : kind === 'account'
+        ? "Couldn't delete the account. Please try again."
+        : "Couldn't delete the cloud backup. Please try again."
     )).finally(() => { setPending(false); setConfirmDelete(null); });
   };
 
