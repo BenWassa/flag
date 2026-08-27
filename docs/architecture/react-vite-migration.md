@@ -1,9 +1,9 @@
 # React and Vite migration architecture decision
 
-**Status:** Implemented in production as of Atlas `1.0.0`; closeout remains under #89
+**Status:** Implemented and closed through #89
 **Parent:** #89
-**Execution record:** `docs/open/issue-89-execution-plan.md`
-**Implementation log:** `docs/open/issue-89-implementation-worklog.md`
+**Execution record:** `docs/closed/issue-89-execution-plan.md`
+**Implementation log:** `docs/closed/issue-89-implementation-worklog.md`
 
 ## Decision
 
@@ -215,4 +215,4 @@ Physical Pixel/iPhone/installed-PWA validation is tracked by #71 and must be rep
 
 ## Historical note
 
-The original phase plan proposed Vite first, then Workbox integration, React shell adapters, passive surfaces, four active-domain ports, compatibility removal and final hardening. In practice, PR #103 accumulated the production Vite/React implementation before the tracker was reconciled. Git history and `docs/open/issue-89-implementation-worklog.md` preserve that execution history; this document describes the architecture that actually ships.
+The original phase plan proposed Vite first, then Workbox integration, React shell adapters, passive surfaces, four active-domain ports, compatibility removal and final hardening. In practice, PR #103 accumulated the production Vite/React implementation before the tracker was reconciled. Git history and `docs/closed/issue-89-implementation-worklog.md` preserve that execution history; this document describes the architecture that actually ships.

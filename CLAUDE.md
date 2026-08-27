@@ -20,7 +20,7 @@ Read these before making product/UI changes:
 - `docs/product/gamification.md` — mastery/completion scarcity hierarchy.
 - `docs/product/learning-and-mastery.md` — live country evidence vs persistent earned mastery.
 - `docs/architecture/react-vite-migration.md` — #89 platform-migration architecture decision.
-- `docs/open/issue-89-execution-plan.md` — canonical #89 dependency/order plan while the migration is active.
+- `docs/closed/issue-89-execution-plan.md` — completed #89 dependency/order and closeout record.
 - `docs/open/index.md` — active work and recommended sequencing.
 
 Important current decisions:
@@ -132,7 +132,7 @@ Before starting work on an issue (and again before wrapping up a session that to
 - Run `gh issue list --state open` and compare it against `docs/open/index.md` and the files in `docs/open/`. Close out any GitHub issue that is actually done, superseded, or merged into another issue.
 - For any issue that is closed on GitHub but still has a doc in `docs/open/`, `git mv` that doc into `docs/closed/` and update `docs/open/index.md` to drop it from active sequencing (linking to the closed doc instead where useful, matching the existing `closed/issue-NN-*.md` closeout pattern).
 - `docs/open/index.md` is the source of truth for what's actually still active — keep it reconciled with GitHub state rather than letting it drift.
-- For #89, each migration phase branches from merged current `main`, owns a focused PR/rollback boundary, runs Node 22 `npm test`, inspects the exact production artifact and records CI/evidence in `docs/open/issue-89-implementation-worklog.md`.
+- The completed #89 migration record retains its focused-PR, Node verification and artifact-inspection evidence in `docs/closed/issue-89-implementation-worklog.md`.
 
 ## Where to look before changing things
 
@@ -141,7 +141,7 @@ Before starting work on an issue (and again before wrapping up a session that to
 - `docs/architecture/routing.md` — route schema and Back/Forward semantics.
 - `docs/architecture/cartography.md` — canonical topology/provenance policy.
 - `docs/architecture/react-vite-migration.md` — #89 migration architecture and preserved contracts.
-- `docs/open/issue-89-execution-plan.md` — #89 phase order, gates and rollback boundaries.
+- `docs/closed/issue-89-execution-plan.md` — completed #89 phase order, gates and rollback boundaries.
 - `PRODUCT.md` — product truth.
 - `DESIGN.md` — implemented production design system.
 - `docs/product/colour-system.md` — colour rationale/tokens.

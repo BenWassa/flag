@@ -11,8 +11,9 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
 - [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema, qualification seam, support guards and reset semantics.
 - [`architecture/react-vite-migration.md`](architecture/react-vite-migration.md) — #89 platform-migration architecture boundary, adapters, build/PWA strategy and rollback model.
-- [`open/issue-89-execution-plan.md`](open/issue-89-execution-plan.md) — canonical 12-phase #89 delivery plan and acceptance gates.
-- [`open/issue-89-implementation-worklog.md`](open/issue-89-implementation-worklog.md) — staged #89 decisions, deviations and verification evidence.
+- [`closed/issue-89-react-vite-migration.md`](closed/issue-89-react-vite-migration.md) — #89 closeout record, acceptance evidence and independent #71 boundary.
+- [`closed/issue-89-execution-plan.md`](closed/issue-89-execution-plan.md) — executed 12-phase #89 delivery plan and acceptance gates.
+- [`closed/issue-89-implementation-worklog.md`](closed/issue-89-implementation-worklog.md) — staged #89 decisions, deviations and verification evidence.
 - [`closed/issue-90-stable-flag-stage.md`](closed/issue-90-stable-flag-stage.md) — shipped stable Flags question geometry across aspect ratios and loading states.
 - [`closed/issue-86-clip-map-context.md`](closed/issue-86-clip-map-context.md) — shipped clipping of decorative map context to continent viewports.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.

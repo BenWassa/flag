@@ -1,6 +1,6 @@
 # Issue #89: Migrate Atlas to React and Vite without rewriting the product engine
 
-**Status:** Open — local closeout implementation and acceptance evidence complete; publication/merged-main closeout pending
+**Status:** Complete — merged through PR #128; final merged-main CI green
 
 ## Current state
 
@@ -15,12 +15,22 @@ Current `main` at the post-v1 reconciliation baseline is:
 
 The migration is therefore no longer an in-flight question of whether React/Vite will own production. They already do.
 
-The current closeout candidate is local branch
-`project-closeout-housekeeping` through `ae1e355`. It is intentionally unpushed;
-all local-completion statements below remain subject to review, merged-main CI
-and reachable-commit tracker closeout.
+The closeout candidate merged through PR #128 as `4275f1f8f3c3fc120ff3f267412db8373f450a91`.
+Merged-main CI [#33069168541](https://github.com/BenWassa/flag/actions/runs/33069168541)
+passed `npm run check` and `npm test` on that commit.
 
-The epic remains open because its original definition of done also requires the legacy verifier compatibility tail to be retired and the final browser/PWA validation matrix to be completed.
+## Closeout
+
+- **Merged commit:** `4275f1f8f3c3fc120ff3f267412db8373f450a91` (PR #128).
+- **Merged-main verification:** CI #33069168541 green (`npm run check`, `npm test`).
+- **Browser verification:** 67 Playwright tests passed, one intentional skip,
+  across desktop Chromium and Pixel-class mobile emulation; focused flag-stage
+  matrix 6/6 passed.
+- **PWA verification:** persistent-context, two-artifact production-output
+  runtime test passed for service-worker control, cached shell/geography offline
+  reopening, first-use offline recovery and update takeover.
+- **Independent boundary:** #71 remains open for physical Pixel, iPhone Safari
+  and installed-PWA validation. No physical-device claim is made here.
 
 ## What production now uses
 

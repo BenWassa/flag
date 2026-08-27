@@ -67,25 +67,13 @@ smaller.
   [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
 ### 4. Platform quality and IA
 
-- [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
-  This is the tracking epic for an incremental presentation/build-layer port.
-  The scope-level epic is [`issue-89-react-vite-migration.md`](issue-89-react-vite-migration.md);
-  the durable architecture decision is
-  [`../architecture/react-vite-migration.md`](../architecture/react-vite-migration.md);
-  the canonical dependency/order plan is
-  [`issue-89-execution-plan.md`](issue-89-execution-plan.md); and implementation
-  evidence is recorded in
-  [`issue-89-implementation-worklog.md`](issue-89-implementation-worklog.md).
-  Local closeout implementation is complete for #93 and #96–#101 on
-  `project-closeout-housekeeping`. The complete post-#100 artifact passes the
-  invariant, component, desktop/mobile browser and PWA runtime matrices. Those
-  issues and #89 remain open until the local commits are intentionally
-  published, merged-main CI passes, and evidence comments/closeout documents
-  are reachable from `origin/main`. No release or push is part of this local
-  checkpoint.
-  Child issues #92–#101 are intentionally scoped as phase sections in the
-  canonical execution plan rather than duplicated into ten competing issue
-  documents.
+#89 and its final child validation issues (#93, #96–#101) are complete through
+PR #128 (`4275f1f`) and merged-main CI #33069168541. The production React/Vite
+closeout record is [`issue-89-react-vite-migration.md`](../closed/issue-89-react-vite-migration.md),
+with the executed plan and evidence log in
+[`issue-89-execution-plan.md`](../closed/issue-89-execution-plan.md) and
+[`issue-89-implementation-worklog.md`](../closed/issue-89-implementation-worklog.md).
+Physical-device validation remains separately open in #71.
 
 #72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
 complete and closed. Their closeout records are

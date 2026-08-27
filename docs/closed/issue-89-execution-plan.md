@@ -1,9 +1,9 @@
 # Issue #89 React/Vite migration — reconciled closeout plan
 
-**Status:** Local closeout gates complete; publication and merged-main gates pending
+**Status:** Complete — execution record closed after PR #128 and merged-main CI
 **Parent:** #89
 **Architecture decision:** `docs/architecture/react-vite-migration.md`
-**Implementation log:** `docs/open/issue-89-implementation-worklog.md`
+**Implementation log:** `docs/closed/issue-89-implementation-worklog.md`
 
 ## Purpose
 

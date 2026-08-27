@@ -1,10 +1,16 @@
 # Issue #89 implementation worklog
 
 **Parent:** #89
-**Execution plan:** `docs/open/issue-89-execution-plan.md`
+**Execution plan:** `docs/closed/issue-89-execution-plan.md`
 **Architecture:** `docs/architecture/react-vite-migration.md`
 
 This worklog records durable implementation history, deviations, compatibility boundaries and verification evidence for the React/Vite migration. Git history remains the detailed commit-by-commit record.
+
+**Closeout:** PR #128 merged as `4275f1f8f3c3fc120ff3f267412db8373f450a91`.
+Merged-main CI [#33069168541](https://github.com/BenWassa/flag/actions/runs/33069168541)
+passed `npm run check` and `npm test`. The browser and PWA evidence is recorded
+in the final 2026-08-26 checkpoint below. #71 remains the separate physical-device
+gate and is not implied complete by this worklog.
 
 ## 2026-08-25 — baseline/contracts phase
 
