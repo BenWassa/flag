@@ -132,7 +132,9 @@ Current v1 engine behaviour:
 - earned Mastery is not revoked;
 - Learn/Review/continent/world rounds do not qualify.
 
-The locked product requirement is two consecutive perfect **complete-region** Play results. Issue #108 tracks the current defect where Flags, Outlines and Neighbours can qualify from default 10-target region rounds because complete target coverage is not yet validated. Locations region Play is full-scope.
+The product requirement and shipped implementation require two consecutive
+perfect **complete-region** Play results. Issue #108 added full-region launches
+and exact supported-target coverage validation across all four domains.
 
 ## 9. Completion hierarchy
 
@@ -234,4 +236,4 @@ Atlas must preserve:
 - richer milestone ceremony: optional, not current v1 behaviour;
 - new Progress dashboard: not currently promised;
 - World Crown learner-facing presentation: future state tied to genuine global completion;
-- full-region Mastery qualification integrity: active bug #108, not a documentation-only deferment.
+- full-region Mastery qualification integrity: shipped under #108.

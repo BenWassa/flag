@@ -1,6 +1,6 @@
 # Issue #90: Keep the Flags question layout stable between flags
 
-**Status:** Implemented — awaiting review/merge  
+**Status:** Complete — shipped on `main` in `046bd93`
 **GitHub:** [#90](https://github.com/BenWassa/flag/issues/90)
 
 ## Problem
@@ -90,6 +90,13 @@ Chromium):
 Automated evidence is Chromium against the production preview. Physical-device
 validation remains #71's.
 
+## Closeout
+
+Shipped in `046bd935d9be08f4ab561b8f060c66da5b3cecad` through PR #121.
+The focused production-preview browser test, Node 22 `npm test`, merged CI and
+GitHub Pages deployment passed. Physical-device validation was not claimed and
+remains owned by #71.
+
 ## Verification matrix
 
 Use at least one wide flag, one common 3:2 flag and one near-square flag. Record
@@ -102,4 +109,3 @@ loading and forced failure at phone portrait, short landscape and desktop.
 - Cropping or editing source flag artwork.
 - Changing scoring, evidence, mastery or question ordering.
 - Broad layout changes to Locations, Outlines or Neighbours.
-
