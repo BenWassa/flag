@@ -8,7 +8,14 @@ import {
   createInitialLocationProgress,
 } from '../dist/domain/map-game.js';
 import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE_CONFIGS } from '../dist/data/map-scopes.js';
-import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { LocationQuizScreen } = await loadScreens('LocationScreens.js');
+const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(LocationQuizScreen, {
+  asset,
+  session,
+  lastWrongCountryId,
+});
 
 const asset = await loadMapAsset('west-africa');
 assert.ok(asset, 'West Africa map must load for edge regressions.');

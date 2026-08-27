@@ -118,7 +118,7 @@ export function createNeighborsRound(context: RoundContext): NeighborsRound {
     const outcome = store.answerNeighbor(countryId);
     resetQuery();
     announce(answerAnnouncement());
-    finishInteraction(outcome.resolved ? null : '[data-neighbor-input]');
+    finishInteraction(outcome.resolved ? null : '#neighbor-country-input');
   }
 
   function advance(): void {
@@ -130,7 +130,7 @@ export function createNeighborsRound(context: RoundContext): NeighborsRound {
       const next = nextId ? COUNTRY_BY_ID.get(nextId) : undefined;
       if (next) announce(`Next country. Name every land neighbour of ${next.name}.`);
     }
-    finishInteraction(result ? null : '[data-neighbor-input]');
+    finishInteraction(result ? null : '#neighbor-country-input');
   }
 
   function reviewMistakes(): void {

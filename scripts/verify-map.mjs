@@ -20,9 +20,24 @@ import {
   locationMasteryGoal,
 } from '../dist/domain/map-game.js';
 import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
-import { renderMapHome } from '../dist/ui/views/map-home.js';
-import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
-import { renderMapResults } from '../dist/ui/views/map-results.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LocationQuizScreen, LocationResultsScreen } = await loadScreens('LocationScreens.js');
+
+const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(LocationQuizScreen, {
+  asset,
+  session,
+  lastWrongCountryId,
+});
+const renderMapResults = (asset, result) => renderScreen(LocationResultsScreen, { asset, result });
+const renderMapHome = (progress, scope, achievements, selectedRegion = false) => renderScreen(GeographyLauncherScreen, {
+  domain: 'locations',
+  scope: selectedRegion ? { ...scope, kind: 'region' } : scope,
+  achievements,
+  persisting: true,
+  progress,
+});
 
 const country = (id) => COUNTRIES.find((item) => item.id === id);
 const africaCatalogIds = COUNTRIES.filter((item) => item.continentId === 'africa').map((item) => item.id);
@@ -221,7 +236,7 @@ assert.ok(resultHtml.includes('1 of 1 first try'), 'Map results report first-try
 assert.ok(resultHtml.includes('map-country--first'), 'Completed map retains resolution color evidence.');
 assert.ok(!resultHtml.includes('map-country--current-correct'), 'Results do not retain transient in-round success styling.');
 assert.ok(
-  resultHtml.includes('data-action="exit-round"') && resultHtml.includes('Back to Locations'),
+  resultHtml.includes('aria-label="Back to Locations"') && resultHtml.includes('Back to Locations'),
   'Results exit to the Locations launcher they actually land on, not a retired region screen.',
 );
 assert.ok(

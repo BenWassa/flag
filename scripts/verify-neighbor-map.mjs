@@ -26,7 +26,14 @@ import {
   renderNeighborMap,
   renderNeighborPuzzleLayer,
 } from '../dist/ui/components/neighbor-map.js';
-import { renderNeighborQuiz } from '../dist/ui/views/neighbor-quiz.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
+const renderNeighborQuiz = (session, lastOutcome, query) => renderScreen(NeighborQuizScreen, {
+  session,
+  lastOutcome,
+  query,
+});
 
 const asset = await loadMapAsset('africa');
 assert.ok(asset, 'Canonical Issue #9 Africa asset loads for Neighbours map presentation.');
