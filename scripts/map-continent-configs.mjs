@@ -268,9 +268,40 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
   }),
 });
 
+export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
+  id: 'north-america',
+  displayName: 'North America',
+  sourceContinent: 'North America',
+  exportPrefix: 'NORTH_AMERICA',
+  outputFilename: 'north-america.ts',
+  provenanceFilename: 'north-america-cartography-provenance.json',
+  expectedCountryCount: 23,
+  regionIds: Object.freeze([
+    'northern-america',
+    'central-america',
+    'caribbean',
+  ]),
+  islandLocatorIds: Object.freeze([]),
+  callouts: Object.freeze({}),
+  lakes: Object.freeze([]),
+  localContextCountryIds: Object.freeze(['COL', 'VEN']),
+  localContextBounds: Object.freeze({ minLon: -86, maxLon: -57, minLat: 0, maxLat: 25 }),
+  allowedContextPatterns: Object.freeze([]),
+  adjacencyMode: 'global',
+  policy: 'standard-v1',
+  boundaryPolicy: Object.freeze({
+    naturalEarthView: 'default de-facto',
+    scoredCountries: 'exact Atlas 23-country North America curriculum only',
+    southAmericaContext: 'COL and VEN are keyed non-scoring context; PAN-COL adjacency remains global',
+    dependenciesAndTerritories: 'non-scoring; explicit source-feature audit required before release',
+    maritimeAdjacency: 'none; land adjacency only',
+  }),
+});
+
 export const MAP_GENERATION_CONFIGS = Object.freeze([
   AFRICA_MAP_GENERATION_CONFIG,
   SOUTH_AMERICA_MAP_GENERATION_CONFIG,
   EUROPE_MAP_GENERATION_CONFIG,
   ASIA_MAP_GENERATION_CONFIG,
+  NORTH_AMERICA_MAP_GENERATION_CONFIG,
 ]);
