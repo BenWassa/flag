@@ -71,6 +71,7 @@ test('local learning stays usable when Firebase service requests fail (#107)', a
   await page.goto('/#/flags/africa');
   await expect(page.getByRole('heading', { name: /Africa flags launcher/ })).toBeVisible();
   await page.getByRole('button', { name: 'Play All Africa' }).click();
-  await expect(page.locator('.quiz-question')).toBeVisible();
-  await expect(page.locator('.answer-grid button').first()).toBeEnabled();
+  await expect(page.locator('.quiz-shell')).toBeVisible();
+  await expect(page.getByRole('region', { name: 'Answer choices' })).toBeVisible();
+  await expect(page.locator('.answer-button').first()).toBeEnabled();
 });
