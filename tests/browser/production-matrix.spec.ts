@@ -62,16 +62,27 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
   await expect(page.getByRole('heading', { name: /Caucasus flags launcher/ })).toBeVisible();
 });
 
-test('keeps unsupported continent shells inert and honest', async ({ page }) => {
+test('keeps North America live while unsupported continent shells stay honest', async ({ page }) => {
   await page.goto('/#/locations');
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
-  const northAmerica = page.locator('.continent-row--shell').filter({ hasText: 'North America' });
-  await expect(northAmerica).toBeVisible();
-  await expect(northAmerica.getByText('Coming soon')).toBeVisible();
-  await expect(northAmerica.getByRole('button')).toHaveCount(0);
 
-  // Direct links to unsupported curriculum normalise back to the honest index.
-  await page.goto('/#/locations/north-america');
+  const northAmerica = page.getByRole('button', { name: 'North America' });
+  await expect(northAmerica).toBeVisible();
+  await northAmerica.click();
+  await expect(page).toHaveURL(/#\/locations\/north-america$/);
+  await expect(page.getByRole('heading', { name: /North America locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Northern America' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Central America' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
+
+  await page.goto('/#/locations');
+  const oceania = page.locator('.continent-row--shell').filter({ hasText: 'Oceania' });
+  await expect(oceania).toBeVisible();
+  await expect(oceania.getByText('Coming soon')).toBeVisible();
+  await expect(oceania.getByRole('button')).toHaveCount(0);
+
+  // Direct links to genuinely unsupported curriculum normalise back to the honest index.
+  await page.goto('/#/locations/oceania');
   await expect(page).toHaveURL(/#\/locations$/);
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
 });
