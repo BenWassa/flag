@@ -53,10 +53,17 @@ async function runBrowser(baseURL, mode) {
     await page.goto(baseURL, { waitUntil: 'networkidle' });
     await page.getByTestId('load').click();
     await page.locator('.maplibregl-canvas').waitFor({ state: 'visible', timeout: 15000 });
-    await page.waitForFunction(() => Boolean(window.__spatialMapLibreMap?.loaded?.()), null, { timeout: 15000 });
+    // MapLibre's `loaded()` remains false in this headless SwiftShader run even
+    // while a rendered globe is visible. The harness synchronises on the first
+    // actual render and records the API state separately instead of timing out.
+    await page.waitForFunction(() => window.__spatialMapLibre?.ready === true, null, { timeout: 15000 });
     result.initialised = true;
     await page.waitForTimeout(1100);
     result.afterInitialise = await page.evaluate(() => structuredClone(window.__spatialMapLibre));
+    result.mapLoadedAfterInitialise = await page.evaluate(() => ({
+      loaded: window.__spatialMapLibreMap?.loaded?.() ?? null,
+      styleLoaded: window.__spatialMapLibreMap?.isStyleLoaded?.() ?? null,
+    }));
     await page.screenshot({ path: resolve(evidenceDir, `${mode}-world.png`), fullPage: true });
 
     const idleStart = await page.evaluate(() => window.__spatialMapLibre.renderCount);
@@ -70,12 +77,18 @@ async function runBrowser(baseURL, mode) {
     result.africaCamera = await page.evaluate(() => structuredClone(window.__spatialMapLibre.lastCamera));
     await page.screenshot({ path: resolve(evidenceDir, `${mode}-africa.png`), fullPage: true });
 
+    await page.getByRole('button', { name: 'West Africa', exact: true }).click();
+    await page.waitForTimeout(900);
+    result.westAfricaDestination = await page.getByTestId('destination').textContent();
+    result.westAfricaCamera = await page.evaluate(() => structuredClone(window.__spatialMapLibre.lastCamera));
+
     await page.evaluate(() => window.__spatialMapLibreActions.navigate('world'));
     await page.waitForTimeout(900);
     const canvas = page.locator('.maplibregl-canvas');
     const box = await canvas.boundingBox();
     if (!box) throw new Error('canvas has no bounding box');
-    await canvas.click({ position: { x: box.width / 2, y: box.height / 2 } });
+    const africaPoint = await page.evaluate(() => window.__spatialMapLibreProject(20, 0));
+    await canvas.click({ position: { x: africaPoint.x, y: africaPoint.y } });
     await page.waitForTimeout(350);
     result.pickDestination = await page.getByTestId('destination').textContent();
 
@@ -109,8 +122,14 @@ async function runBrowser(baseURL, mode) {
     result.syntheticPinchChangedCamera = JSON.stringify(beforePinch) !== JSON.stringify(afterPinch);
 
     const pointerCount = await page.evaluate(() => window.__spatialMapLibre.canvasPointerDowns.length);
-    await dispatchTouch(page, [{ type: 'pointerdown', id: 1, x: 5, y: 380 }, { type: 'pointerup', id: 1, x: 5, y: 380 }]);
+    const gutter = page.getByTestId('back-gutter');
+    const gutterBox = await gutter.boundingBox();
+    if (!gutterBox) throw new Error('Back gutter has no bounding box');
+    await page.mouse.move(gutterBox.x + 5, gutterBox.y + gutterBox.height / 2);
+    await page.mouse.down();
+    await page.mouse.up();
     result.leftGutterDeliveredToCanvas = await page.evaluate((before) => window.__spatialMapLibre.canvasPointerDowns.length > before, pointerCount);
+    result.leftGutterEvents = await page.evaluate(() => window.__spatialMapLibre.backGutterPointerDowns);
 
     result.mapCreatesBeforeSequence = await page.evaluate(() => window.__spatialMapLibre.mapCreates);
     await page.evaluate(() => window.__spatialMapLibreActions.navigate('world'));
@@ -140,6 +159,7 @@ async function runBrowser(baseURL, mode) {
     });
     await page.waitForTimeout(350);
     result.afterForcedLoss = await page.evaluate(() => structuredClone(window.__spatialMapLibre));
+    result.fallbackVisibleAfterForcedLoss = await page.getByTestId('renderer-fallback').isVisible().catch(() => false);
     result.forcedRestore = await page.evaluate(() => {
       const ext = window.__spatialMapLibreLoseExtension;
       if (!ext?.restoreContext) return false;

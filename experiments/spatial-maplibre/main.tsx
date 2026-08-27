@@ -9,6 +9,10 @@ const metrics = {
   mapCreates: 0,
   mapRemoves: 0,
   renderCount: 0,
+  ready: false,
+  styleLoads: 0,
+  mapLoadedOnFirstRender: null as boolean | null,
+  styleLoadedOnFirstRender: null as boolean | null,
   contextLost: 0,
   contextRestored: 0,
   errors: [] as string[],
@@ -17,6 +21,8 @@ const metrics = {
   cameraCompletions: [] as Array<{ destination: Destination; at: number }>,
   lastCamera: null as any,
   projection: null as any,
+  domAnchor: null as any,
+  backGutterPointerDowns: 0,
   destinations: ['world'] as Destination[],
 };
 Object.assign(window, { __spatialMapLibre: metrics });
@@ -30,6 +36,7 @@ function hashFor(d: Destination) { return d === 'west-africa' ? '#/flags/africa/
 
 function App() {
   const [loaded, setLoaded] = useState(false);
+  const [failure, setFailure] = useState<string | null>(null);
   const [destination, setDestination] = useState<Destination>(fromHash);
   const applyLocation = useCallback(() => { const next = fromHash(); setDestination(next); metrics.destinations.push(next); }, []);
   const navigate = useCallback((next: Destination) => {
@@ -54,8 +61,15 @@ function App() {
       <button data-dest="west-africa" onClick={() => navigate('west-africa')}>West Africa</button>
       <button data-testid="back" onClick={() => history.back()}>Back</button>
     </div>
-    <div data-testid="scene-shell" style={{ height: 560, maxHeight: '72vh', border: '1px solid #cbd2dc', borderRadius: 12, overflow: 'hidden', background: '#eef3f8' }}>
-      {loaded ? <Suspense fallback={<div>Loading renderer…</div>}><SpatialMap destination={destination} onNavigate={navigate} /></Suspense> : <button style={{ margin: 24 }} onClick={() => setLoaded(true)}>Start spatial spike</button>}
+    <div data-testid="scene-shell" style={{ position: 'relative', height: 560, maxHeight: '72vh', border: '1px solid #cbd2dc', borderRadius: 12, overflow: 'hidden', background: '#eef3f8' }}>
+      {loaded ? <Suspense fallback={<div>Loading renderer…</div>}><SpatialMap destination={destination} onNavigate={navigate} onFailure={setFailure} /></Suspense> : <button style={{ margin: 24 }} onClick={() => setLoaded(true)}>Start spatial spike</button>}
+      <div
+        aria-label="Reserved Back gesture gutter"
+        data-testid="back-gutter"
+        onPointerDownCapture={(event) => { metrics.backGutterPointerDowns += 1; event.preventDefault(); event.stopPropagation(); }}
+        style={{ position: 'absolute', zIndex: 2, inset: '0 auto 0 0', width: 28, touchAction: 'pan-y' }}
+      />
+      {failure ? <p data-testid="renderer-fallback" role="status" style={{ position: 'absolute', zIndex: 3, left: 36, right: 12, bottom: 8, margin: 0, padding: 8, background: '#f6f8fb', border: '1px solid #b42318' }}>Map renderer unavailable: {failure}. Scope controls remain available.</p> : null}
     </div>
   </main>;
 }

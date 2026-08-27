@@ -19,7 +19,11 @@ const geojson: GeoJSON.FeatureCollection = {
 
 function metric(): any { return (window as any).__spatialMapLibre; }
 
-export default function SpatialMap({ destination, onNavigate }: { destination: Destination; onNavigate: (d: Destination) => void }) {
+export default function SpatialMap({ destination, onNavigate, onFailure }: {
+  destination: Destination;
+  onNavigate: (d: Destination) => void;
+  onFailure: (reason: string) => void;
+}) {
   const containerRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<maplibregl.Map | null>(null);
   const destinationRef = useRef(destination);
@@ -35,6 +39,7 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
       zoom: CAMERA.world.zoom,
       style: {
         version: 8,
+        projection: { type: 'globe' },
         sources: { local: { type: 'geojson', data: geojson } },
         layers: [
           { id: 'background', type: 'background', paint: { 'background-color': '#eef3f8' } },
@@ -44,29 +49,49 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
     });
     mapRef.current = map;
     m.mapCreates += 1;
+    // Expose the instance immediately. `load` is an event, not a reliable
+    // synchronisation point for an external harness (and StrictMode can remove
+    // the first instance before its event runs).
+    (window as any).__spatialMapLibreMap = map;
+    (window as any).__spatialMapLibreProject = (lng: number, lat: number) => map.project([lng, lat]);
     map.doubleClickZoom.disable();
     map.boxZoom.disable();
     map.keyboard.disable();
     map.dragRotate.disable();
     map.touchZoomRotate.disableRotation();
 
-    map.on('load', () => {
-      map.setProjection({ type: 'globe' } as any);
+    const anchor = document.createElement('span');
+    anchor.dataset.testid = 'west-africa-anchor';
+    anchor.textContent = 'West Africa';
+    anchor.style.cssText = 'font: 600 12px system-ui; color: #101318; background: #f6f8fb; padding: 3px 5px; border: 1px solid #7b8794; border-radius: 4px; white-space: nowrap;';
+    const marker = new maplibregl.Marker({ element: anchor, anchor: 'bottom' }).setLngLat([-3, 10]).addTo(map);
+    m.domAnchor = { lng: -3, lat: 10, created: true };
+
+    map.on('style.load', () => {
+      m.styleLoads += 1;
       m.projection = map.getProjection();
       const canvas = map.getCanvas();
-      canvas.addEventListener('webglcontextlost', () => { m.contextLost += 1; });
+      canvas.addEventListener('webglcontextlost', () => {
+        m.contextLost += 1;
+        onFailure('WebGL context lost');
+      });
       canvas.addEventListener('webglcontextrestored', () => { m.contextRestored += 1; });
       canvas.addEventListener('pointerdown', (event: PointerEvent) => m.canvasPointerDowns.push({ x: event.clientX, y: event.clientY, pointerType: event.pointerType }));
-      (window as any).__spatialMapLibreMap = map;
-      (window as any).__spatialMapLibreProject = (lng: number, lat: number) => map.project([lng, lat]);
     });
     map.on('render', () => {
       m.renderCount += 1;
+      m.ready = true;
+      m.mapLoadedOnFirstRender ??= map.loaded();
+      m.styleLoadedOnFirstRender ??= map.isStyleLoaded();
       const c = map.getCenter();
       m.lastCamera = { lng: c.lng, lat: c.lat, zoom: map.getZoom(), bearing: map.getBearing(), pitch: map.getPitch() };
       m.projection = map.getProjection();
     });
-    map.on('error', (event: any) => m.errors.push(String(event.error?.message ?? event.error ?? 'unknown map error')));
+    map.on('error', (event: any) => {
+      const message = String(event.error?.message ?? event.error ?? 'unknown map error');
+      m.errors.push(message);
+      onFailure(message);
+    });
     map.on('click', 'areas', (event: any) => {
       const desired = destinationRef.current === 'world' ? 'africa' : destinationRef.current === 'africa' ? 'west-africa' : null;
       if (!desired) return;
@@ -76,9 +101,10 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
     return () => {
       mapRef.current = null;
       m.mapRemoves += 1;
+      marker.remove();
       map.remove();
     };
-  }, [onNavigate]);
+  }, [onFailure, onNavigate]);
 
   useEffect(() => {
     const map = mapRef.current;
@@ -91,7 +117,9 @@ export default function SpatialMap({ destination, onNavigate }: { destination: D
       map.off('moveend', complete);
     };
     map.on('moveend', complete);
-    return () => map.off('moveend', complete);
+    return () => {
+      map.off('moveend', complete);
+    };
   }, [destination]);
 
   return <div ref={containerRef} data-testid="maplibre-container" style={{ width: '100%', height: '100%' }} />;
