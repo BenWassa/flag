@@ -18,7 +18,7 @@ test('accepts the live Firebase Hosting PWA origin (#107)', async ({ page, conte
 
   const assetUrls = await page.evaluate(() => performance.getEntriesByType('resource').map((entry) => entry.name));
   expect(assetUrls.some((url) => /\/app\.js$/.test(url))).toBe(true);
-  expect(assetUrls.filter((url) => /\.(?:js|css)$/.test(url)).every((url) => new URL(url).origin === location.origin)).toBe(true);
+  expect(assetUrls.filter((url) => /\.(?:js|css)$/.test(url)).every((url) => new URL(url).origin === origin)).toBe(true);
 
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
   expect(manifestHref).toBeTruthy();
