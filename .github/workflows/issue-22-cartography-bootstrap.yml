@@ -1,4 +1,4 @@
-name: Issue 22 North America focused verification
+name: Issue 22 North America browser QA
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: read
 
 jobs:
-  verify:
+  browser:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,9 +16,7 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: node scripts/build-verifier-output.mjs
-      - run: node scripts/verify-north-america.mjs
-      - name: Measure verifier payload
-        run: |
-          echo "VERIFY_RAW=$(wc -c < .verify-dist/data/maps/north-america.js)"
-          echo "VERIFY_GZIP=$(gzip -9 -c .verify-dist/data/maps/north-america.js | wc -c)"
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Run focused production browser matrix
+        run: npx playwright test tests/browser/north-america.spec.ts tests/browser/production-matrix.spec.ts tests/browser/map-hit-precedence.spec.ts tests/browser/map-insets.spec.ts --project=chromium
