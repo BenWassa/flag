@@ -1,26 +1,19 @@
-import { doc, getDoc, serverTimestamp, setDoc } from 'firebase/firestore';
+import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from './firebase.js';
-
-// Must match the allow-list in firestore.rules exactly.
-export type SyncStateKey =
-  | 'flag-atlas:progress:v1'
-  | 'flag-atlas:attempts:v1'
-  | 'flag-atlas:location-progress:v1'
-  | 'flag-atlas:location-attempts:v1'
-  | 'flag-atlas:outline-progress:v1'
-  | 'flag-atlas:outline-attempts:v1'
-  | 'flag-atlas:neighbor-progress:v1'
-  | 'flag-atlas:neighbor-attempts:v1'
-  | 'flag-atlas:earned-achievements:v1'
-  | 'flag-atlas:region-domain-perfect-run-streaks:v1';
+import { CLOUD_STATE_KEYS, type CloudStateKey } from '../state/cloud-progress.js';
 
 const SCHEMA_VERSION = 1;
 
-function stateDoc(uid: string, key: SyncStateKey) {
+export type CloudLoadResult =
+  | { status: 'found'; data: unknown; updatedAt: Date | null }
+  | { status: 'missing' }
+  | { status: 'error' };
+
+function stateDoc(uid: string, key: CloudStateKey) {
   return doc(firestore, 'users', uid, 'state', key);
 }
 
-export async function saveState(uid: string, key: SyncStateKey, data: unknown): Promise<boolean> {
+export async function saveState(uid: string, key: CloudStateKey, data: unknown): Promise<boolean> {
   try {
     await setDoc(stateDoc(uid, key), { data, schemaVersion: SCHEMA_VERSION, updatedAt: serverTimestamp() });
     return true;
@@ -29,12 +22,24 @@ export async function saveState(uid: string, key: SyncStateKey, data: unknown): 
   }
 }
 
-export async function loadState(uid: string, key: SyncStateKey): Promise<unknown | null> {
+export async function loadState(uid: string, key: CloudStateKey): Promise<CloudLoadResult> {
   try {
     const snapshot = await getDoc(stateDoc(uid, key));
-    if (!snapshot.exists()) return null;
-    return snapshot.data().data ?? null;
+    if (!snapshot.exists()) return { status: 'missing' };
+    const raw = snapshot.data();
+    const timestamp = raw.updatedAt instanceof Timestamp ? raw.updatedAt.toDate() : null;
+    if (raw.schemaVersion !== SCHEMA_VERSION || !Object.prototype.hasOwnProperty.call(raw, 'data')) return { status: 'error' };
+    return { status: 'found', data: raw.data, updatedAt: timestamp };
   } catch {
-    return null;
+    return { status: 'error' };
+  }
+}
+
+export async function deleteCloudState(uid: string): Promise<boolean> {
+  try {
+    await Promise.all(CLOUD_STATE_KEYS.map((key) => deleteDoc(stateDoc(uid, key))));
+    return true;
+  } catch {
+    return false;
   }
 }
