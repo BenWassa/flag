@@ -18,9 +18,27 @@ import {
   scoreAnnouncement,
   STREAK_DISPLAY_THRESHOLD,
 } from '../dist/domain/round-feedback.js';
-import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
-import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
-import { renderQuiz } from '../dist/ui/views/quiz.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { FlagsQuizScreen, OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
+const { LocationQuizScreen } = await loadScreens('LocationScreens.js');
+
+const renderQuiz = (session, answeredCountryId) => renderScreen(FlagsQuizScreen, {
+  session,
+  progress,
+  answeredCountryId,
+});
+const renderOutlineQuiz = (asset, session, answeredCountryId) => renderScreen(OutlineQuizScreen, {
+  asset,
+  session,
+  progress,
+  answeredCountryId,
+});
+const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(LocationQuizScreen, {
+  asset,
+  session,
+  lastWrongCountryId,
+});
 
 const AFRICA = { kind: 'continent', id: 'africa', label: 'Africa' };
 const WEST_AFRICA = { kind: 'region', id: 'west-africa', label: 'West Africa' };
@@ -100,7 +118,7 @@ const target = session.questions[2];
 const targetName = COUNTRY_BY_ID.get(target.countryId).name;
 const distractor = target.optionCountryIds.find((id) => id !== target.countryId);
 
-const unanswered = renderQuiz(session, progress, null);
+const unanswered = renderQuiz(session, null);
 assert.ok(unanswered.includes('round-score'), 'Play shows the live score before the answer is given.');
 const scoreValues = [...unanswered.matchAll(/round-score__value">([^<]*)</g)].map(([, value]) => value);
 assert.deepEqual(
@@ -110,7 +128,7 @@ assert.deepEqual(
 );
 assert.ok(unanswered.includes('round-score__item--streak'), 'A qualifying streak is visible during the round.');
 
-const fresh = renderQuiz(playSession([], 0), progress, null);
+const fresh = renderQuiz(playSession([], 0), null);
 assert.deepEqual(
   [...fresh.matchAll(/round-score__value">([^<]*)</g)].map(([, value]) => value),
   ['0', '8'],
@@ -121,7 +139,7 @@ assert.ok(
   'No outcome state leaks before the learner answers.',
 );
 
-const answeredCorrect = renderQuiz(session, progress, target.countryId);
+const answeredCorrect = renderQuiz(session, target.countryId);
 assert.ok(
   answeredCorrect.includes('answer-feedback--correct'),
   'A correct Play answer shows immediate correct feedback in the same render.',
@@ -136,7 +154,7 @@ assert.ok(
   'Play no longer hides the outcome behind a neutral acknowledgement.',
 );
 
-const answeredWrong = renderQuiz(session, progress, distractor);
+const answeredWrong = renderQuiz(session, distractor);
 assert.ok(
   answeredWrong.includes('answer-feedback--wrong'),
   'A missed Play answer shows immediate corrective feedback.',
@@ -187,17 +205,17 @@ const outlineTarget = outlineQuestions[0];
 const outlineTargetName = COUNTRY_BY_ID.get(outlineTarget.countryId).name;
 const outlineDistractor = outlineTarget.optionCountryIds.find((id) => id !== outlineTarget.countryId);
 
-const outlineBefore = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, null);
+const outlineBefore = renderOutlineQuiz(westOutlineAsset, outlineSession, null);
 assert.ok(
   !outlineBefore.includes('answer-feedback--correct') && !outlineBefore.includes('answer-feedback--wrong'),
   'Outlines Play reveals no outcome before the answer.',
 );
-const outlineCorrect = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, outlineTarget.countryId);
+const outlineCorrect = renderOutlineQuiz(westOutlineAsset, outlineSession, outlineTarget.countryId);
 assert.ok(outlineCorrect.includes('answer-feedback--correct'), 'Outlines correct feedback uses the shared panel.');
 assert.ok(outlineCorrect.includes('answer-button--correct'), 'Outlines marks the correct option during Play feedback.');
 assert.ok(!outlineCorrect.includes('Answer recorded'), 'Outlines no longer renders the neutral recorded state.');
 
-const outlineWrong = renderOutlineQuiz(westOutlineAsset, outlineSession, progress, outlineDistractor);
+const outlineWrong = renderOutlineQuiz(westOutlineAsset, outlineSession, outlineDistractor);
 assert.ok(outlineWrong.includes('answer-feedback--wrong'), 'Outlines wrong feedback uses the shared panel.');
 assert.ok(outlineWrong.includes('Not quite'), 'Outlines wrong feedback is explicit in text.');
 assert.ok(outlineWrong.includes(`Answer: ${outlineTargetName}`), 'Outlines wrong feedback names the correct country.');
@@ -236,7 +254,7 @@ assert.deepEqual(
 let mapWrongSession = buildMapSession(westAsset, 'test', 'locations-play-wrong', ['GHA']);
 const mapWrong = applyMapGuess(mapWrongSession, locationProgress, 'MLI', 400);
 mapWrongSession = mapWrong.session;
-const mapWrongHtml = renderMapQuiz(westAsset, mapWrongSession, null);
+const mapWrongHtml = renderMapQuiz(westAsset, mapWrongSession, 'MLI');
 assert.ok(mapWrongHtml.includes('answer-feedback--wrong'), 'Locations wrong feedback uses the shared panel.');
 assert.ok(mapWrongHtml.includes('Not quite'), 'Locations wrong feedback is explicit in text.');
 assert.ok(mapWrongHtml.includes('Answer: Ghana'), 'Locations wrong feedback names the correct country.');
@@ -256,7 +274,7 @@ assert.ok(!andeanHtml.includes('pan Africa'), 'Non-Africa Locations rounds no lo
 /* --- Learn is deliberately left quiet / unchanged --- */
 
 const learnSession = { ...playSession([{ correct: true }, { correct: true }], 2), mode: 'learn' };
-const learnHtml = renderQuiz(learnSession, progress, null);
+const learnHtml = renderQuiz(learnSession, null);
 assert.ok(!learnHtml.includes('round-score'), 'Flags Learn stays low-pressure and carries no live score.');
 const mapLearn = buildMapSession(westAsset, 'learn', 'locations-learn-unchanged', ['GHA']);
 const mapLearnHtml = renderMapQuiz(westAsset, mapLearn, null);

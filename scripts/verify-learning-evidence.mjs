@@ -27,8 +27,9 @@ import { buildQuiz } from '../dist/domain/quiz.js';
 import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
 import { sanitizeNeighborRecord } from '../dist/infrastructure/neighbor-storage.js';
 import { sanitizeRecord } from '../dist/infrastructure/storage.js';
-import { renderQuiz } from '../dist/ui/views/quiz.js';
-import { renderResults } from '../dist/ui/views/results.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { FlagsQuizScreen, RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');
 
 const gha = 'GHA';
 const now = (day) => new Date(`2026-02-${String(day).padStart(2, '0')}T12:00:00Z`);
@@ -290,31 +291,32 @@ const answeredState = applyAttempt(fresh, targetId, {
   activity: 'learn',
   now: now(18),
 }).state;
-const quizHtml = renderQuiz(quizSession, answeredState, targetId);
-assert.ok(quizHtml.includes('data-action="next-question" data-autofocus'), 'Clean Learn continues from the correct answer in place.');
+const quizHtml = renderScreen(FlagsQuizScreen, { session: quizSession, progress: answeredState, answeredCountryId: targetId });
+assert.ok(quizHtml.includes('answer-feedback--correct'), 'Clean Learn continues from the correct answer in place.');
+assert.ok(quizHtml.includes('data-autofocus=""'), 'Clean Learn exposes the advance control as the focus landing point.');
 assert.ok(!quizHtml.includes(' of 3 rounds'));
 assert.ok(!/>Mastered</.test(quizHtml));
 
-const resultHtml = renderResults({
+const resultHtml = renderScreen(RecognitionResultsScreen, { domain: 'flags', result: {
   session: quizSession,
   correct: 1,
   total: 1,
   newlyMastered: [targetId],
   missed: [],
-});
+} });
 assert.ok(!resultHtml.includes('Strong evidence'), 'Results no longer expose the scheduler-flavoured "strong evidence" taxonomy.');
 assert.ok(!resultHtml.includes('newly strong'), 'Results no longer expose a "newly strong" count.');
 assert.ok(resultHtml.includes('Clean round'), 'A clean Learn round still reports a plain clean-round message.');
 assert.ok(!resultHtml.includes('Perfect round'), 'Only a clean Play round earns the Perfect round ceremony, not Learn.');
 assert.ok(!/>Mastered</.test(resultHtml));
 
-const perfectPlayResultHtml = renderResults({
+const perfectPlayResultHtml = renderScreen(RecognitionResultsScreen, { domain: 'flags', result: {
   session: { ...quizSession, mode: 'test' },
   correct: 1,
   total: 1,
   newlyMastered: [targetId],
   missed: [],
-});
+} });
 assert.ok(perfectPlayResultHtml.includes('Perfect round'), 'A clean Play round earns the Perfect round ceremony.');
 assert.ok(!perfectPlayResultHtml.includes('Clean round'), 'The Perfect round badge replaces the plain clean-round message.');
 

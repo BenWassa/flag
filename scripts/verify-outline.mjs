@@ -17,9 +17,30 @@ import { applyAttempt, createInitialProgress, getRecord } from '../dist/domain/p
 import { createSeededRandom } from '../dist/domain/quiz.js';
 import { outlineSilhouette } from '../dist/ui/components/outline.js';
 import { escapeHtml } from '../dist/ui/format.js';
-import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
-import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
 import { parentRoute, parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
+
+function renderOutlineHome(progress, scope, achievements, persisting) {
+  return renderScreen(GeographyLauncherScreen, {
+    domain: 'outlines',
+    scope,
+    achievements,
+    persisting,
+    progress,
+  });
+}
+
+function renderOutlineQuiz(asset, session, progress, answeredCountryId) {
+  return renderScreen(OutlineQuizScreen, {
+    asset,
+    session,
+    progress,
+    answeredCountryId,
+  });
+}
 
 const africaIds = [...AFRICA_MAP_COUNTRY_IDS];
 const africaSet = new Set(africaIds);
@@ -151,20 +172,24 @@ const learnSession = {
 const testSession = { ...learnSession, id: 'test-render', mode: 'test' };
 const wrongId = sample.optionCountryIds.find((id) => id !== sample.countryId);
 assert.ok(wrongId);
+// React's server renderer uses the equivalent hexadecimal apostrophe entity;
+// normalise it so this assertion checks the learner-visible name, not an
+// implementation-specific entity spelling.
+const renderedSampleName = escapeHtml(sampleTarget.name).replaceAll('&#39;', '&#x27;');
 
 const unansweredHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, null);
 const svgMarkup = unansweredHtml.match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
 assert.ok(svgMarkup, 'Outline quiz must render the silhouette SVG.');
 assert.equal(svgMarkup.includes(sampleTarget.name), false, 'Unanswered SVG subtree must not contain the answer name.');
 assert.equal(svgMarkup.includes(sampleTarget.id), false, 'Unanswered SVG subtree must not contain the answer ISO3.');
-assert.ok(unansweredHtml.includes('data-action="outline-answer"'), 'Outline quiz must render four answer controls.');
+assert.equal((unansweredHtml.match(/class="answer-button /g) ?? []).length, 4, 'Outline quiz must render four answer controls.');
 
 const learnedHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, wrongId);
-assert.ok(learnedHtml.includes(`Correct: ${escapeHtml(sampleTarget.name)}`), 'Learn mode must reveal the correct answer immediately after a miss.');
+assert.ok(learnedHtml.includes(`Correct: ${renderedSampleName}`), 'Learn mode must reveal the correct answer immediately after a miss.');
 const testedHtml = renderOutlineQuiz(westAsset, testSession, outlineProgress, wrongId);
 assert.ok(testedHtml.includes('answer-feedback--wrong'), 'Play mode must show immediate wrong-answer feedback.');
 assert.ok(testedHtml.includes('Not quite'), 'Play feedback must communicate the outcome without relying on colour.');
-assert.ok(testedHtml.includes(`Answer: ${escapeHtml(sampleTarget.name)}`), 'Play mode must reveal the correct answer after a miss.');
+assert.ok(testedHtml.includes(`Answer: ${renderedSampleName}`), 'Play mode must reveal the correct answer after a miss.');
 assert.equal(testedHtml.includes('Answer recorded'), false, 'Play mode must not fall back to a neutral acknowledgement.');
 assert.ok(
   testedHtml.includes('answer-button--correct') && testedHtml.includes('answer-button--wrong'),
