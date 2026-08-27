@@ -22,7 +22,7 @@ const LOCATION_PERSIST_SESSION_ID = 'browser-fixture-locations-persist';
 const NEIGHBOR_SESSION_ID = 'fixture-neighbors-southern';
 const NEIGHBOR_WRONG_SESSION_ID = 'fixture-neighbors-wrong';
 const NEIGHBOR_PERSIST_SESSION_ID = 'persist-1';
-const ZERO_NEIGHBOR_SESSION_ID = 'zero-test-0';
+const ZERO_NEIGHBOR_SESSION_ID = 'zero-7';
 
 async function fixSessionId(page: Page, sessionId: string) {
   await page.addInitScript(({ id }) => {
@@ -242,10 +242,13 @@ test.describe('Neighbours browser matrix (#99)', () => {
     expect(persisted.records?.LSO?.lifetimeCompleted).toBe(1);
   });
 
-  test('keeps the explicit no-land-neighbours path usable when the map has no puzzle geometry', async ({ page }) => {
+  test('keeps the explicit no-land-neighbours path usable without leaking the empty set', async ({ page }) => {
     await openNeighbors(page, ZERO_NEIGHBOR_SESSION_ID, 'test', 'west-africa');
     await expect(page.getByRole('heading', { name: 'Cabo Verde', exact: true })).toBeVisible();
+    await expect(page.locator('[data-neighbor-map-host]')).toHaveAttribute('data-neighbor-map-status', 'error');
     await expect(page.locator('.neighbor-map-unavailable')).toHaveText('Map unavailable. Continue with the country entry field.');
+    await expect(page.getByText('0 neighbours found', { exact: true })).toBeVisible();
+    await expect(page.getByText('0 of 0 neighbours found', { exact: true })).toHaveCount(0);
     await page.getByRole('button', { name: NO_LAND_NEIGHBORS_LABEL, exact: true }).click();
     await expect(page.getByText(`Correct: ${NO_LAND_NEIGHBORS_LABEL}.`, { exact: true })).toBeVisible();
     await expect(page.locator('.neighbor-resolution')).toContainText(`${NO_LAND_NEIGHBORS_LABEL}. This country borders no other country by land.`);
