@@ -32,7 +32,7 @@ Important current decisions:
 - complete world = Crown only;
 - earned mastery/completion is persistent for now, even if live country evidence later lapses/revalidates;
 - Atlas Blue is action, green is correct, red is wrong, purple is mastery, gold is scarce prestige;
-- Africa was the first complete four-domain production proving ground, and remains the reference baseline; South America, Europe and Asia now ship to the same bar;
+- Africa was the first complete four-domain production proving ground, and remains the reference baseline; South America, Europe, Asia and North America now ship to the same bar;
 - other continents may appear as honest shells before their full data ships, but unsupported domains must never count as complete;
 - navigation is **mode-first**: Home chooses a learning domain, `/{domain}` lists that domain's continents, and `/{domain}/{continent}` is the launcher (whole-continent Play plus its region list). The scope-first `/atlas/*` surface and the region card's four-domain launch row are retired;
 - the production visual style is **Tactile Atlas**. Preserve its documented system unless a focused product decision changes it;
@@ -77,7 +77,7 @@ Key rules:
 - **Routing is typed and durable.** URLs own stable navigation state; session state owns quiz internals. Preserve Back/Forward, direct links and activity-refresh fallback.
 - **Map/outline/neighbour geometry is generated, not hand-authored.** Use the canonical Natural Earth production topology pipeline; never create a second map source or handwritten neighbour table.
 - **Country learning ledgers remain domain-specific.** New earned achievement state should be layered cleanly above them rather than flattening the domain mechanics.
-- **Flags** supports the full world/195-country curriculum. **Locations**, **Outlines**, and **Neighbours** support four production continents as of v0.7.0: Africa (5 regions), South America (3), Europe (4) and Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28). North America and Oceania remain honest shells.
+- **Flags** supports the full world/195-country curriculum. **Locations**, **Outlines**, and **Neighbours** support five production continents: Africa (5 regions), South America (3), Europe (4), Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28) and North America (3). Oceania remains an honest shell.
 - **React is a presentation dependency only.** Keep adapters around the typed router, `AppStore`, round controllers, map viewport maths and persistence rather than replacing those systems.
 
 ## Product naming and compatibility

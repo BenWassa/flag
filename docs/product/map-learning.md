@@ -7,7 +7,7 @@
 
 Locations teaches identification of countries by true geographic position. The map is the dominant learning object; controls and feedback support the task without becoming a competing dashboard.
 
-Current production coverage is **Africa, South America, Europe and Asia**, including supported learner-facing regions. North America (#22) and Oceania (#27) remain unavailable.
+Current production coverage is **Africa, South America, Europe, Asia and North America**, including supported learner-facing regions. Oceania (#27) remains unavailable.
 
 ## Geography contract
 
@@ -117,4 +117,4 @@ Before enabling another continent/scope:
 - verify Learn, Play, Review, feedback, pan/zoom, storage failure and offline revisit;
 - run the full repository gate and inspect the exact production artifact.
 
-North America and Oceania remain the only continent expansion gaps in current v1 geography-dependent domains.
+Oceania remains the only continent expansion gap in current v1 geography-dependent domains.

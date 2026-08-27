@@ -122,10 +122,10 @@ Lazy continent chunks become available offline after first use through runtime c
 ## Current geography support
 
 - Flags: full 195-country curriculum.
-- Locations: Africa, South America, Europe and Asia.
-- Outlines: Africa, South America, Europe and Asia.
-- Neighbours: Africa, South America, Europe and Asia, limited to targets with complete representable canonical land-neighbour sets.
-- North America (#22) and Oceania (#27): incomplete for the three geography-dependent domains.
+- Locations: Africa, South America, Europe, Asia and North America.
+- Outlines: Africa, South America, Europe, Asia and North America.
+- Neighbours: Africa, South America, Europe, Asia and North America, limited to targets with complete representable canonical land-neighbour sets.
+- Oceania (#27): incomplete for the three geography-dependent domains.
 
 Availability is a data/support concern, not a reason for parallel routers or duplicate domain architectures.
 

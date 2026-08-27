@@ -71,7 +71,7 @@ The six trophy assets exist and are learner-facing when the corresponding comple
 
 World completion is the highest prestige tier. There is no tier above the Crown.
 
-The domain model and persistence layer support `worldCrown`, but it cannot currently be earned because North America and Oceania do not yet have complete four-domain curriculum. There is no v1 React learner-facing Crown surface or ceremony.
+The domain model and persistence layer support `worldCrown`, but it cannot currently be earned because Oceania does not yet have complete four-domain curriculum. There is no v1 React learner-facing Crown surface or ceremony.
 
 Do not show routine locked Crowns or decorative Crown repetition before the genuine state exists.
 

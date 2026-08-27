@@ -49,11 +49,11 @@ Current production coverage:
 | Domain | Coverage |
 | --- | --- |
 | Flags | all 195 countries; World/all continents/learner regions |
-| Locations | Africa, South America, Europe, Asia |
-| Outlines | Africa, South America, Europe, Asia |
-| Neighbours | Africa, South America, Europe, Asia, limited to topology-complete eligible targets |
+| Locations | Africa, South America, Europe, Asia, North America |
+| Outlines | Africa, South America, Europe, Asia, North America |
+| Neighbours | Africa, South America, Europe, Asia, North America, limited to topology-complete eligible targets |
 
-North America (#22) and Oceania (#27) remain incomplete for Locations/Outlines/Neighbours.
+Oceania (#27) remains incomplete for Locations/Outlines/Neighbours.
 
 Unsupported geography must not imply gameplay availability or completion eligibility.
 
@@ -158,7 +158,7 @@ Production presentation uses the shipped continent trophy/crest artwork on compl
 
 World completion is the final tier and reserves the Crown.
 
-The state exists in the achievement model but is not currently achievable because North America/Oceania are incomplete, and there is no learner-facing React Crown surface in v1. Do not create a higher tier.
+The state exists in the achievement model but is not currently achievable because Oceania is incomplete, and there is no learner-facing React Crown surface in v1. Do not create a higher tier.
 
 ## 10. Persistence and reset
 

@@ -136,18 +136,21 @@ four learning domains, together with the Middle East cross-continental scope
 [`issue-26-asia-expansion.md`](../closed/issue-26-asia-expansion.md) and
 [`issue-28-middle-east-region.md`](../closed/issue-28-middle-east-region.md).
 
-Atlas now ships four production continents — Africa, South America, Europe and
-Asia — each with a dedicated verifier gating curriculum, territory/context
-policy, adjacency and runtime payload budget.
+Atlas now ships five production continents — Africa, South America, Europe,
+Asia and North America — each with a dedicated verifier gating curriculum,
+territory/context policy, adjacency and runtime payload budget.
 
-Still outstanding:
+#22 North America is implemented and production-browser verified on its existing
+branch; it remains listed here only until PR/CI/deployment closeout is complete.
+Its durable evidence is in [`issue-22-north-america-expansion.md`](issue-22-north-america-expansion.md).
+#23 remains superseded/closed by the parent North America implementation.
 
-- [#22 — North America](https://github.com/BenWassa/flag/issues/22) (also owns Central America; #23 is superseded/closed — see [`issue-23-central-america-expansion.md`](../closed/issue-23-central-america-expansion.md))
+Still outstanding after #22 closes:
+
 - [#27 — Oceania](https://github.com/BenWassa/flag/issues/27)
 
-Africa remains the reference baseline. North America and Oceania still appear
-as shell/navigation states, and unsupported curriculum must never count towards
-mastery/completion.
+Africa remains the reference baseline. Oceania remains an honest shell, and
+unsupported curriculum must never count towards mastery/completion.
 
 **Continent payload follow-up (#86).** Context clipping is complete. Europe is
 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a
