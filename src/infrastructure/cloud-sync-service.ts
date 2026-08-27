@@ -40,7 +40,7 @@ let started = false;
 let reconciled = false;
 let writeTimer: number | null = null;
 let retryTimer: number | null = null;
-let flushing = false;
+let flushPromise: Promise<void> | null = null;
 const listeners = new Set<StatusListener>();
 const dirty = new Set<CloudStateKey>();
 
@@ -137,27 +137,35 @@ function scheduleWrite(): void {
 }
 
 async function flush(): Promise<void> {
+  if (flushPromise) {
+    await flushPromise;
+    if (!activeUser || !cloudAccountIsAuthorised(activeUser) || !reconciled || dirty.size === 0) return;
+  }
+
   const user = activeUser;
-  if (!user || !cloudAccountIsAuthorised(user) || !reconciled || flushing || dirty.size === 0) return;
+  if (!user || !cloudAccountIsAuthorised(user) || !reconciled || dirty.size === 0) return;
   const token = generation;
-  flushing = true;
-  setStatus('saving');
-  try {
+  const operation = (async () => {
+    setStatus('saving');
     for (const key of [...dirty]) {
       if (token !== generation || activeUser?.uid !== user.uid) return;
       const ok = await saveState(user.uid, key, localValue(key));
+      if (token !== generation || activeUser?.uid !== user.uid) return;
       if (!ok) {
         setStatus('degraded');
         scheduleRetry();
         return;
       }
-      if (token === generation && activeUser?.uid === user.uid) dirty.delete(key);
+      dirty.delete(key);
       persistPending();
     }
     if (token === generation && activeUser?.uid === user.uid) setStatus('synced');
-  } finally {
-    flushing = false;
-  }
+  })();
+  const tracked = operation.finally(() => {
+    if (flushPromise === tracked) flushPromise = null;
+  });
+  flushPromise = tracked;
+  await tracked;
 }
 
 async function reconcile(user: User | null, token: number): Promise<void> {
@@ -211,7 +219,6 @@ function transitionUser(user: User | null): void {
   clearTimer('retry');
   activeUser = user;
   reconciled = false;
-  flushing = false;
   dirty.clear();
 
   if (!user) {
@@ -243,24 +250,69 @@ export function startCloudSync(): () => void {
   };
 }
 
-export async function deleteCloudCopy(user: User): Promise<void> {
+async function beginDeletion(user: User): Promise<void> {
   if (!cloudAccountIsAuthorised(user)) throw new Error('Account is not authorised for cloud backup.');
-  const token = ++generation;
+  generation += 1;
   clearTimer('write');
   clearTimer('retry');
-  if (!await deleteCloudState(user.uid)) throw new Error('Cloud progress could not be deleted.');
+  reconciled = false;
+  setStatus('saving');
+  if (flushPromise) await flushPromise;
+}
+
+function suspendAfterCloudDeletion(): void {
+  generation += 1;
+  clearTimer('write');
+  clearTimer('retry');
+  activeUser = null;
+  reconciled = false;
   dirty.clear();
   persistPending();
-  if (token === generation) await signOutUser();
+  setStatus('signed-out');
+}
+
+function requiresRecentLogin(error: unknown): boolean {
+  return Boolean(error && typeof error === 'object' && 'code' in error
+    && (error as { code?: unknown }).code === 'auth/requires-recent-login');
+}
+
+export async function deleteCloudCopy(user: User): Promise<void> {
+  await beginDeletion(user);
+  if (!await deleteCloudState(user.uid)) {
+    setStatus('degraded');
+    scheduleRetry();
+    throw new Error("Couldn't delete the cloud backup. Progress on this device is unchanged; try again when you're online.");
+  }
+  suspendAfterCloudDeletion();
+  try {
+    await signOutUser();
+  } catch {
+    throw new Error('The cloud backup was deleted, but Atlas could not sign out. Your progress on this device is unchanged; try signing out again.');
+  }
 }
 
 export async function deleteCloudAccount(user: User): Promise<void> {
-  if (!cloudAccountIsAuthorised(user)) throw new Error('Account is not authorised for cloud backup.');
-  ++generation;
-  clearTimer('write');
-  clearTimer('retry');
-  if (!await deleteCloudState(user.uid)) throw new Error('Cloud progress could not be deleted.');
-  dirty.clear();
-  persistPending();
-  await deleteSignedInUser(user);
+  await beginDeletion(user);
+  if (!await deleteCloudState(user.uid)) {
+    setStatus('degraded');
+    scheduleRetry();
+    throw new Error("Couldn't delete the cloud backup, so the account was not deleted. Progress on this device is unchanged; try again when you're online.");
+  }
+
+  // Once the cloud copy is gone, stop this page from recreating it even if the
+  // Auth deletion needs a fresh Google sign-in. Local learner state is retained.
+  suspendAfterCloudDeletion();
+  try {
+    await deleteSignedInUser(user);
+  } catch (error) {
+    try {
+      await signOutUser();
+    } catch {
+      // Sync is already suspended, so a sign-out failure cannot recreate data.
+    }
+    if (requiresRecentLogin(error)) {
+      throw new Error('Cloud progress was deleted, but Google requires a recent sign-in before Atlas can delete the account. Sign in again, then retry account deletion.');
+    }
+    throw new Error('Cloud progress was deleted, but the sign-in account could not be deleted. Sign in again to retry account deletion.');
+  }
 }
