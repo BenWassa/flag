@@ -1,24 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { CONTINENTS } from '../dist/data/continents.js';
-import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../dist/data/map-scopes.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { CONTINENTS } from '../.verify-dist/data/continents.js';
+import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../.verify-dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   getAfricaNeighborScopeConfig,
-} from '../dist/data/neighbors/index.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
-import { renderDomainIndex } from '../dist/ui/views/domain.js';
-import { renderHome } from '../dist/ui/views/home.js';
-import { renderMapHome } from '../dist/ui/views/map-home.js';
-import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
-import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
+} from '../.verify-dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
+const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
 
 assert.deepEqual(
   [...AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS],
@@ -48,7 +47,7 @@ assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas styling rema
 assert.ok(serviceWorker.includes('outline.css') && serviceWorker.includes('neighbors.css'), 'Both learning-domain styles remain in the offline shell.');
 assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbour map presentation runtime is in the offline shell.');
 
-const app = await readFile('src/app.ts', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 for (const marker of ['outlineSession', 'neighborSession', 'flushOutlineAttempts', 'flushNeighborAttempts']) {
   assert.ok(app.includes(marker), `Combined app orchestration retains ${marker}.`);
 }
@@ -64,25 +63,25 @@ const ledgers = {
   outlines: outlineProgress,
   neighbors: neighborProgress,
 };
-const homeHtml = renderHome(ledgers);
-assert.equal((homeHtml.match(/data-action="open-domain"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
+const homeHtml = renderScreen(HomeScreen, { ledgers, persisting: true });
+assert.equal((homeHtml.match(/class="atlas-card"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home names ${label} by its canonical display name.`);
 }
 
 const achievements = createInitialAchievementState();
-const flagsIndexHtml = renderDomainIndex('flags', ledgers, achievements);
+const flagsIndexHtml = renderScreen(DomainScreen, { domain: 'flags', ledgers, achievements, persisting: true });
 assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
-assert.equal((flagsIndexHtml.match(/data-action="open-scope"/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
+assert.equal((flagsIndexHtml.match(/<button class="continent-row__open/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');
 assert.equal((flagsIndexHtml.match(/data-action="quick-play"/g) ?? []).length, 0, 'Flags continent rows do not bypass their launchers.');
 for (const domain of ['locations', 'outlines', 'neighbors']) {
-  const indexHtml2 = renderDomainIndex(domain, ledgers, achievements);
+  const indexHtml2 = renderScreen(DomainScreen, { domain, ledgers, achievements, persisting: true });
   const shippedContinents = CONTINENTS.filter((continent) => scopeSupportsDomain(
     { kind: 'continent', id: continent.id, label: continent.name },
     domain,
   )).length;
   assert.equal(
-    (indexHtml2.match(/data-action="open-scope"/g) ?? []).length,
+    (indexHtml2.match(/<button class="continent-row__open/g) ?? []).length,
     shippedContinents,
     `${domain} opens every continent with canonical shipped coverage.`,
   );
@@ -98,9 +97,9 @@ for (const domain of ['locations', 'outlines', 'neighbors']) {
 }
 
 const launchers = [
-  ['Locations', renderMapHome(locationProgress, AFRICA_MAP_SCOPE, achievements)],
-  ['Outlines', renderOutlineHome(outlineProgress, AFRICA_MAP_SCOPE, achievements)],
-  ['Neighbours', renderNeighborHome(neighborProgress, AFRICA_MAP_SCOPE, achievements)],
+  ['Locations', renderScreen(GeographyLauncherScreen, { domain: 'locations', progress: locationProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
+  ['Outlines', renderScreen(GeographyLauncherScreen, { domain: 'outlines', progress: outlineProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
+  ['Neighbours', renderScreen(GeographyLauncherScreen, { domain: 'neighbors', progress: neighborProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
 ];
 for (const [name, html] of launchers) {
   assert.ok(html.includes('All Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);

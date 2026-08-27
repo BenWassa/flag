@@ -76,9 +76,13 @@ smaller.
   [`issue-89-execution-plan.md`](issue-89-execution-plan.md); and implementation
   evidence is recorded in
   [`issue-89-implementation-worklog.md`](issue-89-implementation-worklog.md).
-  The staged child chain is #91 → #92 → #93 → #94 → #95 → #96 → #97 → #98 →
-  #99 → #100 → #101, followed by #89 closeout. Do not skip forward or collapse
-  unrelated phases into one long-lived branch.
+  Local closeout implementation is complete for #93 and #96–#101 on
+  `project-closeout-housekeeping`. The complete post-#100 artifact passes the
+  invariant, component, desktop/mobile browser and PWA runtime matrices. Those
+  issues and #89 remain open until the local commits are intentionally
+  published, merged-main CI passes, and evidence comments/closeout documents
+  are reachable from `origin/main`. No release or push is part of this local
+  checkpoint.
   Child issues #92–#101 are intentionally scoped as phase sections in the
   canonical execution plan rather than duplicated into ten competing issue
   documents.
@@ -97,9 +101,11 @@ spun off a focused follow-up issue below.
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it. #89 must not claim this
   physical evidence unless #71 actually records it.
-- [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
-  Keep this separate from #89 so hosting/storage migration does not change the
-  React/Vite compatibility boundary while the platform port is in flight.
+- [#46 — Firebase Hosting/Firestore completion](https://github.com/BenWassa/flag/issues/46).
+  Firebase Hosting configuration and automatic live deployment have shipped,
+  but #107 remains open for Firebase-origin acceptance, explicit host cutover
+  and rollback. #106 still owns actual account-backed cloud progress and account
+  lifecycle. Keep both separate from #89's React/Vite compatibility boundary.
 
 #87 (gamification connective-tissue defects: due-state reporting, Play
 feedback parity, Progress evidence coverage) is complete and closed. Its

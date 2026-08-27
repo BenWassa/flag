@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const gestures = await readFile('dist/navigation-gestures.js', 'utf8');
-const app = await readFile('src/app.ts', 'utf8');
+const gestures = await readFile('.verify-dist/navigation-gestures.js', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const styles = await readFile('dist/styles.css', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
-const mapComponent = await readFile('dist/ui/components/map.js', 'utf8');
-const neighborMapComponent = await readFile('dist/ui/components/neighbor-map.js', 'utf8');
+const mapComponent = await readFile('.verify-dist/ui/components/map.js', 'utf8');
+const neighborMapComponent = await readFile('.verify-dist/ui/components/neighbor-map.js', 'utf8');
 
 // Gesture ownership: navigation is the lowest-priority claimant, so every
 // surface that owns its own touch semantics must be able to opt out.
@@ -33,7 +33,7 @@ assert.ok(gestures.includes('CLAIM_DISTANCE_PX'), 'The gesture only claims the t
 assert.ok(gestures.includes('getParentRoute'), 'The gesture asks routing for a parent rather than keeping its own stack.');
 assert.ok(!gestures.includes('history.'), 'The gesture never manipulates history directly; routing owns navigation.');
 assert.ok(app.includes('installNavigationGestures'), 'Navigation gestures are installed by the application entry point.');
-assert.ok(app.includes('parentRoute(currentRoute)'), 'Back navigation resolves through the typed route model.');
+assert.ok(app.includes('parentRoute(currentRoute.current)'), 'Back navigation resolves through the typed route model.');
 
 // Home is the root: the gesture must not exit the app.
 assert.ok(gestures.includes('getParentRoute() !== null'), 'At the navigation root the gesture does nothing instead of exiting the app.');

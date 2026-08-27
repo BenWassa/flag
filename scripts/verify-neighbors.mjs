@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/africa.js';
-import { AFRICA_LAND_ADJACENCY as MAP_ADJACENCY } from '../dist/data/maps/africa.js';
-import { createInitialLocationProgress, getLocationRecord } from '../dist/domain/map-game.js';
+} from '../.verify-dist/data/neighbors/africa.js';
+import { AFRICA_LAND_ADJACENCY as MAP_ADJACENCY } from '../.verify-dist/data/maps/africa.js';
+import { createInitialLocationProgress, getLocationRecord } from '../.verify-dist/domain/map-game.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
@@ -19,10 +19,17 @@ import {
   neighborAttemptBudget,
   neighborMasteryGoal,
   resolveCountryGuess,
-} from '../dist/domain/neighbor-game.js';
-import { createInitialProgress, getRecord } from '../dist/domain/progress.js';
-import { renderNeighborQuiz, renderNeighborSuggestions } from '../dist/ui/views/neighbor-quiz.js';
-import { parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+} from '../.verify-dist/domain/neighbor-game.js';
+import { createInitialProgress, getRecord } from '../.verify-dist/domain/progress.js';
+import { parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
+const renderNeighborQuiz = (session, lastOutcome, query) => renderScreen(NeighborQuizScreen, {
+  session,
+  lastOutcome,
+  query,
+});
 
 assert.deepEqual(AFRICA_LAND_ADJACENCY, MAP_ADJACENCY, 'Lightweight neighbor fixture exactly matches Issue #9 topology output.');
 assert.equal(Object.keys(AFRICA_LAND_ADJACENCY).length, 54);
@@ -129,10 +136,10 @@ assert.equal(neighborMasteryGoal(getNeighborRecord(lapse.progress, 'GHA')), 2, '
 
 const uiSession = buildNeighborSession(AFRICA_LAND_ADJACENCY, createInitialNeighborProgress(['GHA']), scope, ['GHA'], 'learn', 'ui', 1, ['GHA']);
 const html = renderNeighborQuiz(uiSession, null, '');
-assert.ok(html.includes('data-neighbor-input'));
-assert.ok(html.includes('data-autofocus'));
-assert.ok(html.includes('enterkeyhint="go"'));
-assert.ok(html.includes('autocomplete="off"'));
+assert.ok(html.includes('id="neighbor-country-input"'));
+assert.ok(html.includes('data-autofocus="true"'));
+assert.ok(html.includes('enterKeyHint="go"'));
+assert.ok(html.includes('autoComplete="off"'));
 assert.ok(html.includes('aria-autocomplete="list"'));
 assert.ok(html.includes('<strong>0</strong> neighbours found'), 'Initial UI shows zero completed neighbours.');
 assert.ok(
@@ -140,7 +147,7 @@ assert.ok(
   'The neighbour total stays hidden during play so an empty set is not given away.',
 );
 const uiStep = applyNeighborGuess(uiSession, createInitialNeighborProgress(['GHA']), 'BFA', 200);
-const suggestionHtml = renderNeighborSuggestions(uiStep.session, 'burk');
+const suggestionHtml = renderNeighborQuiz(uiStep.session, null, 'burk');
 assert.ok(!suggestionHtml.includes('data-id="BFA"'), 'Completed neighbors disappear from autocomplete suggestions.');
 
 const neighborRoute = parseRoutePath('/neighbors/africa/west-africa/learn');
@@ -152,14 +159,14 @@ assert.ok(storageSource.includes('flag-atlas:neighbor-progress:v1'));
 assert.ok(storageSource.includes('flag-atlas:neighbor-attempts:v1'));
 assert.ok(!storageSource.includes('flag-atlas:location-progress:v1'));
 assert.ok(!storageSource.includes('flag-atlas:progress:v2'));
-const appSource = await readFile('src/app.ts', 'utf8');
 const neighborsRoundSource = await readFile('src/state/neighbors-round.ts', 'utf8');
 assert.ok(neighborsRoundSource.includes("routeForScope('neighbors'"), 'Neighbours uses the shared Issue #10 route constructor.');
 assert.ok(
-  neighborsRoundSource.includes("finishInteraction(outcome.resolved ? null : '[data-neighbor-input]')"),
+  neighborsRoundSource.includes("finishInteraction(outcome.resolved ? null : '#neighbor-country-input')"),
   'Sequential guesses restore input focus while the target remains active.',
 );
-assert.ok(appSource.includes("root.addEventListener('submit'"), 'Enter-to-submit uses the native form path.');
+const reactScreenSource = await readFile('src/react/screens/NeighborScreens.tsx', 'utf8');
+assert.ok(reactScreenSource.includes('onSubmit={(event) =>'), 'Enter-to-submit uses the native React form path.');
 const css = await readFile('src/styles/neighbors.css', 'utf8');
 assert.ok(css.includes('min-height: 50px'), 'Mobile entry and suggestion rows exceed the 44px touch minimum.');
 assert.ok(css.includes('max-height: min(28dvh, 230px)'), 'Autocomplete is bounded so the virtual keyboard does not bury the task status.');

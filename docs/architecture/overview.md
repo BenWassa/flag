@@ -75,7 +75,9 @@ Completed session objects may remain in memory so browser Back/Forward can revis
 
 Generated geography, projection maths, map pan/zoom and Neighbours map runtime remain imperative/framework-independent boundaries mounted by React where appropriate.
 
-Legacy `src/ui/views/*` string renderers remain verifier compatibility fixtures after the v1 React/Vite migration; they are not production screens.
+The legacy string-renderer tree was removed after the React/Vite migration;
+`src/ui` now contains framework-independent UI/map adapters used by React and
+the isolated verifier build.
 
 ## Product-information-architecture boundary
 

@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/index.js';
+} from '../.verify-dist/data/neighbors/index.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
@@ -16,9 +16,16 @@ import {
   neighborAttemptBudget,
   NO_LAND_NEIGHBORS_ID,
   NO_LAND_NEIGHBORS_LABEL,
-} from '../dist/domain/neighbor-game.js';
-import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
-import { renderNeighborQuiz, renderNeighborSuggestions } from '../dist/ui/views/neighbor-quiz.js';
+} from '../.verify-dist/domain/neighbor-game.js';
+import { countryIdsForSupportedScope } from '../.verify-dist/domain/scope-support.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
+const renderNeighborQuiz = (session, lastOutcome, query) => renderScreen(NeighborQuizScreen, {
+  session,
+  lastOutcome,
+  query,
+});
 
 const EAST_AFRICA = { kind: 'region', id: 'east-africa', label: 'East Africa' };
 const ISLAND = 'SYC';
@@ -151,7 +158,7 @@ assert.equal(duplicateClaim.outcome.consumedAttempt, false, 'Duplicates still co
 
 const islandHtml = renderNeighborQuiz(fresh.session, null, '');
 assert.ok(
-  islandHtml.includes(`data-id="${NO_LAND_NEIGHBORS_ID}"`),
+  islandHtml.includes('class="button button--secondary neighbor-none"'),
   'The empty-set claim is an explicit retrieval action, not explanatory text.',
 );
 assert.ok(islandHtml.includes(NO_LAND_NEIGHBORS_LABEL), 'That action is labelled in British English.');
@@ -162,7 +169,7 @@ assert.ok(
 
 const mainHtml = renderNeighborQuiz(mainSession, null, '');
 assert.ok(
-  mainHtml.includes(`data-id="${NO_LAND_NEIGHBORS_ID}"`),
+  mainHtml.includes('class="button button--secondary neighbor-none"'),
   'The action is present for bordered countries too, so its presence cannot signal an island.',
 );
 assert.ok(!mainHtml.includes('of 3'), 'The neighbour total is withheld from bordered targets during play as well.');
@@ -190,7 +197,7 @@ assert.equal(
 );
 
 assert.ok(
-  !renderNeighborSuggestions(fresh.session, 'no').includes(NO_LAND_NEIGHBORS_ID),
+  !renderNeighborQuiz(fresh.session, null, 'no').includes(NO_LAND_NEIGHBORS_ID),
   'The reserved id never appears in country autocomplete.',
 );
 

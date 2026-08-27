@@ -17,10 +17,10 @@ import {
   regionDomainQualifies,
   regionHasCompleteCurriculum,
   worldHasCompleteCurriculum,
-} from '../dist/domain/achievements.js';
-import { CONTINENTS } from '../dist/data/continents.js';
-import { regionLearningScopes } from '../dist/data/learning-scopes.js';
-import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
+} from '../.verify-dist/domain/achievements.js';
+import { CONTINENTS } from '../.verify-dist/data/continents.js';
+import { regionLearningScopes } from '../.verify-dist/data/learning-scopes.js';
+import { LEARNING_DOMAIN_IDS } from '../.verify-dist/domain/models.js';
 
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 // Melanesia is learner-facing but Flags-only: Oceania ships no generated
@@ -159,7 +159,7 @@ assert.deepEqual(
   { kind: 'world', completeCurriculum: false, crownEarned: false },
 );
 
-const achievementEngine = await readFile('dist/domain/achievements.js', 'utf8');
+const achievementEngine = await readFile('.verify-dist/domain/achievements.js', 'utf8');
 for (const forbidden of ['masteryStreak', 'nextReviewAt', "status === 'mastered'", 'lifetimeCorrect']) {
   assert.equal(achievementEngine.includes(forbidden), false, `Achievement domain does not encode the legacy evidence rule ${forbidden}.`);
 }
@@ -184,7 +184,7 @@ const {
   migratePerfectRunStreakState,
   resetPerfectRunStreakStorage,
   savePerfectRunStreakState,
-} = await import('../dist/infrastructure/achievement-storage.js');
+} = await import('../.verify-dist/infrastructure/achievement-storage.js');
 
 memory.clear();
 assert.equal(saveAchievementState(africaFull.state), true);
@@ -244,10 +244,10 @@ Object.defineProperty(globalThis, 'window', {
     clearTimeout(handle) { clearTimeout(handle); },
   },
 });
-const { AppStore } = await import('../dist/state/store.js');
-const { COUNTRIES } = await import('../dist/data/countries.js');
-const { countriesInScope } = await import('../dist/domain/progress.js');
-const { coveredFullRegion, isFullRegionPlayLaunch, FULL_REGION_ROUND_SIZE } = await import('../dist/domain/achievements.js');
+const { AppStore } = await import('../.verify-dist/state/store.js');
+const { COUNTRIES } = await import('../.verify-dist/data/countries.js');
+const { countriesInScope } = await import('../.verify-dist/domain/progress.js');
+const { coveredFullRegion, isFullRegionPlayLaunch, FULL_REGION_ROUND_SIZE } = await import('../.verify-dist/domain/achievements.js');
 
 assert.equal(coveredFullRegion(['A', 'B'], ['A', 'B']), true, 'A round covering every supported target qualifies.');
 assert.equal(coveredFullRegion(['A', 'B'], ['A']), false, 'A sampled round does not qualify.');

@@ -1,14 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { loadMapAsset } from '../dist/data/maps/index.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
 import {
   advanceMapSession,
   applyMapGuess,
   buildMapSession,
   createInitialLocationProgress,
-} from '../dist/domain/map-game.js';
-import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE_CONFIGS } from '../dist/data/map-scopes.js';
-import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
+} from '../.verify-dist/domain/map-game.js';
+import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE_CONFIGS } from '../.verify-dist/data/map-scopes.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { LocationQuizScreen } = await loadScreens('LocationScreens.js');
+const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(LocationQuizScreen, {
+  asset,
+  session,
+  lastWrongCountryId,
+});
 
 const asset = await loadMapAsset('west-africa');
 assert.ok(asset, 'West Africa map must load for edge regressions.');

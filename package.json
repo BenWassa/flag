@@ -11,13 +11,16 @@
     "dev": "vite",
     "preview": "vite preview",
     "check": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.vite.json --noEmit",
-    "build": "vite build && tsc -p tsconfig.verify.json && node scripts/finalize-production-build.mjs",
+    "build": "vite build && npm run build:verify && node scripts/finalize-production-build.mjs",
+    "build:verify": "node scripts/build-verifier-output.mjs",
     "test:unit": "vitest run",
     "test:browser": "playwright test",
+    "test:pwa-runtime": "npm run build && playwright test tests/browser/pwa-runtime.spec.ts --project=chromium",
     "maps:generate": "node scripts/generate-map-assets.mjs",
     "icons:continents:generate": "node scripts/generate-continent-icons.mjs",
     "icons:brand:generate": "node scripts/generate-brand-icons.mjs",
-    "verify": "node scripts/verify-vite-build.mjs && node scripts/verify.mjs && node scripts/verify-learning-evidence.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-map-insets.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-continent-foundation.mjs && node scripts/verify-south-america.mjs && node scripts/verify-europe.mjs && node scripts/verify-asia-expansion.mjs && node scripts/verify-map-contrast.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-neighbor-keyboard.mjs && node scripts/verify-mobile-gestures.mjs && node scripts/verify-zero-neighbours.mjs && node scripts/verify-play-feedback.mjs && node scripts/verify-flags-study.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-achievements.mjs && node scripts/verify-progress-summary.mjs && node scripts/verify-british-english.mjs && node scripts/verify-atlas-brand.mjs && node scripts/verify-action-feedback.mjs",
+    "verify": "node scripts/verify-vite-build.mjs && node scripts/verify.mjs && node scripts/verify-learning-evidence.mjs && node scripts/verify-map.mjs && node scripts/verify-map-v4-edge.mjs && node scripts/verify-map-insets.mjs && node scripts/verify-routing.mjs && node scripts/verify-ia.mjs && node scripts/verify-icons.mjs && node scripts/verify-cartography.mjs && node scripts/verify-continent-foundation.mjs && node scripts/verify-south-america.mjs && node scripts/verify-europe.mjs && node scripts/verify-asia-expansion.mjs && node scripts/verify-map-contrast.mjs && node scripts/verify-map-generation-entry.mjs && node scripts/verify-outline.mjs && node scripts/verify-neighbors.mjs && node scripts/verify-neighbor-map.mjs && node scripts/verify-neighbor-keyboard.mjs && node scripts/verify-mobile-gestures.mjs && node scripts/verify-zero-neighbours.mjs && node scripts/verify-play-feedback.mjs && node scripts/verify-flags-study.mjs && node scripts/verify-domain-integration.mjs && node scripts/verify-achievements.mjs && node scripts/verify-progress-summary.mjs && node scripts/verify-british-english.mjs && node scripts/verify-atlas-brand.mjs && node scripts/verify-action-feedback.mjs && npm run verify:clean",
+    "verify:clean": "node scripts/build-verifier-output.mjs --clean",
     "test": "npm run check && npm run test:unit && npm run build && npm run verify"
   },
   "devDependencies": {

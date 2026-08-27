@@ -48,7 +48,7 @@ To run the complete verification suite:
 npm test
 ```
 
-`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, preserves the temporary verifier-only module emit required by the existing plain-Node invariant suite, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
+`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, emits the temporary plain-Node verifier modules only to ignored `.verify-dist/`, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
 
 Serve `dist/` with any static server for production-artifact inspection, for example:
 
@@ -66,9 +66,11 @@ During supported quizzes:
 
 ## Deploy
 
-Pushes to `main` run `.github/workflows/pages.yml`, which builds and deploys the tested `dist/` artifact to GitHub Pages after CI succeeds.
-
-Firebase Hosting can replace GitHub Pages without changing the application structure. Local hosting configuration and remote deployment remain part of Issue #46: selecting or creating a Firebase project is an explicit infrastructure decision and is not inferred during the React/Vite migration.
+Pushes to `main` build after CI and deploy the static `dist/` artifact to both
+GitHub Pages and Firebase Hosting (`atlas-3c48a.web.app`). GitHub Pages remains
+the declared primary production host. Issue #107 owns Firebase-origin browser,
+Auth, degraded-state and rollback acceptance before any explicit primary-host
+cutover; #106 separately owns real cloud progress sync.
 
 ## Architecture
 
@@ -79,7 +81,7 @@ src/infrastructure   persistence + flag assets
 src/routing          stable hash-route model
 src/state            application/session state
 src/react            React shell, screens and components
-src/ui               framework-independent UI/map adapters and legacy verifier fixtures
+src/ui               framework-independent UI/map adapters
 src/main.tsx         production browser entry
 src/sw.ts            generated Workbox service-worker policy
 ```

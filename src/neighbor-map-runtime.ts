@@ -105,7 +105,9 @@ function applyAsset(host: HTMLElement, asset: MapRegionAsset): void {
 }
 
 function hydrateHost(host: HTMLElement): void {
-  if (host.dataset.neighborMapStatus === 'loading' || host.dataset.neighborMapStatus === 'ready') return;
+  if (host.dataset.neighborMapStatus === 'loading'
+    || host.dataset.neighborMapStatus === 'ready'
+    || host.dataset.neighborMapStatus === 'error') return;
   const key = host.dataset.neighborMapKey;
   const scopeId = host.dataset.scopeId;
   if (!key || !scopeId) return;

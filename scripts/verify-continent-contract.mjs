@@ -16,10 +16,10 @@ export async function verifyContinentContract({
   maxRawBytes = 1_000_000,
   maxGzipBytes = 300_000,
 }) {
-  const mapScopes = await import('../dist/data/map-scopes.js');
-  const maps = await import('../dist/data/maps/index.js');
-  const support = await import('../dist/domain/scope-support.js');
-  const learningScopes = await import('../dist/data/learning-scopes.js');
+  const mapScopes = await import('../.verify-dist/data/map-scopes.js');
+  const maps = await import('../.verify-dist/data/maps/index.js');
+  const support = await import('../.verify-dist/domain/scope-support.js');
+  const learningScopes = await import('../.verify-dist/data/learning-scopes.js');
 
   const continent = mapScopes.getMapContinentConfig(continentId);
   assert.ok(continent, `${continentId} is registered as generated geography.`);

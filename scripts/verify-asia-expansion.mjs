@@ -6,32 +6,32 @@ import {
   ASIA_MAP_REGION_CONFIGS,
   CAUCASUS_MAP_COUNTRY_IDS,
   MIDDLE_EAST_MAP_COUNTRY_IDS,
-} from '../dist/data/map-scopes.js';
+} from '../.verify-dist/data/map-scopes.js';
 import {
   CAUCASUS_LEARNING_COUNTRY_IDS,
   MIDDLE_EAST_LEARNING_COUNTRY_IDS,
   countryIdsForLearningScope,
   getLearningScopeDefinition,
   regionLearningScopes,
-} from '../dist/data/learning-scopes.js';
-import { COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
+} from '../.verify-dist/data/learning-scopes.js';
+import { COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
 import {
   ASIA_LAND_ADJACENCY,
   ASIA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/index.js';
+} from '../.verify-dist/data/neighbors/index.js';
 import {
   ASIA_CARTOGRAPHY_PROVENANCE,
   ASIA_GEOMETRY,
   ASIA_SCOPE_FOCUS,
   ASIA_WATER,
-} from '../dist/data/maps/asia.js';
+} from '../.verify-dist/data/maps/asia.js';
 import {
   createInitialAchievementState,
   getContinentAchievementReadModel,
-} from '../dist/domain/achievements.js';
-import { scopeSupportsDomain, countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
-import { parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+} from '../.verify-dist/domain/achievements.js';
+import { scopeSupportsDomain, countryIdsForSupportedScope } from '../.verify-dist/domain/scope-support.js';
+import { parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { verifyContinentContract } from './verify-continent-contract.mjs';
 
 function sorted(values) {
@@ -86,7 +86,7 @@ const sizes = await verifyContinentContract({
   expectedRegionIds,
   expectedRegionalCountryIds: expectedRegionalCoverage,
   expectedNeighborCountryIds: ASIA_MAP_COUNTRY_IDS,
-  runtimeModulePath: 'dist/data/maps/asia.js',
+  runtimeModulePath: '.verify-dist/data/maps/asia.js',
   maxRawBytes: 3_100_000,
   maxGzipBytes: 500_000,
 });
@@ -250,8 +250,8 @@ for (const [id, floor] of Object.entries(SMALL_COUNTRY_FLOOR)) {
   );
 }
 
-const moduleStat = await stat('dist/data/maps/asia.js');
-const moduleBytes = await readFile('dist/data/maps/asia.js');
+const moduleStat = await stat('.verify-dist/data/maps/asia.js');
+const moduleBytes = await readFile('.verify-dist/data/maps/asia.js');
 const gzipBytes = gzipSync(moduleBytes, { level: 9 }).byteLength;
 assert.equal(moduleStat.size, sizes.rawBytes);
 assert.equal(gzipBytes, sizes.gzipBytes);

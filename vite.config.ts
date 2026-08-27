@@ -6,6 +6,24 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const root = process.cwd();
 
+/**
+ * The PWA runtime harness builds two otherwise identical production artifacts
+ * and uses this inert marker to make the deployment transition observable.
+ * Normal builds never set the variable, so this hook has no production output.
+ */
+function pwaRuntimeValidationMarker(): Plugin {
+  const marker = process.env.ATLAS_PWA_RUNTIME_BUILD_MARKER;
+  if (!marker) return { name: 'atlas-pwa-runtime-validation-marker' };
+  if (!/^[a-z0-9-]+$/i.test(marker)) throw new Error('ATLAS_PWA_RUNTIME_BUILD_MARKER must be a simple build label.');
+
+  return {
+    name: 'atlas-pwa-runtime-validation-marker',
+    transformIndexHtml(html) {
+      return html.replace('</head>', `  <meta name="atlas-pwa-runtime-build" content="${marker}">\n</head>`);
+    },
+  };
+}
+
 const stableEntries = new Map<string, string>([
   ['app', 'app.js'],
   ['map-viewport', 'map-viewport.js'],
@@ -47,6 +65,7 @@ export default defineConfig(({ command }) => ({
   },
   plugins: [
     resolveTypeScriptForJsSpecifiers(),
+    pwaRuntimeValidationMarker(),
     react(),
     VitePWA({
       strategies: 'injectManifest',

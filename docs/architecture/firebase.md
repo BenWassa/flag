@@ -1,16 +1,25 @@
 # Firebase architecture
 
 **Status:** partially implemented on Atlas 1.0.0
-**Reconciled against:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`
+**Reconciled against:** `d8f52ec94105043f3105f79209da6e4c62745b4a`
 **Tracking issue:** #46
 **Remaining cloud-data work:** #106
 **Remaining Hosting work:** #107
 
 ## Purpose
 
-Atlas has a real Firebase client boundary, but Firebase does not currently own learner progress or production hosting.
+Atlas has a real Firebase client boundary and a live Firebase Hosting deployment
+target, but Firebase does not currently own learner progress or the declared
+primary production host.
 
-Current production remains a React/Vite PWA hosted on GitHub Pages with local browser persistence as the authoritative runtime persistence path. Firebase currently provides client configuration, Google authentication plumbing, a named Firestore database handle, a generic document helper and checked-in Firestore rules. The Firestore helper is not wired into `AppStore`, so no learning state is currently uploaded, downloaded, reconciled or restored from Firestore.
+The declared primary production host remains GitHub Pages, while the same
+React/Vite PWA is also deployed automatically to Firebase Hosting at
+`https://atlas-3c48a.web.app/`. Local browser persistence remains the
+authoritative runtime persistence path. Firebase also provides client
+configuration, Google authentication plumbing, a named Firestore database
+handle, a generic document helper and deployed Firestore rules. The Firestore
+helper is not wired into `AppStore`, so no learning state is currently uploaded,
+downloaded, reconciled or restored from Firestore.
 
 This document describes the implementation that exists. It is not a Firebase setup tutorial and does not treat repository configuration as proof of remote Firebase-console state.
 
@@ -60,7 +69,11 @@ The repository selects Firebase project `atlas-3c48a` in `.firebaserc`.
 
 The browser Firebase Web configuration is intentionally client-visible. Those identifiers are not an access-control boundary and must not be treated as secrets. Access control belongs to Firebase Auth, Firestore Security Rules and any future server-side policy.
 
-Repository state does **not** prove that the corresponding remote project settings are currently deployed or enabled. Provider enablement, authorised domains, deployed Firestore rules and other console-side settings require explicit verification under #106/#107.
+Repository state alone does **not** prove remote project settings. The successful
+post-merge deployment run for `d8f52ec` proves that Hosting deployed and the
+checked-in Firestore rules compiled and were released to project `atlas-3c48a`.
+Provider enablement, authorised domains and other console-side settings still
+require explicit verification under #106/#107.
 
 ## Authentication
 
@@ -233,11 +246,26 @@ Generic production-browser offline/update evidence belongs to #93 and #101. Phys
 
 ### Current production host
 
-GitHub Pages is the verified production host. `.github/workflows/pages.yml` deploys a Node 22 Vite build after successful main CI. The current-main CI and Pages runs for `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01` both completed successfully during this reconciliation.
+GitHub Pages remains the declared primary production host.
+`.github/workflows/pages.yml` deploys a Node 22 Vite build after successful main
+CI. Main commit `d8f52ec` passed CI and deployed successfully to GitHub Pages.
 
 ### Firebase Hosting status
 
-Firebase Hosting is not configured in `firebase.json`; there is no checked-in Hosting deployment workflow, cutover procedure or rollback procedure. Repository evidence therefore does not show Firebase Hosting as a current deployment target.
+Firebase Hosting is configured in `firebase.json` for `dist/`, with an SPA
+fallback to `index.html`. `.github/workflows/firebase-deploy.yml` runs after a
+successful `main` CI build and deploys both Hosting and the checked-in Firestore
+rules to project `atlas-3c48a` using a repository secret.
+
+The [post-merge run for `d8f52ec`](https://github.com/BenWassa/flag/actions/runs/33025732947)
+completed successfully on 2026-08-26, deployed Hosting version
+`8f3c77e24df97f29`, and reported `https://atlas-3c48a.web.app/` as the Hosting
+origin. It also compiled and released `firestore.rules` to the named project.
+This is deployment evidence,
+not the complete #107 acceptance gate: no checked-in evidence yet covers the
+Firebase-origin browser matrix, Google Auth authorised-domain behaviour,
+degraded cloud-service behaviour, or an exercised rollback. GitHub Pages remains
+the stated primary host, so no production-host cutover decision has been made.
 
 The Vite build is already host-portable:
 
@@ -248,13 +276,16 @@ The Vite build is already host-portable:
 
 Hash routing should remain the #46 preservation boundary. Fragments are not sent to the host, so moving the same static artifact to Firebase Hosting does not require a History-path migration. Clean paths are a separate routing/product decision, not a Hosting prerequisite.
 
-#107 owns Firebase Hosting configuration, preview/deployment, Firebase-origin verification, production cutover and rollback.
+#107 now owns the remaining Firebase-origin verification, explicit host decision,
+and rollback exercise. Configuration and repeatable live deployment have shipped.
 
 ## Relationship to #100
 
-Current `npm run build` appends the temporary `tsconfig.verify.json` compatibility emit to deployable `dist/`. #100 owns removing/narrowing that verifier-only output; the current artifact remains valid but includes approximately 6.78 MB of compatibility modules, including 16 unreferenced compiled legacy `ui/views/*.js` files.
-
-Firebase Hosting configuration and preview work can use that same valid `dist/` independently. Production Hosting cutover should normally follow #100 so Atlas does not deliberately establish a new production target around known temporary deployment output and then immediately re-baseline artifact/cache evidence.
+`npm run build` now keeps the temporary `tsconfig.verify.json` output in
+ignored `.verify-dist/`, not deployable `dist/`. The #100 cleanup removed the
+16 legacy renderer fixtures and asserts the Vite/Workbox artifact has no
+verifier-only directory trees. The Firebase target therefore receives the same
+lean production artifact inspected locally (33 files / 7,281,623 bytes).
 
 This is a cutover-sequencing relationship, not a reason to make #107 implement #100.
 
@@ -283,17 +314,17 @@ Current main has no durable Firebase privacy/data-retention/account-deletion doc
 | Area | Current state |
 | --- | --- |
 | Firebase SDK + app initialisation | Shipped |
-| Project/client configuration in repository | Shipped; remote console state not verified |
+| Project/client configuration in repository | Shipped; deployment target verified, Auth console state not verified |
 | Google Auth client integration | Partially shipped |
 | Account deletion/privacy lifecycle | Remaining |
 | Firestore handle + generic get/set helper | Shipped as infrastructure only |
 | Actual learner-state cloud sync | Remaining; zero production callers today |
 | Local-first persistence | Shipped |
 | Cloud queue/retry/conflict/backfill | Remaining |
-| Checked-in least-privilege rules | Partially shipped; deployment/tests not verified |
+| Checked-in least-privilege rules | Deployed; Emulator/rules tests still missing |
 | Emulator/rules tests | Remaining |
 | Custom Firestore indexes | Not required by current exact-document design |
-| Firebase Hosting | Remaining |
+| Firebase Hosting | Configured and deployed; origin acceptance/cutover/rollback remain |
 | GitHub Pages hosting | Shipped and verified |
 | Hash routing | Shipped and retained |
 | Clean History paths | Superseded as a #46 requirement |

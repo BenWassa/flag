@@ -299,7 +299,11 @@ function currentRouteKey(route: AppRoute, store: AppStore) {
   if (view.name === 'quiz') return `${path}:${store.session?.id}:${store.session?.currentIndex}`;
   if (view.name === 'map-quiz') return `${path}:${store.mapSession?.id}:${store.mapSession?.currentIndex}`;
   if (view.name === 'outline-quiz') return `${path}:${store.outlineSession?.id}:${store.outlineSession?.currentIndex}`;
-  if (view.name === 'neighbor-quiz') return `${path}:${store.neighborSession?.id}:${store.neighborSession?.currentIndex}:${store.neighborSession?.targets[store.neighborSession.countryIds[store.neighborSession.currentIndex] ?? '']?.guessedIds.length}`;
+  // Include every submitted attempt, not only unique guesses. Duplicate
+  // Neighbours submissions intentionally leave guessedIds unchanged, but they
+  // still produce feedback and must retrigger the focus-intent effect so the
+  // entry field remains the keyboard stop after the response.
+  if (view.name === 'neighbor-quiz') return `${path}:${store.neighborSession?.id}:${store.neighborSession?.currentIndex}:${store.neighborSession?.attempts.length}`;
   if ('result' in view) return `${path}:results:${view.result.session.id}`;
   return path;
 }

@@ -1,30 +1,27 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { loadOutlineAsset } from '../dist/data/outlines.js';
-import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { domainDisplayName } from '../dist/domain/display.js';
-import { buildMapSession, createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { buildNeighborSession, createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { deriveNeighborMapModel } from '../dist/domain/neighbor-map.js';
-import { buildOutlineQuiz } from '../dist/domain/outline.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { buildQuiz } from '../dist/domain/quiz.js';
-import { parseRoutePath, routeTitle, serializeRoutePath } from '../dist/routing/routes.js';
-import { neighborMapSummary, renderNeighborMap } from '../dist/ui/components/neighbor-map.js';
-import { renderDomainIndex } from '../dist/ui/views/domain.js';
-import { renderHome } from '../dist/ui/views/home.js';
-import { renderMapHome } from '../dist/ui/views/map-home.js';
-import { renderMapQuiz } from '../dist/ui/views/map-quiz.js';
-import { renderNeighborHome } from '../dist/ui/views/neighbor-home.js';
-import { renderNeighborQuiz } from '../dist/ui/views/neighbor-quiz.js';
-import { renderOutlineHome } from '../dist/ui/views/outline-home.js';
-import { renderOutlineQuiz } from '../dist/ui/views/outline-quiz.js';
-import { renderQuiz } from '../dist/ui/views/quiz.js';
-import { renderScope } from '../dist/ui/views/scope.js';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { loadOutlineAsset } from '../.verify-dist/data/outlines.js';
+import { AFRICA_LAND_ADJACENCY } from '../.verify-dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { domainDisplayName } from '../.verify-dist/domain/display.js';
+import { buildMapSession, createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { buildNeighborSession, createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { deriveNeighborMapModel } from '../.verify-dist/domain/neighbor-map.js';
+import { buildOutlineQuiz } from '../.verify-dist/domain/outline.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { buildQuiz } from '../.verify-dist/domain/quiz.js';
+import { parseRoutePath, routeTitle, serializeRoutePath } from '../.verify-dist/routing/routes.js';
+import { neighborMapSummary, renderNeighborMap } from '../.verify-dist/ui/components/neighbor-map.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
+const { FlagsLauncherScreen, GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { FlagsQuizScreen, OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
+const { LocationQuizScreen } = await loadScreens('LocationScreens.js');
+const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
 
 const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
@@ -51,13 +48,13 @@ const britishLedgers = {
   neighbors: neighborProgress,
 };
 const achievements = createInitialAchievementState();
-const homeHtml = renderHome(britishLedgers);
-const flagsDomainHtml = renderDomainIndex('flags', britishLedgers, achievements);
-const neighborsDomainHtml = renderDomainIndex('neighbors', britishLedgers, achievements);
-const flagsLauncherHtml = renderScope(flagProgress, africaScope, achievements);
-const locationsLauncherHtml = renderMapHome(locationProgress, africaScope, achievements);
-const outlinesLauncherHtml = renderOutlineHome(outlineProgress, africaScope, achievements);
-const neighborsLauncherHtml = renderNeighborHome(neighborProgress, westAfricaScope, achievements);
+const homeHtml = renderScreen(HomeScreen, { ledgers: britishLedgers, persisting: true });
+const flagsDomainHtml = renderScreen(DomainScreen, { domain: 'flags', ledgers: britishLedgers, achievements, persisting: true });
+const neighborsDomainHtml = renderScreen(DomainScreen, { domain: 'neighbors', ledgers: britishLedgers, achievements, persisting: true });
+const flagsLauncherHtml = renderScreen(FlagsLauncherScreen, { progress: flagProgress, scope: africaScope, achievements, persisting: true });
+const locationsLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'locations', progress: locationProgress, scope: africaScope, achievements, persisting: true });
+const outlinesLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'outlines', progress: outlineProgress, scope: africaScope, achievements, persisting: true });
+const neighborsLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'neighbors', progress: neighborProgress, scope: westAfricaScope, achievements, persisting: true });
 
 const flagQuestions = buildQuiz({
   countries: COUNTRIES,
@@ -112,10 +109,10 @@ const neighborPlaySession = buildNeighborSession(
   1,
   ['GHA'],
 );
-const flagPlayHtml = renderQuiz(flagPlaySession, flagProgress, null);
-const mapPlayHtml = renderMapQuiz(asset, mapPlaySession, null);
-const outlinePlayHtml = renderOutlineQuiz(outlineAsset, outlinePlaySession, outlineProgress, null);
-const neighborPlayHtml = renderNeighborQuiz(neighborPlaySession, null, '');
+const flagPlayHtml = renderScreen(FlagsQuizScreen, { session: flagPlaySession, progress: flagProgress, answeredCountryId: null });
+const mapPlayHtml = renderScreen(LocationQuizScreen, { asset, session: mapPlaySession, lastWrongCountryId: null });
+const outlinePlayHtml = renderScreen(OutlineQuizScreen, { asset: outlineAsset, session: outlinePlaySession, progress: outlineProgress, answeredCountryId: null });
+const neighborPlayHtml = renderScreen(NeighborQuizScreen, { session: neighborPlaySession, lastOutcome: null, query: '' });
 
 const renderedSurfaces = [
   ['Home', homeHtml],
@@ -187,18 +184,18 @@ for (const [name, surface] of renderedSurfaces) {
   }
 }
 
-// The interactive application is app.ts (the composition root: routing,
+// The interactive application is AtlasApp (the composition root: routing,
 // rendering, DOM wiring) plus one round-controller module per learning
 // domain (session orchestration, moved out of app.ts to keep it from
 // growing unbounded). Copy/spelling checks below scan the whole thing, not
 // just app.ts, since a domain's announce strings now live in its own module.
 const app = (await Promise.all(
   [
-    'dist/app.js',
-    'dist/state/flags-round.js',
-    'dist/state/locations-round.js',
-    'dist/state/outlines-round.js',
-    'dist/state/neighbors-round.js',
+    '.verify-dist/react/AtlasApp.js',
+    '.verify-dist/state/flags-round.js',
+    '.verify-dist/state/locations-round.js',
+    '.verify-dist/state/outlines-round.js',
+    '.verify-dist/state/neighbors-round.js',
   ].map((file) => readFile(file, 'utf8')),
 )).join('\n');
 const appForbiddenPhrases = [
@@ -218,9 +215,7 @@ for (const phrase of appForbiddenPhrases) {
 assert.ok(app.includes('land-neighbour targets'));
 assert.ok(app.includes('Remaining neighbours:'));
 assert.ok(app.includes('Neighbour round complete'));
-for (const action of ['start-test', 'start-map-test', 'start-outline-test', 'start-neighbor-test']) {
-  assert.ok(app.includes(action), `Built orchestration retains stable internal action identifier ${action}.`);
-}
+assert.ok(app.includes('playScope') && app.includes('startFlags'), 'Built orchestration retains the typed Play actions for every domain.');
 assert.ok(app.includes("mode === 'test'"), 'Built orchestration retains Test as the internal engine mode.');
 for (const learnerPhrase of ['Test round', 'Repeat test']) {
   assert.equal(app.includes(learnerPhrase), false, `Built app does not expose obsolete learner phrase: ${learnerPhrase}`);
@@ -236,7 +231,7 @@ assert.equal(manifest.lang, 'en-GB');
 assert.ok(manifest.description.includes('focused practice'), 'Practice is correctly retained as a noun in install metadata.');
 assert.ok(Object.hasOwn(manifest, 'background_color') && Object.hasOwn(manifest, 'theme_color'), 'Manifest API field names remain standards-compliant technical identifiers.');
 
-const storage = await readFile('dist/infrastructure/neighbor-storage.js', 'utf8');
+const storage = await readFile('.verify-dist/infrastructure/neighbor-storage.js', 'utf8');
 assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbours progress namespace remains backwards-compatible.');
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 

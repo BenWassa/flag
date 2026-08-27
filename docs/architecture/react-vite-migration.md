@@ -141,26 +141,26 @@ Generated continent geography remains split into lazy Vite chunks.
 
 CI runs that gate on Node 22 and uploads `dist/`. GitHub Pages deploys only after successful CI on `main`, rebuilding the same production inputs under Node 22.
 
-### Current compatibility emit
+### Verifier-only emit
 
-`npm run build` currently performs:
+`npm run build` performs:
 
 ```text
 vite build
 then
-tsc -p tsconfig.verify.json
+node scripts/build-verifier-output.mjs
 ```
 
-The second step exists only to keep the long-standing plain-Node verifier suite working while #100 replaces implementation-coupled assertions. It is not a second browser entry point.
+The second step emits the plain-Node verifier modules into ignored
+`.verify-dist/`, never into deployable `dist/`. It is cleaned after a
+successful verifier chain. `scripts/verify-vite-build.mjs` verifies that
+`dist/` contains no `data/`, `domain/`, `infrastructure/`, `react/`,
+`routing/`, `state/` or `ui/` compatibility trees.
 
-However, because `tsconfig.verify.json` emits into `dist/`, verifier-only modules are physically present in the CI and Pages artifacts. Current v1.0.0 evidence shows:
-
-- the browser entry graph does not import `src/app.ts` or `src/ui/views/*`;
-- the deployed Pages artifact nevertheless contains 16 compiled `ui/views/*.js` legacy string-renderer fixtures;
-- the compatibility emit also places framework-independent `data/`, `domain/`, `infrastructure/`, `routing/`, `state/` and `ui/` modules into the deployable directory even though the Vite browser graph uses bundled output;
-- `scripts/verify-vite-build.mjs` intentionally asserts the presence of compatibility output, including `dist/ui/views/map-quiz.js`.
-
-That is the concrete remaining compatibility boundary owned by #100.
+On 2026-08-26 the legacy `src/app.ts` coordinator and all 16
+`src/ui/views/*.ts` renderers were removed after an import audit. The local
+post-cleanup artifact is 33 files / 7,281,623 bytes; the separate temporary
+verifier output is 90 files / 5,735,833 bytes before its cleanup step.
 
 ## PWA architecture
 
@@ -184,7 +184,10 @@ Static production-artifact verification proves that this policy is built and wir
 
 React components intentionally retained the established semantic class names and Tactile Atlas styles during migration.
 
-CSS rationalisation remains deferred until verifier dependence on the legacy string-renderer fixtures is removed. #100 must use production-markup/coverage evidence rather than visual guesswork, preserve `atlas-theme.css` as normative design-system truth unless a dedicated design change says otherwise, and avoid changing learner-facing behaviour while deleting dead compatibility selectors.
+The #100 cleanup used production-markup/coverage evidence rather than visual
+guesswork: only the retired continent/region Play-cell reduced-motion selectors
+were removed. `atlas-theme.css` remains normative design-system truth; shared
+and dynamically generated selectors remain intact.
 
 Stable `data-action` strings may remain as inert compatibility/test metadata. What has been removed from production is the old global delegated `data-action` dispatcher.
 

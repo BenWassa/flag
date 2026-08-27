@@ -8,10 +8,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { buildInsets } from './map-generation-core.mjs';
-import { ASIA_GEOMETRY, ASIA_INSETS } from '../dist/data/maps/asia.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { buildMapSession } from '../dist/domain/map-game.js';
-import { renderMapSvg } from '../dist/ui/components/map.js';
+import { ASIA_GEOMETRY, ASIA_INSETS } from '../.verify-dist/data/maps/asia.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { buildMapSession } from '../.verify-dist/domain/map-game.js';
+import { renderMapSvg } from '../.verify-dist/ui/components/map.js';
 
 const CATALOG = [
   { id: 'AAA', name: 'Alphaland', region: 'test-region' },

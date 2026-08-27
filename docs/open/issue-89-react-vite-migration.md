@@ -1,6 +1,6 @@
 # Issue #89: Migrate Atlas to React and Vite without rewriting the product engine
 
-**Status:** Open — production migration shipped in Atlas `1.0.0`; compatibility and validation closeout remain
+**Status:** Open — local closeout implementation and acceptance evidence complete; publication/merged-main closeout pending
 
 ## Current state
 
@@ -14,6 +14,11 @@ Current `main` at the post-v1 reconciliation baseline is:
 - GitHub Pages run #376: green.
 
 The migration is therefore no longer an in-flight question of whether React/Vite will own production. They already do.
+
+The current closeout candidate is local branch
+`project-closeout-housekeeping` through `ae1e355`. It is intentionally unpushed;
+all local-completion statements below remain subject to review, merged-main CI
+and reachable-commit tracker closeout.
 
 The epic remains open because its original definition of done also requires the legacy verifier compatibility tail to be retired and the final browser/PWA validation matrix to be completed.
 
@@ -37,19 +42,19 @@ The pre-migration proposal for `useSyncExternalStore` plus `AppStore.subscribe()
 | --- | --- | --- |
 | #91 | closed | Baseline/contracts phase was completed before production migration. |
 | #92 | closed — complete | Vite owns dev/build output; relative Pages paths and lazy geography are verified; current Node 22 CI and Pages are green; exact current artifacts inspected. |
-| #93 | open — partially complete; re-scoped | Workbox InjectManifest and the intended cache policy ship, but production-browser offline/update recovery has not been demonstrated. It remains a runtime PWA validation tail coordinated with #101. |
+| #93 | implementation complete locally; tracker closeout pending | The exact built PWA now has persistent-context browser evidence for service-worker control, cached-shell offline reopening, previously loaded lazy Africa offline, explicit first-time lazy offline failure, and same-origin two-artifact update recovery. Physical installed-PWA/device work remains #71. |
 | #94 | closed — material completion documented | React owns the shell/global lifecycle. Router/store adaptation shipped through a simpler root-owned implementation rather than the proposed observable-store API. No parallel router/store exists. |
 | #95 | closed — complete | Passive React surfaces and Flags study ship; routing/IA/action-feedback invariants, React component coverage and available browser smoke evidence cover the phase boundary. |
-| #96 | open — partially complete; re-scoped | Flags production UI is React-owned and invariants are green, but the issue's required complete active-round component/browser coverage is not present. |
-| #97 | open — partially complete; re-scoped | Outlines production UI is React-owned and invariants are green, but complete React component/browser coverage is not present. |
-| #98 | open — partially complete; re-scoped | Locations production UI is React-owned and map/cartography invariants are broad; browser coverage currently reaches round launch only, not answer/pan/zoom/results parity. |
-| #99 | open — partially complete; re-scoped | Neighbours production UI is React-owned and invariant coverage is broad; there is no current Playwright Neighbours flow or equivalent React component closeout coverage. |
-| #100 | open — partially complete; re-scoped | Production runtime no longer depends on legacy string renderers/global dispatch, but legacy renderer fixtures and the broad verifier emit remain and are physically deployed as unreferenced files. |
-| #101 | open — genuinely still open | Final browser/offline/accessibility/production hardening is materially incomplete; physical-device evidence remains explicitly owned by #71. |
+| #96 | implementation complete locally; tracker closeout pending | Flags has React component coverage plus deterministic complete-round, wrong/review, repeat/exit, refresh/persistence and responsive browser evidence. |
+| #97 | implementation complete locally; tracker closeout pending | Outlines has React component coverage plus deterministic complete-round, wrong/review, keyboard/focus, answer-safe silhouette and refresh browser evidence. |
+| #98 | implementation complete locally; tracker closeout pending | Locations has React component coverage plus answer, pan, zoom, results, review, repeat/exit, refresh/persistence and mobile-emulation evidence. |
+| #99 | implementation complete locally; tracker closeout pending | Neighbours has React component coverage plus input, correct/wrong/duplicate, map, results/review, persistence, refresh and zero-neighbour browser evidence. |
+| #100 | implementation complete locally; tracker closeout pending | The verifier emit now lives outside `dist/`; the obsolete coordinator and all 16 string renderers are removed; full local `npm test` is green. |
+| #101 | implementation complete locally; tracker closeout pending | The final post-#100 artifact passes the complete invariant, component, desktop/mobile browser and PWA runtime matrix. Publication, merged-main CI and tracker administration remain; physical hardware remains independently owned by #71. |
 
 Live GitHub state was reconciled to this matrix during PR #105: #92, #94 and #95 were closed with evidence comments; #93 and #96–#101 were rewritten around current remaining work; #89 was rewritten and intentionally left open.
 
-## Exact remaining compatibility tail (#100)
+## Historical compatibility baseline (#100; superseded below)
 
 Current production dependency inspection shows:
 
@@ -63,9 +68,31 @@ Current production dependency inspection shows:
 
 #100 therefore remains real work. It is no longer “finish moving production screens to React”; it is “replace implementation-coupled verifier coverage, stop emitting compatibility fixtures into the deployable artifact, then remove the obsolete source/render/CSS tail with evidence.”
 
-This reconciliation task does not perform that implementation.
+### 2026-08-26 implementation update
 
-## Current verification truth
+#100's compatibility boundary is now removed on the closeout branch. `npm run
+build` runs Vite/Workbox for deployable `dist/`, then emits only the plain-Node
+verifier modules into ignored `.verify-dist/`. The verifier family imports that
+separate output while its production-artifact assertions continue to read
+`dist/`. `scripts/verify-vite-build.mjs` now rejects verifier-only `data/`,
+`domain/`, `infrastructure/`, `react/`, `routing/`, `state/` and `ui/` trees
+in the deployable artifact.
+
+The source coordinator `src/app.ts`, all 16 `src/ui/views/*.ts` string
+renderers, and the unused pre-Vite `scripts/build.mjs`/`scripts/dev.mjs` path
+are deleted after an import/verifier dependency audit. A real-production-markup
+CSS audit removed only the two now-unreferenced reduced-motion selectors for
+the retired continent/region Play cells; shared map and React selectors remain
+intact.
+
+Local evidence: `npm test` passed with 29 Vitest tests and the full plain-Node
+suite. The resulting `dist/` contains 33 Vite/Workbox files totalling
+7,281,623 bytes, versus the prior 132-file roughly 15.26 MB mixed artifact.
+The temporary 90-file, 5,735,833-byte verifier tree is ignored and removed by
+the successful `npm run verify` cleanup step. GitHub/CI closeout remains a
+separate tracker action.
+
+## Pre-closeout reconciliation verification baseline (superseded by the 2026-08-26 worklog)
 
 ### Invariant / Node 22 evidence
 
@@ -145,15 +172,19 @@ Closeout work under #89 must not change, merely to finish migration bookkeeping:
 - Tactile Atlas design behaviour;
 - PWA caching semantics except where a validation-discovered defect requires a separately reviewable fix.
 
-## Remaining closeout sequence
+## Remaining publication closeout sequence
 
 1. #92, #94 and #95 were closed during this reconciliation with evidence-backed comments.
 2. #93 and #96–#101 were re-scoped to current remaining work rather than historical migration implementation.
-3. Complete the verification-only tails for #93/#96–#99 or explicitly transfer non-duplicated final checks into #101 before closing those children.
-4. Complete #100 compatibility/verifier cleanup without product-semantic changes.
-5. Complete #101 against the exact post-#100 production artifact.
-6. Reconcile #71 physical-device status without duplicating it.
-7. Run the final merged-main Node 22 gate, inspect the exact production artifact and close #89 only when every required child gate is genuinely satisfied.
+3. The verification tails for #93/#96–#99, #100 cleanup and #101 final local
+   acceptance are complete on the local closeout branch.
+4. Publish and review the local commits without running a release.
+5. Merge, then run the final Node 22 gate on merged `main` and inspect the exact
+   merged artifact.
+6. Move the completed child/epic records to `docs/closed/`, fix inbound links
+   and close #93/#96–#101 followed by #89 with reachable commit/CI evidence.
+7. Keep #71 open and execute its independent physical-device schedule; do not
+   duplicate or infer that evidence from #89 automation.
 
 ## Definition of done
 

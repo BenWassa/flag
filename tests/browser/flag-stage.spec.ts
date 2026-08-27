@@ -1,4 +1,4 @@
-import { expect, test, type Browser, type Page } from '@playwright/test';
+import { expect, test, type Browser, type BrowserContext, type Page } from '@playwright/test';
 
 // Issue #90: national flags have different intrinsic aspect ratios. The Flags
 // question stage must keep the same geometry across all of them, so the answer
@@ -27,8 +27,8 @@ function flagSvg(width: number, height: number): string {
 // Every country resolves to a different FlagCDN URL, but a stand-in flag is
 // served for all of them — with caching off, so changing the ratio between
 // measurements is not defeated by a cached response.
-async function serveFlagsAt(page: Page, width: number, height: number) {
-  await page.route('https://flagcdn.com/**', async (route) => {
+async function serveFlagsAt(context: BrowserContext, width: number, height: number) {
+  await context.route('https://flagcdn.com/**', async (route) => {
     await route.fulfill({
       status: 200,
       contentType: 'image/svg+xml',
@@ -46,11 +46,13 @@ async function startFlagsRound(page: Page) {
 
 // The stage is sized by CSS, but the image inside it settles a frame later —
 // measure only once the browser has resolved the intrinsic ratio.
-async function settleFlag(page: Page) {
-  await page.waitForFunction(() => {
+async function settleFlag(page: Page, expectedRatio: number) {
+  await page.waitForFunction((ratio) => {
     const image = document.querySelector<HTMLImageElement>('.flag-stage .flag-image');
-    return Boolean(image && image.complete && image.naturalWidth > 0);
-  });
+    const frame = document.querySelector<HTMLElement>('.flag-stage .flag-frame');
+    const published = frame ? Number.parseFloat(frame.style.getPropertyValue('--flag-ratio')) : Number.NaN;
+    return Boolean(image && image.complete && image.naturalWidth > 0 && Math.abs(published - ratio) < 0.001);
+  }, expectedRatio);
 }
 
 async function stageGeometry(page: Page) {
@@ -62,12 +64,15 @@ async function stageGeometry(page: Page) {
 }
 
 async function measureRatio(browser: Browser, viewport: { width: number; height: number }, ratio: typeof RATIOS[number]) {
-  const context = await browser.newContext({ viewport: { width: viewport.width, height: viewport.height } });
+  const context = await browser.newContext({
+    viewport: { width: viewport.width, height: viewport.height },
+    serviceWorkers: 'block',
+  });
   try {
+    await serveFlagsAt(context, ratio.width, ratio.height);
     const page = await context.newPage();
-    await serveFlagsAt(page, ratio.width, ratio.height);
     await startFlagsRound(page);
-    await settleFlag(page);
+    await settleFlag(page, ratio.width / ratio.height);
     const { stage, answers, image } = await stageGeometry(page);
 
     // The flag itself is still shown whole, at its own ratio, never stretched
@@ -100,17 +105,25 @@ for (const viewport of VIEWPORTS) {
   });
 }
 
-test('keeps the stage geometry when the flag image fails to load', async ({ browser, page }) => {
+test('keeps the stage geometry when the flag image fails to load', async ({ browser }) => {
   const loaded = await measureRatio(browser, { width: 390, height: 844 }, RATIOS[1]);
 
-  await page.setViewportSize({ width: 390, height: 844 });
-  await page.route('https://flagcdn.com/**', (route) => route.abort());
-  await startFlagsRound(page);
-  await expect(page.locator('.flag-frame--failed')).toBeVisible();
-  const failedStage = await page.locator('.flag-stage').boundingBox();
-  const failedAnswers = await page.locator('.answer-panel').boundingBox();
-  if (!failedStage || !failedAnswers) throw new Error('Failed flag state did not render');
+  const context = await browser.newContext({
+    viewport: { width: 390, height: 844 },
+    serviceWorkers: 'block',
+  });
+  try {
+    await context.route('https://flagcdn.com/**', (route) => route.abort());
+    const page = await context.newPage();
+    await startFlagsRound(page);
+    await expect(page.locator('.flag-frame--failed')).toBeVisible();
+    const failedStage = await page.locator('.flag-stage').boundingBox();
+    const failedAnswers = await page.locator('.answer-panel').boundingBox();
+    if (!failedStage || !failedAnswers) throw new Error('Failed flag state did not render');
 
-  expect(Math.abs(failedStage.height - loaded.stageHeight)).toBeLessThanOrEqual(1);
-  expect(Math.abs(failedAnswers.y - loaded.answersTop)).toBeLessThanOrEqual(1);
+    expect(Math.abs(failedStage.height - loaded.stageHeight)).toBeLessThanOrEqual(1);
+    expect(Math.abs(failedAnswers.y - loaded.answersTop)).toBeLessThanOrEqual(1);
+  } finally {
+    await context.close();
+  }
 });

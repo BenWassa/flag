@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
-import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
-import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
-import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../dist/domain/progress.js';
-import { balancedPositions, buildQuiz, createSeededRandom } from '../dist/domain/quiz.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { CONTINENTS, REGIONS } from '../.verify-dist/data/continents.js';
+import { LEARNING_DOMAIN_IDS } from '../.verify-dist/domain/models.js';
+import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
+import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../.verify-dist/domain/progress.js';
+import { balancedPositions, buildQuiz, createSeededRandom } from '../.verify-dist/domain/quiz.js';
 
 const EXPECTED_CONTINENT_TOTALS = {
   africa: 54,
@@ -90,19 +90,22 @@ assert.equal(getRecord(lapsed, 'GHA').status, 'learning', 'A mastered miss must 
 assert.equal(masteryGoal(getRecord(lapsed, 'GHA')), 2, 'A mastered lapse uses the v1 two-success recovery goal.');
 assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections must feed the confusion graph.');
 
-// --- View rendering -------------------------------------------------------
-// The views are pure string builders, so their output can be asserted here
-// without a browser. These guard the states that are easy to break silently:
-// launcher actions, focus landing points, and evidence-language boundaries.
+// --- Production React rendering ------------------------------------------
+// Render the shipped React screens to static markup so these assertions cover
+// the learner-facing presentation rather than the retired string renderers.
+const { loadScreens, renderScreen } = await import('./lib/react-markup.mjs');
+const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
+const { FlagsLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { FlagsQuizScreen, RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');
 
-const { renderHome } = await import('../dist/ui/views/home.js');
-const { renderDomainIndex } = await import('../dist/ui/views/domain.js');
-const { renderScope } = await import('../dist/ui/views/scope.js');
-const { renderQuiz } = await import('../dist/ui/views/quiz.js');
-const { renderResults } = await import('../dist/ui/views/results.js');
-const { renderFocusIntent } = await import('../dist/ui/focus.js');
-const { buildQuiz: build } = await import('../dist/domain/quiz.js');
-const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
+const renderHome = (ledgers, persisting = true) => renderScreen(HomeScreen, { ledgers, persisting });
+const renderDomainIndex = (domain, ledgers, achievements, persisting = true) => renderScreen(DomainScreen, { domain, ledgers, achievements, persisting });
+const renderScope = (progress, scope, achievements, persisting = true) => renderScreen(FlagsLauncherScreen, { progress, scope, achievements, persisting });
+const renderQuiz = (session, progress, answeredCountryId) => renderScreen(FlagsQuizScreen, { session, progress, answeredCountryId });
+const renderResults = (result) => renderScreen(RecognitionResultsScreen, { result, domain: 'flags' });
+const { renderFocusIntent } = await import('../.verify-dist/ui/focus.js');
+const { buildQuiz: build } = await import('../.verify-dist/domain/quiz.js');
+const { createInitialAchievementState } = await import('../.verify-dist/domain/achievements.js');
 const achievements = createInitialAchievementState();
 
 assert.equal(
@@ -146,7 +149,7 @@ for (const [name, html] of Object.entries(screens)) {
 // Home is mode-first: it selects a learning domain, and geography is chosen
 // one level deeper on that domain's own continent index.
 assert.equal(
-  (screens.home.match(/data-action="open-domain"/g) ?? []).length,
+  (screens.home.match(/class="atlas-card"/g) ?? []).length,
   LEARNING_DOMAIN_IDS.length,
   'Home exposes every learning domain.',
 );
@@ -162,7 +165,7 @@ assert.equal(
 );
 // The domain index is the continent list for exactly one domain.
 assert.equal(
-  (screens.flagsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  (screens.flagsIndex.match(/<button class="continent-row__open"/g) ?? []).length,
   CONTINENTS.length,
   'Flags reaches every continent from its own index.',
 );
@@ -171,7 +174,7 @@ const shippedLocationContinents = CONTINENTS.filter((continent) => scopeSupports
   'locations',
 )).length;
 assert.equal(
-  (screens.locationsIndex.match(/data-action="open-scope"/g) ?? []).length,
+  (screens.locationsIndex.match(/<button class="continent-row__open"/g) ?? []).length,
   shippedLocationContinents,
   'Locations opens every continent with canonical shipped map coverage.',
 );
@@ -185,12 +188,12 @@ assert.ok(
   'An unshipped continent names the gap rather than looking playable.',
 );
 assert.equal(
-  screens.locationsIndex.includes('data-action="start-test"'),
+  screens.locationsIndex.includes('Play world'),
   false,
   'Only Flags offers a world round, because only Flags teaches the world.',
 );
 assert.ok(
-  screens.flagsIndex.includes('data-action="start-test"'),
+  screens.flagsIndex.includes('>Play world</button>'),
   'The Flags index keeps its world round.',
 );
 assert.ok(screens.scope.includes('aria-label="Play All Africa"') && screens.scope.includes('Learn Africa'), 'The continent launcher plays the whole continent from its own row and keeps Learn below.');
@@ -226,7 +229,7 @@ assert.ok(unanswered.includes('flag-fallback'), 'Every flag carries a fallback f
 
 const answered = renderQuiz(quizSession, fresh, quizSession.questions[0].countryId);
 assert.ok(
-  answered.includes('data-action="next-question" data-autofocus'),
+  answered.includes('answer-feedback--correct') && answered.includes('data-autofocus=""'),
   'After a clean Learn answer, the correct answer becomes the focused advance control.',
 );
 assert.ok(!answered.includes('aria-live'), 'Announcements belong to the persistent live region, not re-rendered nodes.');
@@ -245,8 +248,8 @@ assert.ok(emptyResult.includes('Clean round'), 'A perfect round still reports it
 // views are written against: hostile text, a corrupted ledger, a scope with
 // nothing in it, and an id the catalog no longer knows.
 
-const { escapeHtml } = await import('../dist/ui/format.js');
-const { sanitizeRecord } = await import('../dist/infrastructure/storage.js');
+const { escapeHtml } = await import('../.verify-dist/ui/format.js');
+const { sanitizeRecord } = await import('../.verify-dist/infrastructure/storage.js');
 
 assert.equal(
   escapeHtml('Australia & New Zealand'),
@@ -318,7 +321,7 @@ const staleOptions = {
 };
 const staleHtml = renderQuiz(staleOptions, fresh, null);
 assert.ok(!staleHtml.includes('This round could not be built'), 'A stale distractor still leaves an answerable question.');
-assert.equal((staleHtml.match(/data-action="answer"/g) ?? []).length, 1, 'Options the catalog no longer knows are dropped.');
+assert.equal((staleHtml.match(/class="answer-button /g) ?? []).length, 1, 'Options the catalog no longer knows are dropped.');
 
 const staleTarget = { ...quizSession, questions: [{ ...quizSession.questions[0], countryId: 'NOPE' }], currentIndex: 0 };
 assert.ok(
@@ -374,7 +377,7 @@ globalThis.localStorage = {
   removeItem() {},
 };
 
-const { AppStore } = await import('../dist/state/store.js');
+const { AppStore } = await import('../.verify-dist/state/store.js');
 
 for (const mode of ['ok', 'throw-write', 'throw-read']) {
   storageMode = mode;

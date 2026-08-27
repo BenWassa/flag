@@ -1,18 +1,18 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
+import { COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/index.js';
+} from '../.verify-dist/data/neighbors/index.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
   createInitialNeighborProgress,
-} from '../dist/domain/neighbor-game.js';
+} from '../.verify-dist/domain/neighbor-game.js';
 import {
   boundsContain,
   calculateNeighborClusterBounds,
@@ -20,13 +20,20 @@ import {
   deriveNeighborMapModel,
   geometryBounds,
   labelBoxes,
-} from '../dist/domain/neighbor-map.js';
+} from '../.verify-dist/domain/neighbor-map.js';
 import {
   neighborMapSummary,
   renderNeighborMap,
   renderNeighborPuzzleLayer,
-} from '../dist/ui/components/neighbor-map.js';
-import { renderNeighborQuiz } from '../dist/ui/views/neighbor-quiz.js';
+} from '../.verify-dist/ui/components/neighbor-map.js';
+import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+
+const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
+const renderNeighborQuiz = (session, lastOutcome, query) => renderScreen(NeighborQuizScreen, {
+  session,
+  lastOutcome,
+  query,
+});
 
 const asset = await loadMapAsset('africa');
 assert.ok(asset, 'Canonical Issue #9 Africa asset loads for Neighbours map presentation.');
@@ -222,7 +229,7 @@ const runtime = await readFile('src/neighbor-map-runtime.ts', 'utf8');
 assert.ok(runtime.includes('loadMapAsset(scopeId)') && runtime.includes('assetPromiseByScopeId'), 'Neighbour geometry is requested lazily and memoised by the active scope.');
 assert.ok(!runtime.includes('AFRICA_GEOMETRY'), 'Neighbor runtime does not eagerly embed the heavyweight canonical geometry module.');
 assert.ok(runtime.includes('detachedShell') && runtime.includes('patchNeighborMapShell'), 'Guess rerenders reuse the expensive SVG shell and patch puzzle layers only.');
-const renderer = await readFile('dist/ui/components/neighbor-map.js', 'utf8');
+const renderer = await readFile('.verify-dist/ui/components/neighbor-map.js', 'utf8');
 assert.ok(renderer.includes('data-map-viewport') && renderer.includes('data-map-focus'), 'Neighbor map reuses the production viewport abstraction and fitted focus contract.');
 assert.equal(renderer.includes('data-map-command='), false, 'Neighbor map stays free of toolbar command chrome.');
 assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography stays text-entry driven and non-clickable.');

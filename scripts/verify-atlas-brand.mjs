@@ -1,11 +1,11 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { parseRoutePath, routeTitle } from '../dist/routing/routes.js';
+import { parseRoutePath, routeTitle } from '../.verify-dist/routing/routes.js';
 
 const index = await readFile('dist/index.html', 'utf8');
 const manifest = JSON.parse(await readFile('dist/manifest.webmanifest', 'utf8'));
-const app = await readFile('src/app.ts', 'utf8');
-const appSource = await readFile('src/app.ts', 'utf8');
+const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
+const appSource = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
 
 assert.match(index, /<title>Atlas<\/title>/, 'The initial browser title uses the learner-facing Atlas brand.');
@@ -41,10 +41,10 @@ assert.ok(serviceWorker.includes('flag-atlas-v29'), 'The React/Vite app-shell ca
 assert.ok(serviceWorker.includes('manifest.webmanifest'), 'Updated install metadata remains in the offline shell.');
 
 const storageSources = await Promise.all([
-  'dist/infrastructure/storage.js',
-  'dist/infrastructure/map-storage.js',
-  'dist/infrastructure/outline-storage.js',
-  'dist/infrastructure/neighbor-storage.js',
+  '.verify-dist/infrastructure/storage.js',
+  '.verify-dist/infrastructure/map-storage.js',
+  '.verify-dist/infrastructure/outline-storage.js',
+  '.verify-dist/infrastructure/neighbor-storage.js',
 ].map((path) => readFile(path, 'utf8')));
 assert.ok(storageSources.every((source) => source.includes('flag-atlas:')), 'Legacy storage namespaces remain compatible.');
 

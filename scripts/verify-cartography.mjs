@@ -11,11 +11,11 @@ import {
   AFRICA_SHARED_BOUNDARY_PATHS,
   AFRICA_VIEWBOX,
   AFRICA_WATER,
-} from '../dist/data/maps/africa.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { buildMapSession } from '../dist/domain/map-game.js';
-import { renderMapSvg } from '../dist/ui/components/map.js';
+} from '../.verify-dist/data/maps/africa.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { buildMapSession } from '../.verify-dist/domain/map-game.js';
+import { renderMapSvg } from '../.verify-dist/ui/components/map.js';
 
 assert.equal(AFRICA_VIEWBOX, '0 0 835 723', 'Production asset retains one deterministic Africa canvas.');
 assert.equal(Object.keys(AFRICA_GEOMETRY).length, 54, 'Generated production geometry has all 54 app countries.');
@@ -191,7 +191,7 @@ const serviceWorker = await readFile('dist/sw.js', 'utf8');
 assert.ok(serviceWorker.includes('flag-atlas-v29'), 'PWA cache retains the production cartography change in the React/Vite generation.');
 assert.ok(serviceWorker.includes('map-cartography.css'), 'New map viewport/cartography CSS is offline-shell compatible.');
 
-const africaModulePath = 'dist/data/maps/africa.js';
+const africaModulePath = '.verify-dist/data/maps/africa.js';
 const africaModule = await stat(africaModulePath);
 const africaModuleBytes = await readFile(africaModulePath);
 const africaGzipBytes = gzipSync(africaModuleBytes, { level: 9 }).byteLength;
@@ -211,7 +211,7 @@ function outsideCanvasCount(path, width, height) {
 }
 
 for (const continentId of ['africa', 'south-america', 'europe', 'asia']) {
-  const generated = await import(`../dist/data/maps/${continentId}.js`);
+  const generated = await import(`../.verify-dist/data/maps/${continentId}.js`);
   const prefix = continentId.replace(/-/g, '_').toUpperCase();
   const [minX, minY, spanX, spanY] = generated[`${prefix}_VIEWBOX`].split(/\s+/).map(Number);
   const canvasWidth = minX + spanX;
