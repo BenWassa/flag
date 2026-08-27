@@ -3,19 +3,10 @@ import type { LocationProgressRecord, LocationProgressState } from '../domain/ma
 import type { CountryEvidenceSummary, ProgressRecord, ProgressState } from '../domain/models.js';
 import type { NeighborProgressRecord, NeighborProgressState } from '../domain/neighbor-models.js';
 import { migrateAchievementState } from '../infrastructure/achievement-storage.js';
+import type { CloudStateKey } from '../infrastructure/firestore-sync.js';
 import { sanitizeLocationRecord } from '../infrastructure/map-storage.js';
 import { sanitizeNeighborRecord } from '../infrastructure/neighbor-storage.js';
 import { sanitizeRecord } from '../infrastructure/storage.js';
-
-export const CLOUD_STATE_KEYS = [
-  'flag-atlas:progress:v1',
-  'flag-atlas:location-progress:v1',
-  'flag-atlas:outline-progress:v1',
-  'flag-atlas:neighbor-progress:v1',
-  'flag-atlas:earned-achievements:v1',
-] as const;
-
-export type CloudStateKey = (typeof CLOUD_STATE_KEYS)[number];
 
 export interface CloudProgressState {
   'flag-atlas:progress:v1': ProgressState;
