@@ -1,6 +1,6 @@
 # Issue #22 — North America full four-domain expansion
 
-**Status:** implementation and complete integrated technical acceptance are complete on `issue-22-north-america-expansion`. Accepted candidate `00cf20c4f132403e91325a4e8c90fa7032e92b05` passed the final clean gate in GitHub Actions run `33117435601`; only PR/merge/deployment closeout remains before Issue #22 is closed.
+**Status:** complete and deployed. Implementation shipped through PR #140 at merge/main SHA `c74ba3fac51b1bfe8f1eddab5735df3b07c4b156`; merged-main CI, GitHub Pages deployment and Firebase deployment/live-origin acceptance are green. Issue #22 is ready to close.
 
 ## Outcome
 
@@ -31,7 +31,7 @@ Important policy decisions:
 - remote US Minor Outlying Islands are explicitly excluded from the North America runtime context because Pacific dependency geometry is irrelevant to this learner viewport.
 - disputed banks and the Guantanamo Bay lease remain non-scoring Natural Earth context and are not Atlas countries.
 
-The provenance JSON remains strictly generator-owned. Final QA, browser, CI and deployment evidence belongs in this worklog and is not manually appended to generated provenance.
+The provenance JSON remains strictly generator-owned. QA, browser, CI and deployment evidence belongs in this worklog and was not manually appended to generated provenance.
 
 ### Viewport component filtering
 
@@ -214,6 +214,23 @@ Across those viewports it verifies North America, Northern America, Central Amer
 
 Existing #117 Germany/Liechtenstein and France/Luxembourg precedence tests stayed green, so the shared pointer fix did not weaken the real-polygon-first interaction contract.
 
+## Delivery closeout
+
+The final delivery sequence completed without further production changes after the accepted technical candidate; the only pre-PR change was the durable worklog evidence update.
+
+- Focused implementation PR: **#140 — `feat(#22): add North America across all four learning domains`**.
+- PR head after the documentation-only evidence commit: `ce34f044fc49b8cce2abb7150e6e8e62a9ef2450`.
+- Normal PR CI: run **`33118301435`**, green (`npm run check`, complete `npm test`, artifact upload).
+- Merge SHA: **`c74ba3fac51b1bfe8f1eddab5735df3b07c4b156`**.
+- Resulting production `main` SHA: **`c74ba3fac51b1bfe8f1eddab5735df3b07c4b156`**.
+- Merged-main CI: run **`33118469841`**, green.
+- GitHub Pages deployment: run **`33118578586`**, green; production build, Pages artifact upload and deployment all succeeded from the merge SHA.
+- Firebase deployment/Hosting: run **`33118578613`**, green; production build, Firebase Hosting live-channel deploy, Firestore rules deploy and live Firebase-origin Chromium acceptance all succeeded from the merge SHA.
+
+The deployed production tree is the accepted North America implementation plus documentation evidence only. The final technical gate already proved the exact lazy chunk, no service-worker precache reference, no verifier-only output, #117 precedence, pointer interactions and cross-continent generator regressions. Normal PR/main CI and both deployment workflows stayed green, so no integration change invalidated those results.
+
+No physical-device testing is claimed as part of #22 closeout.
+
 ## Lessons for Oceania
 
 Issue #27 should reuse these findings before adding new interaction machinery.
@@ -245,6 +262,6 @@ Issue #27 should reuse these findings before adding new interaction machinery.
 - [x] complete Chromium browser matrix green, 56/56;
 - [x] PWA runtime verification green;
 - [x] temporary Issue #22 verifier scaffolding removed before final candidate acceptance;
-- [ ] one focused PR green in normal CI and current with `main`;
-- [ ] merged `main`, GitHub Pages and Firebase deployment health verified;
-- [ ] durable record moved to `docs/closed/`, open-work truth reconciled and GitHub Issue #22 closed with exact PR/SHA/run evidence.
+- [x] focused PR #140 green in normal CI and current with `main` before merge;
+- [x] merged-main CI, GitHub Pages and Firebase deployment/live-origin health verified;
+- [x] durable record archived to `docs/closed/` and open-work truth reconciled.

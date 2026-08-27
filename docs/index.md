@@ -16,6 +16,7 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`closed/issue-89-implementation-worklog.md`](closed/issue-89-implementation-worklog.md) — staged #89 decisions, deviations and verification evidence.
 - [`closed/issue-90-stable-flag-stage.md`](closed/issue-90-stable-flag-stage.md) — shipped stable Flags question geometry across aspect ratios and loading states.
 - [`closed/issue-86-clip-map-context.md`](closed/issue-86-clip-map-context.md) — shipped clipping of decorative map context to continent viewports.
+- [`closed/issue-22-north-america-expansion.md`](closed/issue-22-north-america-expansion.md) — shipped North America four-domain expansion, final payload evidence, browser acceptance and deployment closeout.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
 
 ## Sections
@@ -34,7 +35,7 @@ The learner-facing product name is **Atlas** across current product documentatio
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
-Atlas currently ships production geography for Africa, South America, Europe, Asia and North America. Oceania remains open expansion work under #27; #22 is in final merge/deployment closeout.
+Atlas currently ships production geography for Africa, South America, Europe, Asia and North America. North America completed production delivery through #22 / PR #140; its durable closeout record is [`closed/issue-22-north-america-expansion.md`](closed/issue-22-north-america-expansion.md). Oceania remains the open expansion under #27.
 
 Issue #89 is an active incremental migration of the presentation/build layers to React and Vite. The existing typed router, product engine, persistence, geography and learning semantics are preservation boundaries; use the architecture decision and canonical execution plan above rather than treating the epic as a rewrite brief.
 
