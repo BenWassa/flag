@@ -97,9 +97,11 @@ spun off a focused follow-up issue below.
   Safari and installed PWA). Nothing further is verifiable in an emulator, so do
   not re-run browser checks expecting to close it. #89 must not claim this
   physical evidence unless #71 actually records it.
-- [#46 — Firebase Hosting/Firestore port](https://github.com/BenWassa/flag/issues/46).
-  Keep this separate from #89 so hosting/storage migration does not change the
-  React/Vite compatibility boundary while the platform port is in flight.
+- [#46 — Firebase Hosting/Firestore completion](https://github.com/BenWassa/flag/issues/46).
+  Firebase Hosting configuration and automatic live deployment have shipped,
+  but #107 remains open for Firebase-origin acceptance, explicit host cutover
+  and rollback. #106 still owns actual account-backed cloud progress and account
+  lifecycle. Keep both separate from #89's React/Vite compatibility boundary.
 
 #87 (gamification connective-tissue defects: due-state reporting, Play
 feedback parity, Progress evidence coverage) is complete and closed. Its

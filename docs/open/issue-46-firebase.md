@@ -1,7 +1,7 @@
 # Issue #46 — Firebase reconciliation and remaining execution plan
 
 **Status:** open; historical migration scope reconciled against Atlas 1.0.0
-**Baseline:** `fb60ccf8c5475b9c932cde0a30c46eca40ab1c01`
+**Baseline:** `d8f52ec94105043f3105f79209da6e4c62745b4a`
 **Architecture:** [`../architecture/firebase.md`](../architecture/firebase.md)
 **Cloud-data follow-up:** #106
 **Hosting follow-up:** #107
@@ -10,7 +10,12 @@
 
 Issue #46 is no longer a proposal to "port Atlas to Firebase" from a zero-runtime-framework browser application.
 
-React 19 and Vite are established production architecture. Firebase client infrastructure is already present. GitHub Pages remains the production host. Local browser persistence remains the only production learning-state repository because the checked-in Firestore helper has no application caller.
+React 19 and Vite are established production architecture. Firebase client
+infrastructure is already present. GitHub Pages remains the declared primary
+production host, and a second live deployment now exists at
+`https://atlas-3c48a.web.app/`. Local browser persistence remains the only
+production learning-state repository because the checked-in Firestore helper
+has no application caller.
 
 The remaining objective is to finish two independently valuable Firebase capabilities without replacing Atlas's existing architecture:
 
@@ -33,15 +38,15 @@ Issue #46 remains the umbrella closeout gate. It should not close until the genu
 | 8 | Write queue/retry | **REMAINING** | No Atlas cloud write queue or retry policy exists. One helper write simply returns `false` on failure. |
 | 9 | Conflict resolution | **REMAINING** | No cross-device merge/conflict policy exists. Whole-document timestamps are not an implemented conflict protocol. |
 | 10 | Migration/backfill of existing local data | **REMAINING** | Local migrations exist, but no first-sign-in local-to-cloud backfill or safe cloud-to-local restoration exists. |
-| 11 | Firestore Security Rules | **PARTIAL** | Checked-in owner rules plus a single-UID allow-list and fixed state keys are restrictive. Exact deployed rule state is not verified, and attempt arrays conflict with the rules' `data is map` requirement. |
+| 11 | Firestore Security Rules | **PARTIAL** | Checked-in owner rules plus a single-UID allow-list and fixed state keys are deployed by the successful `d8f52ec` workflow. Emulator coverage is absent, authorised-account policy is not remotely verified, and attempt arrays conflict with the rules' `data is map` requirement. |
 | 12 | Emulator/security-rule testing | **REMAINING** | No Firebase Emulator Suite/rules-unit-testing configuration or tests are checked in. |
 | 13 | Firestore indexes | **SUPERSEDED for current model** | Current exact-document `getDoc`/`setDoc` access needs no custom composite index. Add indexes only if #106 introduces a query that requires them. |
 | 14 | Degraded Firebase behaviour | **PARTIAL** | Learning remains local and Auth has generic failure UI; the unused Firestore helper swallows errors. Actual cloud-sync degradation/recovery semantics remain unimplemented. |
 | 15 | Privacy/data retention/account deletion docs | **REMAINING** | No complete Firebase-specific policy or deletion contract exists. |
-| 16 | Firebase Hosting | **REMAINING** | `firebase.json` has no Hosting block and there is no Hosting deployment workflow/cutover/rollback evidence. |
+| 16 | Firebase Hosting | **PARTIAL** | `firebase.json` targets `dist/`; the post-CI workflow deployed `d8f52ec` successfully to `atlas-3c48a.web.app`. Firebase-origin acceptance, primary-host cutover and rollback evidence remain. |
 | 17 | GitHub Pages production hosting | **SHIPPED / VERIFIED** | Current main CI and Pages deployment are green; `.github/workflows/pages.yml` is the current production deployment path. |
 | 18 | Hash routing vs clean paths | **SHIPPED / SUPERSEDED** | Hash routing is established and works independently of host. Clean History paths are no longer a #46 requirement and should not be bundled into Hosting. |
-| 19 | CI/deployment/rollback | **PARTIAL** | Node 22 CI and Pages deployment are shipped. Firebase Hosting deployment, cutover and rollback remain #107. |
+| 19 | CI/deployment/rollback | **PARTIAL** | Node 22 CI, Pages deployment and automatic Firebase Hosting/rules deployment are shipped. Host decision and exercised rollback remain #107. |
 | 20 | PWA/service-worker interaction | **PARTIAL** | Workbox/Vite PWA integration is shipped. Generic runtime evidence belongs to #93/#101; Firebase-origin/cloud-service-specific evidence belongs to #106/#107. |
 
 ## Already completed items
@@ -60,8 +65,12 @@ The following historical #46 work no longer needs to be implemented from scratch
 - React/Vite static production build suitable for host-independent deployment;
 - relative Vite assets, relative PWA scope/service-worker registration and hash routing;
 - GitHub Pages CI/deployment on Node 22.
+- Firebase Hosting configuration for `dist/` with SPA fallback;
+- a credential-safe post-CI workflow targeting `atlas-3c48a`;
+- a successful live Hosting and Firestore-rules deployment for `d8f52ec`.
 
-These are foundations, not evidence that cloud progress or Firebase Hosting is complete.
+These are foundations and real deployment evidence, not evidence that cloud
+progress or the full Firebase-origin acceptance/cutover gate is complete.
 
 ## Remaining implementation work
 
@@ -84,15 +93,20 @@ These are foundations, not evidence that cloud progress or Firebase Hosting is c
 
 ### #107 — Hosting deployment and cutover
 
-#107 owns infrastructure delivery:
+#107 has completed configuration and repeatable deployment. It still owns:
 
-- configure Firebase Hosting for `dist/`;
-- add a credential-safe reproducible deployment/preview procedure;
 - retain hash routing and current React/Vite build semantics;
 - verify relative assets, manifest, service-worker scope and lazy geography on the Firebase origin;
 - verify Google Auth authorised-domain behaviour for that origin;
 - document and validate production cutover and rollback;
 - keep Hosting independent from #106 cloud sync.
+
+Current evidence: [workflow run `33025732947`](https://github.com/BenWassa/flag/actions/runs/33025732947)
+built `d8f52ec`, deployed Hosting version `8f3c77e24df97f29` to
+`https://atlas-3c48a.web.app/`, compiled `firestore.rules`, and released the
+rules successfully. #107 remains open because a successful deploy log does not
+substitute for the browser/origin, Auth, degraded-state, host-decision and
+rollback evidence in its exit gate.
 
 ## Hosting and #100 sequencing
 
@@ -102,10 +116,10 @@ However, #100 owns removing/narrowing the temporary verifier compatibility tree 
 
 Recommended dependency relationship:
 
-1. #107 may add Hosting configuration and preview validation against current `dist/`;
+1. #107 has added Hosting configuration and a live deployment of current `dist/`;
 2. #100 removes the known temporary compatibility output;
 3. production Firebase Hosting cutover should normally use the post-#100 artifact;
-4. #107 then records the exact Firebase-hosted artifact/origin and rollback evidence.
+4. #107 then re-baselines the exact post-#100 Firebase-hosted artifact/origin and records rollback evidence before any primary-host cutover.
 
 Do not make #107 fix #100, and do not block useful Hosting configuration work merely because #100 is still open.
 

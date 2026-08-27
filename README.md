@@ -66,9 +66,11 @@ During supported quizzes:
 
 ## Deploy
 
-Pushes to `main` run `.github/workflows/pages.yml`, which builds and deploys the tested `dist/` artifact to GitHub Pages after CI succeeds.
-
-Firebase Hosting can replace GitHub Pages without changing the application structure. Local hosting configuration and remote deployment remain part of Issue #46: selecting or creating a Firebase project is an explicit infrastructure decision and is not inferred during the React/Vite migration.
+Pushes to `main` build after CI and deploy the static `dist/` artifact to both
+GitHub Pages and Firebase Hosting (`atlas-3c48a.web.app`). GitHub Pages remains
+the declared primary production host. Issue #107 owns Firebase-origin browser,
+Auth, degraded-state and rollback acceptance before any explicit primary-host
+cutover; #106 separately owns real cloud progress sync.
 
 ## Architecture
 
