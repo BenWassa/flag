@@ -1,31 +1,28 @@
-name: Issue 22 runtime integration
+name: Issue 22 full verification
 
 on:
   push:
     branches: [issue-22-north-america-expansion]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  integrate:
-    if: github.actor != 'github-actions[bot]'
+  verify:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
-      - run: python3 scripts/issue-22-integrate.py
-      - run: npm run check
-      - name: Commit runtime integration
+      - run: npm test
+      - name: Measure production North America chunk
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add src/data/map-scopes.ts src/data/maps/index.ts src/data/neighbors/index.ts
-          git diff --cached --stat
-          git commit -m "feat(#22): register North America learning support" || exit 0
-          git push origin HEAD:issue-22-north-america-expansion
+          chunk=$(find dist/assets -maxdepth 1 -type f -name 'north-america-*.js' | head -1)
+          test -n "$chunk"
+          echo "NORTH_AMERICA_CHUNK=$chunk"
+          echo "CHUNK_RAW=$(wc -c < "$chunk")"
+          echo "CHUNK_GZIP=$(gzip -9 -c "$chunk" | wc -c)"
+          echo "SOURCE_RAW=$(wc -c < src/data/maps/north-america.ts)"
+          echo "SOURCE_GZIP=$(gzip -9 -c src/data/maps/north-america.ts | wc -c)"
