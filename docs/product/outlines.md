@@ -49,9 +49,9 @@ Outlines Play is scored retrieval. Current React presentation provides the share
 
 A miss-free Play result receives transient **Perfect round** treatment on Results.
 
-Standard Outlines region Play currently launches **10 questions**. Because the achievement layer records any perfect region-scoped Play result without validating complete region target coverage, two perfect sampled region rounds can currently award persistent region × domain Mastery for regions with more than 10 eligible countries. This is the known qualification-integrity bug tracked by **#108**.
-
-The product requirement remains two consecutive perfect complete-region Play results for Mastery once #108 is implemented.
+Standard Outlines region Play launches the complete supported region target set.
+The achievement layer validates exact coverage, so sampled rounds cannot award
+or reset region × domain Mastery. Issue #108 shipped this qualification guard.
 
 ## Independent evidence
 

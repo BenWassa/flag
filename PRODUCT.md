@@ -91,13 +91,16 @@ The first durable prestige unit is **region × domain Mastery**: for example, Fl
 
 Purple is reserved for this durable competency state. Country-level evidence does not independently promote a country into learner-facing Mastery.
 
-### Current v1.0 qualification behaviour
+### Current qualification behaviour
 
-The achievement engine currently awards region × domain Mastery after **two consecutive perfect region-scoped Play results** for that region and domain. A non-perfect region-scoped Play result resets the in-progress streak; an already-earned Mastery is not revoked.
-
-There is a known v1.0 qualification-integrity defect: ordinary region Play is full-scope in Locations, but Flags, Outlines and Neighbours currently default to 10 targets. The achievement recorder does not yet verify that those results covered every eligible target in the region. Therefore a region containing more than 10 eligible targets can currently earn Mastery in those three domains after two perfect 10-target region Play rounds.
-
-The locked product rule is stricter: Mastery should require two consecutive perfect **complete-region** Play results. Issue **#108** owns closing the implementation gap. Until #108 ships, documentation and tests must not describe complete-region coverage as already enforced in all four domains.
+The achievement engine awards region × domain Mastery after **two consecutive
+perfect complete-region Play results** for that region and domain. Ordinary
+region Play covers the complete supported target set in all four domains, and
+the achievement recorder verifies exact coverage before advancing the streak.
+An incomplete sampled round neither advances nor resets that streak. A
+qualifying non-perfect complete-region result resets the in-progress streak;
+an already-earned Mastery is not revoked. Issue #108 closed the earlier v1.0
+qualification-integrity defect.
 
 ## Completion hierarchy
 

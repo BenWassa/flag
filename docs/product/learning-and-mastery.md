@@ -111,7 +111,7 @@ For an unearned region × domain:
 
 Learn, Review, continent Play and World Play do not feed this streak.
 
-### Complete-region coverage defect (#108)
+### Complete-region coverage integrity (#108)
 
 The product requirement is that the two qualifying results cover the **entire current supported region target set**, and issue **#108** made that true.
 
@@ -139,7 +139,7 @@ These are intentionally different concepts.
 - persistent achievement;
 - region scope only;
 - current engine requires two consecutive perfect region-scoped Play results;
-- intended to represent two consecutive perfect complete-region results once #108 is fixed;
+- requires two consecutive perfect complete-region results;
 - exposed as explicit Mastered wording on compact region rows without requiring a repeated purple star; dedicated Mastery presentation continues to reserve purple.
 
 Never use the phrases interchangeably.

@@ -131,7 +131,10 @@ A single miss-free Play result receives transient **Perfect round** treatment on
 
 Earned Mastery is purple and must include a non-colour cue. Compact launcher rows use accessible Mastered labelling without adding a purple star merely to repeat state inside navigation.
 
-The current qualification engine counts two consecutive perfect region-scoped Play results. #108 tracks the v1 defect where Flags, Outlines and Neighbours can currently qualify from 10-target region rounds instead of verified complete-region runs.
+The qualification engine counts two consecutive perfect complete-region Play
+results. It verifies exact supported-target coverage in every domain; sampled
+rounds do not affect the qualification streak. Issue #108 closed the earlier
+v1 defect.
 
 ### Complete region
 

@@ -1,6 +1,6 @@
 # Issue #86: Clip continent context layers to the viewport
 
-**Status:** Implemented alongside #115/#116 — awaiting review/merge  
+**Status:** Complete — shipped on `main` in `046bd93`
 **GitHub:** [#86](https://github.com/BenWassa/flag/issues/86)
 
 ## Goal
@@ -64,7 +64,15 @@ These are shared-generator decisions, not continent-specific exceptions.
       the Asia and Europe continent frames at 390x844.)
 - [x] Lazy loading and the runtime asset contract remain intact.
 - [x] `npm run check` and `npm test` pass under Node 22.
-- [ ] The exact production artifact is inspected before merge.
+- [x] The exact production artifact is inspected before merge.
+
+## Closeout
+
+Shipped in `046bd935d9be08f4ab561b8f060c66da5b3cecad` through PR #121.
+The merged Node 22 CI run passed, and the corresponding GitHub Pages deployment
+completed successfully. The production artifact preserves lazy loading and the
+recorded Europe/Asia payload budgets. Physical-device validation was not part of
+this optimisation and remains owned by #71.
 
 ## What the audit actually found
 
@@ -137,4 +145,3 @@ cannot display, so the clip cannot silently regress.
 - Simplifying scored country polygons more aggressively.
 - Adding North America or Oceania.
 - Replacing the projection, renderer or direct-manipulation model.
-

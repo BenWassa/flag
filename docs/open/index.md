@@ -39,52 +39,23 @@ and verification evidence are recorded in
 Mediterranean prototype evidence are recorded in
 [`issue-113-mobile-inset-pattern.md`](../closed/issue-113-mobile-inset-pattern.md).
 
-**#113's audit found that plain viewport framing buys more than any new mark**,
-so the three largest measured wins were split out rather than folded into the
-pattern work. Do these before adding further insets:
+The three largest follow-ups from #113 are complete. #115 corrected Western
+Europe framing, #116 corrected Asia's Russia-driven canvas fit, #86 clipped
+out-of-canvas context to return both modules inside their payload budgets, and
+#117 made real country polygons win contested taps over assisted marks. #90's
+stable Flags stage and #108's complete-region Mastery guard shipped in the same
+production merge. Durable closeout records:
 
-**#115, #116 and #86 are implemented together** on
-`claude/open-issues-review-plan-tz6n9e`, because the two framing fixes share one
-four-continent regeneration and #86's clipping is what returns Asia and Europe
-inside their payload budgets afterwards. Measured on-screen linear change:
-Western Europe **4.50x**, whole Europe **1.59x**, every Asian country **2.30x**
-at maximum zoom, with every Asian region's opening frame also improving
-(1.09x-2.30x) because three of them were pinned at the 180x170 focus floor. No
-region on either continent got smaller. Evidence lives in
-[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
+- [`#86 map-context clipping`](../closed/issue-86-clip-map-context.md)
+- [`#90 stable Flags stage`](../closed/issue-90-stable-flag-stage.md)
+- [`#108 complete-region Mastery`](../closed/issue-108-complete-region-mastery.md)
+- [`#115 Western Europe framing`](../closed/issue-115-western-europe-framing.md)
+- [`#116 Asia/Russia framing`](../closed/issue-116-asia-russia-framing.md)
+- [`#117 map hit precedence`](../closed/issue-117-map-hit-precedence.md)
 
-- [#115 — focus-exclude the Netherlands' Caribbean parts](https://github.com/BenWassa/flag/issues/115).
-  Bonaire and Curaçao are 0.58% of `NLD` and about 1.2 × 1.0 CSS px on screen,
-  yet they set both the west and south edge of the Western Europe frame.
-  Excluding them makes that round **3.34× larger linearly, 11.2× by area**.
-- [#116 — fit-exclude Russia from the Asia canvas](https://github.com/BenWassa/flag/issues/116).
-  Asia has no `fitExcludeCountryIds`, so its canvas is fitted around Russia's
-  trans-antimeridian geometry even though Russia is non-scoring Asia context.
-  Every Asian country is **2.31× under-scaled, including at maximum zoom**,
-  because max zoom is relative to the canvas. Also resolves the dead
-  `fitContextCountryIds` entry.
-- [#117 — clip locator and callout hit surfaces](https://github.com/BenWassa/flag/issues/117).
-  **Implemented** on the same branch. Rather than build an even-odd exclusion
-  clip per mark — which would add a copy of the scope's paths for every assisted
-  country — the assist discs moved into a `.map-assist-hits` layer beneath every
-  country shape, so a real polygon always wins its own territory and a disc can
-  only claim open water or non-scoring context. The visible locator, callout
-  target and leader line became `pointer-events: none` in the same change: they
-  sit above whatever country they cross, so leaving them hit-testable
-  reintroduced the same theft (Liechtenstein's mark reaches well into eastern
-  Germany). Where two discs still overlap over water the smaller mark wins,
-  which is an explicit precedence rather than array order in `map-scopes.ts`.
-  `tests/browser/map-hit-precedence.spec.ts` samples the points a disc covers
-  inside a neighbour's real polygon and asserts the browser answers the
-  neighbour.
-  The 44 CSS px assist discs are unclipped, so an assisted target silently steals
-  taps from co-active neighbours. Only the Maldives locator has clean clearance
-  across all of Europe and Asia. Likely a prerequisite for wider inset rollout.
-
-- [#90 — keep the Flags question layout stable between flags](https://github.com/BenWassa/flag/issues/90).
-  Different flag aspect ratios must not move the multiple-choice touch targets.
-  The responsive implementation and verification scope is
-  [`issue-90-stable-flag-stage.md`](issue-90-stable-flag-stage.md).
+Measured on-screen linear change was Western Europe **4.50x**, whole Europe
+**1.59x**, and every Asian country **2.30x** at maximum zoom. No region became
+smaller.
 - [#104 — map-first continent launcher](https://github.com/BenWassa/flag/issues/104).
   **Deferred, captured only.** The launcher now has exactly one selection
   method: one tap on a scope row starts Play for that scope. The full-bleed
@@ -94,11 +65,6 @@ region on either continent got smaller. Evidence lives in
   progress in colour alone, so it needs its own product decision before any
   implementation. Scope and reasoning:
   [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
-- [#86 — clip continent context layers to the viewport](https://github.com/BenWassa/flag/issues/86).
-  Reduce lazy map payloads in the shared generator without changing canonical
-  country geometry or adjacency. The execution scope is
-  [`issue-86-clip-map-context.md`](issue-86-clip-map-context.md).
-
 ### 4. Platform quality and IA
 
 - [#89 — migrate Atlas to React and Vite without rewriting the product engine](https://github.com/BenWassa/flag/issues/89).
@@ -189,14 +155,10 @@ Africa remains the reference baseline. North America and Oceania still appear
 as shell/navigation states, and unsupported curriculum must never count towards
 mastery/completion.
 
-**Continent payload follow-up (#86).** Physical map context (ocean, coastline, lakes)
-is now simplified per continent, which cut Europe by 29% and Asia by 21% of
-gzip. Asia still ships the largest lazy chunk at roughly 478 KB gzip, because
-its canvas spans canonical whole-country geometry. Clipping context layers to
-each continent's viewport is the next available reduction and is tracked in
-[`issue-86-clip-map-context.md`](issue-86-clip-map-context.md); it needs a
-generator change and a full four-continent regeneration, so it was deliberately
-not bundled into the v0.7.0 integration.
+**Continent payload follow-up (#86).** Context clipping is complete. Europe is
+432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a
+500,000-byte budget, while Africa and South America remain byte-identical. See
+the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
 
 ## Working rules
 
