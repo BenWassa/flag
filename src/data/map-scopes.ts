@@ -339,6 +339,71 @@ export const ASIA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   contextCountryIds: ['EGY', 'RUS'],
 };
 
+export const NORTHERN_AMERICA_MAP_COUNTRY_IDS = ['CAN', 'USA'] as const;
+
+export const CENTRAL_AMERICA_MAP_COUNTRY_IDS = [
+  'BLZ', 'CRI', 'SLV', 'GTM', 'HND', 'MEX', 'NIC', 'PAN',
+] as const;
+
+export const CARIBBEAN_MAP_COUNTRY_IDS = [
+  'ATG', 'BHS', 'BRB', 'CUB', 'DMA', 'DOM', 'GRD',
+  'HTI', 'JAM', 'KNA', 'LCA', 'VCT', 'TTO',
+] as const;
+
+export const NORTH_AMERICA_MAP_COUNTRY_IDS = [
+  ...NORTHERN_AMERICA_MAP_COUNTRY_IDS,
+  ...CENTRAL_AMERICA_MAP_COUNTRY_IDS,
+  ...CARIBBEAN_MAP_COUNTRY_IDS,
+] as const;
+
+export const NORTH_AMERICA_MAP_SCOPE: StudyScope = {
+  kind: 'continent',
+  id: 'north-america',
+  label: 'North America',
+};
+
+export const NORTH_AMERICA_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
+  {
+    scope: { kind: 'region', id: 'northern-america', label: 'Northern America' },
+    continentId: 'north-america',
+    countryIds: NORTHERN_AMERICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 43, top: 28 },
+  },
+  {
+    scope: { kind: 'region', id: 'central-america', label: 'Central America' },
+    continentId: 'north-america',
+    countryIds: CENTRAL_AMERICA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 39, top: 68 },
+  },
+  {
+    scope: { kind: 'region', id: 'caribbean', label: 'Caribbean' },
+    continentId: 'north-america',
+    countryIds: CARIBBEAN_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 69, top: 67 },
+  },
+];
+
+export const NORTH_AMERICA_MAP_CONFIG: MapScopeConfig = {
+  scope: NORTH_AMERICA_MAP_SCOPE,
+  continentId: 'north-america',
+  countryIds: NORTH_AMERICA_MAP_COUNTRY_IDS,
+};
+
+export const NORTH_AMERICA_MAP_SCOPE_CONFIGS: readonly MapScopeConfig[] = [
+  NORTH_AMERICA_MAP_CONFIG,
+  ...NORTH_AMERICA_MAP_REGION_CONFIGS,
+];
+
+export const NORTH_AMERICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'north-america',
+  scope: NORTH_AMERICA_MAP_SCOPE,
+  countryIds: NORTH_AMERICA_MAP_COUNTRY_IDS,
+  regions: NORTH_AMERICA_MAP_REGION_CONFIGS,
+  // COL/VEN preserve the southern mainland edge. FRA/NLD are clipped to their
+  // Caribbean overseas geometry; none is learner-scored in North America.
+  contextCountryIds: ['COL', 'VEN', 'FRA', 'NLD'],
+};
+
 /**
  * Generated geography coverage is registered by continent. New continent work
  * extends this registry rather than adding parallel lookup functions.
@@ -348,6 +413,7 @@ export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freez
   SOUTH_AMERICA_MAP_CONTINENT_CONFIG,
   EUROPE_MAP_CONTINENT_CONFIG,
   ASIA_MAP_CONTINENT_CONFIG,
+  NORTH_AMERICA_MAP_CONTINENT_CONFIG,
 ]);
 
 const MAP_CONTINENT_BY_ID = new Map(
