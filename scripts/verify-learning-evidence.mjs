@@ -1,32 +1,32 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
 import {
   applyCountryEvidence,
   qualifiesForRegionMastery,
-} from '../dist/domain/evidence.js';
+} from '../.verify-dist/domain/evidence.js';
 import {
   applyMapGuess,
   buildMapSession,
   createInitialLocationProgress,
   getLocationRecord,
-} from '../dist/domain/map-game.js';
+} from '../.verify-dist/domain/map-game.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
   createInitialNeighborProgress,
   getNeighborRecord,
-} from '../dist/domain/neighbor-game.js';
+} from '../.verify-dist/domain/neighbor-game.js';
 import {
   applyAttempt,
   applyPassiveExposure,
   createInitialProgress,
   createProgressRecord,
   getRecord,
-} from '../dist/domain/progress.js';
-import { buildQuiz } from '../dist/domain/quiz.js';
-import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
-import { sanitizeNeighborRecord } from '../dist/infrastructure/neighbor-storage.js';
-import { sanitizeRecord } from '../dist/infrastructure/storage.js';
+} from '../.verify-dist/domain/progress.js';
+import { buildQuiz } from '../.verify-dist/domain/quiz.js';
+import { sanitizeLocationRecord } from '../.verify-dist/infrastructure/map-storage.js';
+import { sanitizeNeighborRecord } from '../.verify-dist/infrastructure/neighbor-storage.js';
+import { sanitizeRecord } from '../.verify-dist/infrastructure/storage.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { FlagsQuizScreen, RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');

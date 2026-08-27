@@ -1,12 +1,12 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 
-const gestures = await readFile('dist/navigation-gestures.js', 'utf8');
+const gestures = await readFile('.verify-dist/navigation-gestures.js', 'utf8');
 const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const styles = await readFile('dist/styles.css', 'utf8');
 const html = await readFile('dist/index.html', 'utf8');
-const mapComponent = await readFile('dist/ui/components/map.js', 'utf8');
-const neighborMapComponent = await readFile('dist/ui/components/neighbor-map.js', 'utf8');
+const mapComponent = await readFile('.verify-dist/ui/components/map.js', 'utf8');
+const neighborMapComponent = await readFile('.verify-dist/ui/components/neighbor-map.js', 'utf8');
 
 // Gesture ownership: navigation is the lowest-priority claimant, so every
 // surface that owns its own touch semantics must be able to opt out.

@@ -1,9 +1,9 @@
-import { existsSync, readFileSync, rmSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-// tsconfig.verify temporarily emits source modules into dist for the plain-Node
-// verifier family. Development-only modules must still not become deployable
-// static files merely because that compatibility emit follows the Vite build.
+// Development-only modules must never become deployable static files. The
+// verifier-only TypeScript emit is now isolated in .verify-dist/ before this
+// production guard runs.
 const developmentOnlyOutputs = [
   'dist/infrastructure/development-sandbox.js',
   'dist/infrastructure/development-sandbox.test.js',
@@ -13,7 +13,7 @@ const developmentOnlyOutputs = [
 
 for (const relativePath of developmentOnlyOutputs) {
   const path = resolve(relativePath);
-  if (existsSync(path)) rmSync(path);
+  if (existsSync(path)) throw new Error(`Development-only output leaked into deployable dist/: ${relativePath}.`);
 }
 const productionSurfaces = ['dist/app.js', 'dist/.vite/manifest.json'];
 for (const relativePath of productionSurfaces) {

@@ -22,12 +22,12 @@ const sizes = await verifyContinentContract({
   expectedCountryIds: EXPECTED_COUNTRY_IDS,
   expectedRegionIds: Object.keys(EXPECTED_REGIONS),
   expectedNeighborCountryIds: EXPECTED_COUNTRY_IDS,
-  runtimeModulePath: 'dist/data/maps/south-america.js',
+  runtimeModulePath: '.verify-dist/data/maps/south-america.js',
 });
 
-const mapScopes = await import('../dist/data/map-scopes.js');
-const maps = await import('../dist/data/maps/index.js');
-const neighbors = await import('../dist/data/neighbors/index.js');
+const mapScopes = await import('../.verify-dist/data/map-scopes.js');
+const maps = await import('../.verify-dist/data/maps/index.js');
+const neighbors = await import('../.verify-dist/data/neighbors/index.js');
 
 for (const [regionId, expectedIds] of Object.entries(EXPECTED_REGIONS)) {
   assert.deepEqual(

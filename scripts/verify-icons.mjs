@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { continentIcon } from '../dist/ui/components/continent-icons.js';
-import { icon } from '../dist/ui/components/icons.js';
+import { continentIcon } from '../.verify-dist/ui/components/continent-icons.js';
+import { icon } from '../.verify-dist/ui/components/icons.js';
 
 const PHOSPHOR_BOLD_SOURCES = {
   back: 'arrow-left',

@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
 import {
   AFRICA_MAP_COUNTRY_IDS,
   AFRICA_MAP_REGION_CONFIGS,
   AFRICA_MAP_SCOPE,
   AFRICA_MAP_SCOPE_CONFIGS,
   WEST_AFRICA_MAP_COUNTRY_IDS,
-} from '../dist/data/map-scopes.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
+} from '../.verify-dist/data/map-scopes.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
 import {
   advanceMapSession,
   applyMapGuess,
@@ -18,8 +18,8 @@ import {
   finishMapSession,
   getLocationRecord,
   locationMasteryGoal,
-} from '../dist/domain/map-game.js';
-import { sanitizeLocationRecord } from '../dist/infrastructure/map-storage.js';
+} from '../.verify-dist/domain/map-game.js';
+import { sanitizeLocationRecord } from '../.verify-dist/infrastructure/map-storage.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');

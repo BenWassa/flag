@@ -281,12 +281,11 @@ and rollback exercise. Configuration and repeatable live deployment have shipped
 
 ## Relationship to #100
 
-Current `npm run build` appends the temporary `tsconfig.verify.json` compatibility emit to deployable `dist/`. #100 owns removing/narrowing that verifier-only output; the current artifact remains valid but includes approximately 6.78 MB of compatibility modules, including 16 unreferenced compiled legacy `ui/views/*.js` files.
-
-The live Firebase target currently receives that valid but compatibility-heavy
-artifact. Any decision to make it the primary production host should normally
-follow #100 so Atlas does not baseline a cutover around output that will
-immediately change.
+`npm run build` now keeps the temporary `tsconfig.verify.json` output in
+ignored `.verify-dist/`, not deployable `dist/`. The #100 cleanup removed the
+16 legacy renderer fixtures and asserts the Vite/Workbox artifact has no
+verifier-only directory trees. The Firebase target therefore receives the same
+lean production artifact inspected locally (33 files / 7,281,623 bytes).
 
 This is a cutover-sequencing relationship, not a reason to make #107 implement #100.
 

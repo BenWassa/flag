@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { getAfricaNeighborScopeConfig } from '../dist/data/neighbors/index.js';
-import { createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { getAfricaNeighborScopeConfig } from '../.verify-dist/data/neighbors/index.js';
+import { createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { countryIdsForSupportedScope } from '../.verify-dist/domain/scope-support.js';
 import {
   buildProgressSummary,
   buildScopeProgressSummaries,
   evidenceForCountry,
-} from '../dist/domain/progress-summary.js';
+} from '../.verify-dist/domain/progress-summary.js';
 
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 const unsupportedContinent = { kind: 'continent', id: 'oceania', label: 'Oceania' };

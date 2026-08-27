@@ -1,19 +1,19 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { CONTINENTS } from '../dist/data/continents.js';
-import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../dist/data/map-scopes.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { CONTINENTS } from '../.verify-dist/data/continents.js';
+import { AFRICA_MAP_COUNTRY_IDS, AFRICA_MAP_SCOPE } from '../.verify-dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   getAfricaNeighborScopeConfig,
-} from '../dist/data/neighbors/index.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
+} from '../.verify-dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');

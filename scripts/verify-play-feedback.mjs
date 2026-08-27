@@ -1,23 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { loadOutlineAsset } from '../dist/data/outlines.js';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { loadOutlineAsset } from '../.verify-dist/data/outlines.js';
 import {
   applyMapGuess,
   buildMapSession,
   createInitialLocationProgress,
-} from '../dist/domain/map-game.js';
-import { buildOutlineQuiz } from '../dist/domain/outline.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { buildQuiz } from '../dist/domain/quiz.js';
+} from '../.verify-dist/domain/map-game.js';
+import { buildOutlineQuiz } from '../.verify-dist/domain/outline.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { buildQuiz } from '../.verify-dist/domain/quiz.js';
 import {
   answerFeedback,
   roundScore,
   scoreAnnouncement,
   STREAK_DISPLAY_THRESHOLD,
-} from '../dist/domain/round-feedback.js';
+} from '../.verify-dist/domain/round-feedback.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { FlagsQuizScreen, OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
@@ -305,7 +305,7 @@ assert.ok(
 
 /* --- Round timing keeps rapid play viable --- */
 
-const flagsRoundSource = readFileSync(new URL('../dist/state/flags-round.js', import.meta.url), 'utf8');
+const flagsRoundSource = readFileSync(new URL('../.verify-dist/state/flags-round.js', import.meta.url), 'utf8');
 const flagsDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
 const flagsDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
 assert.ok(flagsDwellCorrect >= 400, 'A Flags correct answer stays visible long enough to register.');
@@ -313,7 +313,7 @@ assert.ok(flagsDwellCorrect <= 900, 'A Flags correct answer does not stall rapid
 assert.ok(flagsDwellWrong > flagsDwellCorrect, 'A Flags missed answer gets longer to read than a correct one.');
 assert.ok(flagsRoundSource.includes('advanceNow'), 'The Flags Play dwell can be skipped from the keyboard.');
 
-const locationsRoundSource = readFileSync(new URL('../dist/state/locations-round.js', import.meta.url), 'utf8');
+const locationsRoundSource = readFileSync(new URL('../.verify-dist/state/locations-round.js', import.meta.url), 'utf8');
 const mapDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
 const mapDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
 assert.ok(mapDwellCorrect >= 400 && mapDwellCorrect <= 900, 'Locations correct feedback has a readable but quick dwell.');

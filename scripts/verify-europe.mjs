@@ -28,14 +28,14 @@ const sizes = await verifyContinentContract({
   expectedCountryIds: EXPECTED_COUNTRY_IDS,
   expectedRegionIds: Object.keys(EXPECTED_REGIONS),
   expectedNeighborCountryIds: EXPECTED_COUNTRY_IDS,
-  runtimeModulePath: 'dist/data/maps/europe.js',
+  runtimeModulePath: '.verify-dist/data/maps/europe.js',
   maxRawBytes: 1_750_000,
   maxGzipBytes: 440_000,
 });
 
-const mapScopes = await import('../dist/data/map-scopes.js');
-const maps = await import('../dist/data/maps/index.js');
-const neighbors = await import('../dist/data/neighbors/index.js');
+const mapScopes = await import('../.verify-dist/data/map-scopes.js');
+const maps = await import('../.verify-dist/data/maps/index.js');
+const neighbors = await import('../.verify-dist/data/neighbors/index.js');
 
 assert.equal(EXPECTED_COUNTRY_IDS.length, 44, 'Europe ships the locked Issue #25 44-country curriculum.');
 
@@ -152,7 +152,7 @@ for (const list of ['fitExcludeCountryIds', 'focusExcludeCountryIds']) {
   assert.match(declared[1], /'NLD'/, `Europe excludes the Netherlands' Caribbean parts from its ${list}.`);
 }
 
-const { EUROPE_SCOPE_FOCUS } = await import('../dist/data/maps/europe.js');
+const { EUROPE_SCOPE_FOCUS } = await import('../.verify-dist/data/maps/europe.js');
 const westernEuropeFocus = EUROPE_SCOPE_FOCUS['western-europe'];
 const europeFocus = EUROPE_SCOPE_FOCUS.europe;
 assert.ok(

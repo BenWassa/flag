@@ -48,7 +48,7 @@ To run the complete verification suite:
 npm test
 ```
 
-`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, preserves the temporary verifier-only module emit required by the existing plain-Node invariant suite, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
+`npm test` type-checks the application and Vite configuration, runs React component tests, builds the production app and Workbox service worker, emits the temporary plain-Node verifier modules only to ignored `.verify-dist/`, and verifies curriculum, routing, cartography, learning-domain, build and product-copy contracts. `npm run test:browser` runs desktop/mobile Chromium smoke tests against the production preview. The deployable static app is written to `dist/`.
 
 Serve `dist/` with any static server for production-artifact inspection, for example:
 
@@ -81,7 +81,7 @@ src/infrastructure   persistence + flag assets
 src/routing          stable hash-route model
 src/state            application/session state
 src/react            React shell, screens and components
-src/ui               framework-independent UI/map adapters and legacy verifier fixtures
+src/ui               framework-independent UI/map adapters
 src/main.tsx         production browser entry
 src/sw.ts            generated Workbox service-worker policy
 ```

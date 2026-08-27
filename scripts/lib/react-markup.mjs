@@ -13,7 +13,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 
 register('./asset-stub-loader.mjs', import.meta.url);
 
-const { AtlasActionsContext } = await import('../../dist/react/actions.js');
+const { AtlasActionsContext } = await import('../../.verify-dist/react/actions.js');
 
 /**
  * Every Atlas action is a no-op here: these assertions are about rendered
@@ -30,5 +30,5 @@ export function renderScreen(Screen, props = {}) {
 
 /** Loads a production screen module through the asset stub. */
 export async function loadScreens(modulePath) {
-  return import(`../../dist/react/screens/${modulePath}`);
+  return import(`../../.verify-dist/react/screens/${modulePath}`);
 }

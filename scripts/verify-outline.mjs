@@ -1,23 +1,23 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
 import {
   AFRICA_MAP_COUNTRY_IDS,
   WEST_AFRICA_MAP_COUNTRY_IDS,
-} from '../dist/data/map-scopes.js';
-import { AFRICA_GEOMETRY } from '../dist/data/maps/africa.js';
+} from '../.verify-dist/data/map-scopes.js';
+import { AFRICA_GEOMETRY } from '../.verify-dist/data/maps/africa.js';
 import {
   buildOutlineAsset,
   buildOutlineQuiz,
   chooseOutlineDistractors,
   normalizeOutlineGeometry,
-} from '../dist/domain/outline.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { applyAttempt, createInitialProgress, getRecord } from '../dist/domain/progress.js';
-import { createSeededRandom } from '../dist/domain/quiz.js';
-import { outlineSilhouette } from '../dist/ui/components/outline.js';
-import { escapeHtml } from '../dist/ui/format.js';
-import { parentRoute, parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+} from '../.verify-dist/domain/outline.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { applyAttempt, createInitialProgress, getRecord } from '../.verify-dist/domain/progress.js';
+import { createSeededRandom } from '../.verify-dist/domain/quiz.js';
+import { outlineSilhouette } from '../.verify-dist/ui/components/outline.js';
+import { escapeHtml } from '../.verify-dist/ui/format.js';
+import { parentRoute, parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
@@ -223,7 +223,7 @@ assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'),
 const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
 assert.equal(mapRendererSource.includes('outlinePath'), false, 'Location rendering must continue to use its existing locator behavior for tiny islands.');
 
-const outlineStorage = await readFile('dist/infrastructure/outline-storage.js', 'utf8');
+const outlineStorage = await readFile('.verify-dist/infrastructure/outline-storage.js', 'utf8');
 assert.ok(outlineStorage.includes('flag-atlas:outline-progress:v1'), 'Outline mastery must use its own persisted ledger key.');
 assert.equal(outlineStorage.includes('flag-atlas:progress:v1'), false, 'Outline storage must not write into flag progress.');
 assert.equal(outlineStorage.includes('flag-atlas:location-progress:v1'), false, 'Outline storage must not write into location progress.');

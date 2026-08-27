@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { CONTINENTS, REGIONS } from '../dist/data/continents.js';
-import { LEARNING_DOMAIN_IDS } from '../dist/domain/models.js';
-import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
-import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../dist/domain/progress.js';
-import { balancedPositions, buildQuiz, createSeededRandom } from '../dist/domain/quiz.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { CONTINENTS, REGIONS } from '../.verify-dist/data/continents.js';
+import { LEARNING_DOMAIN_IDS } from '../.verify-dist/domain/models.js';
+import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
+import { applyAttempt, createInitialProgress, getRecord, masteryGoal } from '../.verify-dist/domain/progress.js';
+import { balancedPositions, buildQuiz, createSeededRandom } from '../.verify-dist/domain/quiz.js';
 
 const EXPECTED_CONTINENT_TOTALS = {
   africa: 54,
@@ -103,9 +103,9 @@ const renderDomainIndex = (domain, ledgers, achievements, persisting = true) => 
 const renderScope = (progress, scope, achievements, persisting = true) => renderScreen(FlagsLauncherScreen, { progress, scope, achievements, persisting });
 const renderQuiz = (session, progress, answeredCountryId) => renderScreen(FlagsQuizScreen, { session, progress, answeredCountryId });
 const renderResults = (result) => renderScreen(RecognitionResultsScreen, { result, domain: 'flags' });
-const { renderFocusIntent } = await import('../dist/ui/focus.js');
-const { buildQuiz: build } = await import('../dist/domain/quiz.js');
-const { createInitialAchievementState } = await import('../dist/domain/achievements.js');
+const { renderFocusIntent } = await import('../.verify-dist/ui/focus.js');
+const { buildQuiz: build } = await import('../.verify-dist/domain/quiz.js');
+const { createInitialAchievementState } = await import('../.verify-dist/domain/achievements.js');
 const achievements = createInitialAchievementState();
 
 assert.equal(
@@ -248,8 +248,8 @@ assert.ok(emptyResult.includes('Clean round'), 'A perfect round still reports it
 // views are written against: hostile text, a corrupted ledger, a scope with
 // nothing in it, and an id the catalog no longer knows.
 
-const { escapeHtml } = await import('../dist/ui/format.js');
-const { sanitizeRecord } = await import('../dist/infrastructure/storage.js');
+const { escapeHtml } = await import('../.verify-dist/ui/format.js');
+const { sanitizeRecord } = await import('../.verify-dist/infrastructure/storage.js');
 
 assert.equal(
   escapeHtml('Australia & New Zealand'),
@@ -377,7 +377,7 @@ globalThis.localStorage = {
   removeItem() {},
 };
 
-const { AppStore } = await import('../dist/state/store.js');
+const { AppStore } = await import('../.verify-dist/state/store.js');
 
 for (const mode of ['ok', 'throw-write', 'throw-read']) {
   storageMode = mode;

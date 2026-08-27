@@ -1,5 +1,6 @@
 node_modules/
 dist/
+.verify-dist/
 dist.build-*/
 dist.previous-*/
 dist-spike-maplibre/

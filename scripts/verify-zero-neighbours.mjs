@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { COUNTRIES } from '../dist/data/countries.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/index.js';
+} from '../.verify-dist/data/neighbors/index.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
@@ -16,8 +16,8 @@ import {
   neighborAttemptBudget,
   NO_LAND_NEIGHBORS_ID,
   NO_LAND_NEIGHBORS_LABEL,
-} from '../dist/domain/neighbor-game.js';
-import { countryIdsForSupportedScope } from '../dist/domain/scope-support.js';
+} from '../.verify-dist/domain/neighbor-game.js';
+import { countryIdsForSupportedScope } from '../.verify-dist/domain/scope-support.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');

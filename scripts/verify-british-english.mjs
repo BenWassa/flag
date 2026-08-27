@@ -1,20 +1,20 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
-import { loadMapAsset } from '../dist/data/maps/index.js';
-import { loadOutlineAsset } from '../dist/data/outlines.js';
-import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { domainDisplayName } from '../dist/domain/display.js';
-import { buildMapSession, createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { buildNeighborSession, createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { deriveNeighborMapModel } from '../dist/domain/neighbor-map.js';
-import { buildOutlineQuiz } from '../dist/domain/outline.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { buildQuiz } from '../dist/domain/quiz.js';
-import { parseRoutePath, routeTitle, serializeRoutePath } from '../dist/routing/routes.js';
-import { neighborMapSummary, renderNeighborMap } from '../dist/ui/components/neighbor-map.js';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
+import { loadMapAsset } from '../.verify-dist/data/maps/index.js';
+import { loadOutlineAsset } from '../.verify-dist/data/outlines.js';
+import { AFRICA_LAND_ADJACENCY } from '../.verify-dist/data/neighbors/index.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { domainDisplayName } from '../.verify-dist/domain/display.js';
+import { buildMapSession, createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { buildNeighborSession, createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { deriveNeighborMapModel } from '../.verify-dist/domain/neighbor-map.js';
+import { buildOutlineQuiz } from '../.verify-dist/domain/outline.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { buildQuiz } from '../.verify-dist/domain/quiz.js';
+import { parseRoutePath, routeTitle, serializeRoutePath } from '../.verify-dist/routing/routes.js';
+import { neighborMapSummary, renderNeighborMap } from '../.verify-dist/ui/components/neighbor-map.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
@@ -191,11 +191,11 @@ for (const [name, surface] of renderedSurfaces) {
 // just app.ts, since a domain's announce strings now live in its own module.
 const app = (await Promise.all(
   [
-    'dist/react/AtlasApp.js',
-    'dist/state/flags-round.js',
-    'dist/state/locations-round.js',
-    'dist/state/outlines-round.js',
-    'dist/state/neighbors-round.js',
+    '.verify-dist/react/AtlasApp.js',
+    '.verify-dist/state/flags-round.js',
+    '.verify-dist/state/locations-round.js',
+    '.verify-dist/state/outlines-round.js',
+    '.verify-dist/state/neighbors-round.js',
   ].map((file) => readFile(file, 'utf8')),
 )).join('\n');
 const appForbiddenPhrases = [
@@ -231,7 +231,7 @@ assert.equal(manifest.lang, 'en-GB');
 assert.ok(manifest.description.includes('focused practice'), 'Practice is correctly retained as a noun in install metadata.');
 assert.ok(Object.hasOwn(manifest, 'background_color') && Object.hasOwn(manifest, 'theme_color'), 'Manifest API field names remain standards-compliant technical identifiers.');
 
-const storage = await readFile('dist/infrastructure/neighbor-storage.js', 'utf8');
+const storage = await readFile('.verify-dist/infrastructure/neighbor-storage.js', 'utf8');
 assert.ok(storage.includes('flag-atlas:neighbor-progress:v1'), 'Existing Neighbours progress namespace remains backwards-compatible.');
 assert.ok(storage.includes('flag-atlas:neighbor-attempts:v1'), 'Existing Neighbours attempt namespace remains backwards-compatible.');
 

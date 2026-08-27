@@ -44,7 +44,7 @@ The pre-migration proposal for `useSyncExternalStore` plus `AppStore.subscribe()
 | #97 | open — partially complete; re-scoped | Outlines production UI is React-owned and invariants are green, but complete React component/browser coverage is not present. |
 | #98 | open — partially complete; re-scoped | Locations production UI is React-owned and map/cartography invariants are broad; browser coverage currently reaches round launch only, not answer/pan/zoom/results parity. |
 | #99 | open — partially complete; re-scoped | Neighbours production UI is React-owned and invariant coverage is broad; there is no current Playwright Neighbours flow or equivalent React component closeout coverage. |
-| #100 | open — partially complete; re-scoped | Production runtime no longer depends on legacy string renderers/global dispatch, but legacy renderer fixtures and the broad verifier emit remain and are physically deployed as unreferenced files. |
+| #100 | implementation complete locally; tracker closeout pending | The verifier emit now lives outside `dist/`; the obsolete coordinator and all 16 string renderers are removed; full local `npm test` is green. |
 | #101 | open — genuinely still open | Final browser/offline/accessibility/production hardening is materially incomplete; physical-device evidence remains explicitly owned by #71. |
 
 Live GitHub state was reconciled to this matrix during PR #105: #92, #94 and #95 were closed with evidence comments; #93 and #96–#101 were rewritten around current remaining work; #89 was rewritten and intentionally left open.
@@ -63,7 +63,29 @@ Current production dependency inspection shows:
 
 #100 therefore remains real work. It is no longer “finish moving production screens to React”; it is “replace implementation-coupled verifier coverage, stop emitting compatibility fixtures into the deployable artifact, then remove the obsolete source/render/CSS tail with evidence.”
 
-This reconciliation task does not perform that implementation.
+### 2026-08-26 implementation update
+
+#100's compatibility boundary is now removed on the closeout branch. `npm run
+build` runs Vite/Workbox for deployable `dist/`, then emits only the plain-Node
+verifier modules into ignored `.verify-dist/`. The verifier family imports that
+separate output while its production-artifact assertions continue to read
+`dist/`. `scripts/verify-vite-build.mjs` now rejects verifier-only `data/`,
+`domain/`, `infrastructure/`, `react/`, `routing/`, `state/` and `ui/` trees
+in the deployable artifact.
+
+The source coordinator `src/app.ts`, all 16 `src/ui/views/*.ts` string
+renderers, and the unused pre-Vite `scripts/build.mjs`/`scripts/dev.mjs` path
+are deleted after an import/verifier dependency audit. A real-production-markup
+CSS audit removed only the two now-unreferenced reduced-motion selectors for
+the retired continent/region Play cells; shared map and React selectors remain
+intact.
+
+Local evidence: `npm test` passed with 29 Vitest tests and the full plain-Node
+suite. The resulting `dist/` contains 33 Vite/Workbox files totalling
+7,281,623 bytes, versus the prior 132-file roughly 15.26 MB mixed artifact.
+The temporary 90-file, 5,735,833-byte verifier tree is ignored and removed by
+the successful `npm run verify` cleanup step. GitHub/CI closeout remains a
+separate tracker action.
 
 ## Current verification truth
 

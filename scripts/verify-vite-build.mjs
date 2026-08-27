@@ -68,24 +68,20 @@ assert.equal(manifest['src/main.tsx'].file, 'app.js', 'React application entry k
 assert.equal(manifest['src/map-viewport.ts'].file, 'map-viewport.js', 'Map viewport entry keeps its stable Phase 2 service-worker filename.');
 assert.equal(manifest['src/neighbor-map-runtime.ts'].file, 'neighbor-map-runtime.js', 'Neighbour map runtime keeps its stable Phase 2 service-worker filename.');
 
-// Existing plain-Node invariant scripts intentionally keep importing these
-// emitted modules during the build-tool phase. They are verifier compatibility
-// output, not browser entries, and are removed/adapted in the later legacy
-// cleanup phase rather than silently dropping coverage now.
-for (const file of [
-  'data/countries.js',
-  'data/maps/index.js',
-  'domain/achievements.js',
-  'domain/map-game.js',
-  'routing/routes.js',
-  'state/store.js',
-  'ui/views/map-quiz.js',
-]) {
-  assert.equal(await exists(join(DIST, file)), true, `Verifier compatibility output contains ${file}.`);
-}
-
 const files = await walk(DIST);
 const relativeFiles = files.map((file) => relative(DIST, file).replaceAll('\\', '/'));
+for (const directory of ['data', 'domain', 'infrastructure', 'react', 'routing', 'state', 'ui']) {
+  assert.equal(
+    relativeFiles.some((file) => file.startsWith(`${directory}/`)),
+    false,
+    `Deployable output contains no verifier-only ${directory}/ tree.`,
+  );
+}
+assert.equal(
+  relativeFiles.some((file) => file.startsWith('ui/views/')),
+  false,
+  'Deployable output contains no legacy string-renderer fixtures.',
+);
 for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
   const pattern = new RegExp(`^assets/${continent}-[^/]+\\.js$`);
   assert.ok(relativeFiles.some((file) => pattern.test(file)), `Vite keeps ${continent} geography in a lazy browser chunk.`);
@@ -106,6 +102,6 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
   assert.equal(new RegExp(`${continent}-[A-Za-z0-9_-]+\\.js`).test(sw), false, `${continent} geography remains runtime-cached rather than precached.`);
 }
 
-console.log(`Verified Vite production artifact: ${relativeFiles.length} files; app.js ${appBytes} B.`);
+console.log(`Verified Vite/Workbox-only production artifact: ${relativeFiles.length} files; app.js ${appBytes} B.`);
 for (const row of lazyChunkRows) console.log(`  lazy ${row}`);
 console.log('Vite build verification passed.');

@@ -458,3 +458,32 @@ stronger than what it replaced.
 
 Node 22 `npm run check`, full `npm test` (twice, for flake) and the 15-test
 Chromium suite are green.
+
+## Step 3b — #100 compatibility boundary removed (2026-08-26)
+
+The remaining migration inventory was rechecked before deletion. No production
+entry or verifier imported `src/app.ts` or `src/ui/views/*`; the only live
+compatibility reference was the build verifier's deliberate assertion that
+compiled legacy files existed. That assertion was inverted to protect the
+production boundary instead.
+
+- `tsconfig.verify.json` now emits to ignored `.verify-dist/`.
+- `scripts/build-verifier-output.mjs` clears only that fixed directory before
+  emitting, and `npm run verify:clean` removes it after a successful verifier
+  chain.
+- Plain-Node module imports/read checks now use `.verify-dist/`; deployed-file
+  checks continue to use `dist/`.
+- `src/app.ts`, all 16 `src/ui/views/*.ts` string renderers, and unused
+  `scripts/build.mjs`/`scripts/dev.mjs` were deleted.
+- `verify-vite-build` rejects the old unbundled verifier directory families in
+  deployable `dist/`.
+- The CSS audit removed only `.continent-row__play` and `.region-row__play`
+  from an obsolete reduced-motion selector group; the remaining candidate
+  selectors were retained because they are shared, dynamic, or insufficiently
+  proven dead.
+
+Local full `npm test` passed: 29 Vitest tests plus all plain-Node verifiers.
+The Vite/Workbox artifact is 33 files / 7,281,623 bytes. The temporary verifier
+tree measured 90 files / 5,735,833 bytes before cleanup and is absent after a
+successful test run. This removes the previous deployed compatibility tail
+(132 files / approximately 15.26 MB), without changing learner behaviour.

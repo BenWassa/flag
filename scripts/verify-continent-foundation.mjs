@@ -4,8 +4,8 @@ import {
   AFRICA_MAP_COUNTRY_IDS,
   AFRICA_MAP_REGION_CONFIGS,
   MAP_CONTINENT_CONFIGS,
-} from '../dist/data/map-scopes.js';
-import { AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS } from '../dist/data/neighbors/index.js';
+} from '../.verify-dist/data/map-scopes.js';
+import { AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS } from '../.verify-dist/data/neighbors/index.js';
 import { verifyContinentContract } from './verify-continent-contract.mjs';
 
 const excluded = new Set(AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS);
@@ -15,7 +15,7 @@ const sizes = await verifyContinentContract({
   expectedCountryIds: AFRICA_MAP_COUNTRY_IDS,
   expectedRegionIds: AFRICA_MAP_REGION_CONFIGS.map((region) => region.scope.id),
   expectedNeighborCountryIds: africaNeighborIds,
-  runtimeModulePath: 'dist/data/maps/africa.js',
+  runtimeModulePath: '.verify-dist/data/maps/africa.js',
 });
 
 assert.ok(

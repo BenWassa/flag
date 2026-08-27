@@ -203,6 +203,23 @@ Physical mobile keyboard and gesture validation remains #71.
 - The production browser graph does not import `src/app.ts` or `src/ui/views/*`.
 - Global delegated `data-action` dispatch is no longer the production interaction model.
 
+### 2026-08-26 implementation result
+
+The compatibility tail is complete locally. `npm run build` now runs Vite and
+Workbox into deployable `dist/`, then invokes `scripts/build-verifier-output.mjs`
+to cleanly emit the plain-Node modules into ignored `.verify-dist/`. The
+verifier suite reads that isolated tree; production HTML, CSS, icon and
+service-worker assertions still read `dist/`. Successful `npm run verify`
+removes `.verify-dist/` through the fixed-path cleanup command.
+
+`src/app.ts`, the 16 `src/ui/views/*.ts` renderers, and the unused pre-Vite
+build/dev scripts are gone. The import audit found no production or verifier
+dependency on them. `verify-vite-build` now rejects the former verifier-only
+directory families in `dist/`. Full local `npm test` passed. The post-cleanup
+artifact is 33 files / 7,281,623 bytes; no renderer source or compatibility
+module is deployable. Only two obsolete reduced-motion selectors for retired
+Play cells were removed; shared CSS remains deliberately retained.
+
 ### Exact remaining compatibility tail
 
 Current `npm run build` performs:
@@ -240,7 +257,8 @@ Stable inert `data-action` values may remain as metadata where useful; gratuitou
 - full Node 22 verification remains green;
 - the exact production artifact is inspected after cleanup.
 
-This reconciliation branch does not implement #100.
+GitHub tracker closure should cite the local commit and subsequent CI evidence;
+this implementation does not itself run a release or push.
 
 ## Phase 11 / #101 — final integrated validation
 

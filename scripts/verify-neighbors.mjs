@@ -1,15 +1,15 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
 import {
   AFRICA_LAND_ADJACENCY,
   AFRICA_STANDARD_NEIGHBOR_TARGET_IDS,
   AFRICA_ZERO_LAND_NEIGHBOR_IDS,
-} from '../dist/data/neighbors/africa.js';
-import { AFRICA_LAND_ADJACENCY as MAP_ADJACENCY } from '../dist/data/maps/africa.js';
-import { createInitialLocationProgress, getLocationRecord } from '../dist/domain/map-game.js';
+} from '../.verify-dist/data/neighbors/africa.js';
+import { AFRICA_LAND_ADJACENCY as MAP_ADJACENCY } from '../.verify-dist/data/maps/africa.js';
+import { createInitialLocationProgress, getLocationRecord } from '../.verify-dist/domain/map-game.js';
 import {
   applyNeighborGuess,
   buildNeighborSession,
@@ -19,9 +19,9 @@ import {
   neighborAttemptBudget,
   neighborMasteryGoal,
   resolveCountryGuess,
-} from '../dist/domain/neighbor-game.js';
-import { createInitialProgress, getRecord } from '../dist/domain/progress.js';
-import { parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+} from '../.verify-dist/domain/neighbor-game.js';
+import { createInitialProgress, getRecord } from '../.verify-dist/domain/progress.js';
+import { parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');

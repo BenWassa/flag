@@ -1,14 +1,14 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES } from '../dist/data/countries.js';
-import { createInitialAchievementState } from '../dist/domain/achievements.js';
-import { createInitialProgress } from '../dist/domain/progress.js';
-import { createInitialLocationProgress } from '../dist/domain/map-game.js';
-import { createInitialNeighborProgress } from '../dist/domain/neighbor-game.js';
-import { AFRICA_MAP_COUNTRY_IDS } from '../dist/data/map-scopes.js';
-import { AFRICA_LAND_ADJACENCY } from '../dist/data/neighbors/index.js';
-import { CONTINENTS } from '../dist/data/continents.js';
-import { scopeSupportsDomain } from '../dist/domain/scope-support.js';
+import { COUNTRIES } from '../.verify-dist/data/countries.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { createInitialProgress } from '../.verify-dist/domain/progress.js';
+import { createInitialLocationProgress } from '../.verify-dist/domain/map-game.js';
+import { createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-game.js';
+import { AFRICA_MAP_COUNTRY_IDS } from '../.verify-dist/data/map-scopes.js';
+import { AFRICA_LAND_ADJACENCY } from '../.verify-dist/data/neighbors/index.js';
+import { CONTINENTS } from '../.verify-dist/data/continents.js';
+import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const app = await readFile('src/react/AtlasApp.tsx', 'utf8');

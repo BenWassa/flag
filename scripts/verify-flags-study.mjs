@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
-import { COUNTRIES, COUNTRY_BY_ID } from '../dist/data/countries.js';
-import { createInitialProgress, getRecord } from '../dist/domain/progress.js';
-import { parseRoutePath, serializeRoutePath } from '../dist/routing/routes.js';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import { createInitialProgress, getRecord } from '../.verify-dist/domain/progress.js';
+import { parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { FlagsStudyScreen } = await loadScreens('PassiveScreens.js');
@@ -124,7 +124,7 @@ assert.ok(
   'The study surface is a first-class view rather than a special case of the quiz.',
 );
 
-const roundSource = await readFile('dist/state/flags-round.js', 'utf8');
+const roundSource = await readFile('.verify-dist/state/flags-round.js', 'utf8');
 assert.ok(
   roundSource.includes('lastActivity'),
   'Repeat restores the activity that actually ran, so a repeated review stays a round.',
