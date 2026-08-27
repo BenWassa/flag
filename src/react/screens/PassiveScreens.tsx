@@ -1,37 +1,27 @@
-import { CONTINENTS, REGIONS } from '../../data/continents.js';
-import { COUNTRIES } from '../../data/countries.js';
-import { getContinentAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
-import { domainDisplayName } from '../../domain/display.js';
-import {
-  LEARNING_DOMAIN_IDS,
-  type Country,
-  type LearningDomain,
-  type ScopeStats,
-  type StudyScope,
-} from '../../domain/models.js';
-import {
-  buildDomainProgressSummary,
-  buildProgressSummary,
-  type DomainProgressSummary,
-  type ProgressLedgers,
-  type ProgressSummary,
-} from '../../domain/progress-summary.js';
-import { countriesInScope } from '../../domain/progress.js';
-import { scopeSupportsDomain } from '../../domain/scope-support.js';
-import { coverageLabel } from '../../ui/format.js';
-import { lazy, Suspense, useState } from 'react';
+import { Suspense, useState } from 'react';
+import { CONTINENTS } from '../../data/continents.js';
+import { REGIONS } from '../../data/regions.js';
+import { buildDomainProgressSummary, buildProgressSummary, scopeSupportsDomain } from '../../domain/curriculum.js';
+import { getContinentAchievementReadModel, getRegionAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
+import type { DomainProgressSummary, LearningDomain, ProgressLedgers, ProgressSummary, StudyScope } from '../../domain/models.js';
 import { isDevelopmentSandbox } from '../../infrastructure/runtime-environment.js';
+import { domainDisplayName } from '../../ui/format.js';
 import { useAtlasActions } from '../actions.js';
-import { FlagImage } from '../components/FlagImage.js';
 import { ContinentIcon, ContinentTrophy, DomainIcon, Icon } from '../components/Icon.js';
-import { ProgressStrip } from '../components/ProgressStrip.js';
+import { ProgressStrip, type ScopeStats } from '../components/ProgressStrip.js';
 import { useAuth } from '../useAuth.js';
 
-const DevelopmentSandboxPanel = typeof __ATLAS_DEVELOPMENT_SANDBOX__ !== 'undefined' && __ATLAS_DEVELOPMENT_SANDBOX__
-  ? lazy(() => import('../components/DevelopmentSandboxPanel.js'))
+const DevelopmentSandboxPanel = isDevelopmentSandbox
+  ? (await import('../components/DevelopmentSandboxPanel.js')).DevelopmentSandboxPanel
   : null;
 
-export function domainCoverageLabel(summary: DomainProgressSummary): string {
+function coverageLabel(names: string[], total: number): string {
+  if (names.length === total) return 'World';
+  if (names.length === 0) return 'Coming soon';
+  return names.join(' · ');
+}
+
+function domainCoverageLabel(summary: DomainProgressSummary): string {
   const names = summary.supportedContinentIds.map((id) => CONTINENTS.find((continent) => continent.id === id)?.name ?? id);
   return coverageLabel(names, CONTINENTS.length);
 }
@@ -55,10 +45,10 @@ export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; 
       {!persisting ? <StorageNotice /> : null}
       <h2 className="atlas-eyebrow">Modes</h2>
       <div className="atlas-card-list">
-        {LEARNING_DOMAIN_IDS.map((domain) => {
-          const summary = buildDomainProgressSummary(ledgers, domain);
-          return <button className="atlas-card" type="button" onClick={() => actions.openDomain(domain)} key={domain}>
-            <span className="atlas-card__mark" aria-hidden="true"><DomainIcon domain={domain} /></span>
+        {['flags', 'locations', 'outlines', 'neighbors'].map((domain) => {
+          const summary = buildDomainProgressSummary(ledgers, domain as LearningDomain);
+          return <button className="atlas-card" type="button" onClick={() => actions.openDomain(domain as LearningDomain)} key={domain}>
+            <span className="atlas-card__mark" aria-hidden="true"><DomainIcon domain={domain as LearningDomain} /></span>
             <span className="atlas-card__body"><span className="atlas-card__identity"><strong>{summary.label}</strong><small>{domainCoverageLabel(summary)}</small></span><ProgressStrip stats={statsFor(summary)} /></span>
             <span className="atlas-card__chevron" aria-hidden="true"><Icon name="chevron" /></span>
           </button>;
@@ -121,7 +111,11 @@ export function ProfileScreen() {
         <Suspense fallback={<p>Loading development sandbox…</p>}><DevelopmentSandboxPanel /></Suspense>
       ) : null}
 
-      {isDevelopmentSandbox ? null : loading ? null : user ? (
+      {isDevelopmentSandbox ? null : loading ? (
+        <div className="profile-card profile-card--loading" role="status" aria-live="polite">
+          <p>Checking sign-in…</p>
+        </div>
+      ) : user ? (
         <div className="profile-card">
           {user.photoURL
             ? <img className="profile-card__avatar" src={user.photoURL} alt="" referrerPolicy="no-referrer" />
@@ -142,16 +136,16 @@ export function ProfileScreen() {
             <button className="button button--secondary" type="button" onClick={() => setConfirmDelete('cloud')} disabled={pending}>Delete cloud copy</button>
             <button className="button button--secondary" type="button" onClick={() => setConfirmDelete('account')} disabled={pending}>Delete account</button>
           </div> : null}
-          {confirmDelete ? <div className="profile-card__delete-confirmation">
+          {confirmDelete ? <div className="profile-card__delete-confirmation" role="group" aria-label={confirmDelete === 'cloud' ? 'Confirm cloud copy deletion' : 'Confirm account deletion'}>
             <p>{confirmDelete === 'cloud'
               ? 'This deletes the cloud backup and signs you out. Progress on this device stays here.'
               : 'This deletes the cloud backup and sign-in account. Progress on this device stays here.'}</p>
             <div className="profile-card__account-actions">
-              <button className="button button--secondary" type="button" onClick={() => setConfirmDelete(null)} disabled={pending}>Cancel</button>
-              <button className="button button--secondary" type="button" onClick={() => handleDelete(confirmDelete)} disabled={pending} aria-busy={pending}>Delete</button>
+              <button className="button button--secondary" type="button" onClick={() => setConfirmDelete(null)} disabled={pending} autoFocus>Cancel</button>
+              <button className="button button--secondary profile-card__destructive-action" type="button" onClick={() => handleDelete(confirmDelete)} disabled={pending} aria-busy={pending}>Delete</button>
             </div>
           </div> : null}
-          {error ? <p className="storage-notice" role="status">{error}</p> : null}
+          {error ? <p className="storage-notice profile-card__error" role="alert">{error}</p> : null}
         </div>
       ) : (
         <div className="profile-card profile-card--signed-out">
@@ -163,7 +157,7 @@ export function ProfileScreen() {
             disabled={pending}
             aria-busy={pending}
           >Sign in with Google</button>
-          {error ? <p className="storage-notice" role="status">{error}</p> : null}
+          {error ? <p className="storage-notice profile-card__error" role="alert">{error}</p> : null}
         </div>
       )}
     </main>
@@ -215,40 +209,10 @@ export function DomainScreen({ domain, ledgers, achievements, persisting }: {
         <ProgressStrip stats={statsFor(world)} />
         <div className="primary-actions"><button className="button button--primary" type="button" onClick={() => actions.startFlags('test')}>Play world</button><button className="button button--secondary" type="button" onClick={() => actions.startFlags('learn')}>Learn world</button></div>
       </section> : null}
-      <section className="atlas-section" aria-labelledby="continents-heading"><div className="list-heading"><h2 id="continents-heading">Continents</h2></div><div className="continent-list">{CONTINENTS.map((continent) => <ContinentRow domain={domain} continent={continent} ledgers={ledgers} achievements={achievements} key={continent.id} />)}</div></section>
-    </main>
-  );
-}
-
-interface StudyGroup { label: string; countries: Country[] }
-
-function groupsFor(scope: StudyScope, countries: Country[]): StudyGroup[] {
-  if (scope.kind === 'region') return [{ label: scope.label, countries }];
-  if (scope.kind === 'continent') return REGIONS.filter((region) => region.continentId === scope.id).map((region) => ({ label: region.name, countries: countries.filter((country) => country.regionId === region.id) })).filter((group) => group.countries.length > 0);
-  return CONTINENTS.map((continent) => ({ label: continent.name, countries: countries.filter((country) => country.continentId === continent.id) })).filter((group) => group.countries.length > 0);
-}
-
-export function FlagsStudyScreen({ scope, revealedIds, revealAll }: { scope: StudyScope; revealedIds: ReadonlySet<string>; revealAll: boolean }) {
-  const actions = useAtlasActions();
-  const countries = countriesInScope(COUNTRIES, scope);
-  if (!countries.length) return <main className="page"><div className="empty-state"><strong tabIndex={-1} data-autofocus>No flags to study here</strong><span>This scope has no flags yet. Choose another region.</span></div><div className="result-actions"><button className="button button--primary" onClick={actions.goBack}>Back</button></div></main>;
-  const groups = groupsFor(scope, countries);
-  let index = 0;
-  return (
-    <main className="page">
-      <header className="topbar topbar--detail"><button className="icon-button" onClick={actions.goBack} aria-label="Back"><Icon name="back" /></button><div className="screen-title"><h1 tabIndex={-1} data-autofocus>{scope.label}</h1><span>Learn · {countries.length} flags</span></div></header>
-      <div className="study-toolbar"><button className="button button--secondary" type="button" onClick={actions.toggleAllFlagNames} aria-pressed={revealAll}>{revealAll ? 'Hide names' : 'Reveal all'}</button><button className="button button--primary" type="button" onClick={() => actions.startFlags('test')}>Play {scope.label}</button></div>
-      <p className="study-hint">Tap a flag to reveal its country.</p>
-      {groups.map((group) => <section className="study-group" aria-label={group.label} key={group.label}>
-        {groups.length > 1 ? <h2 className="study-group__heading">{group.label}</h2> : null}
-        <ul className="flag-gallery">{group.countries.map((country) => {
-          index += 1;
-          const position = index;
-          const revealed = revealAll || revealedIds.has(country.id);
-          const hiddenLabel = `Flag ${position} of ${countries.length}. Reveal the country.`;
-          return <li className="flag-gallery__item" key={country.id}><button className={`flag-card ${revealed ? 'flag-card--revealed' : ''}`} type="button" onClick={() => actions.revealFlag(country.id)} aria-expanded={revealed} aria-label={revealed ? undefined : hiddenLabel}><FlagImage country={country} revealed={revealed} frameClass="flag-frame--card" /><span className="flag-card__name" data-flag-name>{revealed ? country.name : ''}</span></button></li>;
-        })}</ul>
-      </section>)}
+      <section className="continent-section" aria-labelledby="continent-heading">
+        <div className="list-heading"><h2 id="continent-heading">Continents</h2></div>
+        <div className="continent-list">{CONTINENTS.map((continent) => <ContinentRow domain={domain} continent={continent} ledgers={ledgers} achievements={achievements} key={continent.id} />)}</div>
+      </section>
     </main>
   );
 }
