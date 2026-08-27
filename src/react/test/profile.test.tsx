@@ -57,20 +57,20 @@ describe('Profile cloud account states', () => {
     auth.current.user = { uid: 'allowed', displayName: 'Atlas Learner', email: 'learner@example.com', photoURL: null };
     auth.current.cloudStatus = 'reconciling';
     const view = await renderProfile();
-    expect(screen.getByRole('status')).toHaveTextContent('Checking cloud progress');
+    expect(screen.getByRole('status').textContent).toContain('Checking cloud progress');
 
     view.unmount();
     auth.current.cloudStatus = 'degraded';
     await renderProfile();
-    expect(screen.getByRole('status')).toHaveTextContent('Progress is still saved on this device');
-    expect(screen.getByRole('button', { name: 'Sign out' })).toBeEnabled();
+    expect(screen.getByRole('status').textContent).toContain('Progress is still saved on this device');
+    expect((screen.getByRole('button', { name: 'Sign out' }) as HTMLButtonElement).disabled).toBe(false);
   });
 
   it('does not offer cloud deletion to an unauthorised signed-in account', async () => {
     auth.current.user = { uid: 'other', displayName: 'Other account', email: 'other@example.com', photoURL: null };
     auth.current.cloudStatus = 'unauthorised';
     await renderProfile();
-    expect(screen.getByRole('status')).toHaveTextContent("Cloud backup isn't available for this account");
+    expect(screen.getByRole('status').textContent).toContain("Cloud backup isn't available for this account");
     expect(screen.queryByRole('button', { name: 'Delete cloud copy' })).toBeNull();
     expect(screen.queryByRole('button', { name: 'Delete account' })).toBeNull();
   });
