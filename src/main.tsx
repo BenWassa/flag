@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import './map-viewport.js';
 import './neighbor-map-runtime.js';
+import './styles/profile.css';
 import { AtlasApp } from './react/AtlasApp.js';
 import { AppErrorBoundary } from './react/components/AppErrorBoundary.js';
 import { remoteAccountServicesEnabled } from './infrastructure/runtime-environment.js';
