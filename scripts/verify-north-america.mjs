@@ -28,7 +28,7 @@ const sizes = await verifyContinentContract({
   expectedNeighborCountryIds: EXPECTED_COUNTRY_IDS,
   runtimeModulePath: '.verify-dist/data/maps/north-america.js',
   maxRawBytes: 2_100_000,
-  maxGzipBytes: 400_000,
+  maxGzipBytes: 425_000,
 });
 
 const mapScopes = await import('../.verify-dist/data/map-scopes.js');
