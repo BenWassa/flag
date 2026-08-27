@@ -1,76 +1,49 @@
-name: Issue 22 cartography bootstrap
+name: Issue 22 cartography audit
 
 on:
   push:
     branches: [issue-22-north-america-expansion]
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  generate:
-    if: github.actor != 'github-actions[bot]'
+  audit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - name: Add North America generator configuration
+      - name: Audit Natural Earth North America source features
         run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('scripts/map-continent-configs.mjs')
-          s = p.read_text()
-          if 'NORTH_AMERICA_MAP_GENERATION_CONFIG' not in s:
-              block = r'''export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
-            id: 'north-america',
-            displayName: 'North America',
-            sourceContinent: 'North America',
-            exportPrefix: 'NORTH_AMERICA',
-            outputFilename: 'north-america.ts',
-            provenanceFilename: 'north-america-cartography-provenance.json',
-            expectedCountryCount: 23,
-            regionIds: Object.freeze([
-              'northern-america',
-              'central-america',
-              'caribbean',
-            ]),
-            islandLocatorIds: Object.freeze([]),
-            callouts: Object.freeze({}),
-            lakes: Object.freeze([]),
-            localContextCountryIds: Object.freeze(['COL', 'VEN']),
-            localContextBounds: Object.freeze({ minLon: -86, maxLon: -57, minLat: 0, maxLat: 25 }),
-            allowedContextPatterns: Object.freeze([]),
-            adjacencyMode: 'global',
-            policy: 'standard-v1',
-            boundaryPolicy: Object.freeze({
-              naturalEarthView: 'default de-facto',
-              scoredCountries: 'exact Atlas 23-country North America curriculum only',
-              southAmericaContext: 'COL and VEN are keyed non-scoring context; PAN-COL adjacency remains global',
-              dependenciesAndTerritories: 'non-scoring; explicit source-feature audit required before release',
-              maritimeAdjacency: 'none; land adjacency only',
-            }),
-          });
-
-          '''
-              s = s.replace('export const MAP_GENERATION_CONFIGS = Object.freeze([', block + 'export const MAP_GENERATION_CONFIGS = Object.freeze([')
-              s = s.replace('  ASIA_MAP_GENERATION_CONFIG,\n]);', '  ASIA_MAP_GENERATION_CONFIG,\n  NORTH_AMERICA_MAP_GENERATION_CONFIG,\n]);')
-              p.write_text(s)
-          PY
-      - name: Generate canonical map assets
-        run: npm run maps:generate
-      - name: Commit generated North America outputs
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/map-continent-configs.mjs src/data/maps/north-america.ts src/data/neighbors/north-america.ts src/data/neighbors/global.ts docs/architecture/north-america-cartography-provenance.json
-          if git diff --cached --quiet; then
-            echo "No generated changes"
-            exit 0
-          fi
-          git commit -m "feat(#22): generate canonical North America geography"
-          git push origin HEAD:issue-22-north-america-expansion
+          node --input-type=module <<'NODE'
+          import { readFile } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('scripts/map-sources/natural-earth.json', 'utf8'));
+          const source = manifest.sources.countries;
+          const url = `${manifest.rawBaseUrl}/${manifest.upstreamCommit}/${source.path}`;
+          const response = await fetch(url);
+          if (!response.ok) throw new Error(`source fetch failed: ${response.status}`);
+          const collection = await response.json();
+          const rows = collection.features
+            .filter((feature) => String(feature.properties?.CONTINENT ?? '') === 'North America')
+            .map((feature) => {
+              const p = feature.properties ?? {};
+              return {
+                name: p.ADMIN ?? p.NAME ?? p.NAME_EN ?? p.GEOUNIT ?? p.SUBUNIT,
+                geounit: p.GEOUNIT,
+                subunit: p.SUBUNIT,
+                type: p.TYPE,
+                sovereign: p.SOVEREIGNT,
+                ISO_A3_EH: p.ISO_A3_EH,
+                ADM0_A3: p.ADM0_A3,
+                ISO_A3: p.ISO_A3,
+                SOV_A3: p.SOV_A3,
+                SU_A3: p.SU_A3,
+                GU_A3: p.GU_A3,
+              };
+            })
+            .sort((a, b) => String(a.name).localeCompare(String(b.name)));
+          console.log(`NORTH_AMERICA_SOURCE_FEATURES=${rows.length}`);
+          for (const row of rows) console.log(JSON.stringify(row));
+          NODE
