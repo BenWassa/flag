@@ -154,6 +154,42 @@ mastery/completion.
 500,000-byte budget, while Africa and South America remain byte-identical. See
 the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
 
+### 6. Exploration — not scheduled for production
+
+- [#119 — continuous spatial Atlas shell](https://github.com/BenWassa/flag/issues/119).
+  **Moonshot exploration. No production commitment, no renderer selected.**
+  Plan of record: [`issue-119-plan.md`](issue-119-plan.md); canonical scope:
+  [`issue-119-spatial-atlas-moonshot.md`](issue-119-spatial-atlas-moonshot.md);
+  acceptance criteria:
+  [`issue-119-prototype-verification-plan.md`](issue-119-prototype-verification-plan.md).
+
+  Current position: the renderer comparison gate is **AMBER, not GREEN** — the
+  R3F and MapLibre spikes did not attempt the same task and MapLibre's failures
+  are headless-environment artifacts that were never reproduced headed. Two
+  cheap repair runs precede any principal session. The next action is **not**
+  the Africa globe slice: it is a Stage 0 production baseline on a physical
+  phone (shared with #71) followed by a Stage 1 continuity probe built from
+  existing 2D geography with no renderer at all, which tests the load-bearing
+  claim before any renderer budget is spent. Gate G is a human verdict on a
+  real device, not an agent review. Supporting evidence:
+  [`renderer comparison`](issue-119-renderer-comparison.md),
+  [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
+  [`R3F spike`](issue-119-r3f-spike-results.md),
+  [`MapLibre spike`](issue-119-maplibre-spike-results.md). Superseded planning
+  documents are archived in `docs/closed/` as `issue-119-llm-execution-plan.md`,
+  `issue-119-pre-opus-handoff.md`, `issue-119-principal-handoff.md`,
+  `issue-119-support-evidence.md` and `issue-119-renderer-spike-prep.md`.
+
+  #104 stops being indefinitely deferred at Stage 1: a continuous 2D prototype
+  is substantially the #104 design space, so Stage 1's outcome decides it either
+  way. It must not reintroduce colour-only progress encoding.
+
+- [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
+  **Proposed, audit only.** Its mobile-ergonomics and motion-timing lenses
+  produce exactly the current-launcher interaction baseline #119 Stage 0 needs.
+  Run it first, or share one artifact between them; do not capture that baseline
+  twice.
+
 ## Working rules
 
 - Before starting new work, reconcile GitHub issue state against this file and `docs/closed/`.

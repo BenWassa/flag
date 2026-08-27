@@ -1,5 +1,10 @@
 # Issue #119 — Support Evidence Dossier
 
+> **Archived reference. Active plan: [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+>
+> Support-tier evidence dossier gathered before the runtime spikes. Superseded as a reading target by the spike reports and the comparison gate; retained for tracing individual measurements.
+
+
 **Status:** pre-frontier evidence, not an architecture decision  
 **Issue:** #119  
 **Updated:** 2026-08-26  
