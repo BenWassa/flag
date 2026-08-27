@@ -10,15 +10,18 @@ const KEYS = [
   'flag-atlas:earned-achievements:v1',
 ] as const;
 
+type AuthUser = { uid: string } | null;
+type AuthCallback = (user: AuthUser) => void;
+
 const harness = vi.hoisted(() => ({
-  authCallback: null as ((user: { uid: string } | null) => void) | null,
+  authCallback: null as AuthCallback | null,
   cloud: new Map<string, unknown>(),
   writesEnabled: true,
 }));
 
 vi.mock('./runtime-environment.js', () => ({ remoteAccountServicesEnabled: true }));
 vi.mock('./firebase.js', () => ({
-  onAuthChange: vi.fn((callback: (user: { uid: string } | null) => void) => {
+  onAuthChange: vi.fn((callback: AuthCallback) => {
     harness.authCallback = callback;
     return vi.fn();
   }),
@@ -65,6 +68,12 @@ async function settle(turns = 50) {
   for (let index = 0; index < turns; index += 1) await Promise.resolve();
 }
 
+function emitAuth(user: AuthUser) {
+  const callback: AuthCallback | null = harness.authCallback;
+  if (!callback) throw new Error('Auth listener was not registered.');
+  callback(user);
+}
+
 beforeEach(() => {
   vi.useRealTimers();
   vi.resetModules();
@@ -79,7 +88,7 @@ it('backfills one profile, restores into a clean profile, sanitises migration, a
   localStorage.setItem(FLAGS_KEY, JSON.stringify(legacyFlagsPayload(3)));
   const first = await import('./cloud-sync-service.js');
   const stopFirst = first.startCloudSync();
-  harness.authCallback?.({ uid: UID });
+  emitAuth({ uid: UID });
   await settle();
 
   const backedUp = harness.cloud.get(`${UID}:${FLAGS_KEY}`) as { version: number; records: Record<string, unknown> };
@@ -93,7 +102,7 @@ it('backfills one profile, restores into a clean profile, sanitises migration, a
   harness.authCallback = null;
   const second = await import('./cloud-sync-service.js');
   const stopSecond = second.startCloudSync();
-  harness.authCallback?.({ uid: UID });
+  emitAuth({ uid: UID });
   await settle();
 
   const restored = JSON.parse(localStorage.getItem(FLAGS_KEY) ?? '{}');
