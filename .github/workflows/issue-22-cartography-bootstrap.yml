@@ -1,4 +1,4 @@
-name: Issue 22 cartography refinement
+name: Issue 22 runtime integration
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  refine:
+  integrate:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -19,13 +19,13 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - run: python3 scripts/issue-22-refine.py
-      - run: npm run maps:generate
-      - name: Commit refined cartography
+      - run: python3 scripts/issue-22-integrate.py
+      - run: npm run check
+      - name: Commit runtime integration
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/map-generation-core.mjs scripts/map-continent-configs.mjs src/data/maps src/data/neighbors docs/architecture/*cartography-provenance.json
+          git add src/data/map-scopes.ts src/data/maps/index.ts src/data/neighbors/index.ts
           git diff --cached --stat
-          git commit -m "feat(#22): harden North America cartography" || exit 0
+          git commit -m "feat(#22): register North America learning support" || exit 0
           git push origin HEAD:issue-22-north-america-expansion
