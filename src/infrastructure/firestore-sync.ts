@@ -1,6 +1,15 @@
 import { deleteDoc, doc, getDoc, serverTimestamp, setDoc, Timestamp } from 'firebase/firestore';
 import { firestore } from './firebase.js';
-import { CLOUD_STATE_KEYS, type CloudStateKey } from '../state/cloud-progress.js';
+
+export const CLOUD_STATE_KEYS = [
+  'flag-atlas:progress:v1',
+  'flag-atlas:location-progress:v1',
+  'flag-atlas:outline-progress:v1',
+  'flag-atlas:neighbor-progress:v1',
+  'flag-atlas:earned-achievements:v1',
+] as const;
+
+export type CloudStateKey = (typeof CLOUD_STATE_KEYS)[number];
 
 const SCHEMA_VERSION = 1;
 
