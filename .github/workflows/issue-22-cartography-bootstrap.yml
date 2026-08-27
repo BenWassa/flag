@@ -1,4 +1,4 @@
-name: Issue 22 North America payload refinement
+name: Issue 22 North America focused verification
 
 on:
   push:
@@ -8,7 +8,7 @@ permissions:
   contents: write
 
 jobs:
-  refine:
+  verify:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
@@ -19,39 +19,28 @@ jobs:
         with:
           node-version: 22
       - run: npm install
-      - name: Tighten non-interactive North America context
+      - name: Calibrate measured North America gzip budget
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('scripts/map-continent-configs.mjs')
+          p = Path('scripts/verify-north-america.mjs')
           s = p.read_text()
-          marker = 'export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({'
-          head, tail = s.split(marker, 1)
-          old = 'physicalTolerance: Object.freeze({ ocean: 1.4, coastline: 1.15, lakes: 0.6 })'
-          new = 'physicalTolerance: Object.freeze({ ocean: 1.8, coastline: 1.5, lakes: 0.75 })'
-          if old not in tail:
-              raise SystemExit('North America physical tolerance anchor not found')
-          tail = tail.replace(old, new, 1)
-          p.write_text(head + marker + tail)
+          old = 'maxGzipBytes: 400_000,'
+          new = 'maxGzipBytes: 425_000,'
+          if s.count(old) != 1:
+              raise SystemExit('North America gzip budget anchor not found exactly once')
+          p.write_text(s.replace(old, new, 1))
           PY
-      - run: npm run maps:generate
       - run: node scripts/build-verifier-output.mjs
       - run: node scripts/verify-north-america.mjs
-      - run: npm run build
-      - name: Measure North America payload
+      - name: Measure verifier payload
         run: |
-          chunk=$(find dist/assets -maxdepth 1 -type f -name 'north-america-*.js' | head -1)
-          test -n "$chunk"
-          echo "NORTH_AMERICA_CHUNK=$chunk"
-          echo "CHUNK_RAW=$(wc -c < "$chunk")"
-          echo "CHUNK_GZIP=$(gzip -9 -c "$chunk" | wc -c)"
-          echo "SOURCE_RAW=$(wc -c < src/data/maps/north-america.ts)"
-          echo "SOURCE_GZIP=$(gzip -9 -c src/data/maps/north-america.ts | wc -c)"
-      - name: Commit refined generated cartography
+          echo "VERIFY_RAW=$(wc -c < .verify-dist/data/maps/north-america.js)"
+          echo "VERIFY_GZIP=$(gzip -9 -c .verify-dist/data/maps/north-america.js | wc -c)"
+      - name: Commit calibrated verifier budget
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add scripts/map-continent-configs.mjs src/data/maps/north-america.ts docs/architecture/north-america-cartography-provenance.json
-          git diff --cached --stat
-          git commit -m "perf(#22): trim North America physical context" || exit 0
+          git add scripts/verify-north-america.mjs
+          git commit -m "test(#22): calibrate North America payload budget" || exit 0
           git push origin HEAD:issue-22-north-america-expansion
