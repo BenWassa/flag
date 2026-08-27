@@ -8,6 +8,7 @@ const KEYS = [
   'flag-atlas:neighbor-progress:v1',
   'flag-atlas:earned-achievements:v1',
 ] as const;
+const PENDING_KEY = 'flag-atlas:cloud-sync-pending:v1';
 
 const mocks = vi.hoisted(() => ({
   authCallback: null as ((user: { uid: string } | null) => void) | null,
@@ -111,7 +112,24 @@ describe('cloud sync service', () => {
     stop();
   });
 
-  it('keeps failed writes pending and converges after retry', async () => {
+  it('degrades on a sign-in read failure and reconciles after reconnect retry', async () => {
+    vi.useFakeTimers();
+    mocks.loadState.mockResolvedValueOnce({ status: 'error' }).mockResolvedValue({ status: 'missing' });
+    const service = await import('./cloud-sync-service.js');
+    const stop = service.startCloudSync();
+    mocks.authCallback?.({ uid: AUTHORISED_UID });
+    await settle(30);
+    expect(service.getCloudSyncStatus()).toBe('degraded');
+    expect(mocks.saveState).not.toHaveBeenCalled();
+
+    await vi.advanceTimersByTimeAsync(5_000);
+    await settle(50);
+    expect(service.getCloudSyncStatus()).toBe('synced');
+    expect(mocks.saveState).toHaveBeenCalledTimes(KEYS.length);
+    stop();
+  });
+
+  it('keeps failed writes pending and converges after retry without duplicate retries', async () => {
     vi.useFakeTimers();
     mocks.saveState.mockResolvedValueOnce(false).mockResolvedValue(true);
     const service = await import('./cloud-sync-service.js');
@@ -119,12 +137,34 @@ describe('cloud sync service', () => {
     mocks.authCallback?.({ uid: AUTHORISED_UID });
     await settle(40);
     expect(service.getCloudSyncStatus()).toBe('degraded');
-    expect(localStorage.getItem('flag-atlas:cloud-sync-pending:v1')).toContain(KEYS[0]);
+    expect(localStorage.getItem(PENDING_KEY)).toContain(KEYS[0]);
 
     await vi.advanceTimersByTimeAsync(5_000);
     await settle(40);
     expect(service.getCloudSyncStatus()).toBe('synced');
-    expect(localStorage.getItem('flag-atlas:cloud-sync-pending:v1')).toBeNull();
+    expect(localStorage.getItem(PENDING_KEY)).toBeNull();
+    const recoveredCalls = mocks.saveState.mock.calls.length;
+
+    await vi.advanceTimersByTimeAsync(15_000);
+    await settle(20);
+    expect(mocks.saveState).toHaveBeenCalledTimes(recoveredCalls);
+    stop();
+  });
+
+  it('does not apply a stale remote read after sign-out', async () => {
+    let resolveRead: ((value: unknown) => void) | undefined;
+    mocks.loadState.mockImplementationOnce(() => new Promise((resolve) => { resolveRead = resolve; }));
+    const service = await import('./cloud-sync-service.js');
+    const stop = service.startCloudSync();
+    mocks.authCallback?.({ uid: AUTHORISED_UID });
+    await settle(10);
+    mocks.authCallback?.(null);
+    resolveRead?.({ status: 'found', data: flagsState(9), updatedAt: new Date() });
+    await settle(30);
+
+    expect(service.getCloudSyncStatus()).toBe('signed-out');
+    expect(localStorage.getItem(KEYS[0])).toBeNull();
+    expect(mocks.saveState).not.toHaveBeenCalled();
     stop();
   });
 
@@ -165,6 +205,47 @@ describe('cloud sync service', () => {
     expect(mocks.deleteCloudState).toHaveBeenCalledWith(AUTHORISED_UID);
     expect(mocks.deleteSignedInUser).toHaveBeenCalledWith(user);
     expect(JSON.parse(localStorage.getItem(KEYS[0]) ?? '{}').records.gha.lifetimeCorrect).toBe(3);
+    expect(service.getCloudSyncStatus()).toBe('signed-out');
+  });
+
+  it('does not delete the Auth account when cloud deletion fails, and a later retry succeeds', async () => {
+    localStorage.setItem(KEYS[0], JSON.stringify(flagsState(3)));
+    mocks.deleteCloudState.mockResolvedValueOnce(false).mockResolvedValueOnce(true);
+    const service = await import('./cloud-sync-service.js');
+    const user = { uid: AUTHORISED_UID } as never;
+
+    await expect(service.deleteCloudAccount(user)).rejects.toThrow('account was not deleted');
+    expect(mocks.deleteSignedInUser).not.toHaveBeenCalled();
+    expect(service.getCloudSyncStatus()).toBe('degraded');
+
+    await service.deleteCloudAccount(user);
+    expect(mocks.deleteCloudState).toHaveBeenCalledTimes(2);
+    expect(mocks.deleteSignedInUser).toHaveBeenCalledWith(user);
+    expect(JSON.parse(localStorage.getItem(KEYS[0]) ?? '{}').records.gha.lifetimeCorrect).toBe(3);
+  });
+
+  it('suspends sync and signs out when account deletion requires a recent login', async () => {
+    vi.useFakeTimers();
+    localStorage.setItem(KEYS[0], JSON.stringify(flagsState(3)));
+    const recentLoginError = Object.assign(new Error('recent login required'), { code: 'auth/requires-recent-login' });
+    mocks.deleteSignedInUser.mockRejectedValueOnce(recentLoginError);
+    const service = await import('./cloud-sync-service.js');
+    const stop = service.startCloudSync();
+    mocks.authCallback?.({ uid: AUTHORISED_UID });
+    await settle(40);
+    mocks.saveState.mockClear();
+
+    await expect(service.deleteCloudAccount({ uid: AUTHORISED_UID } as never)).rejects.toThrow('requires a recent sign-in');
+    expect(mocks.deleteCloudState).toHaveBeenCalledWith(AUTHORISED_UID);
+    expect(mocks.signOutUser).toHaveBeenCalledOnce();
+    expect(service.getCloudSyncStatus()).toBe('signed-out');
+    expect(JSON.parse(localStorage.getItem(KEYS[0]) ?? '{}').records.gha.lifetimeCorrect).toBe(3);
+
+    window.dispatchEvent(new CustomEvent('atlas:learner-storage-write', { detail: { key: KEYS[0] } }));
+    await vi.advanceTimersByTimeAsync(10_000);
+    await settle(20);
+    expect(mocks.saveState).not.toHaveBeenCalled();
+    stop();
   });
 
   it('deleting only the cloud copy signs out so it is not immediately backfilled', async () => {
@@ -173,5 +254,16 @@ describe('cloud sync service', () => {
     await service.deleteCloudCopy(user);
     expect(mocks.deleteCloudState).toHaveBeenCalledWith(AUTHORISED_UID);
     expect(mocks.signOutUser).toHaveBeenCalledOnce();
+    expect(service.getCloudSyncStatus()).toBe('signed-out');
+  });
+
+  it('reports partial success when cloud-copy deletion succeeds but sign-out fails', async () => {
+    mocks.signOutUser.mockRejectedValueOnce(new Error('offline'));
+    const service = await import('./cloud-sync-service.js');
+    const user = { uid: AUTHORISED_UID } as never;
+
+    await expect(service.deleteCloudCopy(user)).rejects.toThrow('cloud backup was deleted');
+    expect(mocks.deleteCloudState).toHaveBeenCalledWith(AUTHORISED_UID);
+    expect(service.getCloudSyncStatus()).toBe('signed-out');
   });
 });
