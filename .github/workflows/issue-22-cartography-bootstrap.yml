@@ -1,91 +1,93 @@
-name: Issue 22 North America interaction diagnostics
+name: Issue 22 map interaction fix
 
 on:
   push:
     branches: [issue-22-north-america-expansion]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  diagnose:
+  fix:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-22-north-america-expansion
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
-      - name: Diagnose Hispaniola neighbour map derivation
+      - name: Preserve answer taps until a gesture actually begins
         run: |
-          node scripts/build-verifier-output.mjs
-          node --input-type=module <<'NODE'
-          const maps = await import('./.verify-dist/data/maps/index.js');
-          const neighborMap = await import('./.verify-dist/domain/neighbor-map.js');
-          for (const targetId of ['HTI','DOM','PAN']) {
-            const asset = await maps.loadMapAsset(targetId === 'PAN' ? 'central-america' : 'caribbean');
-            const ids = targetId === 'HTI' ? ['DOM'] : targetId === 'DOM' ? ['HTI'] : ['COL','CRI'];
-            try {
-              const model = neighborMap.deriveNeighborMapModel(asset, { targetId, neighborIds: ids, foundIds: [], revealedIds: [] }, (id) => id);
-              console.log('NEIGHBOR_MODEL_OK', targetId, JSON.stringify({focus:model.focus,puzzle:model.puzzleCountries.map(x=>x.countryId)}));
-            } catch (error) {
-              console.error('NEIGHBOR_MODEL_ERROR', targetId, error?.stack ?? error);
-              process.exitCode = 1;
-            }
-          }
-          NODE
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('src/map-viewport.ts')
+          s = p.read_text()
+          old = """  } else {
+    resetPinchStart(viewport, gesture);
+  }
+  viewport.setPointerCapture?.(event.pointerId);
+}
+"""
+          new = """  } else {
+    resetPinchStart(viewport, gesture);
+    // A second pointer proves this is a pinch rather than a tap. Capture both
+    // pointers only now; capturing on the first pointerdown retargets the
+    // browser's later click to the viewport and makes SVG answer marks untappable.
+    for (const pointerId of gesture.pointers.keys()) {
+      try { viewport.setPointerCapture?.(pointerId); } catch { /* Pointer may already have ended. */ }
+    }
+  }
+}
+"""
+          if old not in s:
+            raise SystemExit('pointerdown capture anchor not found')
+          s = s.replace(old, new, 1)
+          old = """    if (Math.hypot(dx, dy) > 4) gesture.dragged = true;
+    if (gesture.dragged) {
+"""
+          new = """    if (!gesture.dragged && Math.hypot(dx, dy) > 4) {
+      gesture.dragged = true;
+      // Capture only after crossing the drag threshold so ordinary country
+      // taps keep their original SVG target and delegated answer semantics.
+      try { viewport.setPointerCapture?.(event.pointerId); } catch { /* Pointer may already have ended. */ }
+    }
+    if (gesture.dragged) {
+"""
+          if old not in s:
+            raise SystemExit('drag capture anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Make North America lazy-PWA exclusion explicit
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('vite.config.ts')
+          s = p.read_text()
+          old = """          'assets/europe-*.js',
+          'assets/asia-*.js',
+"""
+          new = """          'assets/europe-*.js',
+          'assets/asia-*.js',
+          'assets/north-america-*.js',
+"""
+          if old not in s:
+            raise SystemExit('geography PWA globIgnore anchor not found')
+          s = s.replace(old, new, 1)
+          p.write_text(s)
+          PY
+      - name: Commit runtime fixes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/map-viewport.ts vite.config.ts
+          git diff --cached --stat
+          git commit -m "fix(#22): preserve map answer taps during gestures"
+          git push origin HEAD:issue-22-north-america-expansion
+      - run: npm install
       - run: npx playwright install --with-deps chromium
       - run: npm run build
-      - name: Create pointer diagnostic
-        run: |
-          cat > tests/browser/issue-22-pointer-diagnostic.spec.ts <<'EOF'
-          import { test, expect } from '@playwright/test';
-          test('diagnoses invisible hit pointer delivery', async ({ page }) => {
-            test.setTimeout(90000);
-            await page.setViewportSize({width:390,height:844});
-            await page.addInitScript(() => {
-              Object.defineProperty(globalThis.crypto, 'randomUUID', { configurable:true, value:()=> 'issue-22-pointer-diagnostic' });
-              (window as any).__clicks = [];
-              document.addEventListener('click', (event) => {
-                const target = event.target instanceof Element ? event.target : null;
-                (window as any).__clicks.push({
-                  tag: target?.tagName ?? null,
-                  cls: target?.getAttribute('class') ?? null,
-                  id: target?.closest('[data-action="map-answer"]')?.getAttribute('data-id') ?? null,
-                });
-              }, true);
-            });
-            await page.goto('/#/locations/north-america');
-            await page.getByRole('button', {name:'Play Caribbean'}).click();
-            await expect(page.locator('#map-prompt-heading')).toBeVisible({timeout:40000});
-            await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned','true');
-            for (let step=0; step<13; step++) {
-              const heading = await page.locator('#map-prompt-heading').innerText();
-              const hit = page.locator('.map-current-target-hit');
-              const hitCount = await hit.count();
-              console.log('TARGET', step, heading, 'HIT', hitCount, hitCount ? await hit.getAttribute('data-id') : 'none');
-              if (hitCount) {
-                const before = await page.locator('.map-round-count').innerText();
-                const box = await hit.boundingBox();
-                console.log('HIT_BOX', JSON.stringify(box));
-                const owner = box ? await page.evaluate(({x,y}) => document.elementFromPoint(x,y)?.closest('[data-action="map-answer"]')?.getAttribute('data-id') ?? null, {x:box.x+box.width/2,y:box.y+box.height/2}) : null;
-                console.log('OWNER_BEFORE', owner);
-                if (box) await page.mouse.click(box.x+box.width/2, box.y+box.height/2);
-                await page.waitForTimeout(900);
-                console.log('AFTER_MOUSE', await page.locator('#map-prompt-heading').innerText(), await page.locator('.map-round-count').innerText(), JSON.stringify(await page.evaluate(() => (window as any).__clicks)));
-                if ((await page.locator('.map-round-count').innerText()) === before) {
-                  await hit.dispatchEvent('click');
-                  await page.waitForTimeout(900);
-                  console.log('AFTER_DISPATCH', await page.locator('#map-prompt-heading').innerText(), await page.locator('.map-round-count').innerText(), JSON.stringify(await page.evaluate(() => (window as any).__clicks)));
-                }
-                return;
-              }
-              const group = page.locator('.map-active-countries > .map-country[data-action="map-answer"]').filter({has: page.locator('.map-country__shape')}).first();
-              await group.focus();
-              await group.press('Enter');
-              await page.waitForTimeout(1700);
-            }
-            throw new Error('No hit-assist target encountered');
-          });
-          EOF
-      - run: npx playwright test tests/browser/issue-22-pointer-diagnostic.spec.ts --project=chromium
+      - name: Run focused map interaction and North America browser QA
+        run: npx playwright test tests/browser/north-america.spec.ts tests/browser/map-hit-precedence.spec.ts tests/browser/map-insets.spec.ts tests/browser/atlas.spec.ts --project=chromium
