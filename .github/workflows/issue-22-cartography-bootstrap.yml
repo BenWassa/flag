@@ -1,4 +1,4 @@
-name: Issue 22 cartography audit
+name: Issue 22 cartography measurements
 
 on:
   push:
@@ -8,42 +8,41 @@ permissions:
   contents: read
 
 jobs:
-  audit:
+  measure:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Audit Natural Earth North America source features
+      - run: npm install
+      - name: Measure generated North America geometry
         run: |
+          echo "SOURCE_RAW=$(wc -c < src/data/maps/north-america.ts)"
+          echo "SOURCE_GZIP=$(gzip -9 -c src/data/maps/north-america.ts | wc -c)"
+          npx esbuild src/data/maps/north-america.ts --platform=node --format=esm --outfile=/tmp/north-america.mjs
           node --input-type=module <<'NODE'
-          import { readFile } from 'node:fs/promises';
-          const manifest = JSON.parse(await readFile('scripts/map-sources/natural-earth.json', 'utf8'));
-          const source = manifest.sources.countries;
-          const url = `${manifest.rawBaseUrl}/${manifest.upstreamCommit}/${source.path}`;
-          const response = await fetch(url);
-          if (!response.ok) throw new Error(`source fetch failed: ${response.status}`);
-          const collection = await response.json();
-          const rows = collection.features
-            .filter((feature) => String(feature.properties?.CONTINENT ?? '') === 'North America')
-            .map((feature) => {
-              const p = feature.properties ?? {};
-              return {
-                name: p.ADMIN ?? p.NAME ?? p.NAME_EN ?? p.GEOUNIT ?? p.SUBUNIT,
-                geounit: p.GEOUNIT,
-                subunit: p.SUBUNIT,
-                type: p.TYPE,
-                sovereign: p.SOVEREIGNT,
-                ISO_A3_EH: p.ISO_A3_EH,
-                ADM0_A3: p.ADM0_A3,
-                ISO_A3: p.ISO_A3,
-                SOV_A3: p.SOV_A3,
-                SU_A3: p.SU_A3,
-                GU_A3: p.GU_A3,
-              };
-            })
-            .sort((a, b) => String(a.name).localeCompare(String(b.name)));
-          console.log(`NORTH_AMERICA_SOURCE_FEATURES=${rows.length}`);
-          for (const row of rows) console.log(JSON.stringify(row));
+          const mod = await import('file:///tmp/north-america.mjs');
+          const geometry = mod.NORTH_AMERICA_GEOMETRY;
+          const focus = mod.NORTH_AMERICA_SCOPE_FOCUS;
+          function bounds(path = '') {
+            let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+            for (const match of path.matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
+              const x = Number(match[1]), y = Number(match[2]);
+              minX = Math.min(minX, x); minY = Math.min(minY, y);
+              maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+            }
+            return { minX, minY, maxX, maxY, width: maxX - minX, height: maxY - minY };
+          }
+          const ids = ['CAN','USA','MEX','BLZ','SLV','ATG','BHS','BRB','CUB','DMA','DOM','GRD','HTI','JAM','KNA','LCA','VCT','TTO'];
+          for (const id of ids) {
+            const item = geometry[id];
+            console.log(`GEOMETRY ${id} ${JSON.stringify({ ...bounds(item?.path ?? item?.outlinePath ?? ''), locator: item?.locator ?? null, callout: item?.callout ?? null })}`);
+          }
+          for (const id of ['north-america','northern-america','central-america','caribbean']) {
+            console.log(`FOCUS ${id} ${JSON.stringify(focus[id])}`);
+          }
+          console.log(`GEOMETRY_KEYS=${Object.keys(geometry).sort().join(',')}`);
+          console.log(`INSETS=${JSON.stringify(mod.NORTH_AMERICA_INSETS)}`);
+          console.log(`WATER=${JSON.stringify((mod.NORTH_AMERICA_WATER.lakes ?? []).map((x) => x.name))}`);
           NODE
