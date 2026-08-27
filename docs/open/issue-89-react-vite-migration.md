@@ -37,7 +37,7 @@ The pre-migration proposal for `useSyncExternalStore` plus `AppStore.subscribe()
 | --- | --- | --- |
 | #91 | closed | Baseline/contracts phase was completed before production migration. |
 | #92 | closed — complete | Vite owns dev/build output; relative Pages paths and lazy geography are verified; current Node 22 CI and Pages are green; exact current artifacts inspected. |
-| #93 | open — partially complete; re-scoped | Workbox InjectManifest and the intended cache policy ship, but production-browser offline/update recovery has not been demonstrated. It remains a runtime PWA validation tail coordinated with #101. |
+| #93 | implementation complete locally; tracker closeout pending | The exact built PWA now has persistent-context browser evidence for service-worker control, cached-shell offline reopening, previously loaded lazy Africa offline, explicit first-time lazy offline failure, and same-origin two-artifact update recovery. Physical installed-PWA/device work remains #71. |
 | #94 | closed — material completion documented | React owns the shell/global lifecycle. Router/store adaptation shipped through a simpler root-owned implementation rather than the proposed observable-store API. No parallel router/store exists. |
 | #95 | closed — complete | Passive React surfaces and Flags study ship; routing/IA/action-feedback invariants, React component coverage and available browser smoke evidence cover the phase boundary. |
 | #96 | open — partially complete; re-scoped | Flags production UI is React-owned and invariants are green, but the issue's required complete active-round component/browser coverage is not present. |
@@ -45,7 +45,7 @@ The pre-migration proposal for `useSyncExternalStore` plus `AppStore.subscribe()
 | #98 | open — partially complete; re-scoped | Locations production UI is React-owned and map/cartography invariants are broad; browser coverage currently reaches round launch only, not answer/pan/zoom/results parity. |
 | #99 | open — partially complete; re-scoped | Neighbours production UI is React-owned and invariant coverage is broad; there is no current Playwright Neighbours flow or equivalent React component closeout coverage. |
 | #100 | implementation complete locally; tracker closeout pending | The verifier emit now lives outside `dist/`; the obsolete coordinator and all 16 string renderers are removed; full local `npm test` is green. |
-| #101 | open — genuinely still open | Final browser/offline/accessibility/production hardening is materially incomplete; physical-device evidence remains explicitly owned by #71. |
+| #101 | open — final closeout pending | Its PWA runtime tail now has exact-artifact evidence; remaining final closeout, tracker/CI evidence, and the independent #71 physical-device boundary remain. |
 
 Live GitHub state was reconciled to this matrix during PR #105: #92, #94 and #95 were closed with evidence comments; #93 and #96–#101 were rewritten around current remaining work; #89 was rewritten and intentionally left open.
 

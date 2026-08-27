@@ -487,3 +487,51 @@ The Vite/Workbox artifact is 33 files / 7,281,623 bytes. The temporary verifier
 tree measured 90 files / 5,735,833 bytes before cleanup and is absent after a
 successful test run. This removes the previous deployed compatibility tail
 (132 files / approximately 15.26 MB), without changing learner behaviour.
+
+## Step 3e — production PWA runtime matrix (#93 / #101, 2026-08-26)
+
+`tests/browser/pwa-runtime.spec.ts` now builds and serves two real Vite/Workbox
+production artifacts at one localhost origin, retaining a Chromium persistent
+profile across the deployment switch. The only fixture difference is a
+test-only HTML build marker, injected only when
+`ATLAS_PWA_RUNTIME_BUILD_MARKER` is set; normal production output and service
+worker policy are unchanged. `scripts/build-pwa-runtime-fixtures.mjs` records
+SHA-256 identities for `index.html`, `app.js`, and `sw.js` in ignored fixture
+output, and the test-only server changes which built artifact that same origin
+serves without touching application code.
+
+Focused local result: `npm run test:pwa-runtime` passed (one Chromium
+persistent-context test) after a normal production build. It proved:
+
+- the service worker registers and controls a production shell;
+- online use after control places the lazy Africa chunk in
+  `flag-atlas-v29-runtime`;
+- after closing the document, the cached shell reopens offline and the
+  previously loaded Africa Locations map opens from runtime cache;
+- a separate first-time profile can use its already-cached shell offline, but
+  cannot first-load Africa geography offline and receives the existing
+  “Africa map could not be loaded” recovery notice;
+- two distinct locally built artifacts recover across an explicit
+  service-worker update check, `skipWaiting`/`clientsClaim`, and a reload at
+  the same origin. The active map's deliberately ephemeral route normalises to
+  the stable Africa launcher after that reload.
+
+Artifact identities from the passing run:
+
+| Fixture | `index.html` SHA-256 | `app.js` SHA-256 | `sw.js` SHA-256 |
+| --- | --- | --- | --- |
+| `runtime-a` | `a11c95b14c0a5d2cf8bfffd8606351dd8a05f74b4bf089193db2ff740616a8d4` | `48a537eae621b4fba3fe6f584f9bfbed11641f1f44faafc52021c149467c9ad5` | `984f84adb8f94340c8e5c87a88d4175388f57cd4e193c2f88ee745bdfdc77cda` |
+| `runtime-b` | `debd1415050115f8f3d1a8a4d0cd0f800f861b722cd3fb5ad8f1f81309865323` | `48a537eae621b4fba3fe6f584f9bfbed11641f1f44faafc52021c149467c9ad5` | `93fe7adb44b9adbbd66961838aa865070f9422163b994270f65053394925953f` |
+
+The ordinary final artifact rebuilt by that command had 33 files / 7,184 KiB;
+its `index.html`, `app.js`, and `sw.js` SHA-256 values were respectively
+`e33ad0f2f07cfbd88f5e6434525ea0cdfc7bbd00085f68bcaddfa3081a917099`,
+`48a537eae621b4fba3fe6f584f9bfbed11641f1f44faafc52021c149467c9ad5`, and
+`a6393efc23b7e1a279316415d38be74b71a2c17894c7a7d97bbe507c49f9f7bd`.
+
+The update assertion calls `registration.update()` to advance the
+browser-scheduled service-worker update check immediately; a plain reload is
+correctly served by the old cache-first precache until that update check occurs.
+This is automation evidence only. It does not claim an installed PWA,
+physical Android Chrome, iOS Safari, actual deployment origin/CDN behaviour,
+or #71's device/safe-area/keyboard/gesture gates.

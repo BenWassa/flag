@@ -6,6 +6,7 @@ dist.previous-*/
 dist-spike-maplibre/
 spike-evidence-maplibre/
 .build.lock
+.pwa-runtime-builds/
 .DS_Store
 graphify-out/
 test-results/

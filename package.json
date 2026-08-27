@@ -15,6 +15,7 @@
     "build:verify": "node scripts/build-verifier-output.mjs",
     "test:unit": "vitest run",
     "test:browser": "playwright test",
+    "test:pwa-runtime": "npm run build && playwright test tests/browser/pwa-runtime.spec.ts --project=chromium",
     "maps:generate": "node scripts/generate-map-assets.mjs",
     "icons:continents:generate": "node scripts/generate-continent-icons.mjs",
     "icons:brand:generate": "node scripts/generate-brand-icons.mjs",
