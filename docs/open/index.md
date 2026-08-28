@@ -106,10 +106,24 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   is built and verified** — see [`probe/README.md`](../../experiments/spatial-continuity/probe/README.md).
   Run it with `npm run probe:stage1`.
 
-  The next action is the **H1 physical-phone verdict**, and no agent may supply it. The recording
-  sheet is [`issue-119-h1-verdict.md`](issue-119-h1-verdict.md). Everything downstream — renderer
-  evidence repair, F1/F2/F3, any 3D work at all — stays blocked until that sheet has a verdict in it.
-  A negative verdict stops #119, and that is a success, not a failure.
+  **The 3D Africa vertical slice is also built**, at the owner's direction, ahead of the H1 gate —
+  see [`spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md). It runs the full
+  prototype traversal on a persistent Three.js Earth built from the same pinned Natural Earth source
+  and ISO3 policy as production, with the typed router authoritative, native Back, interruptible
+  camera, reduced-motion snap, raycast picking, real DOM scope controls and a WebGL-failure fallback
+  to the 2D probe. Run it with `npm run probe:globe`.
+
+  Measured cost, which replaces the stale historical figures: prototype JS **135.63 kB gzip**
+  (~127 kB of that three.js plus prototype code), `globe-world.json` **269.5 kB gzip**,
+  `globe-africa.json` **127.0 kB gzip**. Production Atlas's entire core `app.js` is 100.42 kB gzip,
+  so the renderer alone exceeds the current core bundle and world geometry exceeds it again.
+  **Mobile performance remains unproven** — everything was verified on headless SwiftShader.
+
+  The remaining gate is the **H1 physical-phone verdict**, and no agent may supply it. The recording
+  sheet is [`issue-119-h1-verdict.md`](issue-119-h1-verdict.md); it can now compare production
+  against either the 2D probe or the globe. Renderer selection (F2) is still **not** made — the
+  prototype deliberately uses plain Three.js rather than R3F so that building it does not read as
+  choosing it. A negative verdict stops #119, and that is a success, not a failure.
 
   The renderer comparison remains **PARKED / AMBER, not decision-ready**. The historical R3F and MapLibre spikes did not attempt the same geography/picking/delivered-cost task, and MapLibre's blank headless source remains confounded by SwiftShader/headless execution. Do **not** repair or choose a renderer yet.
 

@@ -90,7 +90,8 @@ async function main() {
   }
 
   const canvas = parseViewBox(asset.viewBox);
-  host.innerHTML = shell(asset);
+  const mapAsset = asset;
+  host.innerHTML = shell(mapAsset);
 
   const svg = host.querySelector<SVGSVGElement>('#probe-map')!;
   const stage = host.querySelector<HTMLElement>('.probe-stage')!;
@@ -126,7 +127,7 @@ async function main() {
     if (!route || route.name !== 'learning') return wide;
     if (!route.scope) return wide;
     if (route.scope.kind === 'continent') {
-      const focus: MapViewportFocus | undefined = asset.initialFocus;
+      const focus: MapViewportFocus | undefined = mapAsset.initialFocus;
       const base = focus ? { x: focus.x, y: focus.y, width: focus.width, height: focus.height } : canvas;
       return fitToViewport(padded(base, 0.03), aspect());
     }
