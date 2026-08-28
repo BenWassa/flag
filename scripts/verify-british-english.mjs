@@ -48,7 +48,7 @@ const britishLedgers = {
   neighbors: neighborProgress,
 };
 const achievements = createInitialAchievementState();
-const homeHtml = renderScreen(HomeScreen, { ledgers: britishLedgers, persisting: true });
+const homeHtml = renderScreen(HomeScreen, { ledgers: britishLedgers, achievements, persisting: true });
 const flagsDomainHtml = renderScreen(DomainScreen, { domain: 'flags', ledgers: britishLedgers, achievements, persisting: true });
 const neighborsDomainHtml = renderScreen(DomainScreen, { domain: 'neighbors', ledgers: britishLedgers, achievements, persisting: true });
 const flagsLauncherHtml = renderScreen(FlagsLauncherScreen, { progress: flagProgress, scope: africaScope, achievements, persisting: true });

@@ -270,7 +270,7 @@ function createControllers(context: RoundContext) {
 
 function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolean, revealed: ReadonlySet<string>, revealAll: boolean, neighborQuery: string) {
   switch (store.view.name) {
-    case 'home': return <HomeScreen ledgers={ledgers} persisting={allPersisting} />;
+    case 'home': return <HomeScreen ledgers={ledgers} achievements={store.achievements} persisting={allPersisting} />;
     case 'profile': return <ProfileScreen />;
     case 'domain': return <DomainScreen domain={store.view.domain} ledgers={ledgers} achievements={store.achievements} persisting={domainPersisting(store, store.view.domain)} />;
     case 'scope': return <FlagsLauncherScreen progress={store.progress} scope={store.view.scope} achievements={store.achievements} persisting={store.persisting} />;

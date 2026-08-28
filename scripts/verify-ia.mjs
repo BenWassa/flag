@@ -28,8 +28,8 @@ const achievements = createInitialAchievementState();
 const visibleText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const buttons = (html) => [...html.matchAll(/<button\b[^>]*>/g)].map(([tag]) => tag);
 
-const home = renderScreen(HomeScreen, { ledgers, persisting: true });
-const homeWithoutPersistence = renderScreen(HomeScreen, { ledgers, persisting: false });
+const home = renderScreen(HomeScreen, { ledgers, achievements, persisting: true });
+const homeWithoutPersistence = renderScreen(HomeScreen, { ledgers, achievements, persisting: false });
 assert.equal(buttons(home).filter((tag) => tag.includes('atlas-card')).length, LEARNING_DOMAIN_IDS.length, 'Home renders one card per learning domain.');
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) assert.ok(visibleText(home).includes(label), `Home names ${label} visibly.`);
 assert.equal(home.includes('quick-play'), false, 'Home has no retired row-level Play shortcut.');

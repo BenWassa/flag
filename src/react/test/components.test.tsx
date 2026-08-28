@@ -37,12 +37,22 @@ function ledgers() {
 describe('React screen actions', () => {
   it('opens a domain through a component event', async () => {
     const atlasActions = actions();
-    render(<AtlasActionsContext value={atlasActions}><HomeScreen ledgers={ledgers()} persisting /></AtlasActionsContext>);
+    render(<AtlasActionsContext value={atlasActions}><HomeScreen ledgers={ledgers()} achievements={createInitialAchievementState()} persisting /></AtlasActionsContext>);
+
+    expect(screen.queryByRole('heading', { name: 'World Crown' })).toBeNull();
 
     await userEvent.click(screen.getByRole('button', { name: /Flags/i }));
 
     expect(atlasActions.openDomain).toHaveBeenCalledWith('flags');
     expect(screen.getByRole('heading', { name: 'Atlas' })).toBeTruthy();
+  });
+
+  it('shows the World Crown only when the persisted achievement is earned', () => {
+    const earned = { ...createInitialAchievementState(), worldCrown: true };
+    render(<AtlasActionsContext value={actions()}><HomeScreen ledgers={ledgers()} achievements={earned} persisting /></AtlasActionsContext>);
+
+    expect(screen.getByRole('heading', { name: 'World Crown' })).toBeTruthy();
+    expect(screen.getByText('Earned · all six continents complete')).toBeTruthy();
   });
 
   it('keeps continent interaction aligned with canonical domain support', () => {
