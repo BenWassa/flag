@@ -96,7 +96,20 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   **Moonshot exploration. No production commitment, no renderer selected.**
   Plan of record: [`issue-119-plan.md`](issue-119-plan.md); canonical scope: [`issue-119-spatial-atlas-moonshot.md`](issue-119-spatial-atlas-moonshot.md); acceptance criteria: [`issue-119-prototype-verification-plan.md`](issue-119-prototype-verification-plan.md); invariant map: [`issue-119-invariant-harness.md`](issue-119-invariant-harness.md); compact principal handoff: [`issue-119-principal-packet.md`](issue-119-principal-packet.md).
 
-  **Current gate:** final #119 baseline/prototype work waits for #27, #137 and #138 to merge into current `main`. Until then, only documentation/reconnaissance and reusable harness preparation are legitimate.
+  **Current gate (2026-08-28): waiting on Ben, not on code.** #27 and #138 (PR #145) have merged.
+  #137 remains open but was judged non-overlapping for Stage 1 — it is Asia Locations hardening,
+  while the probe traverses Africa in Flags and runs no Locations round; the reasoning and the one
+  accepted risk are recorded in [`issue-119-plan.md`](issue-119-plan.md) §2.
+
+  Stage 0 automated evidence is captured against `main` @ `0a828a7`, and its motion/ergonomics half
+  is supplied by the completed #118 audit rather than captured twice. **The Stage 1 continuity probe
+  is built and verified** — see [`probe/README.md`](../../experiments/spatial-continuity/probe/README.md).
+  Run it with `npm run probe:stage1`.
+
+  The next action is the **H1 physical-phone verdict**, and no agent may supply it. The recording
+  sheet is [`issue-119-h1-verdict.md`](issue-119-h1-verdict.md). Everything downstream — renderer
+  evidence repair, F1/F2/F3, any 3D work at all — stays blocked until that sheet has a verdict in it.
+  A negative verdict stops #119, and that is a success, not a failure.
 
   The renderer comparison remains **PARKED / AMBER, not decision-ready**. The historical R3F and MapLibre spikes did not attempt the same geography/picking/delivered-cost task, and MapLibre's blank headless source remains confounded by SwiftShader/headless execution. Do **not** repair or choose a renderer yet.
 

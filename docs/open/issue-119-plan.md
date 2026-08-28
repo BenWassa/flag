@@ -58,7 +58,29 @@ If any remain unmerged:
 - **do not** capture a supposedly final production comparison baseline;
 - **do not** build the final phone-judgeable H1 probe against knowingly transitional Atlas.
 
-At this checkpoint the dependency gate is **BLOCKED**, so the branch must stop before final Stage 0/Stage 1 execution.
+### Gate status — 2026-08-28
+
+**#27 merged. #138 merged (PR #145). #137 remains open.**
+
+The gate was deliberately relaxed for Stage 1, by owner decision, on this reasoning:
+
+- #137 is **Asia Locations** hardening — zoom ceiling, the Levant inset, tiny-country assistance,
+  Cyprus source reconciliation, and a global Locations selectability fix;
+- the Stage 1 probe traverses **Africa in the Flags domain** and runs no Locations round, so it
+  consumes none of the surfaces #137 changes;
+- the gate was written when #22/#27 were actively rewriting the shared map **generator**, which
+  would genuinely have moved the ground under a geography probe. #137 does not.
+
+**The one real overlap** is the shared `map-viewport` max-zoom constant, which Workstream A may
+retune. The probe does not use the production viewport runtime — its camera is a self-contained
+interpolated `viewBox` — so the exposure is limited to the framing constants being re-derived if
+the probe is ever promoted. The probe is disposable, so that cost is accepted.
+
+Stage 0 automated evidence was captured against `main` @ `0a828a7`, which contains #27 and #138.
+It must be **re-captured after #137 merges** before any figure from it is cited in an F2 decision.
+
+The Stage 0 motion/ergonomics half is supplied by the completed **#118 audit**
+(`issue-118-design-skill-audit.md`), as §4 of this plan directs — it was not captured twice.
 
 ---
 

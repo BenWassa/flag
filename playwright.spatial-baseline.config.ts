@@ -12,6 +12,11 @@ export default defineConfig({
     trace: 'on',
     screenshot: 'on',
     video: 'on',
+    // Sandboxes and CI images that ship their own Chromium can point at it
+    // without the harness pinning a machine-specific path into the repo.
+    launchOptions: process.env.ATLAS_CHROMIUM_PATH
+      ? { executablePath: process.env.ATLAS_CHROMIUM_PATH }
+      : undefined,
   },
   webServer: {
     command: 'npm run preview -- --host 127.0.0.1',
