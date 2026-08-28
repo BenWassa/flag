@@ -17,7 +17,7 @@ The documentation is organised by purpose rather than by file format or feature 
 - [`closed/issue-90-stable-flag-stage.md`](closed/issue-90-stable-flag-stage.md) — shipped stable Flags question geometry across aspect ratios and loading states.
 - [`closed/issue-86-clip-map-context.md`](closed/issue-86-clip-map-context.md) — shipped clipping of decorative map context to continent viewports.
 - [`closed/issue-22-north-america-expansion.md`](closed/issue-22-north-america-expansion.md) — shipped North America four-domain expansion, final payload evidence, browser acceptance and deployment closeout.
-- [`open/issue-27-oceania-expansion.md`](open/issue-27-oceania-expansion.md) — accepted Oceania four-domain implementation record pending merge/deployment closeout.
+- [`closed/issue-27-oceania-expansion.md`](closed/issue-27-oceania-expansion.md) — shipped Oceania four-domain expansion, antimeridian/adjacency policy, final payload evidence and deployment closeout.
 - [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
 
 ## Sections
@@ -36,7 +36,7 @@ The learner-facing product name is **Atlas** across current product documentatio
 
 The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
 
-Atlas has production four-domain geography for all six real continents: Africa, South America, Europe, Asia, North America and Oceania. North America completed delivery through #22 / PR #140; Oceania #27 has passed its post-#22 integrated acceptance and is in merge/deployment closeout. The persistent World Crown curriculum gate is therefore complete; learner-facing Crown surfacing remains separate under #138.
+Atlas ships production four-domain geography for all six real continents: Africa, South America, Europe, Asia, North America and Oceania. North America completed delivery through #22 / PR #140; Oceania completed delivery through #27 / PR #143. The persistent World Crown curriculum gate is therefore complete; learner-facing Crown surfacing remains separate under #138.
 
 Issue #89's React/Vite migration is complete. The existing typed router, product engine, persistence, geography and learning semantics remain preservation boundaries; use the architecture decision and closeout records above rather than treating the platform as a rewrite brief.
 

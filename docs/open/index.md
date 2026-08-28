@@ -125,20 +125,21 @@ and should be read as history.
 
 ### 5. Geography expansion
 
-South America (#24), Europe (#25), Asia (#26), North America (#22) and Oceania (#27) are implemented across all four learning domains, together with the Middle East cross-continental scope (#28). Existing closeout records are
+South America (#24), Europe (#25), Asia (#26), North America (#22) and Oceania (#27) are shipped across all four learning domains, together with the Middle East cross-continental scope (#28). Durable closeout records are
 [`issue-24-south-america-expansion.md`](../closed/issue-24-south-america-expansion.md),
 [`issue-25-europe-expansion.md`](../closed/issue-25-europe-expansion.md),
 [`issue-26-asia-expansion.md`](../closed/issue-26-asia-expansion.md),
-[`issue-22-north-america-expansion.md`](../closed/issue-22-north-america-expansion.md) and
+[`issue-22-north-america-expansion.md`](../closed/issue-22-north-america-expansion.md),
+[`issue-27-oceania-expansion.md`](../closed/issue-27-oceania-expansion.md) and
 [`issue-28-middle-east-region.md`](../closed/issue-28-middle-east-region.md).
 
-#27 is no longer planned or blocked behind #22. Its post-#22 technical candidate `24d3e3a4f476ec5a20be198c0aec5e194a5a40f9` passed the complete integrated acceptance gate in Actions run `33137730483`; its durable record remains [`issue-27-oceania-expansion.md`](issue-27-oceania-expansion.md) until merge/deployment closeout moves it to `docs/closed/`.
+#27 shipped through PR #143. Its post-#22 technical candidate `24d3e3a4f476ec5a20be198c0aec5e194a5a40f9` passed integrated acceptance in Actions run `33137730483`; merge/deployment evidence is in the closed record above.
 
-With #27, Atlas has production curriculum for all six real continents — Africa, South America, Europe, Asia, North America and Oceania — each gated by the shared generator/topology architecture and continent-specific verification. Africa remains the reference baseline.
+Atlas now ships production curriculum for all six real continents — Africa, South America, Europe, Asia, North America and Oceania — through the shared generator/topology architecture. Africa remains the reference baseline.
 
 #22 also owns Central America; #23 remains superseded/closed and was not recreated as a parallel runtime/topology path. Oceania adds truthful `PNG ↔ IDN` cross-continent adjacency plus explicit zero-land-neighbour targets without changing the neighbour definition.
 
-All six continents now satisfy the four-domain curriculum gate used by the achievement read model. Learner-facing World Crown surfacing remains separate under #138; #27 does not alter achievement semantics.
+All six continents satisfy the four-domain curriculum gate used by the achievement read model. Learner-facing World Crown surfacing remains separate under #138; #27 did not alter achievement semantics.
 
 **Continent payload follow-up (#86).** Context clipping is complete. Europe is
 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a
