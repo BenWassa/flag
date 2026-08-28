@@ -12,7 +12,7 @@ import {
 } from '../.verify-dist/domain/progress-summary.js';
 
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
-const unsupportedContinent = { kind: 'continent', id: 'oceania', label: 'Oceania' };
+const unsupportedContinent = { kind: 'continent', id: 'antarctica', label: 'Antarctica' };
 const flags = createInitialProgress(COUNTRIES);
 const locations = createInitialLocationProgress(countryIdsForSupportedScope(africa, 'locations'));
 const outlines = createInitialProgress(COUNTRIES.filter((country) => country.continentId === 'africa'));

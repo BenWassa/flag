@@ -1,249 +1,144 @@
 # Issue #27 — Oceania full four-domain expansion
 
-**Status:** scoped on the shared global expansion foundation; #58 has shipped the required zero-land-neighbour learning contract.
+**Status:** post-#22 integration accepted on the focused #27 branch; PR/merge/deployment closeout pending.
 
-## Goal
+This is the durable implementation record for Issue #27. The common continent-expansion contract remains in `docs/architecture/continent-expansion.md`; generator-owned provenance remains in `docs/architecture/oceania-cartography-provenance.json` and is not manually augmented with CI or closeout evidence.
 
-Ship Oceania to the Africa quality bar across the complete learner-facing continent and all four learning domains while deliberately solving extreme ocean extent, tiny islands, multipart geometry and the pedagogical reality that most Oceania countries have no land borders.
+## Delivered curriculum
 
-See `docs/architecture/continent-expansion.md` for the common completion contract.
+Oceania contains exactly 14 Atlas application countries across four learner regions:
 
-## Canonical scored curriculum
+- Australia & New Zealand — 2: Australia (`AUS`), New Zealand (`NZL`)
+- Melanesia — 4: Fiji (`FJI`), Papua New Guinea (`PNG`), Solomon Islands (`SLB`), Vanuatu (`VUT`)
+- Micronesia — 5: Kiribati (`KIR`), Marshall Islands (`MHL`), Micronesia (`FSM`), Nauru (`NRU`), Palau (`PLW`)
+- Polynesia — 3: Samoa (`WSM`), Tonga (`TON`), Tuvalu (`TUV`)
 
-Oceania contains 14 Atlas application countries.
+All four regions and the parent Oceania scope are supported in Flags, Locations, Outlines and Neighbours. ISO3 remains canonical identity. Dependent territories and non-application source features are not promoted into scored curriculum.
 
-### Australia & New Zealand — 2
+## Canonical cartography and Pacific projection
 
-- Australia (`AUS`)
-- New Zealand (`NZL`)
+Oceania uses the same reproducible Natural Earth 1:10m topology pipeline as the other production continents, pinned to upstream commit `ca96624a56bd078437bca8184e78163e5039ad19`.
 
-### Melanesia — 4
+The generic generator gained optional projection rotation. Oceania uses Pacific-centred `d3.geoNaturalEarth1` rotation `[-160, 0, 0]`, moving the projection seam away from scored Pacific archipelagos without moving countries, duplicating islands or introducing handwritten paths. Other continents retain their existing projection configuration.
 
-- Fiji (`FJI`)
-- Papua New Guinea (`PNG`)
-- Solomon Islands (`SLB`)
-- Vanuatu (`VUT`)
+Deterministic topology simplification retains 29,931 of 41,001 projected Oceania coordinates. Rivers remain excluded under the global cartography policy.
 
-### Micronesia — 5
+### Kiribati / antimeridian integrity
 
-- Kiribati (`KIR`)
-- Marshall Islands (`MHL`)
-- Micronesia (`FSM`)
-- Nauru (`NRU`)
-- Palau (`PLW`)
+Pinned-source audit records 35 canonical Kiribati components spanning both sides of the antimeridian. The Pacific-centred projection preserves the multipart country without a false world-spanning segment, duplicated scoring geometry or manual antimeridian surgery. Permanent production-browser coverage exercises Kiribati Locations and Outlines framing.
 
-### Polynesia — 3
+## Territory and dependency policy
 
-- Samoa (`WSM`)
-- Tonga (`TON`)
-- Tuvalu (`TUV`)
+Pacific source features remain context unless already canonical Atlas application countries.
 
-Do not create scored dependent territories merely because they are geographically part of Oceania.
+- `IDN` is keyed non-scoring context so PNG's true cross-continent land border can be represented while Indonesia remains Asia-owned.
+- New Caledonia and French Polynesia remain French non-scoring context.
+- Guam, Northern Mariana Islands and American Samoa remain United States non-scoring context.
+- Cook Islands and Niue are not promoted into the scored Atlas country catalogue.
+- Other dependencies encountered in the canonical extent remain non-scoring context or are excluded when irrelevant to the learner viewport.
 
-## Four-domain support matrix
+No territory treatment creates maritime adjacency.
 
-| Scope | Flags | Locations | Outlines | Neighbours |
-| --- | --- | --- | --- | --- |
-| Oceania | required | required | required | required |
-| Australia & New Zealand | required | required | required | required |
-| Melanesia | required | required | required | required |
-| Micronesia | required | required | required | required |
-| Polynesia | required | required | required | required |
+## Neighbours truth
 
-Issue #58 resolved the former empty-curriculum gap: verified empty adjacency is now a truthful, explicit retrieval answer and contributes through the existing evidence model. Do not invent maritime neighbours or treat absent topology as an empty set.
+The complete global canonical topology preserves `PNG ↔ IDN` even though the countries belong to different learner continents.
 
-## Shipped Neighbours prerequisite: zero-land-neighbour learning
+The other 13 scored Oceania countries have explicit verified empty direct-land-adjacency sets:
 
-Issue #58 established how Atlas teaches countries with zero direct land neighbours while preserving the definition of neighbour.
+`AUS`, `NZL`, `FJI`, `SLB`, `VUT`, `KIR`, `MHL`, `FSM`, `NRU`, `PLW`, `WSM`, `TON`, `TUV`.
 
-Required shipped contract:
+They use the shared #58 **No land neighbours** retrieval mechanic and remain genuine Neighbours learning targets. Empty adjacency is never inferred from missing topology and no maritime neighbours are invented. The React Neighbours map host remains isolated by `session.id:targetId`, preserving the zero-neighbour → PNG/map-ready lifecycle.
 
-- keep `direct shared land boundary` as the only neighbour definition;
-- make `no land neighbours` a first-class truthful answer/state rather than excluding such countries from learning forever;
-- preserve the existing multi-answer set-building mechanic for `n > 0`;
-- introduce the smallest domain-appropriate interaction for `n = 0`, such as an explicit **No land neighbours** submission rather than forcing meaningless autocomplete guesses;
-- map a clean zero-neighbour retrieval into normal Neighbours country evidence;
-- preserve existing records and do not retroactively damage Africa progress;
-- verify how regional Neighbours mastery counts zero-neighbour countries once they are genuinely learnable.
+## Locations assistance inventory
 
-#27 must consume this shared contract rather than embedding an Oceania-only exception.
+Production-scale evidence supports the minimum truthful assistance inventory:
 
-## Cross-continent adjacency
+- real polygon only: `AUS`, `NZL`, `PNG`;
+- question-specific invisible ~44 CSS px hit assistance: `FJI`, `SLB`, `VUT`, `KIR`, `MHL`, `FSM`, `NRU`, `PLW`, `WSM`, `TON`, `TUV`;
+- visible locators: none;
+- leader-line callouts: none;
+- inset panels: none.
 
-Papua New Guinea (`PNG`) ↔ Indonesia (`IDN`) is the critical proving case.
+Assistance never relocates visible geography. It enlarges only the current question's invisible answer surface and yields to real scoring land.
 
-The complete build-time adjacency graph must retain Indonesia even though Indonesia is in Asia/Southeast Asia. Runtime Oceania data may remain continent-local and lazy.
-
-No maritime adjacency is added for Australia, New Zealand or Pacific island countries.
-
-## Territory / source-feature audit
-
-Explicitly audit non-application/dependent Natural Earth features within Oceania, including representative groups such as:
-
-- New Caledonia;
-- French Polynesia;
-- Guam;
-- Northern Mariana Islands;
-- American Samoa;
-- Cook Islands / Niue where represented;
-- other source territories/dependencies encountered within the generated extent.
-
-These are not automatically Atlas scored countries. Record context/exclusion treatment explicitly and do not silently expand the canonical application-country catalogue.
-
-## Cartography architecture
-
-Generate Oceania through the shared canonical Natural Earth pipeline only.
-
-Required output:
-
-- all 14 scored country geometries;
-- required non-scoring/context geography;
-- topology-derived shared political borders;
-- topology-derived coastlines;
-- ocean/background context;
-- selected useful lakes/reservoirs only where materially helpful;
-- no rivers;
-- generated continent + region focus bounds;
-- complete global build-time adjacency;
-- locator/hit-assist metadata justified by phone-scale visual QA.
-
-## Viewport / extreme extent strategy
-
-Oceania cannot simply fit every scored island into one conventional mainland-style bounding box and call the result usable.
-
-The continent and region views must preserve geographic truth while keeping learnable geography large enough to interact with.
-
-### Full Oceania
-
-Verify a deterministic full-continent fit that represents the curriculum honestly. It may rely on locator treatment for tiny/remote island states, but must not rearrange countries into a schematic fake map.
-
-Do not move islands geographically just to reduce empty ocean.
-
-### Regional framing
-
-Each learner-facing region should have its own generated/verified first view:
-
-- Australia & New Zealand — both countries simultaneously readable;
-- Melanesia — PNG through Fiji/Vanuatu/Solomons at practical scale;
-- Micronesia — locator-heavy treatment likely required;
-- Polynesia — extreme-ocean spacing handled without false repositioning.
-
-Region view must still support a sensible return to the parent continent.
-
-### Dateline handling
-
-Kiribati and other geometries near/across the antimeridian require deliberate projection/path QA.
-
-Do not allow longitude wrapping to create split artefacts, false long lines across the map, duplicated scoring geometry or misleading outline framing.
-
-Any projection/wrap handling must be deterministic and shared, not hand-edited per path.
-
-## Small-island / locator policy
-
-Oceania is the strongest stress test of the existing locator policy.
-
-Likely review targets include nearly every Micronesian/Polynesian state plus Fiji/Vanuatu/Solomon Islands, but do not predeclare locators solely from country size.
-
-For each scope:
-
-1. generate canonical geometry;
-2. inspect the exact production map at realistic phone scale;
-3. identify targets whose truthful polygon is not practically tappable/visible;
-4. add one visible locator with a larger invisible hit surface where justified;
-5. avoid redundant locator + callout treatment;
-6. use mainland leader-line callouts only if a mainland geometry genuinely requires them.
-
-Record the exact final inventory by ISO3 and test it.
+The shared #117 precedence repair remains authoritative: assisted marks paint below real scoring polygons, so real country land wins contested taps by SVG paint/hit order rather than array order. Existing Europe #117 and North America pointer/Caribbean regressions remain covered.
 
 ## Outlines
 
-Outlines must remain canonical and geographically recognisable despite archipelagic geometry.
+Whole-country canonical multipart identity remains the default. Oceania archipelagos are not reduced to a convenient largest island.
 
-Audit especially:
+Marshall Islands retains all 22 generated canonical components/subpaths. Kiribati likewise preserves its full multipart identity across the antimeridian. Exact-production browser acceptance compares rendered multipart count to canonical `subpathCount` and verifies complete framing on phone portrait and short landscape.
 
-- Australia;
-- New Zealand;
-- Papua New Guinea;
-- Fiji;
-- Solomon Islands;
-- Vanuatu;
-- Kiribati antimeridian/multipart geometry;
-- Micronesia (`FSM`);
-- Marshall Islands;
-- Tuvalu.
+## Stacked implementation and post-#22 reconciliation
 
-Do not reduce archipelagic countries to arbitrary single-island silhouettes merely for convenience unless Atlas establishes a general, documented canonical-display policy. Whole-country/multipart geometry remains the default source truth.
+#27 was deliberately developed on the preserved North America #22 lineage so it could inherit generic generator, viewport, pointer, lifecycle and small-island work rather than duplicate it.
 
-Normalised silhouette framing must not turn tiny archipelagos into noisy illegible dots or leak identity through inconsistent treatment.
+The parked implementation was:
 
-## Physical context
+- parked branch head: `c2777a525961645f4adbbb58619eab0a9d104726`;
+- exact clean-tested implementation: `c2ad60160d409f93d2aa9bcf33f938906dd2abe9`;
+- stacked clean acceptance: Actions run `33116494936`.
 
-Ocean is essential orientation context in Oceania. Keep the visual hierarchy quiet so it does not become a giant decorative blue field competing with countries/locators.
+After #22 merged and deployed, the noisy stacked history was discarded semantically rather than presented as new #27 work. The focused branch was rebuilt directly on post-#22 `main` `c0015974ada0c23e99ae7bce82ab120062b9c5d8`.
 
-Selected inland lakes are likely minimal and should be included only where they materially aid recognition. Rivers remain excluded globally after #54.
+The accepted post-sync technical candidate is:
 
-## Routing / progress / achievements
+`24d3e3a4f476ec5a20be198c0aec5e194a5a40f9`
 
-Requirements:
+At acceptance it was exactly one commit ahead / zero behind that main SHA. The focused technical diff contained only Oceania plus genuinely necessary generic corrections; shipped #22 North America provenance and Firebase/account configuration remained owned by current main.
 
-- Oceania + all four regions use shared typed scope definitions;
-- all four domains appear honestly according to the resolved zero-neighbour contract;
-- no empty Neighbours curriculum is treated as earned mastery;
-- existing Flags evidence remains intact;
-- new geography-domain evidence remains independently persisted;
-- browser Back/Forward/direct routes remain stable;
-- #34 region/continent completion uses explicit supported curriculum and cannot auto-complete missing Neighbours work.
+## Final post-#22 integrated acceptance
 
-## Performance
+Actions run `33137730483` is the clean post-#22 integrated acceptance gate. Its temporary verifier workflow checks out the exact technical candidate `24d3e3a4f476ec5a20be198c0aec5e194a5a40f9` under Node `22.23.2` and Java 21.
 
-Oceania has relatively few countries but potentially expensive multipart/coastline/ocean geometry.
+The run completed successfully with:
 
-Record exact production raw + gzip size and coordinate counts. Preserve lazy continent loading. Do not keep enormous ocean path detail that contributes no phone-scale information; physical-context optimisation may be more aggressive than interactive political topology as long as it is deterministic and source-derived.
+- clean-tree guard before installation;
+- `npm ci`;
+- complete deterministic `npm run maps:generate` for all six production continents;
+- post-generation `git diff --exit-code` / clean generated provenance;
+- `npm run check`;
+- complete `npm test`, including **54/54 Vitest tests** and **12/12 Firestore rules tests**;
+- permanent Chromium production suite;
+- explicit #117 hit-precedence regression;
+- focused North America pointer/Caribbean regressions;
+- focused permanent Oceania production suite;
+- PWA runtime verification;
+- exact production build;
+- exact `dist/` artifact inspection;
+- permanent-acceptance inventory proving no #27 diagnostic workflow/script/spec exists in the product candidate;
+- final repository cleanliness after removing only Firebase/Playwright runtime residue;
+- production artifact upload as `flag-atlas-dist-issue-27-post22-acceptance` (artifact `9672775203`).
 
-## Verification
+The Firebase rules harness writes `tests/firebase/firestore-debug.log` and `tests/firebase/package-lock.json` as untracked runtime residue because its existing command performs a nested install. The final acceptance harness removes only those test outputs before the clean-tree assertion; the product candidate itself is unchanged.
 
-In addition to the common playbook gates, assert:
+No physical-device testing was performed or is claimed.
 
-- exact 14-country membership;
-- exact 2/4/5/3 regional membership;
-- explicit territory/dependency exclusions;
-- complete PNG ↔ Indonesia cross-continent adjacency;
-- truthful zero-land-neighbour records;
-- resolved zero-neighbour learning/mastery contract before four-domain completion;
-- antimeridian/Kiribati geometry integrity;
-- no rivers;
-- exact locator/hit-assist inventory;
-- lazy Oceania module loading;
-- runtime asset size.
+## Final production payload
 
-Visual QA must inspect at minimum:
+The exact post-sync production build contains exactly one lazy Oceania geography JavaScript chunk:
 
-- full Oceania;
-- all four regions;
-- Micronesia and Polynesia at realistic phone scale;
-- PNG/Indonesia Neighbours behaviour;
-- zero-land-neighbour Neighbours interaction through the shipped #58 path;
-- Kiribati map + Outline behaviour;
-- representative locator-heavy Locations round;
-- phone portrait + short landscape.
+- `oceania-w4m38Wch.js` — **860,081 B raw / 184,421 B `gzipSync`**.
 
-## Acceptance criteria
+The same build confirms:
 
-- [ ] Oceania uses the shared global expansion architecture with no Oceania-only map/topology system.
-- [ ] Exact 14-country and 2/4/5/3 regional membership is test-covered.
-- [ ] All four learner-facing domains are genuinely teachable for every region under a resolved zero-land-neighbour contract.
-- [ ] Empty/zero-neighbour curriculum is never treated as automatic mastery/completion.
-- [ ] Canonical Natural Earth geometry is the sole production map/outline/adjacency source.
-- [ ] PNG ↔ Indonesia is preserved through complete global topology-derived adjacency.
-- [ ] No maritime neighbours are invented.
-- [ ] Dependent/non-application Pacific territories have explicit context/exclusion policy.
-- [ ] Locations remains geographically truthful across extreme ocean extents without schematic repositioning.
-- [ ] Kiribati/antimeridian behaviour is deterministic and visually correct.
-- [ ] Outlines preserves canonical multipart geography under a consistent display policy.
-- [ ] River-free cartography policy is preserved.
-- [ ] Locator/hit-assist decisions are production-scale tested and regression-protected.
-- [ ] Runtime remains lazy and within an explicitly verified performance budget.
-- [ ] Routes, progress and achievement eligibility remain coherent.
-- [ ] Exact production artifact passes the shared visual release gate.
-- [ ] `npm run check` and `npm test` pass under Node 22.
-- [ ] CI is green on the final commit before merge.
+- Oceania remains continent-lazy;
+- the Oceania geography chunk is absent from the service-worker precache;
+- `dist/` contains no verifier-only output;
+- generator-owned provenance remains generator-owned.
+
+The old stacked chunk hash happened to remain stable after semantic reconciliation, but this measurement is recorded from the post-#22 accepted candidate rather than assumed from the parked branch.
+
+## World Crown consequence
+
+Issue #27 does not change achievement qualification, persistence, scoring or presentation semantics.
+
+With Oceania added, `worldHasCompleteCurriculum()` is true: all six real continents now have complete four-domain curriculum. Existing achievement logic still requires every continent completion before `worldCompletionEligible()` can award the persistent `worldCrown`, and #108 complete-region qualification remains unchanged.
+
+Learner-facing World Crown presentation/acceptance is deliberately outside #27 and tracked by **#138 — Surface and accept the now-reachable World Crown state**.
+
+## Closeout boundary
+
+Before merge, the focused PR must remain current with `main` and CI-green. After merge, verify merged-main CI, GitHub Pages and Firebase Hosting/deployment acceptance, then move this record to `docs/closed/`, reconcile `docs/open/index.md`, record PR/merge/deployment IDs and close #27.
+
+Do not implement #137, #138 or #119 as part of this issue.

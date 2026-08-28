@@ -23,9 +23,8 @@ import { regionLearningScopes } from '../.verify-dist/data/learning-scopes.js';
 import { LEARNING_DOMAIN_IDS } from '../.verify-dist/domain/models.js';
 
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
-// Melanesia is learner-facing but Flags-only: Oceania ships no generated
-// geography yet.
-const flagsOnlyRegion = { kind: 'region', id: 'melanesia', label: 'Melanesia' };
+const melanesia = { kind: 'region', id: 'melanesia', label: 'Melanesia' };
+const unsupportedRegionId = 'not-a-region';
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 
 assert.equal(PERFECT_RUN_STREAK_GOAL, 2, 'Two consecutive perfect full-region Play runs are required, not one.');
@@ -114,19 +113,32 @@ const westMissingNeighbor = awardEligibleAchievements(empty, fullQualification(w
 assert.equal(isRegionDomainMasteryEarned(westMissingNeighbor.state, 'west-africa', 'neighbors'), false);
 assert.equal(isRegionComplete(westMissingNeighbor.state, 'west-africa'), false, 'Complete region waits for every required four-domain mastery.');
 
-assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose the complete four-domain proving-ground curriculum.');
-assert.equal(regionHasCompleteCurriculum('melanesia'), false, 'A Flags-only region is not complete curriculum.');
+assert.equal(regionHasCompleteCurriculum('west-africa'), true, 'Africa regions expose complete four-domain curriculum.');
+assert.equal(regionHasCompleteCurriculum('melanesia'), true, 'Issue #27 makes Melanesia a complete four-domain curriculum.');
 
 const everywhereQualification = () => true;
 const everywhereQualified = awardEligibleAchievements(empty, everywhereQualification);
-assert.equal(isRegionDomainMasteryEarned(everywhereQualified.state, 'melanesia', 'flags'), true, 'A supported individual domain can still earn mastery outside Africa.');
-assert.equal(isRegionComplete(everywhereQualified.state, 'melanesia'), false, 'Unsupported domain absence never counts as complete-region progress.');
+for (const domain of LEARNING_DOMAIN_IDS) {
+  assert.equal(
+    isRegionDomainMasteryEarned(everywhereQualified.state, melanesia.id, domain),
+    true,
+    `Universally qualifying evidence earns Melanesia ${domain} mastery once that domain is shipped.`,
+  );
+}
+assert.equal(isRegionComplete(everywhereQualified.state, melanesia.id), true, 'Complete Oceania curriculum allows Melanesia region completion.');
+const melanesiaReadModel = getRegionAchievementReadModel(everywhereQualified.state, melanesia.id);
+assert.ok(melanesiaReadModel);
+assert.deepEqual(melanesiaReadModel.supportedDomains, LEARNING_DOMAIN_IDS);
+assert.equal(melanesiaReadModel.completeCurriculum, true);
+assert.equal(melanesiaReadModel.complete, true);
 
-const flagsOnlyReadModel = getRegionAchievementReadModel(everywhereQualified.state, flagsOnlyRegion.id);
-assert.ok(flagsOnlyReadModel);
-assert.deepEqual(flagsOnlyReadModel.supportedDomains, ['flags']);
-assert.equal(flagsOnlyReadModel.completeCurriculum, false);
-assert.equal(flagsOnlyReadModel.complete, false);
+assert.equal(regionHasCompleteCurriculum(unsupportedRegionId), false, 'Unknown or unsupported curriculum can never be complete.');
+assert.equal(
+  regionDomainQualifies(unsupportedRegionId, 'flags', everywhereQualification),
+  false,
+  'Universal evidence cannot fabricate mastery for an unsupported region.',
+);
+assert.equal(getRegionAchievementReadModel(everywhereQualified.state, unsupportedRegionId), null, 'Unsupported regions expose no achievement read model.');
 
 const africaIncomplete = awardEligibleAchievements(empty, fullQualification(africa, ['flags', 'locations', 'outlines']));
 assert.equal(isRegionComplete(africaIncomplete.state, 'west-africa'), false);
@@ -152,11 +164,16 @@ for (const continent of CONTINENTS) {
     `${continent.id} completion follows current curriculum support rather than a hard-coded continent allowlist.`,
   );
 }
-assert.equal(worldHasCompleteCurriculum(), false, 'The current worldwide curriculum is incomplete.');
-assert.equal(everywhereQualified.state.worldCrown, false, 'Even universally qualifying current evidence cannot award the World Crown.');
+assert.equal(worldHasCompleteCurriculum(), true, '#22 + #27 make the intended six-continent four-domain curriculum complete.');
+assert.equal(everywhereQualified.state.worldCrown, true, 'Universally qualifying evidence can now reach the existing World Crown state.');
+assert.equal(
+  everywhereQualified.newlyEarned.filter((item) => item.kind === 'world-crown').length,
+  1,
+  'The World Crown is awarded exactly once when complete worldwide curriculum and continent completion become true.',
+);
 assert.deepEqual(
   getWorldAchievementReadModel(everywhereQualified.state),
-  { kind: 'world', completeCurriculum: false, crownEarned: false },
+  { kind: 'world', completeCurriculum: true, crownEarned: true },
 );
 
 const achievementEngine = await readFile('.verify-dist/domain/achievements.js', 'utf8');

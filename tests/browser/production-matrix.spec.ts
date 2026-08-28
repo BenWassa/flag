@@ -62,7 +62,7 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
   await expect(page.getByRole('heading', { name: /Caucasus flags launcher/ })).toBeVisible();
 });
 
-test('keeps North America live while unsupported continent shells stay honest', async ({ page }) => {
+test('keeps North America and Oceania live after complete continent coverage', async ({ page }) => {
   await page.goto('/#/locations');
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
 
@@ -75,16 +75,29 @@ test('keeps North America live while unsupported continent shells stay honest', 
   await expect(page.getByRole('button', { name: 'Play Central America' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
 
+  // The stacked #22 + #27 curriculum deliberately completes every production
+  // continent. Unavailable-shell behaviour is covered with a genuinely
+  // unsupported synthetic scope in verify-action-feedback rather than making
+  // a real production continent unavailable for this browser fixture.
   await page.goto('/#/locations');
-  const oceania = page.locator('.continent-row--shell').filter({ hasText: 'Oceania' });
-  await expect(oceania).toBeVisible();
-  await expect(oceania.getByText('Coming soon')).toBeVisible();
-  await expect(oceania.getByRole('button')).toHaveCount(0);
+  await expect(page.locator('button.continent-row__open')).toHaveCount(6);
+  await expect(page.locator('.continent-row--shell')).toHaveCount(0);
+  await expect(page.getByText('Coming soon')).toHaveCount(0);
 
-  // Direct links to genuinely unsupported curriculum normalise back to the honest index.
+  const oceania = page.getByRole('button', { name: 'Oceania' });
+  await expect(oceania).toBeVisible();
+  await oceania.click();
+  await expect(page).toHaveURL(/#\/locations\/oceania$/);
+  await expect(page.getByRole('heading', { name: /Oceania locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Australia & New Zealand' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Melanesia' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Micronesia' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Polynesia' })).toBeVisible();
+
+  // A directly typed durable Oceania scope now resolves to the real launcher.
   await page.goto('/#/locations/oceania');
-  await expect(page).toHaveURL(/#\/locations$/);
-  await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
+  await expect(page).toHaveURL(/#\/locations\/oceania$/);
+  await expect(page.getByRole('heading', { name: /Oceania locations launcher/ })).toBeVisible();
 });
 
 test('reports a failed lazy map load and recovers on retry', async ({ page }) => {

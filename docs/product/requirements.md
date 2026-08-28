@@ -30,8 +30,9 @@ Production navigation is mode-first:
 Requirements:
 
 - Home chooses one of the four peer learning domains and starts no round;
-- every domain index exposes all six continents, with unsupported ones as inert honest shells;
+- every domain index exposes all six continents;
 - supported continent rows open launchers;
+- any future unsupported scope must remain an inert honest shell;
 - launcher whole-continent and region rows start Play directly;
 - a subordinate whole-continent Learn action remains available;
 - Flags additionally supports World Play/Learn;
@@ -49,13 +50,13 @@ Current production coverage:
 | Domain | Coverage |
 | --- | --- |
 | Flags | all 195 countries; World/all continents/learner regions |
-| Locations | Africa, South America, Europe, Asia, North America |
-| Outlines | Africa, South America, Europe, Asia, North America |
-| Neighbours | Africa, South America, Europe, Asia, North America, limited to topology-complete eligible targets |
+| Locations | Africa, South America, Europe, Asia, North America, Oceania |
+| Outlines | Africa, South America, Europe, Asia, North America, Oceania |
+| Neighbours | Africa, South America, Europe, Asia, North America, Oceania, limited to complete canonical land-neighbour truth and including explicit verified zero-land-neighbour targets |
 
-Oceania (#27) remains incomplete for Locations/Outlines/Neighbours.
+All six real continents now have intended four-domain curriculum. Unsupported future geography must not imply gameplay availability or completion eligibility.
 
-Unsupported geography must not imply gameplay availability or completion eligibility.
+Oceania #27 preserves the shared architecture: canonical multipart geometry, Pacific-centred projection, topology-derived `PNG ↔ IDN`, explicit truthful zero-neighbour records and evidence-based invisible hit assistance without a parallel topology system.
 
 ## 5. Domain requirements
 
@@ -81,6 +82,7 @@ Unsupported geography must not imply gameplay availability or completion eligibi
 
 - derive silhouettes only from canonical production geometry;
 - preserve shape/aspect ratio while removing avoidable absolute-size/location cues;
+- preserve canonical multipart identity;
 - prevent answer leakage through accessible metadata;
 - Learn gives immediate corrective feedback;
 - Play is scored recognition;
@@ -92,7 +94,8 @@ Unsupported geography must not imply gameplay availability or completion eligibi
 - never teach a known incomplete land-neighbour set;
 - preserve set-building mechanics and explicit zero-neighbour answer where supported;
 - Learn/Play retain domain-native clean/assisted/exhausted semantics;
-- keep input/autocomplete mobile-usable and answer-safe.
+- keep input/autocomplete mobile-usable and answer-safe;
+- never invent maritime adjacency.
 
 ## 6. Learn versus Play
 
@@ -128,13 +131,11 @@ A **Perfect round** is one Play result with no misses under the domain's native 
 Current v1 engine behaviour:
 
 - two consecutive perfect region-scoped Play results award Mastery;
-- a non-perfect region-scoped Play resets the unearned streak;
+- a non-perfect qualifying region-scoped Play resets the unearned streak;
 - earned Mastery is not revoked;
 - Learn/Review/continent/world rounds do not qualify.
 
-The product requirement and shipped implementation require two consecutive
-perfect **complete-region** Play results. Issue #108 added full-region launches
-and exact supported-target coverage validation across all four domains.
+The product requirement and shipped implementation require two consecutive perfect **complete-region** Play results. Issue #108 added full-region launches and exact supported-target coverage validation across all four domains.
 
 ## 9. Completion hierarchy
 
@@ -158,7 +159,9 @@ Production presentation uses the shipped continent trophy/crest artwork on compl
 
 World completion is the final tier and reserves the Crown.
 
-The state exists in the achievement model but is not currently achievable because Oceania is incomplete, and there is no learner-facing React Crown surface in v1. Do not create a higher tier.
+With Oceania #27, all six continents now satisfy the curriculum-completeness gate. Existing achievement semantics remain: `worldCrown` is awarded only when all six continent-completion achievements have also been earned.
+
+The persistent state/read model is therefore reachable, but no learner-facing React Crown surface ships in current v1. Issue #138 owns that presentation and final acceptance. Do not create a higher tier.
 
 ## 10. Persistence and reset
 
@@ -202,7 +205,8 @@ Geography should usually be the richest visual object. No glassmorphism, bento d
 - no handwritten neighbour tables;
 - reuse canonical geometry for Locations, Outlines and Neighbours;
 - preserve documented boundary/geopolitical policy;
-- do not theme maps by continent flag colours.
+- do not theme maps by continent flag colours;
+- projection extensions must remain deterministic/shared rather than handwritten per-country surgery.
 
 ## 14. Accessibility
 
@@ -218,22 +222,3 @@ Atlas must preserve:
 - stable focus after route/question transitions;
 - portrait and short-landscape usability;
 - honest unavailable/asset-failure states.
-
-## 15. Architecture constraints
-
-- keep domain rules outside UI rendering;
-- keep country identity canonical/shared;
-- keep typed routes authoritative;
-- keep evidence separate from earned achievement;
-- keep scheduler rules replaceable;
-- keep production React presentation separate from framework-independent domain/state layers;
-- preserve backwards compatibility unless migration has clear product value;
-- investigate before refactoring and avoid duplicate systems.
-
-## 16. Deferred product/design work
-
-- #104: deferred map-first continent-launcher exploration, not scheduled;
-- richer milestone ceremony: optional, not current v1 behaviour;
-- new Progress dashboard: not currently promised;
-- World Crown learner-facing presentation: future state tied to genuine global completion;
-- full-region Mastery qualification integrity: shipped under #108.

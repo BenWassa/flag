@@ -183,9 +183,10 @@ assert.equal(
   CONTINENTS.length - shippedLocationContinents,
   'Every continent Locations has not shipped is still listed, as an honest shell.',
 );
-assert.ok(
+assert.equal(
   screens.locationsIndex.includes('Coming soon'),
-  'An unshipped continent names the gap rather than looking playable.',
+  CONTINENTS.length - shippedLocationContinents > 0,
+  'Locations names a curriculum gap if and only if canonical support still has an unshipped continent.',
 );
 assert.equal(
   screens.locationsIndex.includes('Play world'),

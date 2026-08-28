@@ -38,14 +38,18 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
   if (!targetId || targetState?.resolved || !assist) return '';
 
   const usableRadius = Math.max(assist.r, 22);
-  const exclusionPaths = [
+  // The question-specific disc paints beneath every scoring country, so real
+  // polygons own their land by normal SVG hit-testing (#117). Only non-scoring
+  // context needs an exclusion clip here; copying every scoring polygon into a
+  // compound even-odd clip both bloated the markup and let overlapping
+  // exclusions cancel parity, which allowed Vanuatu's disc to re-open over the
+  // Solomon Islands. Scoring precedence is now structural and independent of
+  // country array order.
+  const contextExclusions = [
     ...(asset.contextPaths ?? []),
     ...(asset.contextCountries ?? []).flatMap(geometryExclusionParts),
-    ...asset.countries
-      .filter((item) => item.countryId !== targetId)
-      .flatMap(geometryExclusionParts),
   ].filter(Boolean).join(' ');
-  const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${exclusionPaths}`;
+  const clipPath = `${circlePath(assist.cx, assist.cy, usableRadius)} ${contextExclusions}`;
 
   return `
     <defs>
@@ -304,13 +308,13 @@ export function renderMapSvg(
             </g>
           ` : ''}
           ${assistHitLayer()}
+          ${assistedHitTarget(asset, session, interactive)}
           <g class="map-active-countries">
             ${asset.countries.map((geometry) => countryMarkup(geometry, !activeInset?.countryIds.includes(geometry.countryId), false)).join('')}
           </g>
           ${renderInlandWater(asset)}
           ${renderBoundaries(asset)}
           ${activeInset ? renderInsetSource(activeInset) : ''}
-          ${assistedHitTarget(asset, session, interactive)}
         </svg>
       </div>
       ${activeInset ? renderInsetPanel(asset, activeInset, countryMarkup, isSelectable) : ''}

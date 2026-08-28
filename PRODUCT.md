@@ -23,7 +23,7 @@ Navigation is **mode-first**:
 
 `Home → learning domain → continent → Play scope`
 
-Home contains the four domain choices and starts no round. A domain index shows all six continents. Supported continents open their continent launcher; unsupported continents remain honest inert shells.
+Home contains the four domain choices and starts no round. A domain index shows all six continents. Supported continents open their continent launcher; unsupported scopes, if introduced in future, must remain honest inert shells.
 
 Inside a supported continent launcher:
 
@@ -93,14 +93,7 @@ Purple is reserved for this durable competency state. Country-level evidence doe
 
 ### Current qualification behaviour
 
-The achievement engine awards region × domain Mastery after **two consecutive
-perfect complete-region Play results** for that region and domain. Ordinary
-region Play covers the complete supported target set in all four domains, and
-the achievement recorder verifies exact coverage before advancing the streak.
-An incomplete sampled round neither advances nor resets that streak. A
-qualifying non-perfect complete-region result resets the in-progress streak;
-an already-earned Mastery is not revoked. Issue #108 closed the earlier v1.0
-qualification-integrity defect.
+The achievement engine awards region × domain Mastery after **two consecutive perfect complete-region Play results** for that region and domain. Ordinary region Play covers the complete supported target set in all four domains, and the achievement recorder verifies exact coverage before advancing the streak. An incomplete sampled round neither advances nor resets that streak. A qualifying non-perfect complete-region result resets the in-progress streak; an already-earned Mastery is not revoked. Issue #108 closed the earlier v1.0 qualification-integrity defect.
 
 ## Completion hierarchy
 
@@ -129,7 +122,9 @@ There is no separate full-screen continent trophy ceremony in v1.0.
 
 World completion is the highest and final prestige tier. The persisted achievement model contains a `worldCrown` state and exposes it through the achievement read model.
 
-The Crown cannot currently be earned because complete four-domain curriculum does not yet exist for every continent. Oceania remains incomplete. There is also **no current React learner-facing World Crown renderer or ceremony**. The Crown remains the reserved eventual presentation for genuine world completion; do not invent a tier above it.
+With Oceania #27, all six real continents have complete four-domain curriculum, so the curriculum gate for World completion is now satisfied. Existing achievement semantics are unchanged: the Crown is awarded only after all six continent-completion achievements have actually been earned.
+
+There is not yet a learner-facing React World Crown surface or ceremony. Issue #138 owns surfacing and final acceptance of the now-reachable Crown state; #27 does not introduce a higher tier or alter qualification semantics.
 
 ## Persistence and reset
 
@@ -160,13 +155,11 @@ The richer cross-domain Progress composition from the former screen is historica
 | Domain | Production-ready coverage |
 | --- | --- |
 | Flags | full 195-country curriculum; World, all six continents and learner-facing regions |
-| Locations | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |
-| Outlines | Africa, South America, Europe, Asia and North America, plus their supported learner-facing regions |
-| Neighbours | Africa, South America, Europe, Asia and North America, with only targets whose complete canonical land-neighbour set is representable |
+| Locations | Africa, South America, Europe, Asia, North America and Oceania, plus their supported learner-facing regions |
+| Outlines | Africa, South America, Europe, Asia, North America and Oceania, plus their supported learner-facing regions |
+| Neighbours | Africa, South America, Europe, Asia, North America and Oceania, with only targets whose complete canonical land-neighbour set is representable, including explicit truthful zero-land-neighbour targets |
 
-**Oceania (#27)** remains open geography expansion work for Locations, Outlines and Neighbours. North America is production-ready across all four domains. Unsupported geography is not Play/Learn-ready and cannot qualify for Mastery/completion.
-
-Flags remains globally available independently of that geography gap.
+All six real continents now have intended four-domain production curriculum. Oceania's 14-country implementation is owned by #27; its World Crown presentation consequence remains separated into #138.
 
 ## Locked product and design constraints
 
@@ -189,5 +182,5 @@ See `DESIGN.md`, `docs/product/colour-system.md`, `docs/product/learning-and-mas
 - **#104** is a deferred product exploration of a map-first continent launcher. It is not scheduled and would require a deliberate reversal or refinement of current colour/accessibility rules before implementation.
 - a dedicated achievement milestone queue/ceremony is optional product/design work, not current v1 behaviour;
 - a new Progress dashboard is not currently promised;
-- World Crown learner-facing artwork/surface remains deferred until genuine world completion is achievable and a focused design decision is made;
+- **#138** owns the learner-facing World Crown surface/final acceptance now that the underlying world curriculum is complete;
 - country-evidence decay/revalidation must remain separate from already-earned prestige unless a future product decision explicitly changes that rule.

@@ -404,6 +404,73 @@ export const NORTH_AMERICA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   contextCountryIds: ['COL', 'VEN', 'FRA', 'NLD'],
 };
 
+export const AUSTRALIA_NEW_ZEALAND_MAP_COUNTRY_IDS = ['AUS', 'NZL'] as const;
+
+export const MELANESIA_MAP_COUNTRY_IDS = ['FJI', 'PNG', 'SLB', 'VUT'] as const;
+
+export const MICRONESIA_MAP_COUNTRY_IDS = ['KIR', 'MHL', 'FSM', 'NRU', 'PLW'] as const;
+
+export const POLYNESIA_MAP_COUNTRY_IDS = ['WSM', 'TON', 'TUV'] as const;
+
+export const OCEANIA_MAP_COUNTRY_IDS = [
+  ...AUSTRALIA_NEW_ZEALAND_MAP_COUNTRY_IDS,
+  ...MELANESIA_MAP_COUNTRY_IDS,
+  ...MICRONESIA_MAP_COUNTRY_IDS,
+  ...POLYNESIA_MAP_COUNTRY_IDS,
+] as const;
+
+export const OCEANIA_MAP_SCOPE: StudyScope = {
+  kind: 'continent',
+  id: 'oceania',
+  label: 'Oceania',
+};
+
+export const OCEANIA_MAP_REGION_CONFIGS: readonly MapScopeConfig[] = [
+  {
+    scope: { kind: 'region', id: 'australia-new-zealand', label: 'Australia & New Zealand' },
+    continentId: 'oceania',
+    countryIds: AUSTRALIA_NEW_ZEALAND_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 43, top: 72 },
+  },
+  {
+    scope: { kind: 'region', id: 'melanesia', label: 'Melanesia' },
+    continentId: 'oceania',
+    countryIds: MELANESIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 55, top: 49 },
+  },
+  {
+    scope: { kind: 'region', id: 'micronesia', label: 'Micronesia' },
+    continentId: 'oceania',
+    countryIds: MICRONESIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 66, top: 29 },
+  },
+  {
+    scope: { kind: 'region', id: 'polynesia', label: 'Polynesia' },
+    continentId: 'oceania',
+    countryIds: POLYNESIA_MAP_COUNTRY_IDS,
+    launcherLabel: { left: 77, top: 61 },
+  },
+];
+
+export const OCEANIA_MAP_CONFIG: MapScopeConfig = {
+  scope: OCEANIA_MAP_SCOPE,
+  continentId: 'oceania',
+  countryIds: OCEANIA_MAP_COUNTRY_IDS,
+};
+
+export const OCEANIA_MAP_SCOPE_CONFIGS: readonly MapScopeConfig[] = [
+  OCEANIA_MAP_CONFIG,
+  ...OCEANIA_MAP_REGION_CONFIGS,
+];
+
+export const OCEANIA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
+  continentId: 'oceania',
+  scope: OCEANIA_MAP_SCOPE,
+  countryIds: OCEANIA_MAP_COUNTRY_IDS,
+  regions: OCEANIA_MAP_REGION_CONFIGS,
+  contextCountryIds: ['IDN'],
+};
+
 /**
  * Generated geography coverage is registered by continent. New continent work
  * extends this registry rather than adding parallel lookup functions.
@@ -414,6 +481,7 @@ export const MAP_CONTINENT_CONFIGS: readonly MapContinentConfig[] = Object.freez
   EUROPE_MAP_CONTINENT_CONFIG,
   ASIA_MAP_CONTINENT_CONFIG,
   NORTH_AMERICA_MAP_CONTINENT_CONFIG,
+  OCEANIA_MAP_CONTINENT_CONFIG,
 ]);
 
 const MAP_CONTINENT_BY_ID = new Map(

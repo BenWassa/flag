@@ -25,6 +25,8 @@ src/
 
 Locations, Outlines and Neighbours reuse the generated production geography foundation. Neighbour adjacency is derived from canonical topology rather than handwritten tables.
 
+Oceania #27 extends that same foundation rather than creating a Pacific subsystem. Its only generic cartography extension is optional projection rotation; Oceania uses a Pacific-centred Natural Earth rotation while source topology, scoring geometry, Outlines and adjacency remain canonical and shared.
+
 ### Domain
 
 `models.ts` owns shared primitives including learning domains, activities, study scopes and persisted evidence shape.
@@ -35,9 +37,7 @@ Locations, Outlines and Neighbours reuse the generated production geography foun
 
 `qualifiesForRegionMastery(record)` remains in `evidence.ts` under a historical compatibility name for per-country strong-evidence qualification; it is **not** the current earned-achievement integration seam.
 
-Issue #108 closed the qualification-integrity defect: all domains now launch
-complete-region Play and verify the exact supported target set before recording
-a region perfect-run event.
+Issue #108 closed the qualification-integrity defect: all domains launch complete-region Play and verify the exact supported target set before recording a region perfect-run event.
 
 `progress.ts` owns Flags/Outlines country-record transitions. Locations and Neighbours retain domain-native session/progress models because their retrieval mechanics are not equivalent to multiple-choice recognition.
 
@@ -75,9 +75,7 @@ Completed session objects may remain in memory so browser Back/Forward can revis
 
 Generated geography, projection maths, map pan/zoom and Neighbours map runtime remain imperative/framework-independent boundaries mounted by React where appropriate.
 
-The legacy string-renderer tree was removed after the React/Vite migration;
-`src/ui` now contains framework-independent UI/map adapters used by React and
-the isolated verifier build.
+The legacy string-renderer tree was removed after the React/Vite migration; `src/ui` now contains framework-independent UI/map adapters used by React and the isolated verifier build.
 
 ## Product-information-architecture boundary
 
@@ -111,34 +109,36 @@ Earned achievement is monotonic under the current product model; live country ev
 
 ## Firebase path
 
-Firebase/Auth/Firestore integration is intentionally outside this product/design reconciliation. Existing Firebase behaviour and its dedicated documentation remain authoritative for cloud/account concerns. Product documentation must not infer new sync, hosting or reset semantics from the local achievement model.
+Firebase/Auth/Firestore integration remains a separate infrastructure concern with its own authoritative documentation. Product/geography work must preserve local-first cloud-progress behaviour, tests and hosting acceptance rather than coupling geography changes into account semantics.
 
 ## PWA
 
 Vite builds `src/sw.ts` through Workbox InjectManifest. The generated precache owns the versioned shell; runtime caching covers same-origin lazy assets and the existing external flag-asset strategy. Hash deep links remain compatible with GitHub Pages and the installed PWA.
 
-Lazy continent chunks become available offline after first use through runtime caching rather than being forced into the initial precache.
+Lazy continent chunks become available offline after first use through runtime caching rather than being forced into the initial precache. Oceania follows this same rule: its generated geography chunk is lazy and absent from the service-worker precache.
 
 ## Current geography support
 
 - Flags: full 195-country curriculum.
-- Locations: Africa, South America, Europe, Asia and North America.
-- Outlines: Africa, South America, Europe, Asia and North America.
-- Neighbours: Africa, South America, Europe, Asia and North America, limited to targets with complete representable canonical land-neighbour sets.
-- Oceania (#27): incomplete for the three geography-dependent domains.
+- Locations: Africa, South America, Europe, Asia, North America and Oceania.
+- Outlines: Africa, South America, Europe, Asia, North America and Oceania.
+- Neighbours: Africa, South America, Europe, Asia, North America and Oceania, using complete canonical land-neighbour truth plus explicit verified zero-land-neighbour targets.
+
+All six real continents therefore have complete four-domain curriculum. `worldHasCompleteCurriculum()` is true; existing achievement semantics still require all six continent-completion achievements before `worldCrown` becomes eligible. Learner-facing World Crown surfacing remains #138.
 
 Availability is a data/support concern, not a reason for parallel routers or duplicate domain architectures.
 
 ## Quality gates
 
-`npm test` is the primary repository gate under Node 22. It covers type checking, React component tests, the production Vite/PWA build and the plain-Node verification suite.
+`npm test` is the primary repository gate under Node 22. It covers type checking, React component tests, Firebase rules, the production Vite/PWA build and the plain-Node verification suite.
 
 Product-semantics ownership is split intentionally:
 
 - learning-evidence verification owns country evidence weighting, lapse/recovery, migration and domain mappings;
 - achievement verification owns perfect-run streaks, support guards, persistence and region/continent/world aggregation;
-- #108 added explicit complete-target-set qualification coverage without coupling achievements back to raw country scheduler fields;
+- #108 owns complete-target-set qualification coverage without coupling achievements back to raw country scheduler fields;
 - routing/IA verification owns the current one-tap launcher contract and unavailable-scope fallback;
-- browser smoke tests cover production-preview desktop/mobile flows.
+- continent verifiers own curriculum, topology/provenance, adjacency and payload invariants;
+- browser production tests cover desktop/mobile flows, pointer ownership, multipart geography and PWA behaviour.
 
 Exact production-artifact inspection and current-main sync remain required before merge for changes that affect production behaviour.

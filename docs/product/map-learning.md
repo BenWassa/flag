@@ -7,7 +7,7 @@
 
 Locations teaches identification of countries by true geographic position. The map is the dominant learning object; controls and feedback support the task without becoming a competing dashboard.
 
-Current production coverage is **Africa, South America, Europe, Asia and North America**, including supported learner-facing regions. Oceania (#27) remains unavailable.
+Current production coverage is **Africa, South America, Europe, Asia, North America and Oceania**, including supported learner-facing regions.
 
 ## Geography contract
 
@@ -22,6 +22,8 @@ Required invariants:
 - small-country/island assistance only where it remains geographically honest;
 - no handwritten scoring geometry;
 - no continent-boundary truncation of geography required by another domain such as Neighbours.
+
+Oceania follows the same contract. Its Pacific-centred Natural Earth projection is a shared deterministic generator configuration rather than a second map system. Tiny Pacific targets use question-specific invisible hit assistance only where production-scale evidence requires it; no visible Oceania locator/callout/inset is part of #27.
 
 See the cartography architecture/provenance documentation for generation and geopolitical policy.
 
@@ -45,10 +47,7 @@ Locations Play gives one scored tap per target. The current React surface provid
 
 A miss-free Play result receives transient **Perfect round** treatment on Results.
 
-Normal region Play uses the full selected-scope map target set. Locations and
-the other three domains now supply complete-region result coverage to the
-region-Mastery streak path, with the explicit canonical completeness guard
-shipped under #108.
+Normal region Play uses the full selected-scope map target set. Locations and the other three domains supply complete-region result coverage to the region-Mastery streak path, with the explicit canonical completeness guard shipped under #108.
 
 ## Results and review
 
@@ -78,15 +77,12 @@ Current interaction principles:
 6. retain pan position across ordinary answer updates where the runtime supports it;
 7. keep the true polygon/locator as the geography being taught;
 8. enlarge practical hit targets only through documented geographically honest locators/assists;
-9. make resolved targets inert.
+9. make resolved targets inert;
+10. real scoring polygons always outrank assisted marks where hit surfaces overlap.
 
-For a dense cluster where ordinary hit expansion would make neighbouring
-answers overlap, a generated closer-view inset may temporarily supplement the
-true map. It must show the same canonical geometry, retain an outlined source
-window, avoid answer-revealing country names, and provide one distinct keyboard
-and touch target per member. The true location remains visible and tappable.
+For a dense cluster where ordinary hit expansion would make neighbouring answers overlap, a generated closer-view inset may temporarily supplement the true map. It must show the same canonical geometry, retain an outlined source window, avoid answer-revealing country names, and provide one distinct keyboard and touch target per member. The true location remains visible and tappable. Oceania #27 did not require this mechanism.
 
-Touch/pointer interaction includes the current pinch/wheel zoom and swipe/drag pan behaviour. Do not reintroduce a second map implementation for a launcher or domain variant.
+Touch/pointer interaction includes the current pinch/wheel zoom and swipe/drag pan behaviour. Single-pointer capture begins only after drag establishment so a tap on a tiny assisted target remains an answer rather than being retargeted by premature capture.
 
 ## Feedback and colour
 
@@ -106,9 +102,9 @@ Individual map targets must not expose country names before selection in a way t
 
 ## Expansion requirements
 
-Before enabling another continent/scope:
+All six real continents are now onboarded. Any future geographic scope extension must:
 
-- onboard it through the canonical generation pipeline;
+- use the canonical generation pipeline;
 - reconcile every scored feature to canonical ISO3;
 - verify target/context coverage and framing;
 - inspect small/narrow countries at phone scale;
@@ -116,5 +112,3 @@ Before enabling another continent/scope:
 - add scope support to Locations/Outlines/Neighbours coherently;
 - verify Learn, Play, Review, feedback, pan/zoom, storage failure and offline revisit;
 - run the full repository gate and inspect the exact production artifact.
-
-Oceania remains the only continent expansion gap in current v1 geography-dependent domains.

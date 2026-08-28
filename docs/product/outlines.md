@@ -8,7 +8,7 @@
 
 Outlines teaches recognition of a country from its silhouette. The silhouette is the dominant visual object; the surrounding quiz chrome stays quiet and consistent with the shared Atlas learning system.
 
-Current production coverage is **Africa, South America, Europe, Asia and North America**, including their supported learner-facing regions. Oceania (#27) remains unavailable until its canonical production geography is onboarded.
+Current production coverage is **Africa, South America, Europe, Asia, North America and Oceania**, including their supported learner-facing regions.
 
 ## Geometry contract
 
@@ -25,6 +25,8 @@ Requirements:
 - retain multipart/island geometry rather than replacing it with hand-drawn approximations;
 - never use an outline-only SVG source or handwritten country geometry;
 - reject unsupported SVG command assumptions rather than silently corrupting geometry.
+
+Oceania #27 is a direct stress test of this contract: Kiribati, Marshall Islands and the other archipelagic countries retain complete canonical multipart identity rather than being reduced to a largest island. Antimeridian handling is inherited from the shared generated map asset rather than an Outline-specific fix.
 
 ## Question model
 
@@ -49,9 +51,7 @@ Outlines Play is scored retrieval. Current React presentation provides the share
 
 A miss-free Play result receives transient **Perfect round** treatment on Results.
 
-Standard Outlines region Play launches the complete supported region target set.
-The achievement layer validates exact coverage, so sampled rounds cannot award
-or reset region × domain Mastery. Issue #108 shipped this qualification guard.
+Standard Outlines region Play launches the complete supported region target set. The achievement layer validates exact coverage, so sampled rounds cannot award or reset region × domain Mastery. Issue #108 shipped this qualification guard.
 
 ## Independent evidence
 
@@ -67,7 +67,6 @@ The answer controls provide the country-name choices. Keyboard selection, visibl
 
 ## Current limits
 
-- Oceania is not yet available.
 - Shape plausibility remains transparent/heuristic rather than machine-learned.
 - Active round internals are not restored across a hard refresh; the shared routing fallback applies.
-- Physical-device QA remains a release-confidence task when behaviour changes; this document does not claim device testing.
+- Physical-device QA remains a release-confidence task when behaviour changes; #27's permanent browser coverage does not claim physical-device testing.
