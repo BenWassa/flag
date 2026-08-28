@@ -41,22 +41,11 @@ For a completed **region-scoped Play** result:
 
 Learn, Review, continent Play and World Play do not feed this streak.
 
-### Known v1 qualification-integrity bug
+### Complete-region integrity
 
-The achievement recorder currently trusts region scope and a perfect result; it does not verify that the result's target set equals the complete supported region target set.
+Issue **#108** closed the former sampled-round qualification defect. Flags, Outlines, Locations and Neighbours require two perfect complete-region Play results, with exact supported-target coverage verified before the streak advances.
 
-That matters because current launch behaviour differs by domain:
-
-- Locations region Play is full-scope;
-- Flags region Play defaults to 10 questions;
-- Outlines region Play defaults to 10 questions;
-- Neighbours region Play defaults to 10 targets.
-
-Issue **#108** closed the former sampled-round defect. Flags, Outlines,
-Locations and Neighbours now require two perfect complete-region Play results,
-with exact supported-target coverage verified before the streak advances.
-
-Do not hide this defect in architecture documentation or work around it in UI presentation.
+An incomplete sampled result neither advances nor resets the region streak. Presentation code must not bypass this guard.
 
 ## Country evidence is not the achievement seam
 
@@ -87,7 +76,7 @@ The continent becomes complete when every required learner-facing region is comp
 
 Asia uses the learner-facing scope set from `src/data/learning-scopes.ts`; the compatibility `west-asia` taxonomy scope remains available for migration/canonical purposes but is not a new learner-facing completion requirement where the newer Middle East/Caucasus learning scopes supersede it.
 
-Current complete four-domain geography exists for Africa, South America, Europe and Asia. North America and Oceania do not yet satisfy the curriculum gate.
+Complete four-domain geography now exists for all six real continents: Africa, South America, Europe, Asia, North America and Oceania.
 
 ## World completion
 
@@ -96,9 +85,9 @@ World completion requires:
 1. all six continents to have complete curriculum; and
 2. all six continent-completion achievements to be earned.
 
-The `worldCrown` state therefore cannot currently be earned because North America and Oceania are incomplete in Locations/Outlines/Neighbours.
+After Oceania #27, the first condition is now true: `worldHasCompleteCurriculum()` is satisfied. Existing semantics are unchanged; `worldCrown` becomes eligible only after all six continent-completion achievements have actually been earned.
 
-There is no learner-facing React World Crown renderer in v1. The state and read model exist; presentation remains reserved for genuine future world completion.
+There is no learner-facing React World Crown renderer in current v1 production. The persisted state and read model are now genuinely reachable; Issue #138 owns learner-facing surfacing and final acceptance without changing the qualification hierarchy.
 
 ## Awarding properties
 
@@ -148,9 +137,10 @@ Achievement verification should cover:
 - non-revocation after award;
 - fixed four-domain region completion;
 - continent aggregation across learner-facing regions;
-- current Africa/South America/Europe/Asia curriculum eligibility;
-- North America/Oceania/world incompleteness;
+- complete curriculum eligibility for all six real continents;
+- `worldHasCompleteCurriculum()` truth with #27;
+- World Crown requiring all six continent-completion achievements rather than curriculum support alone;
 - persistence sanitisation and idempotency;
-- #108 full-target-set qualification, shipped in `046bd93`.
+- #108 full-target-set qualification.
 
 Country evidence weighting/migration remains owned by the learning-evidence tests. The achievement suite must not silently couple itself back to raw country scheduler fields.
