@@ -71,9 +71,11 @@ The six trophy assets exist and are learner-facing when the corresponding comple
 
 World completion is the highest prestige tier. There is no tier above the Crown.
 
-The domain model and persistence layer support `worldCrown`, but it cannot currently be earned because Oceania does not yet have complete four-domain curriculum. There is no v1 React learner-facing Crown surface or ceremony.
+The domain model and persistence layer support `worldCrown`. With Oceania #27, all six real continents now have complete four-domain curriculum, so the curriculum gate is satisfied and the Crown state is genuinely reachable once all six continent-completion achievements are earned.
 
-Do not show routine locked Crowns or decorative Crown repetition before the genuine state exists.
+There is still no v1 React learner-facing Crown surface or ceremony. Issue #138 owns surfacing and final acceptance of the now-reachable state without changing qualification semantics.
+
+Do not show routine locked Crowns or decorative Crown repetition. The Crown remains singular and reserved for genuine world completion.
 
 ## Persistence
 
@@ -106,7 +108,7 @@ Do not introduce by default:
 - persistent region × domain Mastery: purple plus a non-colour cue;
 - complete region: restrained gold treatment;
 - complete continent: gold/purple trophy/crest state on continent index rows;
-- World Crown: reserved singular highest-tier state, currently not rendered.
+- World Crown: reserved singular highest-tier state; presentation is tracked by #138.
 
 Prestige should become more visually distinctive as rarity increases, not more numerically dense.
 
