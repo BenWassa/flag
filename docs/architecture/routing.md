@@ -12,7 +12,7 @@ Atlas composes three independent dimensions:
 2. **geographic scope** — World where applicable, continent, region;
 3. **activity** — Learn, Play, Review.
 
-Navigation is **mode-first**: Home chooses the learning domain first. The next stable screen is that domain's continent index. Supported continent rows open a continent launcher; unavailable continents remain honest inert shells.
+Navigation is **mode-first**: Home chooses the learning domain first. The next stable screen is that domain's continent index. Supported continent rows open a continent launcher; unavailable scopes, if any are introduced in future, remain honest inert shells.
 
 ## Current production flow
 
@@ -41,11 +41,11 @@ This one-tap launcher contract supersedes the older Issue #77 select-then-play c
 | Domain | Production-ready geography |
 | --- | --- |
 | Flags | World, all six continents, all learner-facing regions in the 195-country curriculum |
-| Locations | Africa, South America, Europe, Asia and North America plus supported regions |
-| Outlines | Africa, South America, Europe, Asia and North America plus supported regions |
-| Neighbours | Africa, South America, Europe, Asia and North America plus eligible topology-complete targets/regions |
+| Locations | Africa, South America, Europe, Asia, North America and Oceania plus supported regions |
+| Outlines | Africa, South America, Europe, Asia, North America and Oceania plus supported regions |
+| Neighbours | Africa, South America, Europe, Asia, North America and Oceania plus eligible topology-complete/verified-zero-neighbour targets and regions |
 
-Oceania (#27) remains unavailable for Locations, Outlines and Neighbours; North America is supported.
+All six real continents are now supported across all four learning domains. The route grammar still keeps availability as an explicit data concern so future unsupported scopes cannot become playable merely because their IDs parse.
 
 The route grammar can parse canonical continent/region identity independently of whether a domain currently ships that scope. `normalizeAvailableRoute(...)` owns availability: an unsupported scoped route falls back to that **domain's continent index**, not to Africa and not to an invented substitute continent.
 
@@ -77,9 +77,12 @@ Representative stable routes:
 | Locations continent index | `/#/locations` |
 | Locations → Africa launcher | `/#/locations/africa` |
 | Locations → West Africa Play | `/#/locations/africa/west-africa/test` |
+| Locations → Oceania launcher | `/#/locations/oceania` |
+| Locations → Micronesia Play | `/#/locations/oceania/micronesia/test` |
 | Locations → West Africa Review | `/#/locations/africa/west-africa/review` |
 | Outlines → Europe launcher | `/#/outlines/europe` |
 | Neighbours → South America launcher | `/#/neighbors/south-america` |
+| Neighbours → Oceania launcher | `/#/neighbors/oceania` |
 
 Region routes always serialise with their canonical parent continent. The parser rejects a known region under the wrong continent.
 
@@ -149,7 +152,7 @@ Browser history remains native; Atlas does not maintain a parallel application-o
 
 The parser rejects malformed paths, unknown IDs, mismatched continent/region ancestry and invalid activity combinations.
 
-A syntactically valid but unsupported scope is normalised to the relevant domain index. That screen exposes availability honestly through supported rows and inert `Coming soon` shells.
+A syntactically valid but unsupported future scope is normalised to the relevant domain index. That screen must expose availability honestly rather than fabricate a playable route.
 
 Unsupported geography must not appear Play/Learn-ready and must not become Mastery/completion eligible merely because the route grammar recognises its ID.
 
