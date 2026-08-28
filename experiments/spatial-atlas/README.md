@@ -1,13 +1,17 @@
-# Issue #119 — spatial Atlas prototype (Africa vertical slice)
+# Issue #119 — spatial Atlas prototype
 
 **Prototype. Not production, not a renderer decision, not authorised to replace navigation.**
 
-This is the #119 prototype gate built end to end: a persistent 3D Earth that interprets the real
-typed routes as camera positions.
+A persistent 3D Earth that interprets the real typed routes as camera positions, with the full
+product traversal wired end to end:
 
 ```
-Mode → World → Africa → West Africa → Play-ready → Back to Africa → Back to World
+Mode → World → Continent → Region → Play → Results → back out
 ```
+
+All four modes, all six continents and every region are reachable. Play is a **real Flags round**
+built by the production question generator. The globe stays mounted behind the quiz and the results
+— that persistence is the whole point of the exploration.
 
 ## Run it
 
@@ -44,6 +48,10 @@ npm run measure:globe         # writes .experiments-dist/ and reports real paylo
 | Reduced motion | Yes | Camera snaps instead of travelling |
 | Mobile portrait | Yes | Verified at 412×915 |
 | Graceful renderer failure | Yes | WebGL denied → `data-fallback="webgl-unavailable"` and a link to the 2D probe |
+| Mode-first entry | Yes | Home-equivalent domain choice; the camera does not move, only what the geography means |
+| All six continents | Yes | Every continent frames from its own geometry; no hand-authored camera entries |
+| Real activity, not a stub | Yes | Production `buildQuiz`, real distractors, real scoring — with **zero** production side effects |
+| Results returning to geography | Yes | Results overlay the same mounted globe; Back discards the round and resumes the map |
 | Acceptable mobile performance | **Not established** | Headless SwiftShader is not a phone. See below. |
 
 ## Measured cost
@@ -93,19 +101,39 @@ is no starfield, terrain or photographic Earth.
 and a drag starting inside the 28 px edge gutter is left to the browser so the OS back gesture keeps
 working.
 
+## No production side effects
+
+The round deliberately does **not** use `AppStore`. `AppStore.answer()` calls `saveProgress()` and
+`refreshAchievements()`, so wiring it in would let a throwaway prototype round write the real
+`flag-atlas:progress:v1` ledger and potentially award real region × domain Mastery.
+
+`round.ts` instead calls the pure domain `buildQuiz` — the same function the production store calls,
+with the same distractor selection and the same country data — against a throwaway in-memory ledger.
+Verified: after playing a complete round, `Object.keys(localStorage)` is `[]`.
+
 ## Honest limitations
 
 - **Performance is unproven.** Everything was verified in headless Chromium on SwiftShader, which
   says nothing about a real GPU, thermal behaviour, or battery. A phone measurement is required
   before this informs any decision.
-- **Play is a stub.** The prototype does not run a round. The point of that screen is how you arrive.
-- **Africa only**, in Flags only.
+- **Flags only.** Locations, Outlines and Neighbours reach their continent and region lists and
+  frame correctly, but their Play is not wired — those mechanics need the map/silhouette/adjacency
+  runtimes, which is a much larger job than the recognition round.
+- **Flag images need network.** `flagUrl` points at `flagcdn.com`, exactly as production does. It is
+  blocked in the sandbox this was built in, so flag rendering itself is unverified here; it will
+  load anywhere production Atlas's flags load.
 - **Antimeridian rings are unwrapped but not split.** Countries spanning the date line are not a
   concern for the Africa slice; they would need real handling before any wider use.
 - **Land is `DoubleSide`.** Natural Earth does not guarantee consistent ring winding, and back-face
   culling was silently deleting whichever countries came out reversed. Correct, but it costs fill.
 - **Two LODs, no switching.** The prototype loads world LOD and stays there; `globe-africa.json` is
-  generated and measured but the runtime swap is not implemented.
+  generated and measured but the runtime swap is not implemented, so a region frame is showing
+  world-detail coastlines rather than the finer geometry that exists for it.
+- **Camera framing uses mainland bounds.** A country's full extent is the wrong thing to frame with —
+  Natural Earth's `FRA` reaches −54.6° W because of French Guiana, and `RUS` spans the entire
+  −180..180 range across the antimeridian, which put "Western Europe" in the mid-Atlantic before this
+  was fixed. The generator now emits a `mainland` box from the largest polygon, and longitude is
+  averaged circularly. Small distant territories are therefore outside the frame by design.
 - **No accessibility claim for the globe itself.** The DOM scope controls are real, focusable and
   labelled, and they are the accessible path. The canvas is `role="application"` with a label
   pointing at those controls. That is the honest minimum, not a solved problem.

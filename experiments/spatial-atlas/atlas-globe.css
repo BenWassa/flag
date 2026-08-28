@@ -3,7 +3,7 @@
 
 .globe {
   display: grid;
-  grid-template-rows: auto 1fr auto auto auto;
+  grid-template-rows: auto 1fr auto;
   gap: var(--space-3);
   min-height: 100svh;
   padding:
@@ -98,4 +98,68 @@
 
 @media (prefers-reduced-motion: reduce) {
   .globe-stage.is-ready { transition: none; }
+}
+
+
+/* ---- panel: everything below the persistent globe ---------------------- */
+
+.globe-panel { display: grid; gap: var(--space-3); }
+.globe-scopes button[disabled] {
+  opacity: .55;
+  /* Unsupported scope stays visible and honest rather than Play-ready. */
+  background: var(--track, #eef2f7);
+}
+.globe-scopes button small { font-weight: 500; color: var(--text-muted); margin-left: 6px; }
+
+/* ---- quiz overlay: the globe stays mounted behind it -------------------- */
+
+.globe-quiz { display: grid; gap: var(--space-3); }
+.globe-quiz__meta {
+  display: flex; justify-content: space-between; gap: var(--space-3);
+  color: var(--text-muted); font-size: 12px; font-weight: 650;
+}
+.globe-flag { display: grid; place-items: center; }
+.globe-flag img {
+  width: min(58vw, 220px); height: auto; display: block;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+}
+.globe-answers { display: grid; gap: var(--space-2); }
+.globe-answer {
+  display: flex; align-items: center; gap: var(--space-3);
+  min-height: 52px; padding: 0 14px;
+  border: 1px solid var(--line); border-radius: var(--radius-md);
+  background: #fff; font-weight: 650; text-align: left;
+}
+.globe-answer__key {
+  display: grid; place-items: center;
+  width: 26px; height: 26px; flex: 0 0 auto;
+  border: 1px solid var(--line); border-radius: var(--radius-sm);
+  color: var(--text-muted); font-size: 12px;
+}
+/* Correctness carries a word in the feedback line as well as colour here. */
+.globe-answer.is-correct { border-color: var(--correct); background: var(--correct-soft); }
+.globe-answer.is-wrong { border-color: var(--wrong); background: var(--wrong-soft); }
+.globe-answer[disabled] { opacity: 1; }
+
+.globe-feedback { margin: 0; font-size: 13px; font-weight: 650; }
+.globe-feedback--correct { color: var(--correct); }
+.globe-feedback--wrong { color: var(--wrong); }
+
+.globe-results { display: grid; gap: var(--space-2); justify-items: start; }
+.globe-results__score { font-size: 2rem; line-height: 1; }
+.globe-results__score span { font-size: 1.1rem; color: var(--text-muted); }
+.globe-results p { margin: 0; color: var(--text-muted); font-size: 13px; }
+.globe-results__missed { font-weight: 650; }
+.globe-results__actions { display: flex; flex-wrap: wrap; gap: var(--space-2); margin-top: var(--space-2); }
+
+
+/* ---- activity: the globe yields the screen but stays mounted ------------- */
+
+/* The stage keeps rendering behind the task, so returning to the map resumes a
+   place rather than loading one. It just stops taking two-thirds of a phone. */
+#spatial-atlas.is-activity .globe { grid-template-rows: auto minmax(84px, 22svh) auto; }
+#spatial-atlas.is-activity .globe-stage { transition: none; }
+
+@media (max-height: 700px) {
+  #spatial-atlas.is-activity .globe { grid-template-rows: auto minmax(64px, 16svh) auto; }
 }

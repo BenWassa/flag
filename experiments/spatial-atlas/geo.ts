@@ -11,8 +11,13 @@ export interface GlobeCountry {
   /** Outer ring first, then holes. Empty when the country is locator-only. */
   polygons: number[][][][];
   locator?: [number, number];
-  bounds: { west: number; east: number; south: number; north: number };
+  /** Full extent across every polygon, including distant territories. */
+  bounds: Bounds;
+  /** Largest polygon only — the right thing to point a camera at. */
+  mainland: Bounds;
 }
+
+export interface Bounds { west: number; east: number; south: number; north: number }
 
 export interface GlobeAsset {
   lod: string;
@@ -74,22 +79,41 @@ export function subdivide(
   return split ? subdivide(out, maxEdgeDeg, depth + 1) : out;
 }
 
-/** Degrees of longitude/latitude spanned by a scope, used to choose a camera distance. */
-export function boundsSpan(bounds: GlobeCountry['bounds']): { lon: number; lat: number } {
-  return { lon: Math.abs(bounds.east - bounds.west), lat: Math.abs(bounds.north - bounds.south) };
-}
+export interface Framing { lon: number; lat: number; spanLon: number; spanLat: number }
 
-export function unionBounds(list: GlobeCountry['bounds'][]): GlobeCountry['bounds'] {
-  return {
-    west: Math.min(...list.map((b) => b.west)),
-    east: Math.max(...list.map((b) => b.east)),
-    south: Math.min(...list.map((b) => b.south)),
-    north: Math.max(...list.map((b) => b.north)),
-  };
-}
+const wrapLon = (degrees: number) => ((degrees + 540) % 360) - 180;
 
-export function boundsCentre(bounds: GlobeCountry['bounds']): [number, number] {
-  return [(bounds.west + bounds.east) / 2, (bounds.south + bounds.north) / 2];
+/**
+ * Where to point the camera for a set of countries, and how much it has to fit.
+ *
+ * Longitude is averaged CIRCULARLY. An arithmetic mean puts a scope spanning the
+ * antimeridian at longitude 0 — the exact opposite side of the planet from where
+ * it is. The span is then the widest wrapped angular distance from that centre,
+ * doubled, so a scope straddling the date line still gets a sane frame.
+ */
+export function framingFor(list: Bounds[]): Framing | null {
+  if (!list.length) return null;
+
+  let x = 0;
+  let y = 0;
+  for (const bounds of list) {
+    // Each box contributes its own centre, itself computed the short way round.
+    const centre = bounds.west + wrapLon(bounds.east - bounds.west) / 2;
+    const radians = centre * DEG;
+    x += Math.cos(radians);
+    y += Math.sin(radians);
+  }
+  const lon = Math.atan2(y / list.length, x / list.length) / DEG;
+
+  let spanLon = 0;
+  for (const bounds of list) {
+    for (const edge of [bounds.west, bounds.east]) {
+      spanLon = Math.max(spanLon, Math.abs(wrapLon(edge - lon)) * 2);
+    }
+  }
+  const south = Math.min(...list.map((b) => b.south));
+  const north = Math.max(...list.map((b) => b.north));
+  return { lon, lat: (south + north) / 2, spanLon, spanLat: north - south };
 }
 
 /**

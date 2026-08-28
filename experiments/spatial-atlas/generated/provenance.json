@@ -24,7 +24,7 @@
       "locators": 37,
       "rings": 252,
       "points": 43835,
-      "bytes": 739331
+      "bytes": 753174
     },
     "africa": {
       "retained": 0.45,
@@ -34,7 +34,7 @@
       "locators": 1,
       "rings": 71,
       "points": 23411,
-      "bytes": 374149
+      "bytes": 377951
     }
   }
 }

@@ -148,7 +148,27 @@ function polygonsOf(geometry, lod) {
   return raw.map((polygon) => cleanPolygon(polygon, lod)).filter(Boolean);
 }
 
-/** Bounding box in degrees, used by the camera director to frame a scope. */
+/**
+ * Bounding box of the LARGEST polygon only.
+ *
+ * A country's full extent is the wrong thing to frame a camera with. France's
+ * full bounds reach -54.6 deg W because Natural Earth's FRA includes French
+ * Guiana, and Russia's span the entire -180..180 range across the antimeridian,
+ * so a naive union puts "Western Europe" in the mid-Atlantic. Framing wants the
+ * principal landmass; the full extent is kept separately for anything that
+ * genuinely needs it.
+ */
+function mainlandBoundsOf(polygons) {
+  let best = null;
+  let bestArea = -1;
+  for (const polygon of polygons) {
+    const area = ringArea(polygon[0]);
+    if (area > bestArea) { bestArea = area; best = polygon; }
+  }
+  return best ? boundsOf([best]) : null;
+}
+
+/** Full bounding box in degrees across every polygon. */
 function boundsOf(polygons) {
   let west = Infinity, east = -Infinity, south = Infinity, north = -Infinity;
   for (const polygon of polygons) {
@@ -232,7 +252,12 @@ async function main() {
           ringCount += polygon.length;
           for (const ring of polygon) pointCount += ring.length;
         }
-        entries.push({ id, polygons, bounds: boundsOf(polygons) });
+          entries.push({
+          id,
+          polygons,
+          bounds: boundsOf(polygons),
+          mainland: mainlandBoundsOf(polygons) ?? boundsOf(polygons),
+        });
       }
     }
     // Locator fallback, computed from the UNSIMPLIFIED source so the point is
@@ -243,12 +268,8 @@ async function main() {
       const locator = sourceFeature ? centroidOf(sourceFeature.geometry) : null;
       if (!locator) continue;
       locatorCount += 1;
-      entries.push({
-        id,
-        polygons: [],
-        locator,
-        bounds: { west: locator[0], east: locator[0], south: locator[1], north: locator[1] },
-      });
+      const point = { west: locator[0], east: locator[0], south: locator[1], north: locator[1] };
+      entries.push({ id, polygons: [], locator, bounds: point, mainland: point });
     }
 
     entries.sort((a, b) => a.id.localeCompare(b.id));
