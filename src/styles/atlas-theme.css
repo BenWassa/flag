@@ -84,6 +84,47 @@ body { letter-spacing: -.006em; }
   letter-spacing: -.03em;
 }
 
+/* World Crown is an earned-only global state. Keep its Home treatment quiet:
+   text carries the meaning; gold only reinforces the final prestige tier. */
+.world-crown {
+  margin: -2px 0 24px;
+  padding: 12px 0 13px;
+  border-block: 1px solid color-mix(in srgb, var(--prestige) 72%, var(--line));
+}
+
+.world-crown__identity {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.world-crown h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: -.02em;
+}
+
+.world-crown p {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 650;
+  line-height: 1.35;
+  text-align: right;
+}
+
+@media (max-width: 420px) {
+  .world-crown__identity {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .world-crown p { text-align: left; }
+}
+
 .icon-button,
 .text-icon-button {
   background: var(--surface);

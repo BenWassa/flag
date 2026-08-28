@@ -87,7 +87,7 @@ World completion requires:
 
 After Oceania #27, the first condition is now true: `worldHasCompleteCurriculum()` is satisfied. Existing semantics are unchanged; `worldCrown` becomes eligible only after all six continent-completion achievements have actually been earned.
 
-There is no learner-facing React World Crown renderer in current v1 production. The persisted state and read model are now genuinely reachable; Issue #138 owns learner-facing surfacing and final acceptance without changing the qualification hierarchy.
+The persisted state and read model are genuinely reachable. Issue #138 surfaces `crownEarned` on Home only when true; the renderer consumes the existing read model and does not duplicate or change qualification rules.
 
 ## Awarding properties
 
@@ -110,7 +110,7 @@ Current learner-facing achievement surfaces are:
 - complete region rows: restrained gold completion treatment;
 - domain continent indexes: completed continent row uses the dedicated continent trophy/crest artwork in place of the normal silhouette.
 
-There is no dedicated Progress screen, no separate region badge/crown, no full-screen continent trophy ceremony and no World Crown surface in current v1 production.
+There is no dedicated Progress screen, no separate region badge/crown and no full-screen continent trophy ceremony. An earned World Crown has one quiet Home presentation; an unearned Crown has no routine UI decoration.
 
 Legacy `src/ui/views/*` renderer modules are verifier compatibility fixtures after the React/Vite migration; they are not production achievement surfaces.
 

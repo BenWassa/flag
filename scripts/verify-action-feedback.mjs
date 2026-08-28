@@ -89,7 +89,7 @@ const ledgers = {
 // src/ui/views string renderers, so these invariants describe what a learner is
 // actually served.
 const { DomainScreen, HomeScreen } = await loadScreens('PassiveScreens.js');
-const home = renderScreen(HomeScreen, { ledgers, persisting: true });
+const home = renderScreen(HomeScreen, { ledgers, achievements: createInitialAchievementState(), persisting: true });
 
 // Polygon and Intersect are not legible at 32px on their own; DESIGN.md accepts
 // them only "paired with the visible ... label", so the label has to be real

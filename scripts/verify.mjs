@@ -98,7 +98,7 @@ const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
 const { FlagsLauncherScreen } = await loadScreens('LauncherScreens.js');
 const { FlagsQuizScreen, RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');
 
-const renderHome = (ledgers, persisting = true) => renderScreen(HomeScreen, { ledgers, persisting });
+const renderHome = (ledgers, persisting = true) => renderScreen(HomeScreen, { ledgers, achievements, persisting });
 const renderDomainIndex = (domain, ledgers, achievements, persisting = true) => renderScreen(DomainScreen, { domain, ledgers, achievements, persisting });
 const renderScope = (progress, scope, achievements, persisting = true) => renderScreen(FlagsLauncherScreen, { progress, scope, achievements, persisting });
 const renderQuiz = (session, progress, answeredCountryId) => renderScreen(FlagsQuizScreen, { session, progress, answeredCountryId });

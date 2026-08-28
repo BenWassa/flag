@@ -148,7 +148,7 @@ Do not imply that a separate full-screen trophy ceremony ships today; it does no
 
 ### World Crown
 
-The World Crown is the highest and final prestige tier. The domain/state model supports and persists `worldCrown`, but v1 has no React learner-facing Crown renderer and the state cannot currently be earned because global four-domain curriculum is incomplete.
+The World Crown is the highest and final prestige tier. All six continents now have complete four-domain curriculum, so the existing `worldCrown` state is genuinely reachable. When earned, Home shows one quiet World Crown line with explicit earned wording; the state is not duplicated across domain indexes or expanded into a ceremony/dashboard.
 
 Do not show locked/decorative Crowns in routine states, and do not introduce a prestige tier above the Crown.
 
