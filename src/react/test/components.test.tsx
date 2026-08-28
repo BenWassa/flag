@@ -1,11 +1,13 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it, vi } from 'vitest';
+import { CONTINENTS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
 import { createInitialAchievementState } from '../../domain/achievements.js';
 import { createInitialLocationProgress } from '../../domain/map-game.js';
 import { createInitialNeighborProgress } from '../../domain/neighbor-game.js';
 import { createInitialProgress } from '../../domain/progress.js';
+import { scopeSupportsDomain } from '../../domain/scope-support.js';
 import type { AtlasActions } from '../actions.js';
 import { AtlasActionsContext } from '../actions.js';
 import { Launcher, type LauncherModel } from '../components/Launcher.js';
@@ -43,13 +45,21 @@ describe('React screen actions', () => {
     expect(screen.getByRole('heading', { name: 'Atlas' })).toBeTruthy();
   });
 
-  it('keeps unsupported continents non-interactive', () => {
+  it('keeps continent interaction aligned with canonical domain support', () => {
     render(<AtlasActionsContext value={actions()}><DomainScreen domain="locations" ledgers={ledgers()} achievements={createInitialAchievementState()} persisting /></AtlasActionsContext>);
 
-    expect(screen.getByText('Africa')).toBeTruthy();
-    const unavailable = screen.getAllByText('Coming soon');
-    expect(unavailable.length).toBeGreaterThan(0);
-    expect(unavailable.every((label) => label.closest('button') === null)).toBe(true);
+    for (const continent of CONTINENTS) {
+      const scope = { kind: 'continent' as const, id: continent.id, label: continent.name };
+      const supported = scopeSupportsDomain(scope, 'locations');
+      const label = screen.getByText(continent.name);
+      const button = label.closest('button');
+      if (supported) {
+        expect(button, `${continent.name} Locations should be interactive`).not.toBeNull();
+      } else {
+        expect(button, `${continent.name} Locations should remain non-interactive`).toBeNull();
+        expect(label.parentElement?.textContent).toContain('Coming soon');
+      }
+    }
   });
 
   it('plays a launcher scope from a single row tap', async () => {

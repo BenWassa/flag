@@ -138,6 +138,28 @@ function geometryCoordinateCount(geometry) {
   return count(geometry.coordinates);
 }
 
+function polygonComponents(geometry) {
+  if (!geometry) return [];
+  if (geometry.type === 'Polygon') return [geometry.coordinates];
+  if (geometry.type === 'MultiPolygon') return [...geometry.coordinates];
+  if (geometry.type === 'GeometryCollection') return geometry.geometries.flatMap(polygonComponents);
+  return [];
+}
+
+function geographicAuditFor(geometry) {
+  const components = polygonComponents(geometry);
+  const bounds = coordinateBounds(geometry?.coordinates ?? []);
+  const componentBounds = components.map((coordinates) => coordinateBounds(coordinates));
+  return {
+    coordinateCount: geometryCoordinateCount(geometry),
+    componentCount: components.length,
+    longitude: { min: bounds.minX, max: bounds.maxX },
+    componentsEastOf170: componentBounds.filter((item) => item.maxX > 170).length,
+    componentsWestOfMinus170: componentBounds.filter((item) => item.minX < -170).length,
+    duplicateComponentCount: components.length - new Set(components.map((item) => JSON.stringify(item))).size,
+  };
+}
+
 function projectGeometry(geometry, projection) {
   if (!geometry) return null;
   if (geometry.type === 'GeometryCollection') {
@@ -160,6 +182,12 @@ function projectGeometry(geometry, projection) {
 
 function featureCollection(features) {
   return { type: 'FeatureCollection', features };
+}
+
+function projectionForConfig(config) {
+  const projection = geoNaturalEarth1();
+  if (config.projectionRotate) projection.rotate([...config.projectionRotate]);
+  return projection;
 }
 
 function mergedGeometry(sourceFeatures) {
@@ -741,6 +769,11 @@ function sliceGlobalAdjacency(globalAdjacency, scoredCatalog, representedIds, co
 async function generateContinent({ config, catalog, sourceResults, manifest, globalGraph }) {
   const scoredCatalog = catalogForConfig(catalog, config);
   const normalized = normalizeContinent(sourceResults.countries.json, catalog, scoredCatalog, config);
+  const geographicAudit = Object.fromEntries((config.geographicAuditCountryIds ?? []).map((id) => {
+    const sourceFeature = normalized.features.find((item) => item.properties?.countryId === id);
+    if (!sourceFeature) throw new Error(`${config.displayName} geographic audit is missing ${id}.`);
+    return [id, geographicAuditFor(sourceFeature.geometry)];
+  }));
   const beforePoints = normalized.features.reduce((sum, item) => sum + geometryCoordinateCount(item.geometry), 0);
   const fitExcludedIds = new Set(config.fitExcludeCountryIds ?? []);
   const fitCountryBounds = config.fitCountryBounds ?? {};
@@ -762,7 +795,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
   }));
   if (!fitCollection.features.length) throw new Error(`${config.displayName} viewport-fit policy removed every feature.`);
 
-  const projection = geoNaturalEarth1().fitExtent(
+  const projection = projectionForConfig(config).fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
     fitCollection,
   );
@@ -941,7 +974,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
     scopeFocus[scopeId] = focusForIds([...ids]);
   }
 
-  const sourceProjection = geoNaturalEarth1().fitExtent(
+  const sourceProjection = projectionForConfig(config).fitExtent(
     [[PADDING, PADDING], [WIDTH - PADDING, HEIGHT - PADDING]],
     fitCollection,
   );
@@ -971,6 +1004,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
       canvas: [WIDTH, HEIGHT],
       fitPadding: PADDING,
       pathDigits: PATH_DIGITS,
+      ...(config.projectionRotate ? { rotate: [...config.projectionRotate] } : {}),
     },
     topology: {
       quantization: QUANTIZATION,
@@ -984,6 +1018,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
       source: config.adjacencyMode === 'global' ? 'global canonical Natural Earth application-country topology' : 'continent-local canonical topology',
       globalSourceFeatureCount: globalGraph.sourceFeatureCount,
     },
+    ...(Object.keys(geographicAudit).length ? { geographicAudit } : {}),
     boundaryPolicy: {
       ...config.boundaryPolicy,
       scoredCountries: scoredCatalog.length,

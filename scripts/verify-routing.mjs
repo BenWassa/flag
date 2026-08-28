@@ -92,17 +92,28 @@ assert.equal(serializeRoutePath(normalizeAvailableRoute(locations)), '/locations
 assert.equal(serializeRoutePath(normalizeAvailableRoute(outlines)), '/outlines', 'Bare Outlines is its own continent index.');
 assert.equal(serializeRoutePath(normalizeAvailableRoute(neighbors)), '/neighbors', 'Bare Neighbours is its own continent index.');
 assert.equal(serializeRoutePath(normalizeAvailableRoute(locationsAfrica)), '/locations/africa', 'A shipped continent survives normalisation.');
-// Unshipped curriculum falls back to the domain index, which states the
-// coverage honestly, rather than silently substituting a different continent.
+// Availability follows canonical support. #22 + #27 make Oceania durable for
+// every geography domain, while a genuinely unsupported scope still falls back
+// to the domain index rather than being silently substituted.
 assert.equal(
   serializeRoutePath(normalizeAvailableRoute(route('/locations/oceania'))),
-  '/locations',
-  'An unshipped continent falls back to the domain index rather than a substituted scope.',
+  '/locations/oceania',
+  'Supported Oceania Locations survives normalisation.',
 );
 assert.equal(
   serializeRoutePath(normalizeAvailableRoute(route('/neighbors/oceania/melanesia'))),
-  '/neighbors',
-  'An unshipped region falls back to the domain index too.',
+  '/neighbors/oceania/melanesia',
+  'Supported Melanesia Neighbours survives normalisation.',
+);
+const unsupportedLocations = {
+  name: 'learning',
+  domain: 'locations',
+  scope: { kind: 'continent', id: 'antarctica', label: 'Antarctica' },
+};
+assert.equal(
+  serializeRoutePath(normalizeAvailableRoute(unsupportedLocations)),
+  '/locations',
+  'A genuinely unsupported scope falls back to its domain index.',
 );
 
 // Mode-first Back chain: Home picks a domain, the domain route lists that
@@ -151,10 +162,10 @@ assert.equal(parseRoutePath('/flags/asia/west-africa'), null, 'Region must belon
 assert.equal(parseRoutePath('/locations/africa/not-a-region'), null, 'Unknown region must be rejected.');
 assert.equal(parseRoutePath('/locations/nowhere'), null, 'Unknown continent must be rejected.');
 assert.equal(parseRoutePath('/locations/africa/east-asia'), null, 'A region must belong to its route continent.');
-// Availability is no longer a parse error: an unshipped continent is a valid
-// URL that normalisation resolves, so the parser stays a pure grammar.
-assert.ok(parseRoutePath('/locations/asia'), 'An unshipped but well-formed scope parses.');
-assert.ok(parseRoutePath('/outlines/asia'), 'An unshipped but well-formed scope parses for every domain.');
+// Availability is not parser responsibility: well-formed continent routes parse
+// independently of support, and normalisation owns the support decision.
+assert.ok(parseRoutePath('/locations/asia'), 'A well-formed Locations continent scope parses.');
+assert.ok(parseRoutePath('/outlines/asia'), 'A well-formed Outlines continent scope parses.');
 assert.equal(parseRoutePath('/flags/africa/west-africa/unknown'), null, 'Unknown activity must be rejected.');
 assert.equal(parseRoutePath('/locations/learn'), null, 'World activity is not addressable for locations.');
 assert.equal(parseRoutePath('/outlines/learn'), null, 'World activity is not addressable for outlines.');

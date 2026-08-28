@@ -90,12 +90,6 @@ const ledgers = {
 // actually served.
 const { DomainScreen, HomeScreen } = await loadScreens('PassiveScreens.js');
 const home = renderScreen(HomeScreen, { ledgers, persisting: true });
-const locationsIndex = renderScreen(DomainScreen, {
-  domain: 'locations',
-  ledgers,
-  achievements: createInitialAchievementState(),
-  persisting: true,
-});
 
 // Polygon and Intersect are not legible at 32px on their own; DESIGN.md accepts
 // them only "paired with the visible ... label", so the label has to be real
@@ -105,28 +99,48 @@ for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeSeen.includes(label), `Home names ${label} visibly beside its glyph.`);
 }
 
-// Every supported continent is a deliberate navigation target, while an
-// unshipped continent stays inert: named, but not a control. The count is
-// derived so shipping a new continent does not need a verifier edit.
+// Every production continent is now deliberately supported. Keep the
+// unavailable-action contract covered with a synthetic scope rather than
+// depending on a real continent remaining an unshipped shell forever.
 const supportedLocationContinents = CONTINENTS.filter(
   (continent) => scopeSupportsDomain({ kind: 'continent', id: continent.id, label: continent.name }, 'locations'),
 );
-assert.ok(supportedLocationContinents.length > 0, 'Locations ships at least one continent.');
-assert.ok(
-  supportedLocationContinents.length < CONTINENTS.length,
-  'This check is only meaningful while some continent is still an unshipped shell.',
+assert.equal(
+  supportedLocationContinents.length,
+  CONTINENTS.length,
+  'Locations supports every production continent in the completed curriculum.',
 );
-// A shipped continent is a button; an unshipped one renders the same row class
-// on an inert span, so the element — not just the class — carries the contract.
+const unsupportedContinent = { id: 'verifier-unsupported', name: 'Verifier unsupported' };
+const unsupportedScope = { kind: 'continent', id: unsupportedContinent.id, label: unsupportedContinent.name };
+assert.equal(
+  scopeSupportsDomain(unsupportedScope, 'locations'),
+  false,
+  'The synthetic verifier scope is genuinely unsupported.',
+);
+CONTINENTS.push(unsupportedContinent);
+let locationsIndex;
+try {
+  locationsIndex = renderScreen(DomainScreen, {
+    domain: 'locations',
+    ledgers,
+    achievements: createInitialAchievementState(),
+    persisting: true,
+  });
+} finally {
+  CONTINENTS.pop();
+}
+// A shipped continent is a button; the synthetic unsupported one renders the
+// same row class on an inert span, so the element — not just the class — carries
+// the unavailable-action contract.
 assert.equal(
   (locationsIndex.match(/<button class="continent-row__open"/g) ?? []).length,
   supportedLocationContinents.length,
-  'Locations exposes exactly one navigation control per supported continent.',
+  'Locations exposes exactly one navigation control per supported production continent.',
 );
 assert.equal(
   (locationsIndex.match(/<span class="continent-row__open"/g) ?? []).length,
-  CONTINENTS.length - supportedLocationContinents.length,
-  'Every unshipped continent renders as an inert row rather than a control.',
+  1,
+  'The synthetic unsupported continent renders as an inert row rather than a control.',
 );
 assert.equal(
   (locationsIndex.match(/continent-row__play|quick-play/g) ?? []).length,
@@ -134,14 +148,14 @@ assert.equal(
   'The continent index contains no row-level Play shortcut.',
 );
 const shellTags = [...locationsIndex.matchAll(/<(div|button)[^>]*continent-row--shell[^>]*>/g)];
-assert.ok(shellTags.length > 0, 'Locations still marks the continents it has not shipped.');
+assert.equal(shellTags.length, 1, 'Locations marks the synthetic unsupported continent as unavailable.');
 for (const [tag, tagName] of shellTags) {
-  assert.equal(tagName, 'div', 'An unshipped continent is not a button.');
-  assert.equal(/onclick|continent-row__open/.test(tag), false, 'An unshipped continent carries no action.');
+  assert.equal(tagName, 'div', 'An unsupported continent is not a button.');
+  assert.equal(/onclick|continent-row__open/.test(tag), false, 'An unsupported continent carries no action.');
 }
 assert.ok(
   seenText(locationsIndex).includes('Coming soon'),
-  'The unshipped state reaches every learner as words, not colour.',
+  'The unsupported state reaches every learner as words, not colour.',
 );
 assert.match(
   atlasTheme,
@@ -151,7 +165,7 @@ assert.match(
 assert.match(
   atlasTheme,
   /\.page--tile-index \.continent-row--shell\s*\{[^}]*border-style:\s*dashed/,
-  'Unshipped continents use the dashed unavailable treatment Progress already established.',
+  'Unsupported continents use the dashed unavailable treatment Progress already established.',
 );
 assert.equal(atlasTheme.includes('.continent-row__play'), false, 'No dead continent Play-cell styling remains.');
 assert.equal(atlasTheme.includes('.region-row__play'), false, 'No dead region Play-cell styling remains.');

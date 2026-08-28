@@ -90,6 +90,7 @@ export default defineConfig(({ command }) => ({
           'assets/europe-*.js',
           'assets/asia-*.js',
           'assets/north-america-*.js',
+          'assets/oceania-*.js',
         ],
       },
     }),

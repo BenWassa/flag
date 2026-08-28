@@ -26,6 +26,10 @@ import {
   NORTH_AMERICA_LAND_ADJACENCY,
   NORTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
 } from './north-america.js';
+import {
+  OCEANIA_LAND_ADJACENCY,
+  OCEANIA_ZERO_LAND_NEIGHBOR_IDS,
+} from './oceania.js';
 
 export {
   AFRICA_LAND_ADJACENCY,
@@ -38,6 +42,8 @@ export {
   ASIA_ZERO_LAND_NEIGHBOR_IDS,
   NORTH_AMERICA_LAND_ADJACENCY,
   NORTH_AMERICA_ZERO_LAND_NEIGHBOR_IDS,
+  OCEANIA_LAND_ADJACENCY,
+  OCEANIA_ZERO_LAND_NEIGHBOR_IDS,
 };
 
 export interface NeighborContinentData {
@@ -82,6 +88,11 @@ const NEIGHBOR_CONTINENT_DATA: Partial<Record<ContinentId, NeighborContinentData
   'north-america': {
     continentId: 'north-america',
     adjacency: NORTH_AMERICA_LAND_ADJACENCY,
+    coverageExcludedIds: [],
+  },
+  oceania: {
+    continentId: 'oceania',
+    adjacency: OCEANIA_LAND_ADJACENCY,
     coverageExcludedIds: [],
   },
 };

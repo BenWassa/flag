@@ -93,6 +93,19 @@ const continentLoaders: Partial<Record<ContinentId, ContinentMapLoader>> = {
       insets: data.NORTH_AMERICA_INSETS,
     };
   },
+  oceania: async () => {
+    const data = await import('./oceania.js');
+    return {
+      viewBox: data.OCEANIA_VIEWBOX,
+      geometry: data.OCEANIA_GEOMETRY,
+      contextPaths: data.OCEANIA_EXTRA_CONTEXT_PATHS,
+      sharedBoundaryPaths: data.OCEANIA_SHARED_BOUNDARY_PATHS,
+      coastlinePaths: data.OCEANIA_COASTLINE_PATHS,
+      water: data.OCEANIA_WATER,
+      scopeFocus: data.OCEANIA_SCOPE_FOCUS,
+      insets: data.OCEANIA_INSETS,
+    };
+  },
 };
 
 const continentDataPromises = new Map<ContinentId, Promise<ContinentMapData>>();

@@ -342,10 +342,68 @@ export const NORTH_AMERICA_MAP_GENERATION_CONFIG = Object.freeze({
   }),
 });
 
+export const OCEANIA_MAP_GENERATION_CONFIG = Object.freeze({
+  id: 'oceania',
+  displayName: 'Oceania',
+  sourceContinent: 'Oceania',
+  exportPrefix: 'OCEANIA',
+  outputFilename: 'oceania.ts',
+  provenanceFilename: 'oceania-cartography-provenance.json',
+  expectedCountryCount: 14,
+  regionIds: Object.freeze([
+    'australia-new-zealand',
+    'melanesia',
+    'micronesia',
+    'polynesia',
+  ]),
+  // Pacific-centred projection is a generic generator option, not a Kiribati
+  // geometry patch. It moves the projection seam away from the scored Pacific
+  // archipelagos while retaining canonical source coordinates/topology.
+  projectionRotate: Object.freeze([-160, 0, 0]),
+  islandLocatorIds: Object.freeze([]),
+  hitAssistIds: Object.freeze(['FJI', 'SLB', 'VUT', 'KIR', 'MHL', 'FSM', 'NRU', 'PLW', 'WSM', 'TON', 'TUV']),
+  geographicAuditCountryIds: Object.freeze(['KIR']),
+  callouts: Object.freeze({}),
+  insets: Object.freeze([]),
+  lakes: Object.freeze([]),
+  // Indonesia is non-scoring Oceania context so the PNG land boundary is
+  // visible locally; global topology still owns the complete PNG-IDN edge.
+  localContextCountryIds: Object.freeze(['IDN']),
+  localContextBounds: Object.freeze({ minLon: 125, maxLon: 145, minLat: -12, maxLat: 3 }),
+  allowedContextPatterns: Object.freeze([
+    Object.freeze({ pattern: '(american samoa|ashmore|cartier|cook islands|coral sea|french polynesia|guam|heard island|macdonald islands|new caledonia|niue|norfolk island|northern mariana|pitcairn|tokelau|wallis|futuna)', flags: 'i' }),
+  ]),
+  // Non-scoring dependencies may be rendered when they fall inside the Pacific
+  // canvas, but they never get to determine scoring scale/framing.
+  fitExcludeContextPatterns: Object.freeze([
+    Object.freeze({ pattern: '(american samoa|ashmore|cartier|cook islands|coral sea|french polynesia|guam|heard island|macdonald islands|new caledonia|niue|norfolk island|northern mariana|pitcairn|tokelau|wallis|futuna)', flags: 'i' }),
+  ]),
+  physicalTolerance: Object.freeze({ ocean: 1.8, coastline: 1.4, lakes: 0.6 }),
+  adjacencyMode: 'global',
+  policy: 'standard-v1',
+  boundaryPolicy: Object.freeze({
+    naturalEarthView: 'default de-facto',
+    scoredCountries: 'exact Atlas 14-country Oceania curriculum only',
+    antimeridian: 'Pacific-centred Natural Earth projection rotation moves the rendering seam away from scored archipelagos; canonical geographic geometry is not duplicated, shifted or hand-edited',
+    indonesia: 'canonical Asia-owned IDN is keyed non-scoring local context; complete PNG-IDN land adjacency is derived from the global application-country topology',
+    newCaledonia: 'French dependency; non-scoring context only',
+    frenchPolynesia: 'French dependency; non-scoring context only',
+    guam: 'United States dependency; non-scoring context only',
+    northernMarianaIslands: 'United States commonwealth; non-scoring context only',
+    americanSamoa: 'United States dependency; non-scoring context only',
+    cookIslands: 'self-governing state in free association with New Zealand; not an Atlas application-country target under the current catalogue',
+    niue: 'self-governing state in free association with New Zealand; not an Atlas application-country target under the current catalogue',
+    otherPacificDependencies: 'other pinned-source Pacific dependencies/features remain non-scoring context unless explicitly excluded after source audit',
+    maritimeAdjacency: 'none; topology-derived direct land adjacency only, including explicit empty sets',
+    assistance: 'production 320px audit retains real polygons for AUS, NZL and PNG; 11 small-island targets use question-specific invisible 44px hit assistance anchored inside canonical land; no visible locator, callout or inset is predeclared',
+  }),
+});
+
 export const MAP_GENERATION_CONFIGS = Object.freeze([
   AFRICA_MAP_GENERATION_CONFIG,
   SOUTH_AMERICA_MAP_GENERATION_CONFIG,
   EUROPE_MAP_GENERATION_CONFIG,
   ASIA_MAP_GENERATION_CONFIG,
   NORTH_AMERICA_MAP_GENERATION_CONFIG,
+  OCEANIA_MAP_GENERATION_CONFIG,
 ]);

@@ -1,0 +1,108 @@
+{
+  "upstream": "nvkelso/natural-earth-vector",
+  "upstreamCommit": "ca96624a56bd078437bca8184e78163e5039ad19",
+  "rawBaseUrl": "https://raw.githubusercontent.com/nvkelso/natural-earth-vector",
+  "sources": {
+    "boundaries": {
+      "path": "geojson/ne_10m_admin_0_boundary_lines_land.geojson",
+      "version": "5.1.0",
+      "role": "provenance-and-policy-cross-check",
+      "sha256": "74d9c16229c095fde65943a9919e337682f044bcebccb120764f38edf3b70f4a",
+      "bytes": 2284669
+    },
+    "countries": {
+      "path": "geojson/ne_10m_admin_0_countries.geojson",
+      "version": "5.1.1",
+      "role": "country-polygons",
+      "sha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+      "bytes": 13287234
+    },
+    "lakes": {
+      "path": "geojson/ne_10m_lakes.geojson",
+      "version": "5.0.0",
+      "role": "runtime-major-lakes-reservoirs",
+      "sha256": "2d036f53dedec578001c5c30c2959ee7d4eebc1306900fa4367c49929ec8f2d9",
+      "bytes": 5043554
+    },
+    "minorIslands": {
+      "path": "geojson/ne_10m_minor_islands.geojson",
+      "version": "4.1.0",
+      "role": "evaluated-only",
+      "sha256": "8c933ca7a4760256bdc46408355706e39764b0fa01c160c28888b90b4faec29f",
+      "bytes": 1320514
+    },
+    "ocean": {
+      "path": "geojson/ne_10m_ocean.geojson",
+      "version": "5.1.1",
+      "role": "runtime-ocean",
+      "sha256": "f9696a1337c746a0f6c8c13bc60d0f230d2ef8d105198d5657726c8f8e763fc2",
+      "bytes": 10151895
+    }
+  },
+  "projection": {
+    "name": "d3.geoNaturalEarth1",
+    "canvas": [
+      835,
+      723
+    ],
+    "fitPadding": 22,
+    "pathDigits": 2,
+    "rotate": [
+      -160,
+      0,
+      0
+    ]
+  },
+  "topology": {
+    "quantization": 100000,
+    "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
+    "simplificationQuantile": 0.72,
+    "weightThreshold": 0.0015016546634256207,
+    "coordinateCountBefore": 41001,
+    "coordinateCountAfter": 29931
+  },
+  "adjacency": {
+    "source": "global canonical Natural Earth application-country topology",
+    "globalSourceFeatureCount": 202
+  },
+  "geographicAudit": {
+    "KIR": {
+      "coordinateCount": 709,
+      "componentCount": 35,
+      "longitude": {
+        "min": -174.543406,
+        "max": 176.850922
+      },
+      "componentsEastOf170": 21,
+      "componentsWestOfMinus170": 7,
+      "duplicateComponentCount": 0
+    }
+  },
+  "boundaryPolicy": {
+    "naturalEarthView": "default de-facto",
+    "scoredCountries": 14,
+    "antimeridian": "Pacific-centred Natural Earth projection rotation moves the rendering seam away from scored archipelagos; canonical geographic geometry is not duplicated, shifted or hand-edited",
+    "indonesia": "canonical Asia-owned IDN is keyed non-scoring local context; complete PNG-IDN land adjacency is derived from the global application-country topology",
+    "newCaledonia": "French dependency; non-scoring context only",
+    "frenchPolynesia": "French dependency; non-scoring context only",
+    "guam": "United States dependency; non-scoring context only",
+    "northernMarianaIslands": "United States commonwealth; non-scoring context only",
+    "americanSamoa": "United States dependency; non-scoring context only",
+    "cookIslands": "self-governing state in free association with New Zealand; not an Atlas application-country target under the current catalogue",
+    "niue": "self-governing state in free association with New Zealand; not an Atlas application-country target under the current catalogue",
+    "otherPacificDependencies": "other pinned-source Pacific dependencies/features remain non-scoring context unless explicitly excluded after source audit",
+    "maritimeAdjacency": "none; topology-derived direct land adjacency only, including explicit empty sets",
+    "assistance": "production 320px audit retains real polygons for AUS, NZL and PNG; 11 small-island targets use question-specific invisible 44px hit assistance anchored inside canonical land; no visible locator, callout or inset is predeclared"
+  },
+  "runtimeOptimization": {
+    "pathDigits": 1,
+    "method": "projection-space path quantization plus Ramer-Douglas-Peucker for non-interactive physical context",
+    "canvasUnits": "Oceania 835x723 projected canvas units",
+    "physicalTolerance": {
+      "ocean": 1.8,
+      "lakes": 0.6,
+      "coastline": 1.4
+    },
+    "precisionSensitiveCountryIds": []
+  }
+}
