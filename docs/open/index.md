@@ -177,10 +177,31 @@ the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
   way. It must not reintroduce colour-only progress encoding.
 
 - [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
-  **Proposed, audit only.** Its mobile-ergonomics and motion-timing lenses
-  produce exactly the current-launcher interaction baseline #119 Stage 0 needs.
-  Run it first, or share one artifact between them; do not capture that baseline
-  twice.
+  **Audit complete; implementation not started.** Report:
+  [`issue-118-design-skill-audit.md`](issue-118-design-skill-audit.md). It ran
+  against the built artifact on `3e7fed2` and produced eighteen findings, of
+  which the load-bearing ones are: launcher scope rows expose only
+  `"Play {scope}"` to assistive technology, so count, progress and earned
+  Mastery are all suppressed; complete-region is a colour-only state against
+  locked principle 8; earned region × domain Mastery has no row treatment at
+  all; Outlines Play advances after a measured 238 ms where Flags Play holds a
+  wrong answer for 1560 ms; and the Locations wrong-guess colour is cleared
+  only by an animation keyframe, so it never clears under reduced motion. Seven
+  focused follow-up issues are mapped in §5 — none of them a redesign.
+
+  On the skills question the answer is mostly negative: of eight candidate
+  families, one earns selective adoption (`emilkowalski/skills` —
+  `review-animations`, `animation-vocabulary`), two are reference-only, and five
+  are rejected, including two 3-star native-first packs and two very widely
+  installed skills whose purpose is to *invent* a design direction Atlas has
+  already locked. The motion and game-feel lenses were the only ones that found
+  what the existing Impeccable/Taste workflow does not.
+
+  Its mobile-ergonomics and motion-timing lenses produce exactly the
+  current-launcher interaction baseline #119 Stage 0 needs; §2's confirmed
+  strengths and measured timings are that baseline, so **do not capture it
+  twice**. Physical-device questions raised by the audit (E-02, E-03) were
+  deferred to #71 rather than answered, and #104 was not reopened.
 
 ## Working rules
 
