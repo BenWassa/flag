@@ -1,1288 +1,340 @@
 # Issue #119 — Continuous Spatial Atlas Moonshot
 
-**Status:** moonshot product + technical exploration  
-**Issue:** #119 — Continuous spatial Atlas shell with interactive 3D Earth navigation  
-**Exploration branch:** `explore/spatial-atlas-moonshot`  
-**Production status:** current v1 launcher remains authoritative until a prototype explicitly passes the gates below
+**Status:** product/technical exploration; no production commitment and no renderer selected.  
+**Issue:** #119 — continuous spatial Atlas shell with interactive 3D Earth navigation  
+**Branch:** `explore/spatial-atlas-moonshot`  
+**Execution plan:** [`issue-119-plan.md`](issue-119-plan.md)
 
-> **Plan of record:** this file remains the canonical *scope* — product vision,
-> preservation boundaries, gates and outcomes. Sequencing, budget, the
-> judgement protocol and the current evidence position live in
-> [`issue-119-plan.md`](issue-119-plan.md), which supersedes this document
-> wherever the two disagree on *how* the work proceeds.
+This file is the durable **scope**: product thesis, preservation boundaries, experience requirements and allowed outcomes. Sequencing, dependency gates and ownership live in `issue-119-plan.md`.
 
 ## 1. Purpose
 
-This document scopes a possible future Atlas presentation architecture in which the application no longer *feels* like a sequence of discrete screens.
+Atlas currently uses a coherent mode-first hierarchy:
 
-The underlying product remains route-driven and stateful. The learner instead experiences one persistent spatial instrument:
+`Home → learning domain → continent launcher → region/continent activity`
 
-```text
-MODE
-  ↓
-EARTH
-  ↓
-CONTINENT
-  ↓
-REGION
-  ↓
-ACTIVITY
-  ↓
-REGION / RESULTS
-```
+Issue #119 explores whether that hierarchy should *feel* like movement through one geographic instrument rather than a sequence of page replacements.
 
-The central idea is simple:
+The underlying application remains route-driven. The learner may instead experience a persistent spatial presentation:
 
-> Keep the existing Atlas product engine, typed routing, learning logic, progress, achievements and canonical geography. Replace obvious page replacement with a persistent spatial world that interprets route changes as camera, geography and interface-state changes.
+`Mode → World → Continent → Region → Activity → Region/Results`
 
-This is intentionally a **moonshot**. It should be explored because the interaction model is unusually coherent with a geography-learning product, not because 3D itself is a goal.
+The goal is **spatial continuity**, not 3D spectacle.
 
-A technically impressive spinning globe that slows the app, harms accessibility or adds navigation friction is a failed outcome.
+A spinning globe that is slower, harder to understand, less accessible, more fragile or more repetitive than the current launcher is a failed outcome.
 
-## 2. Current production baseline
+## 2. Current production truth
 
-At the time this scope was created, current `main` already has several architectural properties that make the experiment plausible without a wholesale rewrite:
+At the current pre-#27 checkpoint:
 
 - React owns production presentation;
-- Vite owns browser builds;
-- domain, data, routing and state remain framework-independent TypeScript;
-- country identity is canonical ISO3;
-- Natural Earth 1:10m is the canonical production cartography source;
-- map projection/runtime boundaries are already separated from React;
-- durable URLs own domain/scope/activity identity;
-- active quiz ordering, guesses, timers and other round internals remain ephemeral session state;
-- browser Back/Forward remains native rather than using an application-owned parallel history stack.
+- Vite owns production builds;
+- domain/data/routing/state remain layered TypeScript;
+- typed hash URLs own durable domain/scope/activity state;
+- active round internals remain ephemeral session state;
+- browser Back/Forward is native and first-class;
+- ISO3 is canonical country identity;
+- pinned Natural Earth 1:10m is the sole production topology source;
+- Africa, South America, Europe, Asia and North America ship across the geography-dependent domains;
+- #27 is completing Oceania;
+- #137 will harden shared/Asia map interaction after #27;
+- #138 will surface/accept the genuinely reachable World Crown after world curriculum completion.
 
-The production information architecture remains mode-first:
+Final comparison evidence for #119 must be recaptured after #27/#137/#138 merge. Do not preserve pre-world-complete payload counts or unsupported-continent examples as final truth.
 
-```text
-Home
-→ domain continent index
-→ supported continent launcher
-→ Play continent / region
-```
+## 3. Product thesis
 
-The launcher currently uses one-tap rows. Whole-continent and region rows start Play directly. Learn remains subordinate. That production model remains the fallback and comparison baseline during this exploration.
+Atlas’s existing design thesis remains:
 
-## 3. Relationship to Issue #104
+> **Geography is the content; the interface is the instrument.**
 
-Issue #104 records a deferred exploration of replacing the **continent launcher** with a map-first selection surface.
+The spatial direction asks whether the navigation itself can become geographic:
 
-Issue #119 is larger and should not simply inflate #104 indefinitely.
+- hierarchy is understood through position/scale as well as labels;
+- Back feels like reversing a journey;
+- scope controls remain obvious without requiring a separate selection screen;
+- results can return geography to prominence;
+- repeated navigation remains fast enough for daily practice.
 
-#104 asks approximately:
+Spatial continuity must reduce conceptual chrome rather than move the same dashboard into a map/globe.
 
-> Should a supported continent launcher use geography instead of a row list?
+## 4. H1 before H2
 
-#119 asks:
+Issue #119 deliberately separates:
 
-> Should the entire Atlas presentation layer behave like a continuous spatial world from domain selection through continent/region navigation and into activities/results?
+- **H1 — continuity:** continuous spatial navigation beats discrete launcher replacement;
+- **H2 — sphere:** a 3D Earth adds enough value above successful continuity to justify its cost.
 
-If #119 proves successful, the implementation space in #104 would likely become one child phase of the broader spatial shell. Until then, #104 remains independently deferred and the current row launcher remains production truth.
+H1 is tested first with existing production 2D geography. If H1 fails, stop the moonshot without renderer work.
 
-## 4. Product thesis
-
-Atlas's current design thesis is already:
-
-> Geography is the content; the interface is the instrument.
-
-The spatial-shell direction takes that literally.
-
-The learner should navigate Atlas by moving through geography rather than repeatedly leaving geography to choose the next geography from an unrelated screen.
-
-The intended effect is not cinematic spectacle. It is **spatial continuity**:
-
-- the learner always knows where they are;
-- continent and region hierarchy becomes visually self-explanatory;
-- Back naturally reverses the geographic journey;
-- progress and achievement can remain attached to real places;
-- mode changes and activity transitions feel like changing how Atlas is being used, not loading another application screen.
+This also absorbs the useful design space from closed #104: geography-first continent/region selection is now evidence for H1 rather than an independently scheduled launcher redesign. #104’s rejected colour-only/region-colour ideas do not return by implication.
 
 ## 5. Desired experience
 
-### 5.1 Launch / domain selection
+### Domain selection
 
-Atlas remains **mode-first**.
+Atlas remains mode-first. Flags, Locations, Outlines and Neighbours stay peer product domains.
 
-The four peer domains remain the first durable product decision:
+A future spatial layer may already be visually present or may lazy-load after the domain decision, but **first meaningful interaction must not wait for a heavy renderer**.
 
-- Flags;
-- Locations;
-- Outlines;
-- Neighbours.
+### World
 
-The important change is presentational.
+After domain selection, geography becomes the primary scope-selection object.
 
-The Earth may already be visible as a quiet spatial backdrop/substrate while the four domain controls are shown. Choosing a domain should make those controls recede and let geography take over rather than visibly replacing the entire page.
+A future 3D version may allow restrained rotation and pinch/dolly, but the target visual language is quiet Atlas cartography, not satellite imagery, terrain, starfields or a generic embedded mapping product.
 
-No domain decision should require the 3D engine to block first meaningful interaction. The spatial engine may be lazy-loaded/preloaded around the initial choice if that materially improves startup performance.
+### Continent
 
-### 5.2 World state
+Selecting Africa should make the hierarchy feel continuous. Africa becomes the dominant geographic scope while whole-continent and region actions remain explicit.
 
-After the learner chooses a domain, the Earth becomes the main geography-selection object.
+The continent action stays stronger than region actions. Do not introduce arbitrary region identity colours.
 
-Required qualities:
+### Region
 
-- one-finger rotation/drag;
-- restrained inertia;
-- pinch/dolly scale changes;
-- quiet country/continent geometry;
-- clear silhouette at phone size;
-- no satellite imagery;
-- no terrain;
-- no starfield or decorative space scene;
-- no photorealistic Google Earth aesthetic;
-- no gratuitous visual effects competing with the learning purpose.
+Selecting West Africa should continue the same spatial hierarchy rather than presenting another unrelated page. Labels and real DOM controls must make the state understandable even without observing motion.
 
-The target visual language is Atlas cartography wrapped onto a sphere, not an external mapping product embedded inside Atlas.
+### Activity
 
-### 5.3 Continent selection
+The spatial shell is not permission to make every learning mechanic 3D.
 
-Selecting a continent should result in a camera transition, not an obvious page replacement.
+- Flags: the flag remains the dominant recognition object.
+- Locations: the map remains the dominant learning object until F1 explicitly decides its relationship to a persistent globe.
+- Outlines: the silhouette remains dominant.
+- Neighbours: target geography and neighbour context remain dominant.
 
-Example:
+Starting an activity may therefore layer domain-native UI over/recede the spatial substrate. The activity engine, scoring and evidence semantics are unchanged.
 
-```text
-WORLD
-  ↓ tap Africa
-AFRICA
-```
+### Results / return
 
-Africa rotates/centres into view and the camera moves closer.
+A strong spatial outcome could let activity UI recede and return the practised geography to prominence before practical repeat/review actions appear.
 
-At continent focus, progressive disclosure reveals the scope hierarchy.
+Do not turn results into a reward dashboard. Achievement presentation remains scarce and follows existing earned-state semantics, including the World Crown surface owned by #138.
 
-For Africa:
-
-- **Africa** is the principal whole-continent Play action;
-- North Africa;
-- West Africa;
-- Central Africa;
-- East Africa;
-- Southern Africa;
-
-The continent name should be the strongest control. Region controls are secondary.
-
-Region controls should be associated with the relevant geography without requiring arbitrary region branding colours.
-
-### 5.4 Region selection
-
-Selecting West Africa should continue the spatial movement:
-
-```text
-AFRICA
-  ↓ tap West Africa
-WEST AFRICA
-```
-
-The selected region moves towards the visual centre and other geography becomes subordinate.
-
-The learner should never need to interpret whether a "new screen" loaded. Their mental model should simply be that they moved closer to the selected place.
-
-### 5.5 Activity transition
-
-The globe is a persistent **spatial substrate**, not a mandate to make every quiz 3D.
-
-Domain-native learning objects remain authoritative:
-
-- **Flags:** flag remains the dominant recognition object;
-- **Locations:** map remains the dominant geography object; deeper globe integration is a later separate decision;
-- **Outlines:** silhouette remains the dominant recognition object;
-- **Neighbours:** target geography and land-neighbour context remain dominant.
-
-Starting Play may therefore transition from the spatial shell into an activity layer while preserving enough geographic context that the learner still perceives continuity.
-
-The implementation should prefer composition such as:
-
-```text
-persistent spatial scene
-+
-activity interface layer
-```
-
-over remounting an entirely separate visual application.
-
-### 5.6 Results / return
-
-Results are one of the strongest potential wins.
-
-A round can finish, activity UI can recede and the selected geography can regain prominence. Progress/achievement changes can then appear attached to the place just practised.
-
-Example:
-
-```text
-last West Africa flag answer
-→ activity UI resolves
-→ West Africa geography returns to prominence
-→ round result / progress / Mastery state appears
-→ Repeat / Review / Africa controls become available
-```
-
-This avoids turning Results into a disconnected reward dashboard.
-
-### 5.7 Achievement ceremonies
-
-Do not add routine spectacle.
-
-The spatial shell does, however, provide a natural stage for genuinely scarce achievements:
-
-- complete region: region-level spatial emphasis;
-- complete continent: pull back enough to recognise the whole continent and reveal its earned trophy/crest;
-- future World Crown: world-level camera state.
-
-This maps cleanly onto the existing achievement hierarchy:
-
-```text
-country evidence
-→ region × domain Mastery
-→ complete region
-→ complete continent
-→ World Crown
-```
-
-The hierarchy should remain scarce and subordinate to learning until earned.
-
-## 6. Core architectural principle
+## 6. Core architecture boundary
 
 **Replace presentation continuity, not application semantics.**
 
-Do not rewrite learning/scoring/persistence architecture merely to make navigation spatial.
+A spatial layer may consume the current typed route and derive a visual destination. It must not own a second route/history stack.
 
-The existing typed route model remains authoritative.
-
-The scene consumes route state and derives a desired spatial presentation.
-
-Illustrative route interpretation:
-
-```text
-/#/
-→ camera: world
-→ UI: mode picker
-
-/#/flags
-→ camera: world
-→ domain: flags
-→ UI: continent selection
-
-/#/flags/africa
-→ camera: Africa
-→ domain: flags
-→ UI: continent + region controls
-
-/#/flags/africa/west-africa
-→ camera: West Africa
-→ domain: flags
-→ UI: scope controls
-
-/#/flags/africa/west-africa/test
-→ camera: West Africa/activity composition
-→ domain: flags
-→ UI: active flag round
-```
-
-The animation is not durable state.
-
-The URL is not an animation event log.
-
-## 7. Proposed presentation architecture
-
-Illustrative shape:
-
-```text
-AtlasApp
-│
-├── SpatialAtlas                    persistent
-│   ├── GlobeScene
-│   ├── GeographyLayer
-│   ├── CameraDirector
-│   ├── InteractionLayer
-│   ├── SelectionState
-│   └── SpatialLabelAnchors
-│
-└── InterfaceLayer                  ordinary React/DOM
-    ├── ModeSelection
-    ├── ScopeControls
-    ├── ActivityUI
-    ├── ResultsUI
-    ├── ProfileUI
-    └── RendererFallback
-```
-
-Possible responsibility split:
-
-### `SpatialAtlas`
-
-Owns only visual/spatial interpretation:
-
-- renderer lifecycle;
-- camera;
-- globe rotation;
-- geography meshes;
-- selection/highlight state;
-- pointer picking;
-- motion orchestration;
-- render-loop policy;
-- graphics capability/failure handling.
-
-It must not own scoring, achievement qualification, storage semantics or route truth.
-
-### `CameraDirector`
-
-Takes semantic destinations, not ad-hoc imperative animation commands spread through screens.
-
-Example conceptual API:
+Illustrative semantic destinations only:
 
 ```ts
 type SpatialDestination =
   | { kind: 'world' }
-  | { kind: 'continent'; continentId: ContinentId }
+  | { kind: 'continent'; continentId: string }
   | { kind: 'region'; regionId: string }
-  | { kind: 'activity'; scope: StudyScope; domain: LearningDomain };
+  | { kind: 'activity'; domain: LearningDomain; scope: StudyScope };
 ```
 
-The director decides how to move from current camera state to destination, including interruption and reduced-motion behaviour.
+The precise F1/F2 API is **not** decided by this scope.
 
-### `InterfaceLayer`
+Rules:
 
-Keeps real HTML semantics:
+- route state is durable;
+- camera/motion progress is not durable state;
+- deep links initialise at their stable target;
+- Back/Forward changes route ancestry, then presentation follows;
+- interrupted motion must converge on the newest route state.
 
-- buttons;
-- headings;
-- progress labels;
-- focus;
-- live announcements;
-- quiz answers;
-- forms/inputs;
-- unavailable states.
+## 7. Geography contract
 
-3D picking and DOM activation should call the same application action.
+Current `MapRegionAsset` paths are already-projected 2D runtime outputs. They are suitable for the H1 continuity probe and unsuitable as the direct source for a sphere.
 
-## 8. Technology candidates
+If H1 later passes and F3 authorises spherical assets, they must extend the **existing** Natural Earth pipeline upstream from projection:
 
-Technology selection is deliberately provisional until the Africa spike.
+`pinned Natural Earth → Atlas ISO3/policy reconciliation → existing 2D outputs + authorised spherical outputs`
 
-### 8.1 Preferred prototype: Three.js + React Three Fiber
+No second dataset, handwritten country geometry, handwritten region polygon or handwritten neighbour table is allowed.
 
-Candidate stack:
+A future renderer reuses existing learner region membership. It does not invent a second geographic taxonomy.
 
-- `three`;
-- `@react-three/fiber`;
-- `@react-three/drei`;
-- `CameraControls` via Drei / `camera-controls`;
-- `motion` for DOM/UI choreography;
-- optional `three-globe` for early spherical GeoJSON rendering.
+The final spherical encoding, LOD tiers and visual-vs-picking geometry relationship are reserved for F3.
 
-Why this is the leading candidate:
+## 8. Renderer candidates — neutral until F2
 
-- maximal control of camera choreography;
-- straightforward React ownership of scene lifecycle;
-- persistent scene can coexist with ordinary DOM React;
-- custom stylised globe rather than a map-provider aesthetic;
-- flexible selection/material/achievement treatment;
-- on-demand rendering can keep idle GPU work low;
-- existing React/Vite architecture can remain intact.
+The existing evidence studies two serious candidates:
 
-Risks to validate:
+### Three.js / React Three Fiber
 
-- actual Android/iOS WebGL stability;
-- StrictMode renderer lifecycle/context-loss behaviour during development;
-- bundle cost;
-- touch gesture conflicts;
-- polygon performance at world and continent detail;
-- context recovery;
-- WebGL fallback path.
+Potential strengths:
 
-Do not commit the production architecture to R3F before the spike proves those conditions.
+- high control over camera, scene and bespoke interaction grammar;
+- natural React composition with ordinary DOM overlays;
+- flexible stylised rendering.
 
-### 8.2 Strong alternative: MapLibre GL JS globe
+Unresolved costs/risks include Atlas-authored spherical geometry/tessellation/picking/labels/LOD machinery, delivered bundle cost, WebGL lifecycle stability and mobile gesture behaviour.
 
-MapLibre is a serious alternative because it begins with geographic coordinates and map-native camera/projection behaviour.
+### MapLibre GL JS globe
 
-Potential advantages:
+Potential strengths:
 
-- geospatial model is native rather than adapted onto a general 3D engine;
-- country polygons and camera movement fit the problem well;
-- globe projection already belongs to the map engine;
-- may reduce custom geographic rendering code.
+- geographic coordinates/projection and feature picking are native concepts;
+- camera and GeoJSON source/layer machinery are built in;
+- may reduce Atlas-authored geospatial renderer code.
 
-Potential disadvantages:
+Unresolved costs/risks include custom scene freedom, integration grammar and whether historical headless blank-source failures reproduce under headed/hardware-backed conditions.
 
-- Atlas may have less control over the final scene/interaction grammar;
-- harder to make the entire experience feel like a bespoke spatial game instrument rather than a map application;
-- integration with custom transitions/achievement choreography may be less direct.
+**Neither candidate is preferred or selected here.** The current comparison remains AMBER until H1 passes and support repairs it apples-to-apples. F2 chooses/rejects architecture.
 
-The spike should compare it if R3F introduces structural problems or if map-native behaviour clearly feels superior.
+## 9. Real DOM and picking
 
-### 8.3 Prototype accelerator: `three-globe`
+A spatial experience cannot become a canvas-only application.
 
-`three-globe` may be valuable for the first Africa/world experiment because it can accept polygon data and produce a globe quickly while Atlas retains surrounding scene/camera ownership.
+At every durable scope state:
 
-Do not assume the abstraction should become the permanent production renderer. If it becomes constraining, replace it behind a local adapter after the experiment.
+- ordinary HTML controls expose the same meaningful actions;
+- keyboard users can reach them without rotating a globe;
+- visible focus is preserved;
+- screen readers receive scope context that does not depend on motion;
+- geographic picking and DOM activation converge on the same application action.
 
-### 8.4 Not preferred by default
+3D/2D picking is an additional pointer surface, not a separate business-logic path.
 
-#### CesiumJS
+## 10. Colour, progress and achievement
 
-Excellent planetary GIS engine, but substantially heavier and more feature-rich than Atlas requires. Atlas does not need terrain, 3D Tiles, earth-observation workflows or high-precision global simulation merely to render 195 stylised country polygons.
+Preserve semantic roles:
 
-#### deck.gl GlobeView
+- Atlas Blue — ordinary action/selection/progress;
+- green — correct feedback;
+- red — wrong feedback;
+- purple — durable region × domain Mastery;
+- gold — scarce completion/prestige.
 
-Avoid taking an experimental globe-view dependency unless later evidence shows a distinct advantage.
+Do not assign continent/region identity palettes. Do not encode progress only as fill/saturation/colour. Geography may gain restrained selection/Mastery/completion emphasis only when another textual/semantic cue communicates the state.
 
-#### Independent custom globe geography source
+World Crown presentation remains a genuine earned state, not decorative locked chrome.
 
-Not acceptable. The experiment must extend existing Atlas cartography rather than invent another dataset/policy pipeline.
+## 11. Motion and camera principles
 
-## 9. Canonical spherical geography
+If spatial motion survives H1/F1:
 
-### 9.1 Existing runtime limitation
+- movement explains hierarchy rather than performs spectacle;
+- transitions remain short enough for repeated use;
+- input can interrupt/retarget motion;
+- obsolete journeys are cancelled rather than queued;
+- deep links begin near their final destination;
+- Back normally reads as spatial inverse without requiring an exact animation replay;
+- repeated traversal may shorten/avoid unnecessary choreography;
+- reduced motion preserves hierarchy with immediate/short repositioning.
 
-Current `MapRegionAsset` country geometry stores already-projected SVG path strings in continent-local canvas coordinates.
+Exact camera grammar is F1/F2 territory.
 
-Those paths are excellent for current 2D map rendering but are not the correct source for a sphere.
+## 12. Mobile gesture ownership
 
-Do not attempt to distort those finished projection paths around a globe.
+Any future spatial layer must deliberately coexist with:
 
-### 9.2 Correct source
+- browser/OS edge Back;
+- DOM controls and scrolling;
+- pinch/drag on Locations maps;
+- Neighbours input/software keyboard;
+- activity-specific pointer interaction.
 
-Extend the existing Natural Earth generation pipeline upstream from projection, using the same pinned Natural Earth 1:10m geographic source, policy and ISO3 reconciliation.
+A background globe must not steal gestures from active learning mechanics.
 
-Conceptual pipeline:
+#71 owns current physical-device mobile/PWA validation. A new spatial gesture layer would require new physical validation rather than inheriting #71’s eventual production pass.
 
-```text
-pinned Natural Earth source
-          │
-          ├── current 2D projected map assets
-          │
-          └── new spherical assets
-               ├── world LOD
-               ├── continent LOD
-               └── optional region/activity LOD
-```
+## 13. Accessibility
 
-### 9.3 LOD strategy
+Required regardless of renderer:
 
-Do not ship/render full 1:10m complexity everywhere at all times.
-
-Likely tiers:
-
-#### World LOD
-
-Aggressively simplified geometry.
-
-Purpose:
-
-- continent/country recognition;
-- world rotation;
-- continent picking;
-- low startup/render cost.
-
-#### Continent LOD
-
-Moderate detail loaded when a continent becomes relevant.
-
-Purpose:
-
-- readable boundaries;
-- region interaction;
-- camera approach.
-
-#### Region/activity detail
-
-Only load higher detail where the experience materially requires it.
-
-The learner should perceive one Earth even if the renderer swaps geometry levels underneath the camera transition.
-
-### 9.4 Region membership
-
-Reuse existing learner-facing scope definitions. Do not derive a parallel region taxonomy inside the renderer.
-
-The renderer needs data such as:
-
-- ISO3 country → polygon(s);
-- ISO3 → canonical continent;
-- learner-facing region → ordered/member ISO3 IDs;
-- geographic bounds/centroid or camera-fit metadata;
-- support availability by domain.
-
-Region boundaries may be represented as grouped country geometry rather than a handwritten polygon.
-
-## 10. Camera model
-
-The camera is central to whether this feels coherent or gimmicky.
-
-### 10.1 Principles
-
-- movement should explain hierarchy;
-- motion should be short enough to preserve pace;
-- transitions must be interruptible;
-- repeated navigation must not replay unnecessary cinematic travel;
-- direct deep links initialise close to the final destination;
-- Back should normally feel like a spatial inverse of forward navigation;
-- reduced-motion users get short/snap transitions without losing hierarchy.
-
-### 10.2 Camera destinations
-
-Prefer semantic camera targets generated from canonical bounds rather than dozens of handwritten angles.
-
-The generator may produce:
-
-- geographic centroid;
-- fit radius/bounds;
-- safe camera distance;
-- optional north-up/tilt guidance.
-
-Small authored overrides may be acceptable where a generated view is demonstrably poor, but they should remain presentation metadata and not become a second geography source.
-
-### 10.3 Deep links
-
-A cold load at:
-
-`/#/flags/africa/west-africa`
-
-should initialise at West Africa rather than beginning at a tiny world globe and replaying World → Africa → West Africa.
-
-A short establishing transition is acceptable where appropriate.
-
-### 10.4 Interrupted motion
-
-If a learner taps Back or another scope midway through a camera transition:
-
-- cancel/redirect the existing transition;
-- continue from the actual current camera state;
-- never queue a long sequence of obsolete camera journeys.
-
-## 11. Region controls and picking
-
-### 11.1 Real DOM remains primary semantic interface
-
-Every continent/region selection state must expose ordinary HTML controls.
-
-For Africa, for example:
-
-```text
-Africa                    whole-continent Play
-North Africa              region action
-West Africa               region action
-Central Africa            region action
-East Africa               region action
-Southern Africa           region action
-```
-
-Visual placement can associate these controls with geography, but their semantics remain standard and testable.
-
-### 11.2 Geography picking
-
-Tapping the actual 3D polygon/group is an additional pointer input.
-
-Both paths converge on the same application action:
-
-```text
-3D West Africa pick
-              ┐
-              ├──> navigate/select West Africa
-DOM button    ┘
-```
-
-Do not implement separate business logic for map and button activation.
-
-### 11.3 Tiny geography
-
-World-level picking does not need every microstate to function as a 44px precise country quiz target. The shell selects larger geographic scopes.
-
-Where country-level picking is later used, Atlas's existing small-country/callout/inset work remains relevant and must not be casually discarded.
-
-## 12. Progress, Mastery and colour
-
-### 12.1 Preserve semantic colours
-
-Unless a separate design decision changes the system:
-
-- Atlas Blue: ordinary action/selection/progress;
-- green: correct feedback;
-- red: wrong feedback;
-- purple: durable region × domain Mastery;
-- gold: scarce completion/prestige.
-
-Do not assign each region an arbitrary brand colour.
-
-Do not encode progress only through map fill/saturation.
-
-### 12.2 Spatial augmentation
-
-Possible restrained model:
-
-- neutral geography: base land treatment;
-- hover/focus/selection: Atlas Blue edge/emphasis;
-- Mastered: purple boundary/glow/edge plus textual/non-colour cue;
-- complete: sparse gold edge/material accent plus textual/non-colour cue.
-
-Exact progress remains available through controls/labels rather than requiring a learner to estimate percentage from a fill.
-
-### 12.3 Geography remains content
-
-Avoid turning the globe into a dashboard surface covered in metrics, badges and progress arcs.
-
-The spatial shell should reduce chrome, not move the same chrome into 3D.
-
-## 13. Unsupported geography
-
-The globe should remain geographically honest even when curriculum support is incomplete.
-
-Example for Locations:
-
-- North America still exists visually;
-- it may be selectable for orientation;
-- the resulting control state clearly communicates unavailable / Coming soon;
-- no Play-ready affordance;
-- no fake 0% progress presentation;
-- no achievement eligibility.
-
-Existing domain/scope availability functions remain authoritative.
-
-## 14. Mobile gestures
-
-Gesture ownership must be designed before broad implementation.
-
-### 14.1 Proposed shell gestures
-
-- one-finger drag: rotate Earth;
-- tap: activate selected continent/region;
-- pinch: dolly/zoom;
-- optional restrained inertial release;
-- no free-flight camera.
-
-### 14.2 OS/browser Back
-
-Atlas must not capture edge gestures in a way that breaks platform navigation.
-
-Particularly verify:
-
-- Android predictive/system Back gestures;
-- iOS Safari/PWA edge Back;
-- browser history Back/Forward.
-
-Reserve edge behaviour where necessary.
-
-### 14.3 Activity interaction conflicts
-
-The shell and active learning mechanic must not both believe they own the same gesture.
-
-Example:
-
-- world/continent shell: drag rotates globe;
-- active Locations map: drag pans learning map according to that mechanic;
-- active Flags: horizontal drag should not unexpectedly rotate the hidden globe beneath answer controls.
-
-Define active gesture owner by product state.
-
-## 15. Accessibility model
-
-A spatial experience is not allowed to become a 3D-only experience.
-
-Required:
-
-- real DOM controls for every durable scope action;
-- keyboard operation;
-- visible focus;
-- logical heading/landmark hierarchy;
-- screen-reader accessible scope labels;
-- no country-answer leakage during geography quizzes;
+- real DOM actions for durable scope selection;
+- keyboard operation and visible focus;
+- logical heading/landmark structure;
+- stable focus after route changes;
 - no colour-only state;
-- reduced-motion mode;
-- stable focus restoration after route transitions;
-- live announcements where spatial movement changes meaningful context;
-- honest renderer failure state.
+- reduced-motion equivalent;
+- answer-safe accessible metadata;
+- useful failure/fallback state;
+- no requirement to observe camera travel to understand hierarchy.
 
-### 15.1 Reduced motion
+If an accessible parallel interface becomes so dominant that spatial presentation is decorative, that is a legitimate reason to narrow/reject the moonshot.
 
-Reduced-motion mode should preserve the spatial hierarchy while removing long travel.
+## 14. Performance and PWA requirements
 
-Possible treatment:
+The spatial idea succeeds only if Atlas remains immediate on a phone.
 
-```text
-World
-→ short fade/reposition
-Africa
-→ short fade/reposition
-West Africa
-```
+Any authorised spatial runtime must:
 
-The user still understands scope nesting without a large simulated camera flight.
+- stay off the initial critical path unless measurement justifies otherwise;
+- load lazily/preload deliberately;
+- avoid permanent idle render work where the selected renderer permits;
+- reuse geometry/material/resources according to the approved lifecycle;
+- constrain unnecessary high-DPI/GPU cost;
+- avoid decorative terrain/textures/post-processing;
+- preserve service-worker/offline/update behaviour;
+- version/cache new generated assets consistently with the existing PWA.
 
-### 15.2 Keyboard model
+Measure exact artifact deltas; do not rely on historical bundle figures.
 
-Keyboard users should not be expected to rotate the Earth to discover controls.
+## 15. Failure and fallback
 
-At each spatial state, the relevant semantic controls are directly focusable.
+A renderer may not become a single point of failure.
 
-Arrow-key spatial navigation may be explored later, but is not required for the first prototype.
+Future architecture must handle:
 
-## 16. Performance architecture
+- initial capability failure;
+- renderer initialisation exception;
+- context loss/repeated context loss;
+- bounded recovery;
+- fallback to a usable 2D/current navigation path.
 
-The experiment succeeds only if it feels immediate on a phone.
+Infinite retry loops and blank geography are failures.
 
-### 16.1 Persistent renderer
+## 16. Stage 1 H1 slice
 
-Avoid mounting/unmounting the WebGL canvas on every route.
+Before any renderer, prove the experience thesis using production 2D geography:
 
-A single persistent scene is both the conceptual design and the performance strategy.
+`Mode/domain → World/continent selection → Africa → West Africa → Play-ready/activity → Back to Africa → Back to world/domain`
 
-### 16.2 Render on demand
+The probe must use current router/history/DOM controls/design tokens, be interruptible, support reduced motion and be judgeable on a phone.
 
-When:
+Ben decides H1 through the fixed physical-device script in `issue-119-plan.md`.
 
-- camera is still;
-- globe is not rotating;
-- no transition/animation is running;
-- no material state is changing;
+If continuity is neutral or worse, stop #119.
 
-prefer an idle/on-demand render policy rather than permanent 60 FPS GPU use.
+## 17. What only a principal may decide
 
-### 16.3 DPR
+Support must not decide:
 
-Constrain/adapt device pixel ratio. Native high-DPI phone resolution is unnecessary for a quiet vector globe if it materially increases GPU cost.
+### F1 — spatial interaction contract
 
-### 16.4 Geometry/material reuse
+Including the Locations-vs-globe decision, progressive disclosure, gesture ownership, interruption and reduced-motion grammar.
 
-Do not reconstruct hundreds of geometries/materials on every scope change.
+### F2 — renderer / scene / camera architecture
 
-Reuse scene resources and update emphasis/visibility where possible.
+Including renderer choice/rejection, lifecycle, camera abstraction, picking/DOM integration, lazy boundary and failure strategy.
 
-### 16.5 Lazy loading
+### F3 — spherical geography / LOD contract
 
-The current application has no 3D runtime dependency. Preserve fast startup.
+Including output representation, simplification/LOD boundaries, visual/picking mesh relationship, antimeridian/multipart policy and asset lifecycle.
 
-Potential sequence:
+Do not build the Africa 3D vertical slice until F1–F3 authorise it.
 
-```text
-render initial Atlas shell/domain controls
-→ dynamically import spatial engine
-→ initialise world scene
-```
+## 18. Allowed outcomes
 
-The exact threshold should be performance-tested rather than assumed.
+A successful exploration may conclude:
 
-### 16.6 No unnecessary 3D cost
+- **A — broad 3D spatial shell:** H1 and H2 both justify the architecture;
+- **B — narrowed 3D:** only selected navigation/ceremony surfaces justify it;
+- **C — continuous 2D shell:** H1 wins but the sphere does not earn its cost;
+- **D — local geography-first enhancement:** only a smaller launcher/result treatment is worth keeping;
+- **E — retain current launcher:** continuity itself does not materially win.
 
-Prototype exclusions:
+Outcome E is not project failure. It is successful falsification before a costly migration.
 
-- no terrain mesh;
-- no high-resolution raster world texture;
-- no expensive real-time shadows;
-- no volumetric clouds;
-- no post-processing stack unless a specific measured need emerges;
-- no decorative particles.
+## 19. Hard stop conditions
 
-## 17. WebGL resilience and fallback
+Stop/narrow rather than scaling if:
 
-The 3D renderer must not become a single point of failure for the PWA.
+- navigation is slower or less clear than current rows after real refinement;
+- repetition makes camera travel annoying;
+- OS Back and manipulation cannot coexist cleanly;
+- accessibility requires a separate dominant interface;
+- route truth is duplicated into an animation state machine;
+- canonical geography needs a second source;
+- renderer/payload/runtime cost materially harms the mobile PWA;
+- renderer failure cannot degrade safely;
+- geography becomes decoration instead of instructional context;
+- unrelated scoring/storage/Mastery changes are needed to justify the experience.
 
-Detect/handle:
-
-- WebGL initialisation failure;
-- context loss;
-- repeated context loss;
-- graphics capability below supported threshold;
-- renderer exception.
-
-Fallback options:
-
-1. current production launcher/navigation;
-2. simplified 2D spatial launcher generated from the same canonical geography.
-
-The first prototype may use the current launcher as the fallback because it already exists and is known to work.
-
-## 18. PWA/offline implications
-
-The spatial engine changes the asset profile substantially.
-
-Requirements:
-
-- shell remains installable/offline according to existing policy;
-- essential spatial assets have an explicit caching policy;
-- lazy continent detail may use runtime caching after first visit if consistent with the established service-worker approach;
-- no CDN-only critical runtime dependency without an offline strategy;
-- service-worker updates must not strand incompatible cached geometry/runtime versions;
-- generated spherical assets need deterministic versioning/provenance.
-
-Do not expand the initial precache blindly with all high-detail global assets.
-
-## 19. Prototype branch policy
-
-The first spike lives on:
-
-`explore/spatial-atlas-moonshot`
-
-This is an **exploration branch**, not a long-lived production migration branch.
-
-Allowed during the spike:
-
-- candidate 3D dependencies;
-- prototype-only scene code;
-- generated experimental spherical assets;
-- prototype styling/components;
-- benchmark/verification utilities;
-- architecture notes/results.
-
-Do not merge the spike merely because it works.
-
-If the experiment passes, production implementation should be decomposed into focused branches/PRs with reviewed architecture boundaries.
-
-## 20. Africa vertical-slice prototype
-
-### 20.1 Why Africa
-
-Africa remains the best proving ground because:
-
-- Atlas's geography foundation began there;
-- region taxonomy is established;
-- continent shape is distinctive;
-- five learner-facing regions provide meaningful scope hierarchy;
-- existing navigation/progress behaviour provides a direct baseline.
-
-### 20.2 Required traversal
-
-Prove:
-
-```text
-Mode selection
-→ World
-→ Africa
-→ West Africa
-→ Back to Africa
-→ Back to World
-```
-
-This is the minimum valuable experiment.
-
-### 20.3 Prototype requirements
-
-The spike should include:
-
-- persistent globe scene;
-- generated canonical world/Africa geometry;
-- drag rotation;
-- pinch/dolly;
-- Africa picking;
-- West Africa picking;
-- Africa whole-continent DOM control;
-- Africa region DOM controls;
-- camera transition World → Africa;
-- camera transition Africa → West Africa;
-- reverse navigation;
-- interrupted transition handling;
-- route synchronisation or an isolated adapter faithful to the current route model;
-- reduced-motion treatment;
-- mobile portrait composition;
-- unsupported-geography visual treatment concept;
-- renderer failure fallback;
-- measured bundle/runtime characteristics.
-
-### 20.4 Prototype success criterion
-
-The experiment passes only if it is **materially better** than the current launcher in the target experience.
-
-It should feel:
-
-- faster or at least equally immediate in practice;
-- more geographically coherent;
-- less like changing pages;
-- easy to understand without instructions;
-- comfortable to manipulate one-handed on a phone;
-- restrained enough to remain Atlas rather than becoming a generic 3D demo.
-
-### 20.5 Prototype failure conditions
-
-Treat any of these as grounds to stop, redesign or choose a lower-ambition alternative:
-
-- continent/region selection is slower or less clear than rows;
-- globe interaction frequently conflicts with OS gestures;
-- input/picking is unreliable on phone hardware;
-- persistent renderer materially harms battery/thermal behaviour;
-- bundle/startup cost damages first interaction;
-- accessibility fallback feels like a completely separate inferior product;
-- camera travel becomes repetitive after normal repeated use;
-- the geography becomes decorative rather than instructional;
-- renderer instability makes the PWA unreliable.
-
-## 21. Prototype measurements
-
-Record actual evidence rather than qualitative claims only.
-
-Suggested capture:
-
-### Build
-
-- added JS gzip/brotli size;
-- geometry payload sizes by LOD;
-- initial vs lazy chunk split;
-- service-worker/precache delta.
-
-### Runtime
-
-- time from domain activation to usable globe;
-- frame rate during drag/transition on representative mobile hardware;
-- idle renderer activity;
-- memory use trend over repeated navigation if measurable;
-- context loss/recovery behaviour;
-- resize/orientation behaviour.
-
-### UX
-
-- number of taps from domain choice to West Africa Play-ready state;
-- ability to select each Africa region at narrow portrait size;
-- Back/Forward correctness;
-- motion interruption correctness;
-- reduced-motion correctness;
-- one-handed usability observations from real device testing when actually performed.
-
-Do not claim physical-device performance without actual physical-device testing.
-
-## 22. Suggested implementation workstreams after a successful spike
-
-### Phase 0 — Product/spatial specification
-
-Lock:
-
-- spatial state hierarchy;
-- camera grammar;
-- gesture ownership;
-- scope-control hierarchy;
-- accessibility model;
-- progress/Mastery semantics;
-- unavailable geography treatment;
-- reduced-motion policy.
-
-### Phase 1 — Canonical spherical asset pipeline
-
-Deliver:
-
-- generator extension;
-- deterministic outputs;
-- world/continent LOD;
-- ISO3 reconciliation;
-- region grouping;
-- bounds/centres metadata;
-- provenance documentation;
-- payload/performance verifier.
-
-### Phase 2 — Africa isolated prototype
-
-Deliver the vertical slice described above.
-
-No production navigation replacement.
-
-### Phase 3 — Persistent `SpatialAtlas` shell
-
-Only after prototype approval.
-
-Introduce a production-quality persistent renderer boundary and route → spatial-destination adapter.
-
-### Phase 4 — Domain/world selection integration
-
-Transition current post-mode continent selection to the world globe while preserving route/state semantics and honest unsupported continents.
-
-### Phase 5 — Continent/region selection integration
-
-Implement supported continent focus and region selection.
-
-This is the phase most likely to subsume #104's design space.
-
-### Phase 6 — Activity transition integration
-
-Integrate existing activity UIs without rewriting their domain logic.
-
-### Phase 7 — Results integration
-
-Return geography to prominence after rounds and attach practical result actions to the selected scope.
-
-### Phase 8 — Achievement transitions
-
-Add only restrained earned milestone spatial treatments.
-
-### Phase 9 — Locations engine decision
-
-> **Amended:** a provisional answer is now required in F1, not Phase 9. See
-> [`issue-119-plan.md` §5.1](issue-119-plan.md#51-locations-vs-the-globe--belongs-in-f1-not-phase-9).
-> Locations is the one domain whose own dominant learning object is already a
-> map, so a persistent globe behind it is two maps at once. Whether Locations
-> eventually merges into the globe determines whether the world/continent LOD
-> needs country-accurate picking — which changes the F3 geometry contract.
-> Phase 9 remains the place to *finish* the decision, not to start it.
-
-Assess whether the Locations 2D runtime should:
-
-- remain an optimised 2D learning surface;
-- reuse parts of the spherical renderer;
-- or gain a dedicated globe mode.
-
-Do not bundle the full implementation into the navigation shell by default.
-
-### Phase 10 — hardening
-
-Full:
-
-- accessibility;
-- PWA/offline;
-- low-end graphics;
-- real-device mobile;
-- orientation/safe area;
-- Back/Forward/deep links;
-- renderer/context recovery;
-- production artifact inspection;
-- complete repository gate.
-
-## 23. Existing Atlas systems to preserve
-
-Unless a separate issue explicitly changes them:
-
-### Routing
-
-- typed route grammar;
-- stable route compatibility;
-- native browser history;
-- activity-refresh fallback behaviour;
-- ephemeral active-round internals.
-
-### Geography
-
-- ISO3 canonical identity;
-- Natural Earth source/provenance;
-- existing geopolitical/boundary policy;
-- generated topology/adjacency ownership;
-- no handwritten country geometry;
-- no handwritten neighbour tables.
-
-### Learning
-
-- independent domain ledgers;
-- existing evidence semantics;
-- scoring rules;
-- retry/reveal behaviour;
-- current Mastery qualification semantics;
-- achievement persistence.
-
-### Product language
-
-Learner-facing British English remains authoritative.
-
-### Design
-
-- geography remains dominant;
-- cool near-white / graphite base;
-- restrained colour;
-- modest depth;
-- progressive disclosure;
-- minimal gamification;
-- no ornamental 3D spectacle.
-
-## 24. Likely repository touchpoints
-
-Prototype investigation should expect work around:
-
-```text
-src/react/
-  AtlasApp.tsx
-  components/
-  screens/
-
-src/routing/
-  routes.ts
-  router.ts
-
-src/data/
-  continents.ts
-  learning-scopes.ts
-  map-scopes.ts
-
-src/domain/
-  models.ts
-  map-models.ts
-
-scripts/
-  generate-map-assets.mjs
-  map-sources/
-
-src/infrastructure/
-  generated/static asset loading boundaries
-
-src/sw.ts
-vite configuration / production build verification
-```
-
-Do not assume all of these need production modification for the spike. Prefer an isolated prototype surface where practical.
-
-## 25. Testing strategy
-
-### Unit/domain
-
-No new learning-domain semantics should be required for the prototype.
-
-Add focused tests for any pure:
-
-- route → spatial destination mapping;
-- region aggregation;
-- camera metadata generation;
-- availability presentation model.
-
-### Component
-
-Test DOM controls independently of WebGL where possible.
-
-The learner must be able to activate a continent/region through standard React controls even if renderer details are mocked.
-
-### Browser
-
-Automate where practical:
-
-- route transitions;
-- Back/Forward;
-- reduced-motion class/state;
-- renderer fallback;
-- resize/portrait/landscape;
-- pointer selection adapter.
-
-Do not mistake browser automation for physical-device validation.
-
-### Production artifact
-
-Before any production integration merge:
-
-- run `npm test` under Node 22;
-- inspect exact generated production bundle;
-- inspect lazy chunks;
-- inspect service-worker asset treatment;
-- confirm CI green;
-- verify current main sync.
-
-## 26. Risks
-
-### Risk: 3D novelty dominates the product
-
-Mitigation: quiet materials, no terrain/space decoration, strict geography-first design review.
-
-### Risk: camera movement becomes repetitive
-
-Mitigation: short transitions, interruption, route-aware direct initialisation, reduced journey length for repeated nearby navigation.
-
-### Risk: bundle/startup regression
-
-Mitigation: lazy runtime, LOD geometry, bundle budget gate, retain domain selection before full engine readiness if needed.
-
-### Risk: mobile thermal/battery cost
-
-Mitigation: on-demand rendering, constrained DPR, no expensive lighting/postprocessing, idle instrumentation.
-
-### Risk: accessibility becomes second-class
-
-Mitigation: standard DOM controls are part of the primary architecture, not an afterthought.
-
-### Risk: WebGL context instability
-
-Mitigation: persistent renderer, context handling, fallback launcher, real-device stress tests.
-
-### Risk: duplicate geography system
-
-Mitigation: spherical outputs generated from the existing canonical Natural Earth pipeline only.
-
-### Risk: route and camera become coupled incorrectly
-
-Mitigation: URL remains state truth; camera consumes semantic destination and remains presentation-only.
-
-### Risk: Locations gets prematurely rewritten
-
-Mitigation: explicitly defer Locations engine replacement until after shell navigation proves value.
-
-## 27. Decision gates
-
-### Gate A — architecture feasibility
-
-Can Atlas render a persistent interactive Earth cleanly inside the existing React/Vite/PWA architecture without destabilising the shell?
-
-### Gate B — canonical geography
-
-Can the existing map generator provide spherical LOD assets without introducing another geography source or policy layer?
-
-### Gate C — mobile interaction
-
-Does World → Africa → West Africa feel precise and natural at phone scale?
-
-### Gate D — continuity
-
-Does route navigation genuinely feel spatially continuous rather than like a slow animation inserted between screens?
-
-### Gate E — accessibility
-
-Can DOM-first semantic controls and reduced motion remain first-class without undermining the spatial concept?
-
-### Gate F — performance
-
-Is startup, manipulation, idle behaviour and memory acceptable on target mobile hardware?
-
-### Gate G — product value
-
-After actual use, is this materially better than the current one-tap launcher rather than merely more impressive?
-
-**Gate G is a human verdict, not an agent review.** It is decided by Ben on a
-physical phone, running a fixed script against production Atlas and the
-prototype in that order, and recorded before the independent F6 architecture
-review runs. The protocol — judge, devices, seven-step script, recorded verdict
-— is in [`issue-119-plan.md` §2](issue-119-plan.md#2-who-decides-and-how).
-Screenshots, CI logs and Playwright mobile viewports cannot satisfy this gate.
-
-Only after all seven gates pass should Atlas plan a production migration epic/child PR sequence.
-
-## 28. Alternative outcomes
-
-The exploration does not need to end in all-or-nothing adoption.
-
-Possible outcomes:
-
-### Outcome A — Full persistent spatial shell
-
-The moonshot works and becomes the long-term presentation model.
-
-### Outcome B — Globe only for continent selection
-
-World-level globe works beautifully, but region/activity continuity adds too much complexity. Keep the globe at one IA level.
-
-### Outcome C — 2D spatial shell
-
-The continuity concept is excellent but WebGL cost is not. Reproduce the hierarchy with animated canonical 2D geography.
-
-**Amended:** Outcome C is no longer only an end-state. A throwaway 2D
-continuity probe is now the *first* experiment (plan Stage 1), because it tests
-the load-bearing claim — that continuity beats screen replacement — using
-existing production geography and no renderer at all. If that claim fails, no
-globe can rescue it and the exploration ends cheaply.
-
-### Outcome D — #104-style continent launcher only
-
-The broader shell is unnecessary, but map-first region selection is still a net win.
-
-### Outcome E — Retain current launcher
-
-The current one-tap rows remain faster/clearer. Archive the spike with evidence and do not force the moonshot into production.
-
-A disciplined exploration regards Outcome E as a valid success if it prevents an expensive weak redesign.
-
-## 29. Immediate next action
-
-**Amended.** The next action is no longer the Africa vertical slice.
-
-1. **Stage 0 — baseline.** Run the fixed device script against *production*
-   Atlas on physical hardware and record it, so the prototype has something
-   honest to be compared against later. Share the device session with #71.
-2. **Stage 1 — continuity probe.** Build a throwaway continuous-navigation
-   prototype from existing 2D production geography. No globe, no renderer, no
-   generator work. Then run the same script on it.
-
-Stage 1 answers the question everything else rests on:
-
-> Does moving through geography, rather than replacing screens, actually feel
-> better on a phone — independently of whether the surface is a sphere?
-
-The Africa vertical slice remains the decisive experiment for the *globe*, but
-it is Stage 5, after Stage 1 has justified spending a renderer on the idea.
-Full sequence, budget and kill criteria: [`issue-119-plan.md`](issue-119-plan.md).
+The current production launcher remains authoritative until a future production migration is separately designed, reviewed and accepted.
