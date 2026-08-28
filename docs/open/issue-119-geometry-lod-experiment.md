@@ -1,69 +1,54 @@
-# Issue #119 — Geometry / LOD feasibility experiment
+# Issue #119 — Geometry / LOD feasibility evidence
 
-**Status:** support-tier evidence; does not choose the production spherical asset architecture  
-**Branch:** `explore/spatial-atlas-moonshot`  
-**Production baseline:** `main` at `046bd935d9be08f4ab561b8f060c66da5b3cecad`
+**Status:** historical support-tier feasibility evidence; **PARKED until H1 passes**.  
+**Decision authority:** final spherical/LOD contract belongs to principal F3.
 
-## Purpose
+This experiment answered one narrow question before any globe architecture was chosen:
 
-Resolve one objective question before a frontier-model architecture session:
+> Is canonical Atlas country geometry inherently too large for a lightweight world/continent selection representation?
 
-> Is Atlas's canonical country geometry inherently too large for a lightweight persistent world/continent spatial interface, or is a dedicated low-detail representation plausibly small enough for a mobile PWA?
+The answer from the historical four-continent measurement was **no**. It did not define a spherical data contract, renderer representation or final LOD policy.
 
-This experiment deliberately does **not** answer how the spherical data should ultimately be encoded, triangulated or rendered. That remains part of the principal architecture decision.
+## Historical baseline
 
-## Inputs
+The original measurement used the then-production generated country paths for:
 
-The experiment uses the exact generated country paths from the tested/deployed production artifact corresponding to current `main`.
+- Africa;
+- South America;
+- Europe;
+- Asia.
 
-Canonical source truth remains unchanged:
+North America was not yet part of that historical run. North America now ships in production, and Oceania is being completed under #27. Therefore the old four-continent totals are **not** the final global envelope.
 
-- Natural Earth 1:10m country polygons;
-- upstream commit `ca96624a56bd078437bca8184e78163e5039ad19`;
-- canonical Atlas ISO3 reconciliation and geopolitical policy;
-- no handwritten country geometry.
+Canonical source truth was and remains:
 
-The current generator's recorded topology counts are:
+- pinned Natural Earth 1:10m country polygons;
+- Atlas ISO3 reconciliation and geopolitical policy;
+- no handwritten country geometry;
+- existing generated 2D assets as the measured input to this *envelope* experiment only.
 
-| Continent | Scored countries | Coordinates before current topology simplification | After current topology simplification |
-| --- | ---: | ---: | ---: |
-| Africa | 54 | 56,682 | 40,775 |
-| South America | 12 | 52,353 | 38,209 |
-| Europe | 44 | 125,770 | 90,578 |
-| Asia | 48 | 157,545 | 114,766 |
-| **Total** | **158** | **392,350** | **284,328** |
+## Method and limitation
 
-The exact deployed lazy geography chunks are currently approximately:
-
-| Chunk | Raw JS | gzip |
-| --- | ---: | ---: |
-| Africa | 915,705 B | 241,683 B |
-| South America | 883,434 B | 241,443 B |
-| Europe | 1,506,355 B | 432,021 B |
-| Asia | 2,024,655 B | 493,043 B |
-
-Those production chunks include substantially more than the country polygon strings: physical context, focus metadata, adjacency, insets/callouts and module overhead. They are therefore not sensible world-LOD payload targets.
-
-## Method
-
-A disposable analysis parsed only the canonical generated country `path` strings from the deployed artifact and applied Ramer-Douglas-Peucker simplification at several projection-space tolerances.
-
-The same calculation is now reproducible from the repository with:
+The reproducible script is:
 
 ```bash
 node scripts/experiments/spatial-lod-envelope.mjs
 ```
 
-Important limitation:
+It parses current generated 2D country paths and applies Ramer-Douglas-Peucker simplification in projection space.
 
-- this operates on the already projected runtime paths;
-- it is a **payload and shape-complexity envelope**, not the proposed spherical pipeline;
-- a real implementation must simplify shared topology / geographic coordinates upstream so common borders do not develop seams;
-- a real spherical representation may have different encoding/triangulation overhead.
+This is deliberately **not** the spherical pipeline:
 
-## Measured payload envelope
+- it begins after 2D projection;
+- independently simplified SVG paths are not a production topology contract;
+- a real spherical output must simplify/reconcile upstream so shared boundaries, antimeridian handling and multipart identity remain correct;
+- renderer-specific tessellation/encoding may change payload characteristics.
 
-Across all four currently shipped continents' country paths:
+Use this experiment to reason about feasibility and sensitivity, not to author F3.
+
+## Historical measured envelope
+
+Across the four continents in the original run:
 
 | RDP tolerance (835-unit canvas) | Coordinates | Raw compact JSON | gzip | Approx. max deviation at 390 px continent width |
 | ---: | ---: | ---: | ---: | ---: |
@@ -74,68 +59,116 @@ Across all four currently shipped continents' country paths:
 | 2.0 | 12,182 | 144,029 B | 53,459 B | 0.93 px |
 | 4.0 | 8,946 | 106,665 B | 39,228 B | 1.87 px |
 
-The CSS-pixel conversion is deliberately conservative: `390 / 835 ≈ 0.467` CSS px per current continent-canvas unit when the entire continent canvas occupies the full phone width. At world scale the same geographic detail is visually smaller still.
+The CSS-pixel conversion used `390 / 835 ≈ 0.467` CSS px per current continent-canvas unit when the full continent canvas occupies phone width. At world scale the same geographic detail is smaller.
 
-### What this proves
+### What the historical experiment proves
 
-A low-detail global selection representation does **not** need anything close to the present multi-hundred-kilobyte-per-continent production map payloads.
+A selection-oriented low-detail representation does not inherently require the current multi-hundred-kilobyte high-detail runtime map payload per continent.
 
-Even without designing a purpose-built spherical encoding, the currently shipped four-continent country geometry has a plausible country-only envelope around:
+The old four-continent country-only paths had a plausible envelope around:
 
-- ~82 KB gzip at ≤0.47 CSS px equivalent deviation;
-- ~53 KB gzip at ≤0.93 CSS px equivalent deviation.
+- ~82 KB gzip at the 1.0 tolerance;
+- ~53 KB gzip at the 2.0 tolerance.
 
-North America and Oceania are not yet production map assets, so this experiment deliberately does not fabricate a 195-country final number. The measured result is sufficient to reject the assumption that canonical 1:10m provenance inherently makes the world view too heavy.
+Those are **feasibility figures**, not a six-continent budget and not a promise that a spherical representation will have the same size.
 
 ## Critical small-country finding
 
-Uniform simplification cannot be the entire LOD policy.
+Uniform simplification cannot be the full policy.
 
-Approximate projected-area comparisons show that tiny states are disproportionately damaged even at otherwise conservative tolerances. At tolerance 1.0, examples include Monaco, Liechtenstein, San Marino and Andorra; Palestine and some small Asian states also change materially. At tolerance 2.0 the problem expands.
+The historical run showed disproportionate damage to very small states even at otherwise conservative tolerances. European microstates were the clearest examples; small Asian states also changed materially.
 
-This is expected and useful evidence, not a blocker.
+That finding is more important than the exact old byte totals:
 
-The production cartography already has the concept Atlas needs: **precision-sensitive exceptions and alternative honest interaction surfaces for tiny countries**.
+- world-scale display can simplify aggressively where only continent recognition/selection matters;
+- more detailed interaction levels may need precision-sensitive preservation;
+- visual geometry and picking geometry may not need identical detail;
+- Atlas already has honest small-country assistance concepts in its 2D production cartography;
+- final simplification belongs upstream in canonical topology/geographic coordinates, not per-country projected SVG cleanup.
 
-The likely architectural implication to present to the principal model is:
+None of those observations selects a final LOD architecture.
 
-1. **World LOD** is primarily for continent recognition/selection; it does not need every microstate to remain a truthful tappable target.
-2. **Continent LOD** can preserve a precision-sensitive subset or swap to a more detailed level before region/country interaction matters.
-3. Visual geometry and picking geometry need not be identical. Tiny targets can retain canonical geometry / explicit locators without forcing the entire world mesh to remain high-detail.
-4. The final generator should simplify topology upstream, not independently simplify country SVG paths as this measurement experiment does.
+## Required six-continent refresh — only after H1 PASS
 
-## Strongest current hypothesis, not a locked decision
+After #27/#137/#138 settle current `main` **and** Ben materially passes the H1 phone comparison, rerun/extend support measurements for all six continents:
 
-The evidence favours a hierarchical asset strategy conceptually resembling:
+1. Africa;
+2. South America;
+3. Europe;
+4. Asia;
+5. North America;
+6. Oceania.
 
-```text
-canonical reconciled Natural Earth geography
-        │
-        ├── world display/pick LOD
-        │     aggressive topology simplification
-        │     continent-level interaction truth
-        │
-        ├── continent LOD
-        │     more detail
-        │     precision-sensitive exceptions
-        │     region interaction truth
-        │
-        └── existing high-detail 2D/runtime assets
-              domain-specific map/outlines behaviour
-```
+### Required outputs
 
-Whether those globe levels are GeoJSON, TopoJSON, pre-triangulated buffers, Three.js geometry, MapLibre sources or another representation remains deliberately undecided.
+For each continent and candidate simplification envelope record:
 
-## Principal-model decision still reserved
+- scored country count;
+- source/reconciled component count;
+- coordinate count before/after simplification;
+- raw encoded size;
+- gzip size;
+- representative phone-scale deviation;
+- smallest-country/component survivability;
+- multipart integrity;
+- picking feasibility at the intended selection level;
+- provenance/source revision.
 
-Opus/Sol should decide, using this evidence plus the renderer spikes:
+### Difficult cases that must be inspected explicitly
 
-- where the LOD boundaries belong;
-- whether the world renders individual country polygons, merged continent surfaces plus boundaries, or another composition;
-- whether visual and picking meshes separate;
-- what exact upstream spherical output contract the generator should expose;
-- whether R3F/Three or MapLibre changes the optimal encoding.
+**Europe**
 
-The support conclusion is only:
+- Monaco;
+- Liechtenstein;
+- San Marino;
+- Andorra;
+- other microstate/precision-sensitive cases already protected by production cartography.
 
-> **Geometry payload is feasible. Do not spend frontier context debating whether a lightweight world asset is possible; spend it deciding the best representation and interaction architecture.**
+**North America / Caribbean**
+
+- Bahamas;
+- Antigua and Barbuda;
+- Saint Kitts and Nevis;
+- Saint Vincent and the Grenadines;
+- Trinidad and Tobago;
+- dense multipart island groups.
+
+**Oceania / Pacific**
+
+- very small island states;
+- widely dispersed multipart archipelagos;
+- Kiribati and antimeridian-crossing representation;
+- cases where display survival and practical picking may require different detail.
+
+**Global antimeridian**
+
+- Russia/Pacific-facing views;
+- any canonical components crossing or wrapping around ±180°.
+
+## Evidence this refresh may report
+
+Support may state facts such as:
+
+- a tolerance erases a required visible component;
+- a candidate envelope costs N bytes raw/gzip;
+- a country’s multipart geometry becomes unsuitable for direct picking;
+- an antimeridian transform splits or duplicates geometry incorrectly;
+- a precision-sensitive subset is required for faithful interaction.
+
+Support must **not** turn those facts into the final contract.
+
+## F3 decisions explicitly reserved
+
+The principal decides:
+
+- exact spherical output representation;
+- LOD boundaries and switching policy;
+- whether world view renders country polygons, merged continent surfaces or another composition;
+- whether visual and picking representations differ;
+- precision-sensitive exception policy;
+- antimeridian/multipart encoding contract;
+- renderer-specific asset form and lifecycle.
+
+The durable support conclusion remains only:
+
+> **A lightweight global geography representation is plausibly feasible; the difficult problem is preserving interaction truth for tiny/multipart/antimeridian geography, not proving that simplification can reduce bytes.**
