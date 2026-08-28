@@ -159,7 +159,7 @@ The richer cross-domain Progress composition from the former screen is historica
 | Outlines | Africa, South America, Europe, Asia, North America and Oceania, plus their supported learner-facing regions |
 | Neighbours | Africa, South America, Europe, Asia, North America and Oceania, with only targets whose complete canonical land-neighbour set is representable, including explicit truthful zero-land-neighbour targets |
 
-All six real continents now have intended four-domain production curriculum. Oceania's 14-country implementation is owned by #27; its World Crown presentation consequence remains separated into #138.
+All six real continents now have intended four-domain production curriculum. The existing World Crown state is therefore reachable; #138 surfaces it only after it is genuinely earned.
 
 ## Locked product and design constraints
 
@@ -182,5 +182,5 @@ See `DESIGN.md`, `docs/product/colour-system.md`, `docs/product/learning-and-mas
 - **#104** is a deferred product exploration of a map-first continent launcher. It is not scheduled and would require a deliberate reversal or refinement of current colour/accessibility rules before implementation.
 - a dedicated achievement milestone queue/ceremony is optional product/design work, not current v1 behaviour;
 - a new Progress dashboard is not currently promised;
-- **#138** owns the learner-facing World Crown surface/final acceptance now that the underlying world curriculum is complete;
+- the World Crown appears only when earned, as a quiet Home prestige line rather than a locked decoration, ceremony or new progression economy;
 - country-evidence decay/revalidation must remain separate from already-earned prestige unless a future product decision explicitly changes that rule.

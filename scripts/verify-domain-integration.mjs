@@ -63,13 +63,13 @@ const ledgers = {
   outlines: outlineProgress,
   neighbors: neighborProgress,
 };
-const homeHtml = renderScreen(HomeScreen, { ledgers, persisting: true });
+const achievements = createInitialAchievementState();
+const homeHtml = renderScreen(HomeScreen, { ledgers, achievements, persisting: true });
 assert.equal((homeHtml.match(/class="atlas-card"/g) ?? []).length, 4, 'Home exposes all four learning domains.');
 for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
   assert.ok(homeHtml.includes(`<strong>${label}</strong>`), `Home names ${label} by its canonical display name.`);
 }
 
-const achievements = createInitialAchievementState();
 const flagsIndexHtml = renderScreen(DomainScreen, { domain: 'flags', ledgers, achievements, persisting: true });
 assert.ok(flagsIndexHtml.includes('Play world') && flagsIndexHtml.includes('Learn world'), 'Flags keeps its world-level Play/Learn index.');
 assert.equal((flagsIndexHtml.match(/<button class="continent-row__open/g) ?? []).length, 6, 'Flags exposes all six continent launchers.');

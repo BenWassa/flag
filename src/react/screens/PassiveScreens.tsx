@@ -1,6 +1,6 @@
 import { CONTINENTS, REGIONS } from '../../data/continents.js';
 import { COUNTRIES } from '../../data/countries.js';
-import { getContinentAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
+import { getContinentAchievementReadModel, getWorldAchievementReadModel, type EarnedAchievementState } from '../../domain/achievements.js';
 import { domainDisplayName } from '../../domain/display.js';
 import {
   LEARNING_DOMAIN_IDS,
@@ -44,8 +44,9 @@ function StorageNotice() {
   return <p className="storage-notice">This browser is blocking storage, so today's progress will be lost when you close the tab.</p>;
 }
 
-export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; persisting: boolean }) {
+export function HomeScreen({ ledgers, achievements, persisting }: { ledgers: ProgressLedgers; achievements: EarnedAchievementState; persisting: boolean }) {
   const actions = useAtlasActions();
+  const worldAchievement = getWorldAchievementReadModel(achievements);
   return (
     <main className="page page--home page--atlas">
       <header className="topbar topbar--atlas">
@@ -53,6 +54,9 @@ export function HomeScreen({ ledgers, persisting }: { ledgers: ProgressLedgers; 
         <button className="icon-button" type="button" onClick={actions.openProfile} aria-label="Profile"><Icon name="profile" /></button>
       </header>
       {!persisting ? <StorageNotice /> : null}
+      {worldAchievement.crownEarned ? <section className="world-crown" aria-labelledby="world-crown-title" data-world-crown-earned>
+        <div className="world-crown__identity"><h2 id="world-crown-title">World Crown</h2><p>Earned · all six continents complete</p></div>
+      </section> : null}
       <h2 className="atlas-eyebrow">Modes</h2>
       <div className="atlas-card-list">
         {LEARNING_DOMAIN_IDS.map((domain) => {
