@@ -1,376 +1,238 @@
-# Issue #119 — Prototype Verification Plan
+# Issue #119 — Prototype verification plan
 
-**Status:** support-stage acceptance/test specification  
-**Issue:** #119  
-**Scope:** Africa vertical slice only until the go/no-go review
+**Status:** support-stage acceptance specification.  
+**Scope:** Stage 0 production baseline + Stage 1 2D continuity probe first; renderer-specific acceptance only after H1 passes and F1–F3 authorise it.
 
-## 1. Purpose
+A spatial prototype succeeds only if it is materially better on a real phone **and** preserves Atlas routing, accessibility, gesture, performance, PWA and learning contracts.
 
-A spinning globe is not a successful prototype.
+The invariant-to-test mapping lives in [`issue-119-invariant-harness.md`](issue-119-invariant-harness.md). This file defines the evidence expected from the prototype itself.
 
-The Issue #119 Africa spike passes only if it demonstrates a materially better mobile geography-navigation experience **and** preserves Atlas's routing, accessibility, gesture, performance and failure-handling contracts.
+## 1. Comparison traversal
 
-This document defines evidence the prototype must produce. It deliberately avoids choosing the renderer or camera implementation.
+Primary H1 path:
 
-## 2. Vertical slice under test
+`Home/mode → Flags → World/continent selection → Africa → West Africa → Play → Back Africa → Back world/domain`
 
-Primary path:
+Also verify stable direct entry:
 
-```text
-Home / mode selection
-→ Flags (or one agreed prototype domain)
-→ World
-→ Africa
-→ West Africa
-→ Back to Africa
-→ Back to World/domain selection
-```
+- `/#/flags/africa`
+- `/#/flags/africa/west-africa`
 
-Also test direct entry:
+The final Stage 1 probe uses existing 2D geography. Do not introduce a renderer merely to satisfy this verification plan.
 
-```text
-/#/flags/africa
-/#/flags/africa/west-africa
-```
+## 2. Route/state acceptance
 
-The principal model may choose a different single domain for the spike only if it documents why it provides a cleaner test of the spatial shell. The durable route semantics must remain representative.
-
-## 3. Route and state acceptance
-
-### R1 — URLs remain authoritative
+### R1 — URL authority
 
 For every durable spatial state:
 
 - URL serialises through the existing typed route model;
-- browser refresh returns to the correct stable scope;
-- spatial animation is not persisted as application state;
-- no camera tween progress appears in the URL.
+- refresh returns to the correct stable scope;
+- motion/tween progress is not persisted as application state.
 
-### R2 — No parallel navigation stack
+### R2 — no parallel navigation stack
 
-The spatial renderer must not maintain an independent history that can disagree with the router.
+Spatial presentation derives a destination from existing route/store state. It must not maintain an independent history that can disagree with browser/router history.
 
-A camera destination may be derived from route state, but Back/Forward remain browser/router concepts.
-
-### R3 — Back ancestry
+### R3 — Back/Forward ancestry
 
 From West Africa:
 
 - Back returns to Africa;
-- another Back returns to the domain/world selection state;
-- history does not reintroduce retired select-region-then-Play states.
+- another Back returns to the domain/world state;
+- Forward replays browser history correctly;
+- no retired intermediate selection state is invented solely for animation.
 
-### R4 — Interrupted transition
+### R4 — interruption
 
-If the user navigates Back while the camera is travelling Africa → West Africa:
+If route state changes while spatial motion is running:
 
-- obsolete travel is cancelled/redirected;
-- route and visible destination converge;
-- no queued animation later pulls the learner back to West Africa.
+- obsolete motion cancels/retargets;
+- visible destination converges on the newest route;
+- no queued stale motion later pulls the learner back.
 
-### R5 — Cold deep link
+### R5 — cold/deep link
 
-Loading a region URL directly should initialise near the target destination.
+A stable region link initialises directly at that scope. Do not require World → Africa → West Africa cinematic replay on cold entry.
 
-Do not replay a long mandatory World → Africa → West Africa cinematic chain on every cold deep link.
+Active-round cold entry keeps the existing ephemeral-session fallback semantics.
 
-## 4. DOM/3D semantic parity
+## 3. DOM/geography semantic parity
 
-### A1 — Real controls exist
+### A1 — real controls
 
-At every continent/region selection state, ordinary DOM controls expose the same selectable scopes as the 3D geography.
+Every durable continent/region state exposes ordinary HTML controls for the same actions offered by geography.
 
-At Africa this includes at minimum:
+### A2 — same action
 
-- Africa / whole-continent action;
-- North Africa;
-- West Africa;
-- Central Africa;
-- East Africa;
-- Southern Africa.
+Geography pick, DOM activation and keyboard activation converge on the same route/application action. Do not create renderer-specific business logic.
 
-### A2 — Same application action
-
-Selecting West Africa through:
-
-- geographic picking;
-- DOM button;
-- keyboard activation;
-
-must converge on the same route/application action.
-
-Do not maintain separate business logic for 3D picking.
-
-### A3 — Focus
+### A3 — focus
 
 After durable route changes:
 
-- keyboard focus lands somewhere predictable and useful;
-- hidden/transitioning DOM controls are not focusable;
-- returning via Back restores a sensible focus target where possible.
+- focus lands predictably/usefully;
+- hidden/transitioning controls are not focusable;
+- returning via Back restores sensible focus where practical.
 
-### A4 — Announcements
+### A4 — announcements
 
-Screen-reader users receive enough semantic context to understand the new scope without relying on camera movement.
+Meaningful scope changes are understandable without observing motion. Screen-reader semantics must not leak active quiz answers.
 
-Motion is never the sole communication of hierarchy.
+## 4. Gesture acceptance
 
-## 5. Gesture conflict matrix
+Record explicit evidence for:
 
-The prototype should explicitly record pass/fail for the following combinations.
+| Context | Expected owner |
+| --- | --- |
+| centre drag on future world scene | spatial scene if F1 authorises it |
+| tap without meaningful drag | scope selection |
+| small pointer jitter | tap, not accidental drag |
+| pinch on future world scene | spatial scene if F1 authorises it |
+| left-edge system/browser Back | platform/browser routing |
+| DOM button/overlay gesture | DOM control/scroll |
+| Ctrl/meta + wheel | browser/page accessibility; never stolen |
+| drag release over geography | no accidental activation |
+| Back during spatial motion | router wins |
+| active Locations map | Locations map owns its gestures |
+| Neighbours input/software keyboard | DOM/input owns interaction |
 
-| Gesture / context | Expected owner | Requirement |
-| --- | --- | --- |
-| one-finger drag in globe centre | spatial scene | rotate Earth |
-| tap without meaningful drag | scope picking | select intended geography/control |
-| small pointer jitter | tap | must not suppress ordinary selection unnecessarily |
-| two-finger pinch on globe | spatial scene | zoom/dolly |
-| two-finger translate during pinch | spatial scene | behaviour must be deliberate and stable |
-| left-edge swipe outside interactive controls | Atlas/browser Back contract | must remain available |
-| left-edge drag beginning over globe | explicitly resolved | no accidental fight between globe and Back |
-| drag over DOM button/overlay | DOM/control | must not rotate Earth through the control |
-| scroll inside scrollable DOM overlay | DOM scroll | globe must not steal it |
-| Ctrl/meta + wheel | browser/page accessibility | never captured as globe zoom |
-| pointer drag then release over country | spatial scene | no accidental country activation |
-| quick tap on country | selection | no delayed drag interpretation |
-| Back during camera animation | routing | route wins, animation redirects |
-| pinch ending with one finger still down | spatial scene | no jump/discontinuous rotation |
-| activity-specific Locations map | activity map | background globe must not steal gestures |
+Current Atlas uses a 28 CSS px page-level Back gesture precedent and yields around map viewports/interactive controls. A future spatial layer must reconcile platform ownership deliberately.
 
-### Current Atlas precedent
+**Physical edge-gesture evidence cannot come from Playwright.** #71 owns the current production device baseline; spatial interaction needs physical retesting if introduced.
 
-Current page-level swipe Back begins only within a 28 px left-edge gutter and excludes `[data-map-viewport]` plus interactive controls.
-
-The prototype should reconcile that precedent deliberately rather than silently replacing it.
-
-## 6. Reduced motion
+## 5. Reduced motion
 
 With `prefers-reduced-motion: reduce`:
 
-- all durable states remain understandable;
-- long orbital/fly transitions are replaced by short or effectively immediate spatial repositioning;
-- selection hierarchy is conveyed through labels/geometry emphasis, not travel distance;
-- no functionality depends on observing an animation;
-- achievement/result behaviour remains restrained.
+- every durable state remains understandable;
+- long travel is replaced by immediate/short repositioning;
+- hierarchy remains visible through geography/labels/controls;
+- no functionality depends on watching motion;
+- focus remains stable.
 
-Automated coverage should verify reduced-motion branching where practical.
+Stage 1 must prove this before a renderer is involved.
 
-## 7. Renderer failure / fallback contract
+## 6. Failure/fallback
 
-### Fallback case 1 — WebGL unavailable at initialisation
+Stage 1 should preserve the current production navigation as a safe escape because it adds no renderer dependency.
 
-Required result:
+If H1 later passes and a renderer is authorised, acceptance must cover:
 
-- application remains usable;
-- domain/scope selection remains reachable;
-- no blank full-screen Canvas blocks the app;
-- failure is not presented as user error.
+1. renderer/WebGL unavailable at initialisation;
+2. renderer initialisation exception;
+3. context loss after successful mount;
+4. repeated context loss / bounded recovery;
+5. capability/performance rejection based on an explicit measured rule.
 
-### Fallback case 2 — Renderer initialisation throws
+Required outcome: Atlas remains usable, routing/state remains intact, and a known 2D/current navigation path is available. Blank full-screen geography and infinite recovery loops fail.
 
-Required result:
+## 7. Performance evidence
 
-- `AppErrorBoundary` or a spatial-specific boundary prevents total-app loss;
-- fallback UI is available;
-- routing/state remain intact.
+### P1 — exact startup baseline
 
-### Fallback case 3 — Context lost after successful mount
+Do not copy historical bundle figures into the gate. Rebuild then-current production and use:
 
-Prototype must record the chosen behaviour.
-
-Acceptable directions include:
-
-- recover renderer in place;
-- remount renderer safely;
-- degrade to 2D/current launcher after bounded recovery attempts.
-
-Infinite retry loops and permanently blank geography are failures.
-
-### Fallback case 4 — capability/performance rejection
-
-If a device fails an explicit graphics capability/performance gate, Atlas should select a documented fallback rather than provide a severely degraded interactive globe.
-
-Do not create capability discrimination heuristics without evidence; define what is actually measured.
-
-## 8. Performance evidence
-
-### P1 — Startup preservation
-
-Mode selection must remain usable without waiting for the full globe stack.
-
-Measure:
-
-- current initial shell;
-- prototype initial shell;
-- lazy renderer chunk;
-- lazy world-LOD chunk;
-- time until first meaningful control activation.
-
-Current exact production explicit-shell baseline recorded in the support dossier is about **138 KB gzip** before lazy Firebase and lazy continent map chunks.
-
-### P2 — Spatial load
-
-Measure from mode selection or preloading trigger until:
-
-- Earth is visibly ready;
-- Earth is interactively ready.
-
-Do not combine those timestamps if interaction is blocked after first paint.
-
-### P3 — Active manipulation
-
-During sustained globe rotation/pinch record:
-
-- frame time distribution where tooling permits;
-- dropped frames/jank observations;
-- long tasks;
-- layout work caused by DOM overlay repositioning.
-
-### P4 — Idle behaviour
-
-After all camera motion stops:
-
-- verify whether the renderer continues producing frames;
-- record idle CPU/GPU behaviour where tooling permits;
-- if R3F is used, verify demand-rendering behaviour rather than assuming it.
-
-### P5 — repeated navigation/memory
-
-Repeat at least:
-
-```text
-World ↔ Africa ↔ West Africa
+```bash
+npm run measure:spatial-artifact
 ```
 
-multiple times.
+Record:
 
-Check for:
+- initial entry JS/CSS;
+- all lazy geography chunks;
+- service-worker/runtime files;
+- total exact artifact size;
+- raw + gzip values.
 
-- renderer remounts;
-- growing geometry/material counts;
-- WebGL contexts accumulating;
-- obvious memory growth;
-- event-listener duplication;
-- stale camera transitions.
+### P2 — spatial/prototype readiness
 
-## 9. Geometry acceptance
+For Stage 1, measure route/action timing to an interactive 2D target state. For a future authorised renderer, separately measure visibly ready and interactively ready.
 
-### G1 — canonical identity
+### P3 — manipulation/motion
 
-Every selectable country mesh/polygon must reconcile to canonical Atlas ISO3.
+Where meaningful, record frame/long-task/layout evidence without pretending desktop/headless results are physical phone performance.
 
-### G2 — same source policy
+### P4 — idle behaviour
 
-Generated globe assets must come from the same pinned Natural Earth source and normalisation/political policy as current production cartography.
+A future renderer must demonstrate the approved idle policy rather than assuming demand rendering from library documentation.
 
-### G3 — no handwritten region polygons
+### P5 — repetition/leaks
 
-Regions are derived from existing learner-facing ISO3 membership.
+Repeat World ↔ Africa ↔ West Africa and inspect for stale transitions, duplicate listeners/resources, unwanted remounts and memory/resource growth where tooling permits.
 
-### G4 — antimeridian
+## 8. Geography acceptance
 
-Explicitly inspect Russia/Pacific-facing world views and any geometry crossing ±180°.
+For any future spherical assets:
 
-### G5 — MultiPolygon integrity
+- every selectable country resolves to canonical Atlas ISO3;
+- one pinned Natural Earth source/policy remains authoritative;
+- region membership comes from existing learner-facing scopes;
+- no handwritten region polygons;
+- antimeridian cases are inspected explicitly;
+- multipart countries/archipelagos remain truthful;
+- simplification does not shift political ownership or break picking;
+- existing production 2D assets are not casually mutated by the experiment.
 
-Check island/fragmented countries relevant to world and Africa presentation.
+Stage 1 uses current 2D production assets and therefore should not add generator work.
 
-### G6 — LOD honesty
+## 9. Product Gate G — human judgement
 
-Simplification may remove visual detail for world navigation but must not:
+Automated technical gates do not decide whether spatial continuity feels better.
 
-- merge countries;
-- erase recognisable major islands where relevant to selection;
-- create self-intersections that break picking;
-- shift political ownership.
+**Ben decides H1 on a physical phone**, using the fixed script in [`issue-119-plan.md`](issue-119-plan.md), production first and Stage 1 second.
 
-### G7 — current 2D assets remain intact
+Record per side:
 
-The prototype must not regenerate/change production 2D assets merely to create spherical experiment outputs unless a separate reviewed generator change requires it.
+- faster / same / slower;
+- clearer / same / less clear;
+- would-use-daily yes/no;
+- single worst moment.
 
-## 10. Visual/product acceptance
+Repeated traversal is deliberately weighted heavily. A first-run delight that becomes fifth-run friction fails the product hypothesis.
 
-This is intentionally not reducible to automated tests — and it is also not
-reducible to an agent review.
+If H1 is neutral or worse, stop #119 before renderer repair/F1–F3.
 
-**Gate G is decided by Ben on a physical phone**, running the fixed seven-step
-script in [`issue-119-plan.md` §2](issue-119-plan.md#2-who-decides-and-how)
-against production Atlas first and the prototype second, and recording the
-verdict *before* the independent F6 review runs. F6 reviews architecture and
-evidence; it does not decide whether the thing feels better, because it can
-only see screenshots and CI logs — the evidence class §12 below forbids
-treating as physical-device proof.
+## 10. Evidence classes
 
-Step 6 of that script — reaching a region five separate times, as a returning
-learner would — carries the most weight and is the easiest to skip. Camera
-choreography that delights on the first traversal is the classic thing that
-becomes friction on the fifteenth. A prototype that wins the first traversal
-and loses the fifth has failed.
+Label every result as one of:
 
-The review should answer:
+- unit/component;
+- invariant verifier;
+- Playwright desktop;
+- Playwright mobile viewport;
+- production artifact measurement;
+- Android physical;
+- iPhone/iOS physical;
+- installed PWA physical;
+- manual product judgement.
 
-- Is the Earth immediately legible as Atlas rather than an embedded map product?
-- Does selecting Africa explain hierarchy through movement rather than spectacle?
-- Are region labels obvious without becoming a cluttered map annotation layer?
-- Does the continent action remain the strongest control?
-- Can a learner reach West Africa faster or more naturally than through the current launcher?
-- Does free globe rotation help orientation, or add friction before a simple selection?
-- Does Back feel like reversing a spatial journey?
-- Does the interaction remain quiet/information-first?
-- Is there any point where the user thinks a conventional screen just loaded behind an animation?
-- Would the experience still be worth the complexity if achievement animation were removed entirely?
+Never report Playwright mobile emulation as physical-device evidence.
 
-A prototype can pass technical gates and still fail this product review.
+## 11. Stage 1 checkpoint packet
 
-## 11. Automated test targets
+Before asking Ben for H1 judgement, collect only what is needed to compare Stage 1 with production:
 
-Do not overfit tests to implementation details before F2.
+1. exact base SHA and prototype branch SHA;
+2. complete traversal video/screenshots;
+3. route/action count and browser timing attachments;
+4. Back/Forward/deep-link/refresh results;
+5. focus/reduced-motion results;
+6. exact artifact delta;
+7. known prototype compromises;
+8. explicit statement that no renderer/learning/storage architecture changed.
 
-Once architecture is chosen, add tests for semantic invariants such as:
+If Ben has not yet supplied a physical verdict, park at this clean device-judgeable checkpoint.
 
-- route → destination mapping;
-- destination → accessible DOM controls;
-- 3D selection dispatches the same action as DOM selection;
-- Back changes route ancestry correctly;
-- deep link resolves correct initial destination;
-- reduced-motion variant exists;
-- unsupported scope remains unavailable;
-- renderer failure reveals fallback;
-- active activity prevents background globe gesture theft.
+## 12. Principal packet after H1 PASS
 
-Avoid brittle assertions like exact camera floating-point coordinates unless a documented camera contract requires them.
+Only after H1 materially passes, repair renderer evidence and refresh six-continent LOD evidence, then update [`issue-119-principal-packet.md`](issue-119-principal-packet.md) with:
 
-## 12. Evidence classes
+- Stage 0 baseline;
+- H1 result;
+- apples-to-apples renderer evidence;
+- six-continent geometry/LOD envelope;
+- hard invariants/kill criteria;
+- unresolved F1/F2/F3 decisions.
 
-Use explicit labels in the worklog:
-
-- **unit/component**;
-- **Playwright desktop**;
-- **Playwright mobile viewport**;
-- **Android physical**;
-- **iPhone/iOS physical**;
-- **installed PWA physical**;
-- **manual visual review**;
-- **bundle/artifact measurement**.
-
-Do not claim physical-device success from a Playwright mobile viewport.
-
-## 13. Prototype go/no-go packet
-
-Before F6, collect one concise packet containing:
-
-1. video/screen capture or equivalent visual evidence of the complete path;
-2. renderer/package versions;
-3. route/history results;
-4. accessibility/reduced-motion results;
-5. gesture matrix;
-6. payload comparison;
-7. runtime/performance observations;
-8. failure/fallback results;
-9. known compromises/hacks;
-10. code architecture summary;
-11. current branch diff against then-current `main`;
-12. explicit recommendation from the builder, separated from the independent reviewer's architecture judgement;
-13. **the recorded Gate G device verdict** — faster/same/slower, clearer/same/less clear, would-use-daily, and the single worst moment, for both production and prototype. Collected before F6 opens, not derived from it.
-
-F6 should be able to reject the moonshot cleanly without requiring sunk-cost justification.
+Do not begin the Africa 3D vertical slice before the principal decisions authorise it.
