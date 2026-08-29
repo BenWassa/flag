@@ -118,7 +118,7 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
       .find((name) => /\/assets\/africa-[^/]+\.js$/.test(name)) ?? null);
     expect(africaUrl).not.toBeNull();
     await expect.poll(() => cacheState(page, africaUrl ?? undefined)).toMatchObject({ hasAfrica: true });
-    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v29-runtime']) });
+    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v30-runtime']) });
 
     // The returning learner closes the app, loses the network, and reopens the
     // shell. This uses a fresh document, so the lazy chunk must come from the
@@ -161,7 +161,7 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
     await page.reload();
     await expect(page.locator('meta[name="atlas-pwa-runtime-build"]')).toHaveAttribute('content', 'runtime-b');
     await waitForServiceWorkerControl(page);
-    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v29-runtime']) });
+    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v30-runtime']) });
     // An active map route remains intentionally ephemeral after a document
     // reload, so update recovery returns to its stable Africa launcher.
     await expect(page.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
