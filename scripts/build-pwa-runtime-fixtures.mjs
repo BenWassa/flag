@@ -35,8 +35,11 @@ function build(marker) {
     throw new Error(`PWA runtime fixture ${marker} is missing its test-only artifact marker.`);
   }
   const serviceWorker = readFileSync(resolve(output, 'sw.js'), 'utf8');
-  if (!serviceWorker.includes('flag-atlas-v29') || !serviceWorker.includes('index.html')) {
+  if (!serviceWorker.includes('flag-atlas-v30') || !serviceWorker.includes('index.html')) {
     throw new Error(`PWA runtime fixture ${marker} does not contain the production Workbox policy.`);
+  }
+  if (serviceWorker.includes('flag-atlas-spatial-preview-v1')) {
+    throw new Error(`PWA runtime fixture ${marker} must remain on the classic Atlas cache namespace.`);
   }
 
   return {
