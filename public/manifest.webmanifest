@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Atlas Spatial Preview",
-  "short_name": "Atlas Spatial",
-  "description": "Preview the experimental Spatial Atlas presentation while using the same geography-learning progress.",
+  "name": "Atlas",
+  "short_name": "Atlas",
+  "description": "Learn flags and country geography with durable progress and focused practice.",
   "lang": "en-GB",
   "start_url": "./#/",
   "scope": "./",
