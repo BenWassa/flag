@@ -187,7 +187,19 @@ the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
   all; Outlines Play advances after a measured 238 ms where Flags Play holds a
   wrong answer for 1560 ms; and the Locations wrong-guess colour is cleared
   only by an animation keyframe, so it never clears under reduced motion. Seven
-  focused follow-up issues are mapped in §5 — none of them a redesign.
+  focused follow-up issues are filed as
+  [#146](https://github.com/BenWassa/flag/issues/146) (launcher accessible names,
+  Mastery and complete-region cues),
+  [#147](https://github.com/BenWassa/flag/issues/147) (Outlines Play dwell and
+  live score), [#148](https://github.com/BenWassa/flag/issues/148)
+  (reduced-motion map clearing),
+  [#149](https://github.com/BenWassa/flag/issues/149) (Neighbours combobox
+  semantics), [#150](https://github.com/BenWassa/flag/issues/150) (motion tokens
+  and a control-height scale),
+  [#151](https://github.com/BenWassa/flag/issues/151) (retired-subsystem CSS and
+  the empty launcher badge) and
+  [#152](https://github.com/BenWassa/flag/issues/152) (degenerate Home coverage
+  label) — none of them a redesign.
 
   On the skills question the answer is mostly negative: of eight candidate
   families, one earns selective adoption (`emilkowalski/skills` —

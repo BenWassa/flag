@@ -12,5 +12,9 @@ graphify-out/
 test-results/
 playwright-report/
 .firebase/
+tests/firebase/firestore-debug.log
+# `npm run test:firebase-rules` runs `npm install` here, so the lockfile is
+# regenerated output rather than a committed dependency pin.
+tests/firebase/package-lock.json
 *firebase-adminsdk*.json
 *.serviceaccount.json
