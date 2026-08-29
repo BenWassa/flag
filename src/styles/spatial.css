@@ -6,6 +6,41 @@
  * no glass, no gradient furniture and no motion beyond the camera itself.
  */
 
+.spatial-preview-switch {
+  position: fixed;
+  inset-block-start: max(8px, env(safe-area-inset-top));
+  inset-inline-end: max(8px, env(safe-area-inset-right));
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text-muted);
+  box-shadow: var(--shadow-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.spatial-preview-switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding-inline: 9px;
+  border-radius: var(--radius-sm);
+  background: var(--action-soft);
+  color: var(--action-pressed);
+  text-decoration: none;
+}
+
+.spatial-preview-switch a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--action) 35%, transparent);
+  outline-offset: 2px;
+}
+
 .spatial-shell {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
@@ -171,4 +206,5 @@
   .spatial-stage { display: none; }
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
+  .spatial-preview-switch { border: 1px solid ButtonText; box-shadow: none; }
 }
