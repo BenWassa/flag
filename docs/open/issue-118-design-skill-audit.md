@@ -183,7 +183,7 @@ independently valuable and independently shippable. Ordered by impact.
    for a plain labelled button group. The current half-pattern is worse than either.
 5. **[#150](https://github.com/BenWassa/flag/issues/150) — introduce a small motion-token and control-height scale.** — M-02, F-01.
    A small `--duration-*` / `--ease-*` set plus a documented height scale beside the existing radius
-   tiers, then migrate. This is the durable fix that makes #154 and #155 hard to reintroduce.
+   tiers, then migrate. This is the durable fix that makes findings M-03 and F-01 hard to reintroduce.
 6. **[#151](https://github.com/BenWassa/flag/issues/151) — remove retired CSS and duplicate shared control styles.** — F-02, T-02.
    Delete the ~80 lines of retired-subsystem CSS and the triple-defined `.text-icon-button`; remove
    or fill the empty dashed `.launcher-header__badge`.
@@ -212,7 +212,7 @@ speculative issue. E-02 and E-03 belong to **#71** and are recorded there rather
 | #104 remains deferred | Yes — untouched |
 | adopt/selective/reference/reject for each candidate | Yes — §4 |
 | Redundant generalist skills identified rather than retained | Yes — five rejections, two on redundancy grounds |
-| Implementation split into focused follow-ups | Yes — §5; #153–#159 filed 2026-08-28 |
+| Implementation split into focused follow-ups | Yes — §5; #146–#152 filed 2026-08-28 |
 | No production application changes | Yes — this document is the only change |
 
 `npm test` (check + unit + Firebase rules + production build + full verifier suite) passes on the
