@@ -185,8 +185,8 @@ its full extent still spans the date line correctly for picking.
 
 ## 9. Payload budget
 
-Spatial entry is renderer (125.6 kB gzip) plus world geography (53.0 kB gzip) =
-**178.6 kB gzip**, against the plan's ≤ 250 kB direction. Continent detail is
+Spatial entry is renderer (125.7 kB gzip) plus world geography (53.0 kB gzip) =
+**178.8 kB gzip**, against the plan's ≤ 250 kB direction. Continent detail is
 13.6–68.8 kB gzip and lazy. For comparison, the existing projected 2D continent
 assets this branch does not touch are 185–519 kB gzip each.
 

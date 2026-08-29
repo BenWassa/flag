@@ -37,7 +37,7 @@ scene graph does not change: it is constructed once from a generated asset and
 then mutated by reference. Paying a reconciler for a tree that never reconciles
 buys nothing and costs three things:
 
-1. **Delivered bytes.** The renderer chunk measured here is 125.6 kB gzip and is
+1. **Delivered bytes.** The renderer chunk measured here is 125.7 kB gzip and is
    almost entirely `WebGLRenderer` and its shader chunks — the practical floor
    for any Three-based approach. R3F plus the `CameraControls` binding the
    original proposal named would add to that floor, not replace it.
@@ -183,19 +183,19 @@ Built artifact, gzip:
 
 | Chunk | Gzip | When |
 | --- | ---: | --- |
-| `app.js` (core shell) | **101.5 kB** | always |
-| `stage-controller` (Three + scene + controller) | **125.6 kB** | first spatial route |
+| `app.js` (core shell) | **102.0 kB** | always |
+| `stage-controller` (Three + scene + controller) | **125.7 kB** | first spatial route |
 | `world` geography | **53.0 kB** | first spatial route |
-| **Spatial entry total** | **178.6 kB** | — |
+| **Spatial entry total** | **178.8 kB** | — |
 | continent detail (each) | 13.6–68.8 kB | on entering that continent |
 
 Against the plan's directional target of ≤ 250 kB gzip for renderer plus initial
-world-selection geography: **178.6 kB, inside budget**, and asserted by
+world-selection geography: **178.8 kB, inside budget**, and asserted by
 `verify-spatial-atlas.mjs` so it cannot drift.
 
 Two comparisons matter. The prototype this branch started from measured
 135.6 kB of JS plus 269.5 kB of world geometry — **405 kB** for the same entry
-point. And `app.js` moved from roughly 100.4 kB to 101.5 kB: the entire spatial
+point. And `app.js` moved from roughly 100.4 kB to 102.0 kB: the entire spatial
 stack is behind a dynamic import, and the verifier asserts `WebGLRenderer` does
 not appear in the initial shell.
 

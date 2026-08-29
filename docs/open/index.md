@@ -110,9 +110,9 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   - [`F2 — renderer/scene/camera architecture`](issue-119-renderer-decision.md);
   - [`F3 — spherical geography and LOD contract`](issue-119-spherical-geography-contract.md).
 
-  Measured spatial entry payload is **178.6 kB gzip** (renderer 125.6 + world
+  Measured spatial entry payload is **178.8 kB gzip** (renderer 125.7 + world
   geography 53.0) against the plan's ≤ 250 kB direction, down from the
-  prototype's 405 kB. Core `app.js` is unchanged at 101.5 kB gzip: the whole
+  prototype's 405 kB. Core `app.js` is 102.0 kB gzip: the whole
   spatial stack is behind a dynamic import, and the conventional Atlas remains
   the renderer-failure path in source rather than in principle.
 

@@ -22,9 +22,9 @@ Two corrections to this plan's own text, made by implementation evidence:
 - **§2 item 8** points at `experiments/spatial-atlas/README.md`. That prototype is
   **retired**. Its capabilities live in `src/spatial/` under test; keeping a
   second globe implementation beside the real one is the duplication §4 forbids.
-- **§6's cost direction** is met: measured spatial entry is **178.6 kB gzip**
-  (renderer 125.6, world geography 53.0) against the ≤ 250 kB target, down from
-  the prototype's 405 kB. Core `app.js` moved 100.4 → 101.5 kB gzip.
+- **§6's cost direction** is met: measured spatial entry is **178.8 kB gzip**
+  (renderer 125.7, world geography 53.0) against the ≤ 250 kB target, down from
+  the prototype's 405 kB. Core `app.js` moved 100.4 → 102.0 kB gzip.
 
 §12's physical-device list is unchanged and unclaimed.
 
