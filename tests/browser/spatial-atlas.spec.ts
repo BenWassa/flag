@@ -157,6 +157,23 @@ test.describe('activities own the screen', () => {
     }
   });
 
+  test('Learn runs in every domain and yields the stage', async ({ page }) => {
+    // Flags Learn is a scrolling gallery; the geography domains open their own
+    // surfaces. All four take the whole screen, so none competes with the globe.
+    await openSpatial(page, '/flags/africa');
+    await page.getByRole('button', { name: 'Learn Africa' }).click();
+    await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
+    expect(await stageMode(page)).toBe('yielded');
+    await expect(page.locator('.flag-gallery')).toBeVisible();
+
+    for (const domain of ['locations', 'outlines', 'neighbors']) {
+      await openSpatial(page, `/${domain}/africa/southern-africa`);
+      await page.getByRole('button', { name: 'Learn Africa' }).click();
+      await page.waitForFunction(() => document.querySelector('.spatial-shell')?.getAttribute('data-mode') === 'yielded', null, { timeout: 30000 });
+      expect(await stageMode(page), domain).toBe('yielded');
+    }
+  });
+
   test('a refreshed round route falls back to its stable scope', async ({ page }) => {
     await openSpatial(page, '/flags/africa/southern-africa');
     await page.getByRole('button', { name: 'Play Southern Africa' }).click();
@@ -180,7 +197,14 @@ test.describe('accessibility and resilience', () => {
     await expect(page.getByRole('button', { name: 'Play All Africa' })).toBeVisible();
     for (const region of ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa']) {
       await expect(page.getByRole('button', { name: `Play ${region}` })).toBeVisible();
+      // ...and the scope bar offers the selection a geography tap performs.
+      await expect(page.locator('.spatial-scopes__item', { hasText: region })).toBeVisible();
     }
+    // The scope bar is a real control set, reachable and operable by keyboard.
+    const bar = page.locator('.spatial-scopes__item', { hasText: 'East Africa' });
+    await bar.focus();
+    await page.keyboard.press('Enter');
+    await expect(page).toHaveURL(/#\/flags\/africa\/east-africa$/);
   });
 
   test('reduced motion arrives at the destination without animating', async ({ page }) => {
@@ -270,6 +294,21 @@ test.describe('layout matrix', () => {
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(1);
       await expect(page.getByRole('button', { name: 'Play All Africa' })).toBeVisible();
+
+      // ...and so is a live question, with its answers fully on screen.
+      await page.getByRole('button', { name: 'Play All Africa' }).click();
+      await expect(page.locator('.answer-button').first()).toBeVisible();
+      const quiz = await page.evaluate(() => {
+        const answers = [...document.querySelectorAll('.answer-button')].map((element) => element.getBoundingClientRect());
+        return {
+          overflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          clipped: answers.some((rect) => rect.right > window.innerWidth + 1 || rect.left < -1),
+          count: answers.length,
+        };
+      });
+      expect(quiz.count).toBeGreaterThan(0);
+      expect(quiz.clipped).toBe(false);
+      expect(quiz.overflow).toBeLessThanOrEqual(1);
     });
   }
 });

@@ -20,4 +20,4 @@ The old **H1-before-H2 stop sequence does not apply anymore**. On 2026-08-28 the
 
 The exact pre-authorisation scope, including the old H1-first sequencing, is preserved at [`../closed/issue-119-spatial-atlas-moonshot-historical.md`](../closed/issue-119-spatial-atlas-moonshot-historical.md).
 
-For implementation, do not read that archived record as current instruction. Start with the plan, principal packet and [`../../experiments/spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md).
+For implementation, do not read that archived record as current instruction. Start with the [plan](issue-119-plan.md) and the [architecture map](issue-119-principal-packet.md). The isolated `experiments/spatial-atlas` prototype has been retired; the implemented candidate lives in `src/spatial/`.

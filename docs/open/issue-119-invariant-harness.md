@@ -1,7 +1,14 @@
 # Issue #119 — Spatial invariant acceptance harness
 
-**Status:** CURRENT reusable acceptance map.  
-**Purpose:** make the authorised full Spatial Atlas candidate prove existing Atlas contracts rather than weakening them to fit a renderer.
+**Status:** CURRENT reusable acceptance map — **satisfied** by the implemented candidate.
+**Purpose:** make the Spatial Atlas candidate prove existing Atlas contracts rather than weakening them to fit a renderer.
+
+Where this matrix asked for spatial-specific evidence, the evidence now exists in
+two places and nowhere else: `scripts/verify-spatial-atlas.mjs` (in the `npm test`
+gate) and `tests/browser/spatial-atlas.spec.ts` (`npm run test:spatial`). No
+existing test or verifier was weakened, removed or relaxed to accommodate the
+spatial architecture; the conventional suite runs unchanged against the same
+build.
 
 This document maps hard invariants to existing production coverage and identifies the spatial-specific evidence that must be added. Prefer extending established tests/verifiers over building parallel test systems.
 
@@ -34,25 +41,25 @@ The Stage 0 baseline and Stage 1 2D continuity probe remain useful evidence for 
 
 The old physical-phone H1 verdict is likewise not a prerequisite for implementation. Real-device acceptance is still required before a production migration decision, but it is deferred until the mature candidate is ready.
 
-## Full-candidate additions now required
+## Full-candidate additions — where each one landed
 
-The authorised implementation must add reusable evidence for:
-
-- renderer initialisation failure → conventional/2D route fallback;
-- context loss → bounded recovery or fallback;
-- persistent-scene lifecycle according to the F2 decision;
-- render-on-demand / idle-work policy;
-- picking and DOM actions dispatching the same route/application action;
-- gesture ownership between the spatial stage, Locations and DOM overlays;
-- lazy chunks and service-worker caching following the approved PWA policy;
-- deterministic spherical assets and provenance;
-- real runtime LOD switching;
-- microstates, multipart countries and antimeridian cases;
-- all six continents and every supported region reachable;
-- Flags, Locations, Outlines and Neighbours real Learn/Play flows where supported;
-- Results return and unchanged progress/Mastery/achievement semantics;
-- exact built-artifact payload measurement;
-- focus/announcements and reduced-motion behaviour under the final interaction contract.
+| Required evidence | Where it lives |
+| --- | --- |
+| renderer initialisation failure → conventional fallback | browser: WebGL context creation blocked, full navigation driven through the result |
+| context loss → bounded recovery | browser: `WEBGL_lose_context` lose/restore |
+| persistent-scene lifecycle | browser: one canvas across a world → continent → region traversal; verifier: dispose path |
+| render-on-demand / idle-work policy | verifier: exactly one guarded `requestAnimationFrame` in the scene; browser: flat frame count at rest |
+| picking and DOM dispatching the same action | verifier: 195 countries × 4 domains × 6 continents; browser: tap versus its DOM control |
+| gesture ownership | verifier: 28 px edge gutter, `touch-action` scoped to the stage; browser: drag does not navigate |
+| lazy chunks and service-worker caching | verifier: chunk sizes, `WebGLRenderer` absent from `app.js`, precache membership |
+| deterministic spherical assets and provenance | verifier: per-country encoding round trip, pinned digest, framing-policy cross-check |
+| real runtime LOD switching | browser: continent chunk requested on entry; verifier: detail asset coverage |
+| microstates, multipart, antimeridian | verifier: locator completeness, hit precedence, Chukotka on both sides of the date line, Fiji, circular framing |
+| six continents, every region reachable | browser: all four domains × all six continents; verifier: every learner-facing region frames |
+| four domains' real Learn/Play flows | browser: a complete Flags round to Results, Learn in all four domains, the three map-native domains yielding |
+| Results return, unchanged achievement semantics | verifier: results mode, per region × domain mastery, no cross-domain leak, no world-level tint |
+| exact built-artifact payload measurement | verifier: asserted against the ≤ 250 kB gzip budget |
+| focus, announcements, reduced motion | browser: canvas `aria-hidden`, keyboard reaches controls, reduced motion arrives without animating |
 
 Do not assert exact camera floating-point coordinates unless F2 deliberately makes them part of a durable contract. Test semantic destinations and observable behaviour instead.
 

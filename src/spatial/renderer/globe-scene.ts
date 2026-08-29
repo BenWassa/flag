@@ -171,9 +171,14 @@ function buildCountryGeometry(country: GlobeCountry, radius: number): BufferGeom
   return geometry;
 }
 
-function buildBorderGeometry(countries: readonly GlobeCountry[], radius: number): BufferGeometry {
+function buildBorderGeometry(
+  countries: readonly GlobeCountry[],
+  radius: number,
+  exclude?: ReadonlySet<string>,
+): BufferGeometry {
   const positions: number[] = [];
   for (const country of countries) {
+    if (exclude?.has(country.id)) continue;
     for (const polygon of country.polygons) {
       for (const ring of polygon) {
         for (let i = 0; i < ring.length; i += 1) {
@@ -190,11 +195,14 @@ function buildBorderGeometry(countries: readonly GlobeCountry[], radius: number)
   return geometry;
 }
 
-function buildLocatorGeometry(countries: readonly GlobeCountry[]): { geometry: BufferGeometry; ids: string[] } | null {
+function buildLocatorGeometry(
+  countries: readonly GlobeCountry[],
+  exclude?: ReadonlySet<string>,
+): { geometry: BufferGeometry; ids: string[] } | null {
   const positions: number[] = [];
   const ids: string[] = [];
   for (const country of countries) {
-    if (!country.locator) continue;
+    if (!country.locator || exclude?.has(country.id)) continue;
     positions.push(...toSphere(country.locator[0], country.locator[1], LOCATOR_RADIUS));
     ids.push(country.id);
   }
@@ -296,7 +304,7 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
     alphaTest: 0.5,
   });
 
-  function buildLayer(asset: GlobeAsset, detail: boolean): Layer {
+  function buildLayer(asset: GlobeAsset, detail: boolean, exclude?: ReadonlySet<string>): Layer {
     const landRadius = detail ? DETAIL_LAND_RADIUS : LAND_RADIUS;
     const group = new Group();
     const meshes = new Map<string, Mesh>();
@@ -309,11 +317,11 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       group.add(mesh);
     }
     const borders = new LineSegments(
-      buildBorderGeometry(asset.countries, detail ? DETAIL_BORDER_RADIUS : BORDER_RADIUS),
+      buildBorderGeometry(asset.countries, detail ? DETAIL_BORDER_RADIUS : BORDER_RADIUS, exclude),
       borderMaterial,
     );
     group.add(borders);
-    const locatorData = buildLocatorGeometry(asset.countries);
+    const locatorData = buildLocatorGeometry(asset.countries, exclude);
     const locators = locatorData ? new Points(locatorData.geometry, locatorMaterial) : null;
     if (locators) group.add(locators);
     scene.add(group);
@@ -332,6 +340,31 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
   let detailLayer: Layer | null = null;
   let detailLod: string | null = null;
   let states: CountryPresentation = new Map();
+
+  /**
+   * Borders and locators are merged buffers, so a covered country cannot simply
+   * be hidden the way its mesh can. Rebuilding the base layer's lines without
+   * the detail layer's countries is what stops a coarse world outline showing
+   * through beside the finer one it was replaced by — a visible double stroke,
+   * and a stray world locator dot sitting on top of real detail geometry.
+   *
+   * It runs once per continent entry over a buffer of a few tens of thousands of
+   * vertices, not per frame.
+   */
+  function rebuildBaseLines(exclude?: ReadonlySet<string>) {
+    baseLayer.borders.geometry.dispose();
+    baseLayer.borders.geometry = buildBorderGeometry(base.countries, BORDER_RADIUS, exclude);
+    if (baseLayer.locators) {
+      baseLayer.group.remove(baseLayer.locators);
+      baseLayer.locators.geometry.dispose();
+      baseLayer.locators = null;
+    }
+    const locatorData = buildLocatorGeometry(base.countries, exclude);
+    if (locatorData) {
+      baseLayer.locators = new Points(locatorData.geometry, locatorMaterial);
+      baseLayer.group.add(baseLayer.locators);
+    }
+  }
 
   /**
    * Applies presentation to whichever layer currently owns each country. Detail
@@ -441,7 +474,13 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       if ((asset?.lod ?? null) === detailLod) return;
       if (detailLayer) { disposeLayer(detailLayer); detailLayer = null; }
       detailLod = asset?.lod ?? null;
-      if (asset) detailLayer = buildLayer(asset, true);
+      if (asset) {
+        const covered = new Set(asset.countries.map((country) => country.id));
+        detailLayer = buildLayer(asset, true);
+        rebuildBaseLines(covered);
+      } else {
+        rebuildBaseLines();
+      }
       applyStates();
       requestRender();
     },

@@ -282,6 +282,7 @@ for (const [view, expectedMode] of [
   assert.equal(live.picking, 'none', `${view} makes no geography selectable.`);
   assert.equal(live.countryStates.size, 0, `${view} highlights no country, so the globe cannot hint at an answer.`);
   assert.equal(live.description, '', `${view} publishes no scope description while a question is live.`);
+  assert.equal(live.scopeStatus.size, 0, `${view} publishes no scope status while a question is live.`);
 }
 
 // Results resolve the same session over the geography just played.
@@ -357,12 +358,23 @@ const otherDomain = deriveSpatialState({
   achievements: earned,
 });
 assert.equal(otherDomain.countryStates.get('GHA'), 'active', 'Mastery is per region × domain and does not leak across domains.');
+
+// Colour never carries earned state alone: the DOM control that mirrors the
+// globe's tint publishes the same state as a scope status the bar renders in words.
+assert.equal(masteredState.scopeStatus.get('west-africa'), 'mastered', 'Mastery reaches the DOM control as state, not only as colour.');
+assert.equal(masteredState.scopeStatus.get('southern-africa'), 'complete', 'Completion reaches the DOM control as state, not only as colour.');
+assert.equal(masteredState.scopeStatus.get('north-africa'), undefined, 'Unearned scopes carry no status.');
+assert.equal(otherDomain.scopeStatus.get('west-africa'), undefined, 'Scope status is per domain.');
+const scopeBarSource = await readFile('src/spatial/SpatialScopeBar.tsx', 'utf8');
+assert.match(scopeBarSource, /visually-hidden/, 'The scope bar names earned state for assistive technology.');
+assert.match(scopeBarSource, /aria-hidden="true"/, 'The scope bar mark is decorative beside that text.');
 // World level stays neutral: the globe never becomes a progress choropleth.
 const worldWithMastery = deriveSpatialState({ route: { name: 'learning', domain: 'flags' }, view: 'domain', achievements: earned });
 for (const value of worldWithMastery.countryStates.values()) {
   assert.notEqual(value, 'mastered', 'World level carries no mastery tint.');
   assert.notEqual(value, 'complete', 'World level carries no completion tint.');
 }
+assert.equal(worldWithMastery.scopeStatus.size, 0, 'World level publishes no scope status either.');
 
 // ---------------------------------------------------------------------------
 // Camera grammar

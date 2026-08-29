@@ -51,6 +51,9 @@ export type CountryState = 'ordinary' | 'active' | 'dimmed' | 'unavailable' | 'm
 /** What a tap on geography is currently allowed to mean. */
 export type PickingMode = 'none' | 'continent' | 'region';
 
+/** Earned state for one selectable scope. Always accompanied by text. */
+export type ScopeStatus = 'mastered' | 'complete';
+
 export interface SpatialState {
   mode: SpatialStageMode;
   /** Continent detail LOD the stage should have mounted, beyond the world asset. */
@@ -60,6 +63,11 @@ export interface SpatialState {
   picking: PickingMode;
   domain: LearningDomain | null;
   countryStates: ReadonlyMap<string, CountryState>;
+  /**
+   * Earned state per selectable scope id, so the DOM control can say in words
+   * what the geography says in colour. Purple and gold never carry meaning alone.
+   */
+  scopeStatus: ReadonlyMap<string, ScopeStatus>;
   /** Sentence describing the spatial state for assistive technology. */
   description: string;
 }
@@ -196,6 +204,22 @@ function worldCountryStates(domain: LearningDomain | null): ReadonlyMap<string, 
 }
 
 const EMPTY: ReadonlyMap<string, CountryState> = new Map();
+const NO_STATUS: ReadonlyMap<string, ScopeStatus> = new Map();
+
+function scopeStatusFor(
+  continentId: ContinentId | null,
+  domain: LearningDomain | null,
+  achievements: EarnedAchievementState,
+): ReadonlyMap<string, ScopeStatus> {
+  if (!continentId || !domain) return NO_STATUS;
+  const status = new Map<string, ScopeStatus>();
+  for (const region of selectableRegionScopes(continentId, domain)) {
+    if (!region.id) continue;
+    if (isRegionComplete(achievements, region.id)) status.set(region.id, 'complete');
+    else if (isRegionDomainMasteryEarned(achievements, region.id, domain)) status.set(region.id, 'mastered');
+  }
+  return status;
+}
 
 export function deriveSpatialState(input: SpatialInput): SpatialState {
   const { route, view, achievements } = input;
@@ -208,6 +232,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       picking: 'none',
       domain,
       countryStates: EMPTY,
+      scopeStatus: NO_STATUS,
       description: '',
     };
   }
@@ -222,6 +247,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       picking: 'none',
       domain,
       countryStates: countryStatesForScope(scope, domain, achievements, inScope),
+      scopeStatus: NO_STATUS,
       description: scope ? `${scope.label} is framed on the globe.` : '',
     };
   }
@@ -237,6 +263,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       picking: 'none',
       domain,
       countryStates: EMPTY,
+      scopeStatus: NO_STATUS,
       description: '',
     };
   }
@@ -250,6 +277,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       picking: 'region',
       domain,
       countryStates: countryStatesForScope(route.scope, domain, achievements, inScope),
+      scopeStatus: scopeStatusFor(detailContinent(route.scope), domain, achievements),
       description: `${route.scope.label} is framed on the globe. Tap a country to choose its region.`,
     };
   }
@@ -260,6 +288,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
     picking: domain ? 'continent' : 'none',
     domain,
     countryStates: worldCountryStates(domain),
+    scopeStatus: NO_STATUS,
     description: domain
       ? 'The whole Earth is framed. Tap a continent, or use the list below.'
       : 'The whole Earth is framed. Choose what to learn.',

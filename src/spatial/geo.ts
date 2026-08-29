@@ -48,28 +48,65 @@ function midpoint(a: [number, number], b: [number, number]): [number, number] {
 export type Triangle = [[number, number], [number, number], [number, number]];
 
 /**
- * A triangle spanning many degrees chords visibly through the sphere. Rather
- * than tessellating the whole globe, only triangles whose longest edge exceeds
- * `maxEdgeDeg` are split, recursively. Most country triangles are already small
- * because the source rings are dense, so this touches very few of them.
+ * Bends flat triangles onto the sphere without cracking them.
+ *
+ * A triangle spanning many degrees chords visibly through the sphere, so long
+ * edges have to be split and the new vertices re-projected. The subtlety is
+ * WHICH edges: splitting a triangle because its longest edge is too long, while
+ * its neighbour across a shorter shared edge stays whole, leaves a T-junction —
+ * the split side bows outward onto the sphere and the unsplit side stays a
+ * chord, so a hairline of ocean shows through the middle of a country. Those
+ * seams were visible across Mali, Niger and Algeria.
+ *
+ * So the decision is made PER EDGE, from the edge alone. Two triangles sharing
+ * an edge therefore always agree about it, and the midpoint each computes is
+ * bit-identical, which is what removes the cracks rather than hiding them.
  */
 export function subdivide(triangles: Triangle[], maxEdgeDeg: number, depth = 0): Triangle[] {
-  if (depth > 4) return triangles;
+  if (depth > 5) return triangles;
   const out: Triangle[] = [];
   let split = false;
+
   for (const [a, b, c] of triangles) {
-    const longest = Math.max(
-      Math.hypot(a[0] - b[0], a[1] - b[1]),
-      Math.hypot(b[0] - c[0], b[1] - c[1]),
-      Math.hypot(c[0] - a[0], c[1] - a[1]),
-    );
-    if (longest <= maxEdgeDeg) { out.push([a, b, c]); continue; }
+    const longAB = Math.hypot(a[0] - b[0], a[1] - b[1]) > maxEdgeDeg;
+    const longBC = Math.hypot(b[0] - c[0], b[1] - c[1]) > maxEdgeDeg;
+    const longCA = Math.hypot(c[0] - a[0], c[1] - a[1]) > maxEdgeDeg;
+    const count = Number(longAB) + Number(longBC) + Number(longCA);
+    if (count === 0) { out.push([a, b, c]); continue; }
     split = true;
-    const mab = midpoint(a, b);
-    const mbc = midpoint(b, c);
-    const mca = midpoint(c, a);
-    out.push([a, mab, mca], [mab, b, mbc], [mca, mbc, c], [mab, mbc, mca]);
+
+    if (count === 3) {
+      const mab = midpoint(a, b);
+      const mbc = midpoint(b, c);
+      const mca = midpoint(c, a);
+      out.push([a, mab, mca], [mab, b, mbc], [mca, mbc, c], [mab, mbc, mca]);
+      continue;
+    }
+
+    if (count === 1) {
+      // Bisect the long edge and fan from the opposite vertex.
+      if (longAB) { const m = midpoint(a, b); out.push([a, m, c], [m, b, c]); }
+      else if (longBC) { const m = midpoint(b, c); out.push([b, m, a], [m, c, a]); }
+      else { const m = midpoint(c, a); out.push([c, m, b], [m, a, b]); }
+      continue;
+    }
+
+    // Two long edges: bisect both and triangulate the resulting quad.
+    if (!longCA) {
+      const mab = midpoint(a, b);
+      const mbc = midpoint(b, c);
+      out.push([mab, b, mbc], [a, mab, mbc], [a, mbc, c]);
+    } else if (!longAB) {
+      const mbc = midpoint(b, c);
+      const mca = midpoint(c, a);
+      out.push([mbc, c, mca], [b, mbc, mca], [b, mca, a]);
+    } else {
+      const mca = midpoint(c, a);
+      const mab = midpoint(a, b);
+      out.push([mca, a, mab], [c, mca, mab], [c, mab, b]);
+    }
   }
+
   return split ? subdivide(out, maxEdgeDeg, depth + 1) : out;
 }
 

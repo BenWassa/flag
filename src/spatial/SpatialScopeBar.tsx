@@ -1,6 +1,6 @@
 import { CONTINENTS } from '../data/continents.js';
 import { useAtlasActions } from '../react/actions.js';
-import { selectableRegionScopes, type SpatialState } from './spatial-state.js';
+import { selectableRegionScopes, type ScopeStatus, type SpatialState } from './spatial-state.js';
 import { isContinentId } from './scope-geography.js';
 
 /**
@@ -16,6 +16,8 @@ import { isContinentId } from './scope-geography.js';
  * continent — so the bar appears at continent and region focus only, and it
  * navigates through exactly the action a geography tap dispatches.
  */
+const statusLabel = (status: ScopeStatus) => (status === 'complete' ? 'complete' : 'Mastered');
+
 export function SpatialScopeBar({ state }: { state: SpatialState }) {
   const actions = useAtlasActions();
   const scope = state.framedScope;
@@ -39,15 +41,24 @@ export function SpatialScopeBar({ state }: { state: SpatialState }) {
         aria-current={scope.id === continentId ? 'true' : undefined}
         onClick={() => actions.openScope(state.domain!, continentId)}
       >All {continent.name}</button>
-      {regions.map((region) => (
-        <button
-          className="spatial-scopes__item"
-          type="button"
-          key={region.id}
-          aria-current={scope.id === region.id ? 'true' : undefined}
-          onClick={() => region.id && actions.openScope(state.domain!, region.id)}
-        >{region.label}</button>
-      ))}
+      {regions.map((region) => {
+        const status = region.id ? state.scopeStatus.get(region.id) : undefined;
+        return (
+          <button
+            className={`spatial-scopes__item${status ? ` spatial-scopes__item--${status}` : ''}`}
+            type="button"
+            key={region.id}
+            aria-current={scope.id === region.id ? 'true' : undefined}
+            onClick={() => region.id && actions.openScope(state.domain!, region.id)}
+          >
+            {region.label}
+            {/* The globe tints a Mastered or complete region. Colour never carries
+                that on its own, so the control that mirrors it says so in words. */}
+            {status ? <span className="visually-hidden">, {statusLabel(status)}</span> : null}
+            {status ? <span className="spatial-scopes__mark" aria-hidden="true">{status === 'complete' ? '\u25c6' : '\u25cf'}</span> : null}
+          </button>
+        );
+      })}
     </nav>
   );
 }

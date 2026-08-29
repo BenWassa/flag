@@ -14,4 +14,4 @@ Current execution authority:
 
 - [`issue-119-plan.md`](issue-119-plan.md)
 - [`issue-119-principal-packet.md`](issue-119-principal-packet.md)
-- [`../../experiments/spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md)
+- [`issue-119-principal-packet.md`](issue-119-principal-packet.md) — the implemented candidate's architecture map (the prototype this sheet refers to has been retired)
