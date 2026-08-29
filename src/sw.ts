@@ -11,7 +11,11 @@ declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision?: string | null }>;
 };
 
-const CACHE_PREFIX = 'flag-atlas-v29';
+// The deployed Spatial Atlas preview lives under the same origin as classic
+// Atlas, and Cache Storage is origin-wide rather than service-worker-scope-wide.
+// Keep this namespace deliberately separate so preview installation/testing can
+// never evict or overwrite the production PWA caches.
+const CACHE_PREFIX = 'flag-atlas-spatial-preview-v1';
 const FLAG_CACHE = `${CACHE_PREFIX}-flags`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime`;
 
@@ -24,7 +28,7 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys
-        .filter((key) => /^flag-atlas-v\d+(?:-.+)?$/.test(key) && key !== FLAG_CACHE && key !== RUNTIME_CACHE)
+        .filter((key) => /^flag-atlas-spatial-preview-v\d+(?:-.+)?$/.test(key) && key !== FLAG_CACHE && key !== RUNTIME_CACHE)
         .map((key) => caches.delete(key)),
     )),
   );
