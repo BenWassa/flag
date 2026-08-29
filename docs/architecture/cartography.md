@@ -7,6 +7,26 @@
 **Source manifest:** `scripts/map-sources/natural-earth.json`  
 **Generated provenance:** `docs/architecture/cartography-provenance.json`
 
+## Spherical geography (Issue #119, exploration line)
+
+The Spatial Atlas candidate adds a **second output** of this same pipeline, not a
+second pipeline: `scripts/generate-globe-assets.mjs` reads the same pinned source
+through the same `fetchPinnedSource` digest check, resolves identity with the same
+ISO3 candidate order, and reuses the framing policy declared in
+`scripts/map-continent-configs.mjs`. It emits lat/lon only — no projection, no
+renderer assumption — into `src/data/globe/`.
+
+```text
+pinned source geodata
+  ├── projected 2D continent assets   (npm run maps:generate)
+  └── spherical world + continent LODs (npm run globe:generate)
+```
+
+The contract is recorded in
+[`../open/issue-119-spherical-geography-contract.md`](../open/issue-119-spherical-geography-contract.md)
+and asserted by `scripts/verify-spatial-atlas.mjs`. It is exploration-line work:
+`main` is unaffected.
+
 ## Production decision
 
 Atlas uses **Natural Earth 1:10m** as the practical production cartography source and treats **UN Maps / UN Geospatial** as the boundary-policy, disputed-territory, and publication-disclaimer reference.

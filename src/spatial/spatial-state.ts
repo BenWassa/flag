@@ -150,6 +150,14 @@ export function resolveTapTarget(state: SpatialState, countryId: string): string
   return regionId ?? continentId;
 }
 
+/**
+ * Which continent's geography a scope belongs to.
+ *
+ * Two lookups cover four domains: Flags reads the canonical learning scopes, and
+ * Locations, Outlines and Neighbours all read the same generated map continent
+ * configuration. Both are consulted because the two taxonomies legitimately
+ * differ — the Middle East scope crosses a canonical continent boundary.
+ */
 function framedContinentId(scope: StudyScope): ContinentId | null {
   if (scope.kind === 'continent' && isContinentId(scope.id)) return scope.id;
   if (!scope.id) return null;

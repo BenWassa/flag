@@ -27,7 +27,7 @@
     "verify:clean": "node scripts/build-verifier-output.mjs --clean",
     "test": "npm run check && npm run test:unit && npm run test:firebase-rules && npm run build && npm run verify",
     "globe:generate": "node scripts/generate-globe-assets.mjs",
-    "test:spatial": "npm run build && playwright test --config=pw.spatial.config.ts",
+    "test:spatial": "npm run build && playwright test spatial-atlas.spec.ts",
     "check:experiments": "tsc -p tsconfig.experiments.json --noEmit"
   },
   "devDependencies": {

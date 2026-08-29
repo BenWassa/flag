@@ -15,6 +15,10 @@ import { expect, test, type Page } from '@playwright/test';
 
 const STAGE = '.spatial-stage[data-ready="true"] canvas';
 
+// Booting a WebGL surface under SwiftShader, then walking twenty-four
+// domain/continent frames, is slower than the suite default allows.
+test.setTimeout(120_000);
+
 async function openSpatial(page: Page, path: string) {
   await page.goto(`/#${path}`);
   await page.waitForSelector(STAGE, { timeout: 30000 });
@@ -164,7 +168,7 @@ test.describe('activities own the screen', () => {
     await page.getByRole('button', { name: 'Learn Africa' }).click();
     await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
     expect(await stageMode(page)).toBe('yielded');
-    await expect(page.locator('.flag-gallery')).toBeVisible();
+    await expect(page.locator('.flag-gallery').first()).toBeVisible();
 
     for (const domain of ['locations', 'outlines', 'neighbors']) {
       await openSpatial(page, `/${domain}/africa/southern-africa`);

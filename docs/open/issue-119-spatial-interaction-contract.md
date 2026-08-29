@@ -44,6 +44,14 @@ Progressive disclosure is the ladder itself: the deeper the route, the fewer
 things are selectable. World picks continents. A continent picks regions. A
 region is a leaf. An activity picks nothing.
 
+One layout adaptation, and only one: on a **short landscape** viewport
+(844 × 390 and similar) `context` stands the geography down completely for the
+duration of the question. Splitting that viewport between a globe and a Flags
+question left the answers in a column too narrow to read, with options clipped
+off-screen. A phone in landscape has no room to share, and the activity is the
+content. The contract is unchanged — the mode is still `context` — the layout
+simply refuses to pretend there is room.
+
 ## 3. The Locations-versus-globe decision
 
 This was the hardest question in the brief, and the answer is a refusal.
@@ -216,7 +224,32 @@ resolves through the existing `normalizeAvailableRoute` honesty rules. All six
 continents currently ship all four domains, so this path is a contract rather
 than a common case — but it exists, and it is verified.
 
-## 12. What this contract deliberately does not do
+## 12. One change outside the spatial module
+
+`src/map-viewport.ts` marked a map viewport "positioned" and computed its opening
+frame **before** waiting for the element to have a size. React can hand its
+mutation observer a subtree it has built but not yet attached, and a detached
+element has no aspect: `viewportAspect` falls back to 1:1, the frame is computed
+against that square, `applyBox` remembers it, and the resize path then faithfully
+re-applies the wrong frame at the real aspect rather than correcting it.
+
+Whether the opening frame was right was therefore decided by mutation timing.
+On `main` that race usually lands the right way. Under the spatial shell it
+landed the wrong way **six times out of six**: whole-Africa Locations Learn at
+840 × 360 opened with ten countries cropped off the stage.
+
+The fix defers positioning until the viewport actually has a box, and lets the
+resize observer trigger the deferred fit when it gains one. The frame it produces
+is slightly looser than the racy one — the generated 26-unit focus margin is now
+actually honoured, where before a scope could end edge-to-edge — and no scope is
+cropped at any tested viewport.
+
+This is a change to a preserved contract, made because the alternative was
+shipping cropped geography. It is flagged for review: the `focusMinimumByScope`
+values in `scripts/map-continent-configs.mjs` were tuned against the racy
+behaviour, and a production migration should re-check them.
+
+## 13. What this contract deliberately does not do
 
 - it does not animate between activity screens — the activity is the content;
 - it does not label countries on the globe — labels are a second cartography

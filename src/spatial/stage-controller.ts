@@ -13,7 +13,7 @@ import { loadGlobeAsset } from '../data/globe/index.js';
 import type { ContinentId } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
 import { DEG, framingFor, GeographyIndex } from './geo.js';
-import type { GlobeAsset } from './globe-asset.js';
+import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
   framingBoxes,
@@ -22,7 +22,6 @@ import {
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
-import type { GlobeBounds } from './globe-asset.js';
 import type { SpatialState } from './spatial-state.js';
 import {
   createGlobeScene,
@@ -157,9 +156,14 @@ export async function createStageController(
   });
 
   const observer = new ResizeObserver(() => {
+    // A stage the layout has collapsed — short landscape during a Flags
+    // question, or a yielded activity — must stop rendering rather than keep
+    // painting a one-pixel canvas.
+    const visible = container.clientWidth > 0 && container.clientHeight > 0;
+    scene.setActive(visible && state?.mode !== 'yielded');
+    if (!visible) return;
     scene.resize();
     if (state) director.retarget(poseFor(state));
-    container.dataset.ready = 'true';
   });
   observer.observe(container);
 
@@ -190,7 +194,8 @@ export async function createStageController(
       if (destroyed) return;
       state = next;
       const yielded = next.mode === 'yielded';
-      scene.setActive(!yielded);
+      const visible = container.clientWidth > 0 && container.clientHeight > 0;
+      scene.setActive(!yielded && visible);
       container.dataset.mode = next.mode;
       container.dataset.picking = next.picking;
       if (yielded) return;

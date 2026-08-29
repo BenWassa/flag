@@ -34,8 +34,9 @@ export function SpatialStage({ state, onSelectCountry, onUnavailable, children }
   const select = useRef(onSelectCountry);
   const [ready, setReady] = useState(false);
 
-  latest.current = state;
-  select.current = onSelectCountry;
+  // Declared before the boot effect so both refs are current by the time it
+  // runs, without writing to a ref during render.
+  useEffect(() => { latest.current = state; select.current = onSelectCountry; });
 
   useEffect(() => {
     const host = container.current;

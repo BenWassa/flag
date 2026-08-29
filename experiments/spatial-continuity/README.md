@@ -2,6 +2,15 @@
 
 This directory contains **support-tier evidence tooling**, not the moonshot renderer and not a production navigation replacement.
 
+> **Historical on this branch.** The Stage 0 harness measures route and action
+> counts against whatever the checkout builds. On the full Spatial Atlas
+> candidate that is the *spatial* shell, not the conventional baseline it was
+> written to characterise, so its numbers here describe the candidate rather than
+> the thing the candidate should be compared against. Capture a conventional
+> baseline from `main` if that comparison is wanted; the candidate's own
+> verification lives in `scripts/verify-spatial-atlas.mjs` and
+> `tests/browser/spatial-atlas.spec.ts`.
+
 ## Dependency gate
 
 Do not call any captured Stage 0 evidence **final** and do not build the final Stage 1 continuity probe until current `main` contains the completed production work from #27, #137 and #138.

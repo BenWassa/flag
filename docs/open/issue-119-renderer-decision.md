@@ -139,6 +139,30 @@ rather than replacing them, so disposal is a removal, not a rebuild. The radius
 offset is not cosmetic: two independently simplified coastlines of New Guinea
 genuinely overlap, and coplanar land would z-fight.
 
+Borders and locators are merged buffers, so a covered country cannot be hidden
+the way its mesh can. Entering a continent therefore rebuilds the base layer's
+lines without that continent's countries — once per entry, over a few tens of
+thousands of vertices. Without it the coarse world outline keeps drawing beside
+the finer one that replaced it (a visible double stroke) and a world locator dot
+can sit on top of real detail geometry.
+
+### Tessellation
+
+Bending a flat triangle onto the sphere means splitting its long edges and
+re-projecting the new vertices. The split decision is made **per edge, from the
+edge alone**, not per triangle. Deciding per triangle leaves T-junctions: a
+triangle split because its own longest edge was too long, while its neighbour
+across a shorter shared edge stayed whole, bows onto the sphere on one side and
+stays a chord on the other, so a hairline of ocean shows through the middle of a
+country. Those seams were visible straight across Mali, Niger, Algeria and
+Nigeria before the rule changed. Per-edge decisions mean two triangles sharing an
+edge always agree and compute a bit-identical midpoint, which removes the cracks
+rather than hiding them.
+
+Land materials are `DoubleSide` rather than back-face culled: Natural Earth does
+not guarantee consistent ring winding across features, and culling would silently
+delete whichever countries came out reversed.
+
 ### Context loss, resize, orientation
 
 `webglcontextlost` is prevented and flagged; `webglcontextrestored` re-sizes and
