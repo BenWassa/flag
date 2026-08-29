@@ -1,145 +1,155 @@
-# Issue #119 — Principal entry packet
+# Issue #119 — Full Spatial Atlas implementation packet
 
-**Status:** support-owned packet; **not ready for principal review** while the dependency and H1 gates below are unresolved.  
-**Authority:** `issue-119-plan.md` is the execution plan; this file is only the compact handoff.  
-**Reserved decisions:** F1 spatial interaction contract · F2 renderer/scene/camera architecture · F3 spherical geography/LOD contract.
+**Status:** READY FOR PRINCIPAL/FULL-IMPLEMENTATION AGENT.  
+**Authority:** `issue-119-plan.md` is the execution plan.  
+**Working base:** `explore/spatial-atlas-moonshot`.  
+**Create:** `moonshot/full-spatial-atlas`.  
+**Production `main`:** do not merge or replace without a later explicit owner decision.
 
-## 1. Current state / decision brief
+## Mission
 
-Issue #119 asks whether Atlas should replace the *perception* of discrete launcher screens with a continuous geographic presentation while preserving the existing product engine.
+Take the existing Spatial Atlas prototype and build it into the strongest credible **complete parallel Atlas candidate**.
 
-The first question is deliberately cheaper than the globe question:
+Do not stop at the old H1 gate. The owner has explicitly authorised the exploration branch to proceed through the previously reserved F1/F2/F3 decisions and full implementation so the final judgement can be made against a mature candidate rather than a cheap probe.
 
-> **H1 — Does continuous spatial navigation feel materially better than replacing launcher screens?**
+The target experience is:
 
-H1 is tested with existing production 2D geography. No renderer or spherical architecture is needed to answer it.
+`Mode → World → Continent → Region → Learn/Play → Results → spatial return`
 
-### Dependency gate
+across **Flags, Locations, Outlines and Neighbours**, all six continents, with the existing Atlas product engine preserved underneath.
 
-Do not treat Stage 0 or Stage 1 evidence as final until current `main` includes the completed production work from:
+## Read first
 
-- #27 — Oceania four-domain expansion;
-- #137 — Asia Locations/cartography hardening;
-- #138 — learner-facing World Crown acceptance.
+Keep the initial context set small:
 
-At the support checkpoint created on 27 August 2026, #22 North America is merged/deployed, while #27, #137 and #138 are not all merged. The exploration branch is therefore parked in preparation mode.
+1. live Issue #119;
+2. `DESIGN.md`;
+3. `.impeccable/design.json`;
+4. `docs/open/issue-119-plan.md`;
+5. `experiments/spatial-atlas/README.md`;
+6. `docs/open/issue-119-invariant-harness.md`;
+7. `docs/ROUTING.md`;
+8. `docs/MAP_GEOMETRY_SOURCES.md` + `docs/CARTOGRAPHY_PROVENANCE.json`;
+9. `docs/COUNTRY_NAMING.md`.
 
-### Product truth that is already settled
+Use `issue-119-renderer-comparison.md` and `issue-119-geometry-lod-experiment.md` only when making F2/F3 decisions. Ignore archived #119 handoffs unless a historical fact is disputed.
 
-- React 19 + Vite own production presentation/building.
-- Typed hash routes own durable navigation state; native Back/Forward remains authoritative.
-- Active round internals remain ephemeral session state.
-- Canonical country identity is ISO3.
-- Natural Earth 1:10m is the sole production geography source for Locations, Outlines and Neighbours.
-- Existing learning evidence, scoring, Mastery, achievement persistence and storage contracts are preservation boundaries.
-- Real DOM controls, keyboard access, reduced motion and non-colour state cues remain mandatory.
-- The spatial stack, if any, must be lazy and must have a usable renderer-failure fallback.
+## Existing starting point — do not rebuild it
 
-## 2. Stage 0 production baseline
+The current branch already contains a working persistent Three.js Earth with:
 
-**Status: PENDING FINAL DEPENDENCY GATE.**
+- typed-route-driven camera state;
+- all six continents and every region reachable;
+- mode-first navigation;
+- continent/region picking;
+- equivalent real DOM scope controls;
+- interruptible camera travel;
+- native Back;
+- reduced-motion snapping;
+- WebGL failure fallback;
+- one real Flags round and Results;
+- generated Natural Earth spherical geometry from the canonical pinned source.
 
-Automated evidence should be produced by the Stage 0 harness against the exact then-current production artifact and attached to the relevant verification run. Capture:
+Measured current cost is roughly 135.63 kB gzip JS + 269.5 kB gzip world geometry. Mobile hardware performance is not proven.
 
-- route/action counts for the comparison traversal;
-- typed-route transitions, Back/Forward and cold/deep-link behaviour;
-- focus restoration and reduced-motion branches;
-- initial/core and lazy asset sizes (raw + gzip);
-- navigation/resource timing available from the browser;
-- PWA/offline regression evidence;
-- screenshots/video suitable for side-by-side review.
+Current known gaps include:
 
-Do not substitute automated mobile emulation for physical-device judgement.
+- Locations, Outlines and Neighbours real activity integration;
+- runtime LOD switching;
+- complete antimeridian handling;
+- final renderer choice;
+- production-grade accessibility/focus semantics;
+- mobile/PWA/performance hardening.
 
-### Human comparison script
+Extend this work. Do not restart from a blank renderer or introduce a second geography source.
 
-Ben runs the fixed script in `issue-119-plan.md` on a physical phone, production first and Stage 1 second. Record faster/same/slower, clearer/same/less clear, would-use-daily yes/no, and the single worst moment. Repetition matters more than first-impression choreography.
+## Decisions you own
 
-## 3. Stage 1 — H1 result
-
-**Status: PENDING. DO NOT BUILD FINAL PROBE ON TRANSITIONAL MAIN.**
-
-Required slice:
-
-`Mode/domain → World/continent selection → Africa → West Africa → Play-ready/activity → Back to Africa → Back to world/domain`
-
-Constraints:
-
-- existing production `MapRegionAsset` 2D geography only;
-- existing fit/focus metadata and typed router;
-- real DOM controls and existing browser history;
-- current Atlas design tokens;
-- interruptible motion plus a reduced-motion equivalent;
-- no Three.js/R3F/MapLibre;
-- no second navigation state machine;
-- no progress/scoring/Mastery changes.
-
-### H1 verdict
-
-| Verdict | Consequence |
-| --- | --- |
-| Materially better | Continue to support-tier renderer/LOD evidence repair, then principal F1–F3. |
-| Neutral or worse | Record the negative result and stop #119. Do not spend renderer effort rescuing H1. |
-| Not yet judged | Park at a clean device-judgeable checkpoint. |
-
-## 4. Renderer evidence
-
-**Status: PARKED UNTIL H1 PASSES. Existing evidence is AMBER.**
-
-Current evidence cannot choose the renderer. Before any F2 decision, support must make the candidates attempt comparable Atlas tasks:
-
-- MapLibre: headed/hardware-backed rerun where practical, current Node/base, real local Atlas geography, and explicit separation of renderer failures from SwiftShader/headless artefacts;
-- R3F: real canonical Africa country geography and real country picking, with delivered cost including geography and Atlas-authored support code.
-
-Compare renderer JS, CSS, geography, Atlas support code, lazy cost/startup impact, idle/render behaviour, picking, camera interaction and failure/recovery. Do not mark the evidence GREEN until it is genuinely apples-to-apples.
-
-## 5. Six-continent geometry / LOD envelope
-
-**Status: PARKED UNTIL H1 PASSES.**
-
-The historical four-continent projected-path experiment proves only that a lightweight selection LOD is plausible. Refresh against the final six-continent curriculum and include:
-
-- Africa;
-- South America;
-- Europe, including microstates;
-- Asia;
-- North America, including Caribbean small islands;
-- Oceania, including Pacific small islands and Kiribati/antimeridian cases.
-
-Record coordinates, component counts, raw/gzip, microstate survivability, antimeridian integrity, picking feasibility and provenance. This evidence informs F3 but must not define the final spherical/LOD contract.
-
-## 6. Hard invariants / kill criteria
-
-Any future spatial architecture must preserve:
-
-- URL authority, native Back/Forward and direct deep links;
-- ephemeral active quiz state;
-- one router/history stack only;
-- one canonical Natural Earth source and ISO3 identity;
-- equivalent real DOM controls, keyboard access and visible focus;
-- reduced motion and OS-edge gesture compatibility;
-- lazy spatial loading and recoverable renderer failure/fallback;
-- current PWA/offline guarantees;
-- unchanged evidence/scoring/storage semantics;
-- no answer leakage;
-- British English and the current semantic colour system.
-
-Kill or narrow the moonshot if spatial navigation is slower/less clear after real refinement, repeated camera travel becomes friction, accessibility requires a separate dominant interface, route truth starts duplicating into animation state, the renderer materially worsens the mobile PWA, canonical geography needs a second source, or unrelated learning/storage changes are required to justify the design.
-
-## 7. Unresolved principal decisions
-
-The support tier must stop before deciding:
+You are authorised to decide and document:
 
 ### F1 — Spatial interaction contract
 
-Includes gesture ownership, route-to-spatial presentation semantics, progressive disclosure, reduced-motion behaviour, and the **Locations-vs-globe** relationship.
+Write `docs/open/issue-119-spatial-interaction-contract.md` and implement it. Resolve hierarchy, progressive disclosure, gestures, interruption/reversal, reduced motion, activity transitions and especially Locations-vs-globe.
 
 ### F2 — Renderer / scene / camera architecture
 
-Select or reject candidates only after H1 passes and the renderer comparison is genuinely comparable.
+Write `docs/open/issue-119-renderer-decision.md`. Use existing evidence plus focused new measurements where necessary, then choose. Plain Three, R3F and MapLibre are candidates, not commitments.
 
 ### F3 — Spherical geography / LOD contract
 
-Define the generated spherical representation, LOD boundaries, picking/display relationship and asset lifecycle from the six-continent evidence.
+Write `docs/open/issue-119-spherical-geography-contract.md`. Define generated world/continent/region LOD, display/picking geometry, microstates, antimeridian/multipart handling, runtime switching and disposal while preserving the single canonical Natural Earth pipeline.
 
-**Do not begin the Africa 3D vertical slice until F1–F3 have authorised an architecture.**
+Do not leave these decisions permanently parked. Make them at the point where evidence is sufficient and continue implementation.
+
+## Non-negotiable invariants
+
+Preserve:
+
+- URL authority and typed hash routing;
+- native Back/Forward and direct deep links;
+- ephemeral active-round state;
+- one router/history stack;
+- ISO3 identity;
+- one pinned Natural Earth source;
+- current curriculum/region membership;
+- scoring/evidence/Mastery/achievement semantics;
+- storage/Firebase contracts;
+- British English;
+- real DOM controls, keyboard access, visible focus and reduced motion;
+- PWA/offline behaviour;
+- Atlas semantic colour roles;
+- geography as the dominant visual object.
+
+No handwritten country geometry, duplicate neighbour tables, satellite/terrain aesthetic, 3D-only accessibility path, or unrelated gamification redesign.
+
+## Implementation priority
+
+1. create `moonshot/full-spatial-atlas` from the current exploration head;
+2. F1 design contract;
+3. F2 renderer decision;
+4. F3 spherical/LOD contract;
+5. canonical generated asset + runtime LOD implementation;
+6. production-quality persistent shell and route integration;
+7. world/continent/region navigation + DOM parity;
+8. Flags real application lifecycle;
+9. Locations end to end;
+10. Outlines end to end;
+11. Neighbours end to end;
+12. Results/Mastery/Crown spatial presentation;
+13. accessibility/fallback hardening;
+14. performance/PWA/mobile-layout hardening;
+15. complete automated acceptance and exact-artifact inspection;
+16. candidate PR back to `explore/spatial-atlas-moonshot` — **never `main` in this task**.
+
+## Performance direction
+
+The current prototype payload is too expensive to accept passively. Aggressively reduce the lazy spatial-entry cost; `issue-119-plan.md` sets a directional target of ≤250 kB gzip for renderer + initial world-selection geography where technically reasonable.
+
+Require render-on-demand at idle, constrained/adaptive DPR, real runtime LOD switching, recoverable context failure and explicit payload measurements.
+
+Do not invent physical-device numbers. Real GPU frame pacing, thermals, battery and OS edge-gesture coexistence remain pending until hardware testing occurs.
+
+## Verification
+
+`npm test` remains the primary gate. Add spatial tests rather than weakening existing invariants.
+
+The final candidate must have automated evidence for routing/history, deep links, interrupted/reduced-motion camera behaviour, geography/DOM action parity, all continents/regions, all four real domain flows, Results, persistence semantics, LOD/microstates/antimeridian cases, renderer fallback, idle rendering, accessibility basics, deterministic generation, exact payload cost and PWA/offline regression.
+
+Inspect the exact built artifact at narrow portrait, Pixel-class portrait, tablet portrait, short landscape and desktop. Do not call browser emulation physical-device testing.
+
+## Final handoff standard
+
+Report:
+
+- branch/head;
+- F1/F2/F3 decisions;
+- architecture implemented;
+- four-domain completion matrix;
+- exact payload/geometry costs;
+- automated and browser verification actually run;
+- unresolved physical-device-only evidence;
+- known defects/limitations;
+- fallback status;
+- what remains before any production migration.
+
+The objective is not to prove the moonshot should ship. The objective is to produce the best credible full candidate so that decision is worth making.
