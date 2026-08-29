@@ -1,400 +1,473 @@
-# Issue #119 — Spatial Atlas plan of record
+# Issue #119 — Spatial Atlas full-candidate plan of record
 
-**Status:** support preparation active; **principal work is not authorised yet**.  
+**Status:** OWNER-AUTHORISED FULL IMPLEMENTATION ON THE EXPLORATION LINE.  
 **Issue:** #119 — continuous spatial Atlas shell with interactive 3D Earth navigation  
-**Branch:** `explore/spatial-atlas-moonshot`  
-**Scope:** [`issue-119-spatial-atlas-moonshot.md`](issue-119-spatial-atlas-moonshot.md)  
-**Acceptance map:** [`issue-119-invariant-harness.md`](issue-119-invariant-harness.md)  
-**Principal packet:** [`issue-119-principal-packet.md`](issue-119-principal-packet.md)
+**Base exploration branch:** `explore/spatial-atlas-moonshot`  
+**Production `main`:** remains untouched until a later explicit migration decision.  
+**Authority:** this file supersedes the earlier H1-first stop-gate sequencing **for exploration-branch implementation only**.
 
-This is the single canonical execution plan. Archived #119 handoffs in `docs/closed/` are historical tracing material, not required principal reading.
+## 0. Owner decision and purpose
 
-The task is intentionally split so cheap support work falsifies the idea before a frontier/principal model spends judgement on architecture.
+The earlier programme intentionally stopped before expensive implementation unless a physical-phone H1 comparison materially passed. The owner has now explicitly chosen a different exploration strategy:
 
----
+> Build the Spatial Atlas far enough that it can be judged as a complete, production-grade alternative Atlas experience rather than as a cheap falsification probe.
 
-## 1. What #119 is testing
+Therefore the implementation agent is authorised to:
 
-The product thesis is not “Atlas should have a globe”. It is:
+- make the previously reserved F1/F2/F3 decisions;
+- design the complete spatial interaction model;
+- choose the renderer/scene/camera architecture from evidence;
+- define the spherical geography/LOD contract;
+- integrate all four learning domains;
+- replace the conventional presentation **on the exploration-derived working branch only**;
+- harden the candidate as far as automation and non-physical-device evidence permit.
 
-> Moving through Atlas as a continuous geographic space is materially easier to understand and more pleasant to use on a real phone than replacing launcher screens.
+The agent must **not** merge this work to `main`, claim that the product direction has been accepted, or fabricate physical-device evidence. The final product judgement still belongs to the owner on real hardware.
 
-That contains two separable hypotheses:
-
-| Hypothesis | Question | Cheapest honest test |
-| --- | --- | --- |
-| **H1 — continuity** | Does continuous spatial navigation beat discrete launcher replacement? | Existing production 2D geography; no renderer. |
-| **H2 — sphere** | If H1 wins, does a rotatable Earth add enough orientation/product value to justify a persistent renderer and spherical asset architecture? | Principal-owned 3D work after evidence gates. |
-
-**H1 is load-bearing.** If continuity is neutral or worse, stop #119. A more expensive renderer is not permitted to rescue a failed navigation hypothesis.
+The old 2D H1 probe, verdict sheet and renderer spikes remain useful historical evidence. They are no longer execution blockers.
 
 ---
 
-## 2. Current repository truth
+## 1. Definition of done
 
-Support reconciliation checkpoint: **27 August 2026**.
+The goal is a **complete parallel Atlas v2 candidate**, not another disposable demo.
 
-- `main` is post-#22 North America and its closeout/deploy documentation.
-- #22 is production-complete across Flags, Locations, Outlines and Neighbours.
-- #27 Oceania is still active at this checkpoint.
-- #137 Asia hardening is sequenced after #27 and is not part of the settled baseline yet.
-- #138 World Crown presentation/acceptance is still open and depends on the world-complete post-#27 curriculum.
-- #104 is **closed**. Its former map-first launcher design space is now historical input to H1, not an independently open dependency.
-- #34 is **closed**. Current learner-facing World Crown work belongs to #138.
-- #71 remains open for physical Pixel/iPhone/installed-PWA validation.
-- #118 remains open and has not yet produced a reusable motion/mobile-ergonomics baseline.
+A successful candidate provides, on the exploration line:
 
-Current `CLAUDE.md`, `PRODUCT.md` and `DESIGN.md` correctly describe the post-#22 production shape but still contain pre-#27/pre-#138 statements about Oceania/Crown reachability. Those statements must be re-read after #27/#137/#138 merge; do not freeze them into #119’s final baseline.
+`Mode → World → Continent → Region → Learn/Play → Results → spatial return`
 
-### Dependency gate
+for **Flags, Locations, Outlines and Neighbours**, across all six supported continents, while preserving the durable Atlas product engine underneath.
 
-Prefer final Stage 0 and Stage 1 execution only after **#27, #137 and #138 have merged into current `main`**.
+The candidate is complete only when:
 
-If any remain unmerged:
-
-- documentation/reconnaissance may proceed;
-- reusable harnesses may be prepared and smoke-tested;
-- historical evidence may be labelled and retained;
-- **do not** capture a supposedly final production comparison baseline;
-- **do not** build the final phone-judgeable H1 probe against knowingly transitional Atlas.
-
-### Gate status — 2026-08-28
-
-**#27 merged. #138 merged (PR #145). #137 remains open.**
-
-The gate was deliberately relaxed for Stage 1, by owner decision, on this reasoning:
-
-- #137 is **Asia Locations** hardening — zoom ceiling, the Levant inset, tiny-country assistance,
-  Cyprus source reconciliation, and a global Locations selectability fix;
-- the Stage 1 probe traverses **Africa in the Flags domain** and runs no Locations round, so it
-  consumes none of the surfaces #137 changes;
-- the gate was written when #22/#27 were actively rewriting the shared map **generator**, which
-  would genuinely have moved the ground under a geography probe. #137 does not.
-
-**The one real overlap** is the shared `map-viewport` max-zoom constant, which Workstream A may
-retune. The probe does not use the production viewport runtime — its camera is a self-contained
-interpolated `viewBox` — so the exposure is limited to the framing constants being re-derived if
-the probe is ever promoted. The probe is disposable, so that cost is accepted.
-
-Stage 0 automated evidence was captured against `main` @ `0a828a7`, which contains #27 and #138.
-It must be **re-captured after #137 merges** before any figure from it is cited in an F2 decision.
-
-The Stage 0 motion/ergonomics half is supplied by the completed **#118 audit**
-(`issue-118-design-skill-audit.md`), as §4 of this plan directs — it was not captured twice.
+1. the spatial shell is the default presentation on the candidate branch;
+2. one persistent geographic scene interprets typed route state rather than owning a parallel navigation state machine;
+3. all continent and region navigation works through both geography and equivalent real DOM controls;
+4. all four domains run real production learning mechanics, not stubs;
+5. Back/Forward, deep links and active-round fallback remain correct;
+6. canonical Natural Earth/ISO3 geography remains the single source of truth;
+7. progress, evidence, scoring, Mastery, achievements, storage and Firebase contracts are unchanged unless a separate explicit migration decision is documented;
+8. reduced motion, keyboard/focus behaviour and renderer fallback are first-class paths;
+9. the spatial stack is lazy/controlled enough to remain credible as a mobile PWA;
+10. `npm test` and the spatial-specific acceptance suite are green against the exact built artifact;
+11. unresolved physical-phone claims are recorded as unresolved rather than inferred.
 
 ---
 
-## 3. Preservation boundaries
+## 2. Required reading — keep it small
 
-Support and principal work alike must preserve unless an explicitly separate product decision says otherwise:
+Before production-code changes, read:
 
-- React/Vite production ownership;
-- typed hash routing and URL authority;
+1. live GitHub Issue #119;
+2. `DESIGN.md`;
+3. `.impeccable/design.json`;
+4. `docs/ROUTING.md`;
+5. `docs/COUNTRY_NAMING.md`;
+6. `docs/MAP_GEOMETRY_SOURCES.md` and `docs/CARTOGRAPHY_PROVENANCE.json`;
+7. this plan;
+8. `experiments/spatial-atlas/README.md` — current working prototype and measured gaps;
+9. `docs/open/issue-119-invariant-harness.md`;
+10. `docs/open/issue-119-renderer-comparison.md` and `docs/open/issue-119-geometry-lod-experiment.md` only as evidence, not as binding decisions.
+
+Do **not** burn context reading archived #119 handoffs unless a historical fact is contested.
+
+The current prototype already proves persistent scene mounting, route-driven camera state, all six continents/regions, real DOM scope controls, native Back, reduced-motion snapping, WebGL fallback and a real Flags round. Extend it; do not restart from a blank globe.
+
+---
+
+## 3. Working topology
+
+Start from the current head of:
+
+`explore/spatial-atlas-moonshot`
+
+Create a dedicated implementation branch:
+
+`moonshot/full-spatial-atlas`
+
+The branch may absorb ordinary non-conflicting `main` fixes when useful, but **do not wait for unrelated conventional Atlas backlog**. Before any eventual production migration, a separate reconciliation against then-current `main` is mandatory.
+
+Keep commits coherent and reviewable. A large programme may use child branches/PRs into `moonshot/full-spatial-atlas`, but do not fragment architecture into duplicate systems merely to create smaller PRs.
+
+---
+
+## 4. Locked preservation boundaries
+
+The spatial candidate changes presentation continuity, not Atlas semantics.
+
+Preserve:
+
+- React 19 + Vite application ownership;
+- typed hash routes as durable navigation authority;
 - native browser Back/Forward;
+- direct cold/deep-link initialisation at the stable target state;
 - ephemeral active-round/session state;
-- ISO3 country identity;
-- one pinned Natural Earth 1:10m production geography source;
-- existing learner region membership rather than a renderer-owned taxonomy;
-- learning evidence, scoring, Mastery and achievement qualification semantics;
-- persistence/storage namespaces and Firebase behaviour;
+- canonical ISO3 identity;
+- the single pinned Natural Earth 1:10m source and documented geopolitical policy;
+- existing region membership and curriculum truth;
+- learning evidence and scoring rules;
+- Mastery and achievement qualification/persistence semantics;
+- storage namespaces/migrations and Firebase behaviour;
 - British English learner-facing copy;
-- Atlas semantic colours and no colour-only state;
+- Atlas semantic colours and non-colour state cues;
 - real DOM controls, keyboard access, visible focus and reduced motion;
-- current PWA/offline guarantees;
-- answer-safe accessibility metadata.
+- offline/PWA guarantees;
+- geography as the dominant content object.
 
-Spatial presentation may interpret route state. It must not become a second application/router/state engine.
+Do not create:
 
----
+- a second router/history stack;
+- a second geography/topology source;
+- handwritten country geometry or neighbour tables;
+- renderer-owned curriculum taxonomy;
+- decorative satellite/terrain/space aesthetics;
+- a 3D-only accessibility path;
+- unrelated scoring/storage/gamification redesign.
 
-## 4. Stage 0 — production baseline
-
-**Owner:** support automation + Ben physical-device judgement.  
-**Execute final capture only after the dependency gate clears.**
-
-### Automated evidence
-
-Use the exact then-current production build and the isolated harness in `experiments/spatial-continuity/` to capture what automation can truthfully measure:
-
-- route/action count for the comparison traversal;
-- typed route transitions;
-- Back/Forward;
-- cold/deep-link behaviour;
-- active-round refresh fallback;
-- browser focus behaviour;
-- reduced-motion branch;
-- browser navigation/resource timing;
-- screenshots/video/trace for side-by-side inspection;
-- exact `dist/` raw/gzip measurements;
-- relevant PWA/offline acceptance through the existing PWA suite.
-
-Historical hard-coded payload numbers are not the final baseline. Re-measure the exact production artifact after #27/#137/#138.
-
-Where #118 eventually supplies directly relevant motion/ergonomics evidence against the same production build, consume it instead of duplicating the audit.
-
-### Human device script — fixed
-
-**Judge:** Ben on a physical phone. An agent, screenshot or Playwright mobile viewport cannot decide H1.
-
-Run production Atlas first, then the Stage 1 probe, in the same session:
-
-1. Cold-open. Choose Flags.
-2. Reach West Africa Play-ready/activity state. Count taps and note hesitation.
-3. Start a round, answer three, leave mid-round.
-4. Back out to Africa. Back out to world/domain level.
-5. Switch to Outlines. Reach Southern Africa.
-6. Repeat step 2 four more times, as a returning learner would.
-7. One-handed throughout, thumb only, standing.
-
-Record for **each** side:
-
-- faster / same / slower;
-- clearer / same / less clear;
-- would-use-daily: yes / no;
-- single worst moment.
-
-Step 6 carries the most weight. Choreography that delights once but becomes friction through repetition is a failure.
-
-Do not claim device evidence unless the device session actually happened.
+The existing conventional shell should remain available in source as the renderer-failure/fallback path until an explicit production migration removes it.
 
 ---
 
-## 5. Stage 1 — cheap 2D continuity probe
+## 5. Design contract — F1 is now authorised
 
-**Owner:** support.  
-**Principal sessions:** zero.  
-**Execute final probe only after the dependency gate clears.**
+Before broad implementation, write a concise living decision record at:
 
-Test exactly this vertical slice:
+`docs/open/issue-119-spatial-interaction-contract.md`
 
-`Mode/domain → World/continent selection → Africa → West Africa → Play-ready/activity → Back to Africa → Back to world/domain`
+Then implement it. Do not turn this into a documentation-only sprint.
 
-Use only:
+The contract must decide:
 
-- existing production 2D `MapRegionAsset` geography;
-- existing fit/focus metadata;
-- existing typed router and browser history;
-- real DOM controls;
-- current design tokens and semantic colours.
+### Hierarchy and progressive disclosure
 
-Required behaviour:
+- mode-first entry;
+- world selection state;
+- continent focus and whole-continent Learn/Play;
+- geographically associated region controls;
+- region focus and activity entry;
+- activity/result return to geography;
+- cold deep-link behaviour without replaying cinematic ancestry.
 
-- motion/camera-like 2D transitions are interruptible;
-- route state wins if motion is interrupted;
-- deep links initialise at the stable target rather than replaying a long ancestor sequence;
-- reduced motion provides an immediate/short equivalent;
-- the prototype is judgeable on a phone;
-- DOM controls remain available and dispatch the same application action as geography selection.
+### Gesture ownership
 
-Do **not** use:
+- one-finger drag rotates spatial geography when the spatial stage owns the gesture;
+- tap selects;
+- pinch/dolly zooms;
+- OS/browser edge Back remains available;
+- activity-specific map gestures take precedence while Locations owns the learning surface;
+- interruption always yields to the learner's hand and route truth.
 
-- Three.js;
-- React Three Fiber;
-- MapLibre;
-- spherical/new globe geometry;
-- a second navigation state machine;
-- colour-only region progress;
-- scoring/Mastery/storage changes;
-- broad production navigation replacement.
+### Motion
 
-The probe is deliberately disposable. If it requires principal architecture work to exist, that is evidence that H1 is not cheap enough to test cleanly.
+Define one coherent camera grammar for:
 
----
+- forward hierarchy travel;
+- Back/Forward reversal;
+- interrupted travel;
+- same-level selection;
+- activity entry/exit;
+- reduced motion.
 
-## 6. H1 stop gate
+Motion must communicate hierarchy, not perform spectacle.
 
-Ben runs the fixed Stage 0/Stage 1 device comparison.
+### Locations-vs-globe decision
 
-| Verdict | Action |
-| --- | --- |
-| **Continuity materially wins** | H1 passes. Continue to support-tier evidence repair below. |
-| **Continuity is neutral or worse** | Record the negative result and **STOP #119**. No renderer rescue attempt. |
-| **Mixed: selection better, repetition worse** | Narrow/reject rather than automatically escalating to 3D. |
-| **No physical verdict yet** | Park the branch at a clean device-judgeable checkpoint and stop. |
+Resolve this explicitly. Locations is the one domain where the learning object is already a map.
 
-The builder may report technical facts. The builder does not self-award H1 PASS.
+Choose and document one coherent model, for example:
 
----
+- spatial shell yields to the established 2D Locations answer surface during the question, then restores the globe context; or
+- the selected renderer becomes the Locations answer surface only if it can preserve every current selectability, zoom, tiny-country, accessibility and answer-feedback invariant.
 
-## 7. Stage 2 — renderer evidence repair, only after H1 PASS
+Do not ship two competing maps on screen merely to preserve visual continuity.
 
-**Owner:** support evidence.  
-**Decision authority:** principal F2 only.
-
-The current renderer comparison is **AMBER** because the historical spikes were not apples-to-apples.
-
-### MapLibre repair
-
-- current Node/current Atlas base;
-- headed or hardware-backed Chromium where practical;
-- real local Atlas geography;
-- distinguish genuine renderer/source failures from headless SwiftShader artefacts;
-- verify picking, camera interaction, idle behaviour and failure/recovery.
-
-### R3F repair
-
-- current Node/current Atlas base;
-- real canonical Africa geography rather than a minimal sphere/mesh;
-- real country polygon picking;
-- delivered cost includes geography plus required Atlas-authored tessellation/picking/label/LOD support.
-
-### Comparable measures
-
-Record separately:
-
-- renderer JS;
-- CSS;
-- geography;
-- Atlas-authored support code;
-- total lazy chunk cost;
-- startup impact;
-- idle/render behaviour;
-- picking;
-- camera/gesture interaction;
-- renderer failure/recovery.
-
-Do not mark the comparison GREEN until both candidates attempt materially comparable Atlas tasks. Support may reconcile facts; it may not choose the renderer.
+Use the Impeccable-style sequence where useful: critique → clarify → simplify → distil → adapt → harden → polish.
 
 ---
 
-## 8. Stage 3 — six-continent geography/LOD evidence, only after H1 PASS
+## 6. Renderer / scene architecture — F2 is now authorised
 
-The existing projected-path experiment is useful **historical feasibility evidence**, not the final six-continent spherical contract.
+Write the decision record at:
 
-Refresh measurements against final curriculum coverage for:
+`docs/open/issue-119-renderer-decision.md`
 
-- Africa;
-- South America;
-- Europe;
-- Asia;
-- North America;
-- Oceania.
+Evaluate the current plain-Three prototype and the existing R3F/MapLibre evidence against the actual Atlas task. Re-run focused spikes if a decision-relevant fact is still ambiguous, then choose.
 
-Explicit difficult cases:
+The decision must cover:
+
+- persistent scene lifecycle;
+- camera abstraction/director;
+- render-on-demand / idle behaviour;
+- adaptive/constrained DPR;
+- picking and DOM parity;
+- lazy-loading boundary;
+- resize/orientation behaviour;
+- context loss and renderer failure recovery;
+- reduced-motion integration;
+- integration with React lifecycle/StrictMode;
+- testability in Playwright;
+- delivered JS/CSS/support-code cost.
+
+Do not preserve plain Three, R3F or MapLibre merely because a spike already exists. Choose the architecture that best satisfies Atlas.
+
+### Cost direction
+
+The current prototype is approximately:
+
+- 135.63 kB gzip prototype JS;
+- 269.5 kB gzip world geometry;
+- 127.0 kB gzip Africa geometry;
+- versus roughly 100.42 kB gzip for the current production core.
+
+That is a warning, not an automatic rejection.
+
+Aggressively reduce the **lazy spatial-entry payload**. Target a combined renderer + initial world-selection geography envelope of **≤250 kB gzip** where technically reasonable. If the best architecture cannot meet that target, document the measured reason rather than hiding the cost.
+
+Idle geography must not require a permanent animation loop when nothing is moving.
+
+---
+
+## 7. Spherical geography / LOD architecture — F3 is now authorised
+
+Write the contract at:
+
+`docs/open/issue-119-spherical-geography-contract.md`
+
+Extend the existing canonical generator. Do not create a parallel cartography pipeline.
+
+The final contract must cover:
+
+- world selection LOD;
+- continent LOD;
+- region/activity detail where justified;
+- display geometry versus picking geometry;
+- microstate/small-island survival;
+- locator/assist policy when simplification removes visible polygons;
+- multipart countries;
+- antimeridian splitting/unwrapping;
+- mainland framing versus distant territories;
+- deterministic generation and provenance;
+- payload verification;
+- runtime LOD switching and disposal/reuse.
+
+Audit all six continents, explicitly including:
 
 - European microstates;
-- Caribbean small islands;
+- Caribbean islands;
 - Pacific small islands;
-- Kiribati / antimeridian;
-- multipart archipelagos.
+- Kiribati/date-line cases;
+- Russia and other antimeridian-adjacent geometry;
+- multipart/overseas-territory framing.
 
-Record:
-
-- coordinate counts;
-- component counts;
-- raw/gzip payload;
-- microstate survivability;
-- antimeridian integrity;
-- picking feasibility;
-- source/provenance.
-
-**Do not define final LOD boundaries, spherical encoding, visual/picking mesh policy or renderer-specific asset contracts.** Those are F3 decisions.
+The runtime must actually switch LODs; generated-but-unused detail does not satisfy this phase.
 
 ---
 
-## 9. Invariant acceptance harness
+## 8. Production candidate shell
 
-Use [`issue-119-invariant-harness.md`](issue-119-invariant-harness.md) as the map from #119 requirements to existing Atlas tests/verifiers and future spatial-specific coverage.
+Evolve the prototype into application architecture rather than maintaining it as an isolated toy.
 
-The architecture does not pass by weakening these invariants:
+Introduce a coherent production-quality spatial module, approximately:
 
-- URLs remain durable authority;
-- Back/Forward remains native;
-- deep links initialise directly;
-- active quiz state remains ephemeral;
-- no second router/history stack;
-- one Natural Earth source;
-- ISO3 preserved;
-- equivalent real DOM controls;
-- keyboard/focus accessibility;
+```text
+SpatialAtlas
+├── scene / renderer host
+├── geography layer
+├── camera director
+├── picking layer
+├── spatial labels / DOM controls
+└── route → spatial-state adapter
+```
+
+The adapter must be a pure interpretation of authoritative application route/state. The scene must not invent durable navigation state.
+
+On `moonshot/full-spatial-atlas`, make the spatial shell the default presentation for normal learning routes once it is stable enough. Preserve the conventional presentation as a fallback rather than running two independent application shells.
+
+---
+
+## 9. Complete all four learning domains
+
+### Flags
+
+Replace the prototype's isolated in-memory round with the real application lifecycle while preserving normal persistence, scoring and result semantics. Keep the flag as the dominant recognition object; the globe is context, not competition.
+
+### Locations
+
+Implement the F1 decision. Preserve all current interaction invariants, including zoom/pan, tiny-country assistance, pointer ownership, answer feedback, previously answered-country selectability and no answer leakage.
+
+### Outlines
+
+Keep the country silhouette dominant. Integrate real Learn/Play, answer feedback, progress and Results while allowing the spatial context to persist/re-enter without shrinking the outline into decorative content.
+
+### Neighbours
+
+Integrate the real target/adjacency mechanic, input/suggestion semantics, keyboard path and map/geographic context. Preserve canonical topology-derived land adjacency and zero-neighbour truth.
+
+For every domain prove:
+
+- continent and region scope;
+- Learn and Play where the production domain supports both;
+- mid-round Back behaviour;
+- refresh/deep-link fallback;
+- Results;
+- progress persistence;
+- Mastery/achievement effects exactly matching current semantics.
+
+---
+
+## 10. Results, Mastery and prestige
+
+Results should feel like the same spatial session resolving, not an unrelated reward page.
+
+Integrate:
+
+- score/result summary;
+- return/retry/next actions;
+- region × domain Mastery;
+- complete-region/continent state;
+- World Crown where applicable;
+- restrained purple/gold spatial augmentation with explicit non-colour cues.
+
+Do not add an achievement economy or celebratory layer beyond current Atlas semantics.
+
+---
+
+## 11. Accessibility and fallback
+
+The globe is never the sole interface.
+
+Required:
+
+- equivalent real DOM controls for spatially selectable scopes;
+- correct accessible hierarchy/names/state;
+- complete keyboard navigation;
+- visible focus;
+- focus restoration after durable transitions;
+- sensible announcements for route/scope changes;
+- reduced-motion camera grammar;
+- no answer leakage from accessibility metadata;
+- high-contrast/forced-colour compatibility where applicable;
+- renderer failure falls back to a fully usable conventional/2D route experience.
+
+Treat the canvas itself as a pointer/visual surface, not as a substitute for semantic HTML.
+
+---
+
+## 12. Mobile/PWA/performance hardening
+
+Do as much as can be honestly automated now.
+
+Implement and verify:
+
+- lazy spatial stack loading;
+- render-on-demand at idle;
+- adaptive DPR;
+- resize/orientation recovery;
+- renderer context-loss recovery;
+- world/continent/region LOD switching;
+- geometry/material reuse and disposal;
+- no runaway RAF/listener lifecycle;
+- offline revisit consistent with current cache policy;
+- cold deep links;
+- installed-PWA-safe routing assumptions;
+- edge-gutter gesture non-capture;
+- short landscape and narrow portrait layout.
+
+Record as **PENDING PHYSICAL DEVICE** rather than passing:
+
+- real GPU frame pacing;
+- thermals/battery;
+- Android/iOS edge-gesture coexistence;
+- actual pinch/drag feel;
+- installed-PWA device behaviour.
+
+Never claim those without hardware evidence.
+
+---
+
+## 13. Verification programme
+
+Primary gate remains:
+
+`npm test`
+
+Add spatial-specific automated coverage rather than weakening existing tests.
+
+At minimum cover:
+
+- route ↔ camera/scope interpretation;
+- Back/Forward;
+- deep-link initialisation;
+- interrupted camera travel;
 - reduced motion;
-- OS-edge gesture compatibility;
-- renderer fallback/recovery;
-- spatial stack lazy-loading;
-- PWA/offline behaviour;
-- evidence/scoring/storage unchanged;
-- no answer leakage.
+- DOM/geography action parity;
+- all six continent framing;
+- every region reachable;
+- all four domains real Learn/Play flow;
+- Results return;
+- no duplicate navigation stack;
+- no storage/scoring semantic drift;
+- LOD switching;
+- microstates and antimeridian cases;
+- renderer failure/fallback;
+- idle render behaviour;
+- accessibility/focus basics;
+- exact lazy payload measurement;
+- deterministic spherical asset generation;
+- PWA/offline regression.
 
-#71 owns current physical OS-edge/PWA evidence; a future spatial gesture layer still requires its own physical retest.
+Run the browser matrix against the exact built artifact at minimum at:
 
----
+- 320×568;
+- 390×844 / Pixel-class portrait;
+- tablet portrait;
+- 844×390 short landscape;
+- desktop.
 
-## 10. Principal entry gate
-
-A principal session starts only when all applicable items below are true:
-
-1. #27, #137 and #138 are merged into current `main`.
-2. Stage 0 exact-production automated baseline is captured.
-3. Ben’s physical production baseline is recorded.
-4. Stage 1 2D continuity probe is phone-judgeable.
-5. Ben has supplied the H1 verdict.
-6. H1 is a material PASS.
-7. Renderer comparison has been repaired to genuine apples-to-apples evidence.
-8. Six-continent geometry/LOD evidence is refreshed.
-9. The branch is synced to then-current `main`.
-10. [`issue-119-principal-packet.md`](issue-119-principal-packet.md) is current and concise.
-
-The principal should not need archived handoffs or thousands of lines of historical planning.
-
-### Principal reads
-
-Start with:
-
-1. live #119;
-2. `CLAUDE.md`;
-3. `DESIGN.md`;
-4. `.impeccable/design.json`;
-5. this plan;
-6. `issue-119-principal-packet.md`.
-
-Read `issue-119-renderer-comparison.md` and the refreshed geometry report only for the evidence behind F2/F3. Read archived documents only to trace a contested historical fact.
+Do not describe browser emulation as physical-device testing.
 
 ---
 
-## 11. Decisions explicitly reserved for the principal
+## 14. Delivery sequence
 
-### F1 — spatial interaction contract
+Use this sequence unless evidence forces a documented change:
 
-Includes:
+1. reconcile current exploration head and create `moonshot/full-spatial-atlas`;
+2. write F1 interaction contract and begin shell refinement;
+3. decide F2 renderer architecture;
+4. decide F3 spherical/LOD contract;
+5. implement canonical generated assets + runtime LOD;
+6. integrate production-quality persistent SpatialAtlas shell;
+7. finish world/continent/region navigation and DOM parity;
+8. integrate Flags end to end;
+9. integrate Locations end to end;
+10. integrate Outlines end to end;
+11. integrate Neighbours end to end;
+12. integrate Results/Mastery/Crown presentation;
+13. harden accessibility/fallback;
+14. harden mobile/PWA/performance;
+15. run complete automated acceptance and inspect the exact artifact;
+16. document remaining physical-device-only questions;
+17. open a **candidate review PR targeting `explore/spatial-atlas-moonshot`**, not `main`.
 
-- route → spatial presentation semantics;
-- progressive disclosure;
-- gesture ownership;
-- interruption grammar;
-- reduced-motion grammar;
-- **Locations-vs-globe decision**.
-
-### F2 — renderer / scene / camera architecture
-
-Choose or reject candidates from repaired evidence. Define renderer lifecycle, camera abstraction, picking/DOM parity, failure fallback and lazy-loading boundary.
-
-### F3 — spherical geography / LOD contract
-
-Define the generated spherical representation, LOD boundaries, picking/display relationship, antimeridian/multipart handling and asset lifecycle using the six-continent evidence.
-
-**STOP before making F1, F2 or F3. Do not begin the Africa 3D vertical slice until those decisions authorise it.**
+Do not stop merely because the earlier H1 gate has not been physically judged. Stop only for a genuine architectural impossibility, a preservation-boundary conflict that cannot be resolved cleanly, or a safety/data-integrity risk.
 
 ---
 
-## 12. Kill criteria and principal budget
+## 15. Final handoff
 
-Default to **retain/narrow the current launcher**, not indefinite continuation, if:
+The completed candidate handoff must state plainly:
 
-- H1 fails;
-- repeated spatial travel is slower or more annoying than current navigation;
-- native Back and spatial manipulation cannot coexist cleanly;
-- accessibility requires a parallel interface so dominant that spatial presentation becomes decoration;
-- route truth starts duplicating into an animation/state machine;
-- canonical geography requires a second source;
-- renderer cost materially worsens mobile startup/PWA behaviour;
-- renderer failure cannot degrade safely;
-- the design needs unrelated scoring/storage/Mastery changes to justify itself.
+- chosen F1/F2/F3 decisions and why;
+- exact branch/head;
+- what changed architecturally;
+- all four domain integration status;
+- exact bundle/geometry costs;
+- complete automated verification evidence;
+- exact browser evidence actually run;
+- physical-device evidence still missing;
+- known defects/limitations;
+- whether the conventional fallback remains intact;
+- what would still be required before a production merge.
 
-Principal sessions are scarce and reserved for high-leverage decisions:
-
-- F1 + F2: target one principal session, split only if repaired evidence is genuinely balanced;
-- F3: principal contract design, implementation delegated;
-- Africa 3D vertical slice/refinement: only after F1–F3, with an explicit finite budget;
-- independent go/no-go review: fresh principal after Ben’s device verdict, not instead of it.
-
-Rejection is a valid successful exploration outcome.
+A complete candidate is allowed to be rejected after owner testing. The purpose of this programme is to make that judgement against the best credible Spatial Atlas implementation rather than against an intentionally cheap probe.
