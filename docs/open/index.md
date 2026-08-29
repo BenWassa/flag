@@ -46,7 +46,7 @@ The three largest follow-ups from #113 are complete. #115 corrected Western Euro
 
 Measured on-screen linear change was Western Europe **4.50x**, whole Europe **1.59x**, and every Asian country **2.30x** at maximum zoom. No region became smaller.
 
-#104 (map-first continent launcher) is **closed**, not an open/deferred dependency. Its geography-first selection question remains historical input to #119's cheap Stage 1 H1 continuity probe; #119 must not revive #104's conflicting colour-only progress or region-colour taxonomy. Historical scope/reasoning remains in [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
+#104 (map-first continent launcher) is **closed**, not an open/deferred dependency. Its geography-first selection question remains historical input to #119's completed 2D continuity probe; #119 must not revive #104's conflicting colour-only progress or region-colour taxonomy. Historical scope/reasoning remains in [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
 
 ### 4. Platform quality and IA
 
@@ -86,50 +86,23 @@ Atlas now ships production curriculum for all six real continents — Africa, So
 
 All six continents satisfy the four-domain curriculum gate used by the achievement read model. Learner-facing World Crown surfacing remains separate under #138; #27 did not alter achievement semantics.
 
-- [#137 — Asia Locations/cartography hardening](https://github.com/BenWassa/flag/issues/137) remains open. It is the last unmerged item in #119's dependency gate.
+- [#137 — Asia Locations/cartography hardening](https://github.com/BenWassa/flag/issues/137) remains open. It no longer blocks #119's owner-authorised full-candidate implementation; any eventual production migration must reconcile against then-current `main`.
 
 **Continent payload follow-up (#86).** Context clipping is complete. Europe is 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a 500,000-byte budget, while Africa and South America remain byte-identical. See the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
 
 ### 6. Exploration — not scheduled for production
 
 - [#119 — continuous spatial Atlas shell](https://github.com/BenWassa/flag/issues/119).
-  **Moonshot exploration. No production commitment, no renderer selected.**
-  Plan of record: [`issue-119-plan.md`](issue-119-plan.md); canonical scope: [`issue-119-spatial-atlas-moonshot.md`](issue-119-spatial-atlas-moonshot.md); acceptance criteria: [`issue-119-prototype-verification-plan.md`](issue-119-prototype-verification-plan.md); invariant map: [`issue-119-invariant-harness.md`](issue-119-invariant-harness.md); compact principal handoff: [`issue-119-principal-packet.md`](issue-119-principal-packet.md).
+  **Owner-authorised full candidate on the exploration line; no production migration is authorised.**
+  The existing 2D continuity probe remains available as historical comparison evidence, and the existing persistent 3D prototype is the implementation starting point.
 
-  **Current gate (2026-08-28): waiting on Ben, not on code.** #27 and #138 (PR #145) have merged.
-  #137 remains open but was judged non-overlapping for Stage 1 — it is Asia Locations hardening,
-  while the probe traverses Africa in Flags and runs no Locations round; the reasoning and the one
-  accepted risk are recorded in [`issue-119-plan.md`](issue-119-plan.md) §2.
+  Full candidate work now belongs on `moonshot/full-spatial-atlas`. F1/F2/F3 may be decided and implemented there, followed by end-to-end Flags, Locations, Outlines and Neighbours integration plus Results/Mastery/Crown, accessibility, fallback, mobile/PWA and performance hardening. The candidate may replace the conventional presentation on its own branch, but **must not merge to `main`** without a later explicit owner decision.
 
-  Stage 0 automated evidence is captured against `main` @ `0a828a7`, and its motion/ergonomics half
-  is supplied by the completed #118 audit rather than captured twice. **The Stage 1 continuity probe
-  is built and verified** — see [`probe/README.md`](../../experiments/spatial-continuity/probe/README.md).
-  Run it with `npm run probe:stage1`.
+  Physical-device acceptance is **not claimed**. Real GPU performance, gesture coexistence and final product judgement remain deferred until the mature candidate is ready for owner testing on real hardware; the old H1 phone sheet is historical evidence rather than an implementation gate.
 
-  **The 3D Africa vertical slice is also built**, at the owner's direction, ahead of the H1 gate —
-  see [`spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md). It runs the full
-  prototype traversal on a persistent Three.js Earth built from the same pinned Natural Earth source
-  and ISO3 policy as production, with the typed router authoritative, native Back, interruptible
-  camera, reduced-motion snap, raycast picking, real DOM scope controls and a WebGL-failure fallback
-  to the 2D probe. Run it with `npm run probe:globe`.
+  Current execution authority is [`issue-119-plan.md`](issue-119-plan.md) plus the compact [`issue-119-principal-packet.md`](issue-119-principal-packet.md), with [`spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md) describing the actual prototype starting point. The [`invariant harness`](issue-119-invariant-harness.md) remains the acceptance map. Older H1-first scope/verification material is clearly labelled historical and preserved under `docs/closed/` where appropriate.
 
-  Measured cost, which replaces the stale historical figures: prototype JS **135.63 kB gzip**
-  (~127 kB of that three.js plus prototype code), `globe-world.json` **269.5 kB gzip**,
-  `globe-africa.json` **127.0 kB gzip**. Production Atlas's entire core `app.js` is 100.42 kB gzip,
-  so the renderer alone exceeds the current core bundle and world geometry exceeds it again.
-  **Mobile performance remains unproven** — everything was verified on headless SwiftShader.
-
-  The remaining gate is the **H1 physical-phone verdict**, and no agent may supply it. The recording
-  sheet is [`issue-119-h1-verdict.md`](issue-119-h1-verdict.md); it can now compare production
-  against either the 2D probe or the globe. Renderer selection (F2) is still **not** made — the
-  prototype deliberately uses plain Three.js rather than R3F so that building it does not read as
-  choosing it. A negative verdict stops #119, and that is a success, not a failure.
-
-  The renderer comparison remains **PARKED / AMBER, not decision-ready**. The historical R3F and MapLibre spikes did not attempt the same geography/picking/delivered-cost task, and MapLibre's blank headless source remains confounded by SwiftShader/headless execution. Do **not** repair or choose a renderer yet.
-
-  Once the dependency gate clears, the sequence is: exact-production Stage 0 automated baseline + Ben physical production baseline → cheap Stage 1 continuity probe using existing production 2D geography and the existing router → Ben physical-phone H1 verdict. If continuity is neutral or worse, stop #119. **Only after a material H1 PASS** should support repair renderer evidence apples-to-apples and refresh six-continent LOD measurements before a principal session decides F1/F2/F3. No Africa 3D slice is authorised before those decisions.
-
-  Supporting historical evidence: [`renderer comparison`](issue-119-renderer-comparison.md), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md), [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md). Superseded planning documents are archived in `docs/closed/` and are not required principal reading.
+  Supporting evidence remains available without blocking implementation: [`renderer comparison`](issue-119-renderer-comparison.md), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md), [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md), and the 2D probe/phone-comparison records.
 
 - [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
   **Audit complete; implementation not started.** Report:
@@ -143,17 +116,17 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   wrong answer for 1560 ms; and the Locations wrong-guess colour is cleared
   only by an animation keyframe, so it never clears under reduced motion. Seven
   focused follow-up issues are filed as
-  [#153](https://github.com/BenWassa/flag/issues/153) (launcher accessible names,
+  [#146](https://github.com/BenWassa/flag/issues/146) (launcher accessible names,
   Mastery and complete-region cues),
-  [#154](https://github.com/BenWassa/flag/issues/154) (Outlines Play dwell and
-  live score), [#155](https://github.com/BenWassa/flag/issues/155)
+  [#147](https://github.com/BenWassa/flag/issues/147) (Outlines Play dwell and
+  live score), [#148](https://github.com/BenWassa/flag/issues/148)
   (reduced-motion map clearing),
-  [#156](https://github.com/BenWassa/flag/issues/156) (Neighbours combobox
-  semantics), [#157](https://github.com/BenWassa/flag/issues/157) (motion tokens
+  [#149](https://github.com/BenWassa/flag/issues/149) (Neighbours combobox
+  semantics), [#150](https://github.com/BenWassa/flag/issues/150) (motion tokens
   and a control-height scale),
-  [#158](https://github.com/BenWassa/flag/issues/158) (retired-subsystem CSS and
+  [#151](https://github.com/BenWassa/flag/issues/151) (retired-subsystem CSS and
   the empty launcher badge) and
-  [#159](https://github.com/BenWassa/flag/issues/159) (degenerate Home coverage
+  [#152](https://github.com/BenWassa/flag/issues/152) (degenerate Home coverage
   label) — none of them a redesign.
 
   On the skills question the answer is mostly negative: of eight candidate
@@ -164,11 +137,7 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   already locked. The motion and game-feel lenses were the only ones that found
   what the existing Impeccable/Taste workflow does not.
 
-  Its mobile-ergonomics and motion-timing lenses produce exactly the
-  current-launcher interaction baseline #119 Stage 0 needs; §2's confirmed
-  strengths and measured timings are that baseline, so **do not capture it
-  twice**. Physical-device questions raised by the audit (E-02, E-03) were
-  deferred to #71 rather than answered, and #104 was not reopened.
+  Its mobile-ergonomics and motion-timing measurements remain reusable baseline evidence for #119 rather than something that must be recaptured before the full candidate can start. Physical-device questions raised by the audit (E-02, E-03) were deferred to #71 rather than answered, and #104 was not reopened.
 
 ## Working rules
 
