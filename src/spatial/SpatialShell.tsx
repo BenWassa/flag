@@ -26,6 +26,11 @@ export interface SpatialShellProps {
   children: ReactNode;
 }
 
+function classicAtlasHref(): string {
+  const hash = typeof window === 'undefined' ? '#/' : window.location.hash || '#/';
+  return `../${hash}`;
+}
+
 export function SpatialShell({ state, contentKey, onSelectCountry, onRendererUnavailable, children }: SpatialShellProps) {
   const panel = useRef<HTMLDivElement | null>(null);
 
@@ -35,12 +40,16 @@ export function SpatialShell({ state, contentKey, onSelectCountry, onRendererUna
     panel.current?.scrollTo({ top: 0, behavior: 'instant' });
   }, [contentKey]);
 
-  return (
+  return <>
+    <div className="spatial-preview-switch" role="status" aria-label="Spatial Atlas preview">
+      <span>Spatial preview</span>
+      <a href={classicAtlasHref()} aria-label="Return to classic Atlas">Classic Atlas</a>
+    </div>
     <div className="spatial-shell" data-mode={state.mode}>
       <SpatialStage state={state} onSelectCountry={onSelectCountry} onUnavailable={onRendererUnavailable}>
         <SpatialScopeBar state={state} />
       </SpatialStage>
       <div className="spatial-shell__panel" ref={panel}>{children}</div>
     </div>
-  );
+  </>;
 }
