@@ -83,6 +83,12 @@ export default defineConfig(({ command }) => ({
           'manifest.webmanifest',
           'icons/**/*.{svg,png}',
           'assets/index-*.js',
+          // Issue #119: the spatial stack is the shell on this candidate, so the
+          // renderer and the world LOD are precached like `app.js`. Continent
+          // detail stays lazy and runtime-cached, exactly as the projected 2D
+          // continent assets already do.
+          'assets/stage-controller-*.js',
+          'assets/world-*.js',
         ],
         globIgnores: [
           'assets/africa-*.js',
@@ -116,6 +122,7 @@ export default defineConfig(({ command }) => ({
         outline: resolve(root, 'src/styles/outline.css'),
         neighbors: resolve(root, 'src/styles/neighbors.css'),
         'atlas-theme': resolve(root, 'src/styles/atlas-theme.css'),
+        spatial: resolve(root, 'src/styles/spatial.css'),
       },
       output: {
         entryFileNames(chunk) {

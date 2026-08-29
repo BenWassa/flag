@@ -1,10 +1,34 @@
 # Issue #119 — Spatial Atlas full-candidate plan of record
 
-**Status:** OWNER-AUTHORISED FULL IMPLEMENTATION ON THE EXPLORATION LINE.  
+**Status:** OWNER-AUTHORISED FULL IMPLEMENTATION ON THE EXPLORATION LINE — **EXECUTED**.  
 **Issue:** #119 — continuous spatial Atlas shell with interactive 3D Earth navigation  
 **Base exploration branch:** `explore/spatial-atlas-moonshot`  
 **Production `main`:** remains untouched until a later explicit migration decision.  
 **Authority:** this file supersedes the earlier H1-first stop-gate sequencing **for exploration-branch implementation only**.
+
+## Delivery status (2026-08-29)
+
+The plan below is the execution authority and is preserved as written. It has now
+been carried out on the candidate branch. The architecture actually built is
+recorded in three decision records rather than in this plan:
+
+- [`F1 — spatial interaction contract`](issue-119-spatial-interaction-contract.md);
+- [`F2 — renderer/scene/camera architecture`](issue-119-renderer-decision.md);
+- [`F3 — spherical geography and LOD contract`](issue-119-spherical-geography-contract.md);
+- [`architecture map`](issue-119-principal-packet.md) — the short entry point.
+
+Two corrections to this plan's own text, made by implementation evidence:
+
+- **§2 item 8** points at `experiments/spatial-atlas/README.md`. That prototype is
+  **retired**. Its capabilities live in `src/spatial/` under test; keeping a
+  second globe implementation beside the real one is the duplication §4 forbids.
+- **§6's cost direction** is met: measured spatial entry is **178.6 kB gzip**
+  (renderer 125.6, world geography 53.0) against the ≤ 250 kB target, down from
+  the prototype's 405 kB. Core `app.js` moved 100.4 → 101.5 kB gzip.
+
+§12's physical-device list is unchanged and unclaimed.
+
+---
 
 ## 0. Owner decision and purpose
 

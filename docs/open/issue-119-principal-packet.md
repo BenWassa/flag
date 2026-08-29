@@ -1,155 +1,88 @@
-# Issue #119 — Full Spatial Atlas implementation packet
+# Issue #119 — Spatial Atlas candidate: architecture map
 
-**Status:** READY FOR PRINCIPAL/FULL-IMPLEMENTATION AGENT.  
-**Authority:** `issue-119-plan.md` is the execution plan.  
-**Working base:** `explore/spatial-atlas-moonshot`.  
-**Create:** `moonshot/full-spatial-atlas`.  
-**Production `main`:** do not merge or replace without a later explicit owner decision.
+**Status:** IMPLEMENTED on the full-candidate branch. This file replaced the
+pre-implementation entry packet; F1, F2 and F3 are no longer open questions.
+**Authority:** `issue-119-plan.md` remains the execution plan of record.
+**Production `main`:** unchanged, and not to be merged into without a later
+explicit owner decision.
 
-## Mission
+This is the short map. It describes what the candidate *is*, not what it was
+meant to become. Read it before touching the spatial code; read the three
+decision records when you need the reasoning.
 
-Take the existing Spatial Atlas prototype and build it into the strongest credible **complete parallel Atlas candidate**.
+---
 
-Do not stop at the old H1 gate. The owner has explicitly authorised the exploration branch to proceed through the previously reserved F1/F2/F3 decisions and full implementation so the final judgement can be made against a mature candidate rather than a cheap probe.
+## The candidate in one paragraph
 
-The target experience is:
+A persistent Three.js Earth sits behind the existing Atlas screens and
+**interprets** the typed route as a place to stand. It never decides where the
+application is. Every screen, action, round, score, ledger and achievement is
+production Atlas, untouched: the spatial shell wraps the existing React screens
+rather than replacing them, which is also why turning the renderer off yields the
+conventional application rather than a degraded one.
 
-`Mode → World → Continent → Region → Learn/Play → Results → spatial return`
+## Decision records
 
-across **Flags, Locations, Outlines and Neighbours**, all six continents, with the existing Atlas product engine preserved underneath.
+| | Decision | Record |
+| --- | --- | --- |
+| F1 | Route → spatial presentation; five stage modes; the globe yields entirely to map-native activities | [`issue-119-spatial-interaction-contract.md`](issue-119-spatial-interaction-contract.md) |
+| F2 | Plain Three.js behind a narrow handle, lazily imported, render-on-demand | [`issue-119-renderer-decision.md`](issue-119-renderer-decision.md) |
+| F3 | Two LOD levels, seven generated assets, delta-varint encoding, the declared 2D framing policy reused | [`issue-119-spherical-geography-contract.md`](issue-119-spherical-geography-contract.md) |
 
-## Read first
+## Where the code is
 
-Keep the initial context set small:
+```text
+src/spatial/
+  spatial-state.ts      PURE route + view + achievements -> SpatialState. The whole
+                        navigation contract. Holds no state; writes no history.
+  geo.ts                Spherical maths and geographic picking. No Three, no DOM.
+  globe-asset.ts        Decoder for the generated assets. Mirrors the generator.
+  scope-geography.ts    Curriculum scope -> country ids -> framing boxes.
+  camera-director.ts    Retargetable travel, reduced motion. No Three.
+  gestures.ts           Pointer ownership and the platform edge-gutter reserve.
+  stage-controller.ts   Imperative owner: camera, LOD mounting, picking, gestures.
+  renderer/globe-scene.ts   Three.js. The only file that imports a renderer.
+  SpatialStage.tsx      React host. Lazy-imports the stack; pushes SpatialState.
+  SpatialScopeBar.tsx   The DOM twin of the globe's region selection.
+  SpatialShell.tsx      Layout; collapses to a plain block when the stage yields.
 
-1. live Issue #119;
-2. `DESIGN.md`;
-3. `.impeccable/design.json`;
-4. `docs/open/issue-119-plan.md`;
-5. `experiments/spatial-atlas/README.md`;
-6. `docs/open/issue-119-invariant-harness.md`;
-7. `docs/ROUTING.md`;
-8. `docs/MAP_GEOMETRY_SOURCES.md` + `docs/CARTOGRAPHY_PROVENANCE.json`;
-9. `docs/COUNTRY_NAMING.md`.
+src/data/globe/         Generated. world + six continents + provenance.
+scripts/generate-globe-assets.mjs   Generator (npm run globe:generate).
+scripts/lib/globe-encoding.mjs      Encoder; mirror of globe-asset.ts.
+src/styles/spatial.css  Stage layout. Existing tokens only.
+```
 
-Use `issue-119-renderer-comparison.md` and `issue-119-geometry-lod-experiment.md` only when making F2/F3 decisions. Ignore archived #119 handoffs unless a historical fact is disputed.
+The integration point in the application is nine lines in
+`src/react/AtlasApp.tsx`: derive `spatialState`, wrap `content` in
+`SpatialShell`, and route a geography tap through `resolveTapTarget` into the
+same `navigateStable` the DOM buttons call.
 
-## Existing starting point — do not rebuild it
+## The rules that hold this together
 
-The current branch already contains a working persistent Three.js Earth with:
-
-- typed-route-driven camera state;
-- all six continents and every region reachable;
-- mode-first navigation;
-- continent/region picking;
-- equivalent real DOM scope controls;
-- interruptible camera travel;
-- native Back;
-- reduced-motion snapping;
-- WebGL failure fallback;
-- one real Flags round and Results;
-- generated Natural Earth spherical geometry from the canonical pinned source.
-
-Measured current cost is roughly 135.63 kB gzip JS + 269.5 kB gzip world geometry. Mobile hardware performance is not proven.
-
-Current known gaps include:
-
-- Locations, Outlines and Neighbours real activity integration;
-- runtime LOD switching;
-- complete antimeridian handling;
-- final renderer choice;
-- production-grade accessibility/focus semantics;
-- mobile/PWA/performance hardening.
-
-Extend this work. Do not restart from a blank renderer or introduce a second geography source.
-
-## Decisions you own
-
-You are authorised to decide and document:
-
-### F1 — Spatial interaction contract
-
-Write `docs/open/issue-119-spatial-interaction-contract.md` and implement it. Resolve hierarchy, progressive disclosure, gestures, interruption/reversal, reduced motion, activity transitions and especially Locations-vs-globe.
-
-### F2 — Renderer / scene / camera architecture
-
-Write `docs/open/issue-119-renderer-decision.md`. Use existing evidence plus focused new measurements where necessary, then choose. Plain Three, R3F and MapLibre are candidates, not commitments.
-
-### F3 — Spherical geography / LOD contract
-
-Write `docs/open/issue-119-spherical-geography-contract.md`. Define generated world/continent/region LOD, display/picking geometry, microstates, antimeridian/multipart handling, runtime switching and disposal while preserving the single canonical Natural Earth pipeline.
-
-Do not leave these decisions permanently parked. Make them at the point where evidence is sufficient and continue implementation.
-
-## Non-negotiable invariants
-
-Preserve:
-
-- URL authority and typed hash routing;
-- native Back/Forward and direct deep links;
-- ephemeral active-round state;
-- one router/history stack;
-- ISO3 identity;
-- one pinned Natural Earth source;
-- current curriculum/region membership;
-- scoring/evidence/Mastery/achievement semantics;
-- storage/Firebase contracts;
-- British English;
-- real DOM controls, keyboard access, visible focus and reduced motion;
-- PWA/offline behaviour;
-- Atlas semantic colour roles;
-- geography as the dominant visual object.
-
-No handwritten country geometry, duplicate neighbour tables, satellite/terrain aesthetic, 3D-only accessibility path, or unrelated gamification redesign.
-
-## Implementation priority
-
-1. create `moonshot/full-spatial-atlas` from the current exploration head;
-2. F1 design contract;
-3. F2 renderer decision;
-4. F3 spherical/LOD contract;
-5. canonical generated asset + runtime LOD implementation;
-6. production-quality persistent shell and route integration;
-7. world/continent/region navigation + DOM parity;
-8. Flags real application lifecycle;
-9. Locations end to end;
-10. Outlines end to end;
-11. Neighbours end to end;
-12. Results/Mastery/Crown spatial presentation;
-13. accessibility/fallback hardening;
-14. performance/PWA/mobile-layout hardening;
-15. complete automated acceptance and exact-artifact inspection;
-16. candidate PR back to `explore/spatial-atlas-moonshot` — **never `main` in this task**.
-
-## Performance direction
-
-The current prototype payload is too expensive to accept passively. Aggressively reduce the lazy spatial-entry cost; `issue-119-plan.md` sets a directional target of ≤250 kB gzip for renderer + initial world-selection geography where technically reasonable.
-
-Require render-on-demand at idle, constrained/adaptive DPR, real runtime LOD switching, recoverable context failure and explicit payload measurements.
-
-Do not invent physical-device numbers. Real GPU frame pacing, thermals, battery and OS edge-gesture coexistence remain pending until hardware testing occurs.
+1. **The route is the application.** `spatial-state.ts` is pure and verified not
+   to contain `pushState`, `replaceState` or any write to `location`.
+2. **The renderer owns no taxonomy.** Verified: `globe-scene.ts` imports no
+   curriculum table. ISO3 identity comes from `src/data/countries.ts`.
+3. **One geography source.** The generator extends the pinned Natural Earth
+   pipeline and reuses the declared 2D framing policy.
+4. **Every spatial action has a DOM control.** Verified exhaustively over
+   195 countries × 4 domains × 6 continents.
+5. **No answer leakage.** A live question carries no scope highlighting, no
+   picking and no description.
+6. **Nothing renders while idle.** One guarded `requestAnimationFrame` in the
+   whole scene; a browser test asserts a flat frame count at rest.
 
 ## Verification
 
-`npm test` remains the primary gate. Add spatial tests rather than weakening existing invariants.
+- `npm test` — the full existing gate, including `scripts/verify-spatial-atlas.mjs`.
+- `npm run test:spatial` — `tests/browser/spatial-atlas.spec.ts` across desktop
+  Chromium and Pixel 7, plus a five-viewport layout matrix.
+- Headless Chromium runs on SwiftShader. That is engineering evidence. It is
+  **not** physical-device evidence and must never be described as such.
 
-The final candidate must have automated evidence for routing/history, deep links, interrupted/reduced-motion camera behaviour, geography/DOM action parity, all continents/regions, all four real domain flows, Results, persistence semantics, LOD/microstates/antimeridian cases, renderer fallback, idle rendering, accessibility basics, deterministic generation, exact payload cost and PWA/offline regression.
+## What is still open
 
-Inspect the exact built artifact at narrow portrait, Pixel-class portrait, tablet portrait, short landscape and desktop. Do not call browser emulation physical-device testing.
-
-## Final handoff standard
-
-Report:
-
-- branch/head;
-- F1/F2/F3 decisions;
-- architecture implemented;
-- four-domain completion matrix;
-- exact payload/geometry costs;
-- automated and browser verification actually run;
-- unresolved physical-device-only evidence;
-- known defects/limitations;
-- fallback status;
-- what remains before any production migration.
-
-The objective is not to prove the moonshot should ship. The objective is to produce the best credible full candidate so that decision is worth making.
+Owner judgement on real hardware: GPU frame pacing, thermals, battery,
+Android/iOS edge-gesture coexistence, installed-PWA behaviour, and whether the
+interaction is actually better than the conventional launcher on a phone held in
+one hand. See `issue-119-plan.md` §12 for the standing list.

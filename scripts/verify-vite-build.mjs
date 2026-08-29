@@ -3,7 +3,7 @@ import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
 
 const DIST = 'dist';
-const CSS_FILES = ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css'];
+const CSS_FILES = ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css', 'spatial.css'];
 
 async function exists(path) {
   try {

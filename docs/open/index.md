@@ -93,16 +93,44 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
 ### 6. Exploration — not scheduled for production
 
 - [#119 — continuous spatial Atlas shell](https://github.com/BenWassa/flag/issues/119).
-  **Owner-authorised full candidate on the exploration line; no production migration is authorised.**
-  The existing 2D continuity probe remains available as historical comparison evidence, and the existing persistent 3D prototype is the implementation starting point.
+  **Owner-authorised full candidate, built and implemented on the exploration line. No production migration is authorised and none is claimed.**
 
-  Full candidate work now belongs on `moonshot/full-spatial-atlas`. F1/F2/F3 may be decided and implemented there, followed by end-to-end Flags, Locations, Outlines and Neighbours integration plus Results/Mastery/Crown, accessibility, fallback, mobile/PWA and performance hardening. The candidate may replace the conventional presentation on its own branch, but **must not merge to `main`** without a later explicit owner decision.
+  The candidate is complete in the sense the plan defines: a persistent Three.js
+  Earth interprets the typed route across `Mode → World → Continent → Region →
+  Learn/Play → Results → spatial return`, for all four domains and all six
+  continents, running the real production learning, scoring, evidence, Mastery
+  and storage lifecycle. The isolated `experiments/spatial-atlas` prototype is
+  **retired**: keeping a second globe implementation beside the real one is the
+  duplication the plan forbids, and its capabilities now live in `src/spatial/`
+  under test.
 
-  Physical-device acceptance is **not claimed**. Real GPU performance, gesture coexistence and final product judgement remain deferred until the mature candidate is ready for owner testing on real hardware; the old H1 phone sheet is historical evidence rather than an implementation gate.
+  The three reserved decisions are made and recorded:
 
-  Current execution authority is [`issue-119-plan.md`](issue-119-plan.md) plus the compact [`issue-119-principal-packet.md`](issue-119-principal-packet.md), with [`spatial-atlas/README.md`](../../experiments/spatial-atlas/README.md) describing the actual prototype starting point. The [`invariant harness`](issue-119-invariant-harness.md) remains the acceptance map. Older H1-first scope/verification material is clearly labelled historical and preserved under `docs/closed/` where appropriate.
+  - [`F1 — spatial interaction contract`](issue-119-spatial-interaction-contract.md);
+  - [`F2 — renderer/scene/camera architecture`](issue-119-renderer-decision.md);
+  - [`F3 — spherical geography and LOD contract`](issue-119-spherical-geography-contract.md).
 
-  Supporting evidence remains available without blocking implementation: [`renderer comparison`](issue-119-renderer-comparison.md), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md), [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md), and the 2D probe/phone-comparison records.
+  Measured spatial entry payload is **178.6 kB gzip** (renderer 125.6 + world
+  geography 53.0) against the plan's ≤ 250 kB direction, down from the
+  prototype's 405 kB. Core `app.js` is unchanged at 101.5 kB gzip: the whole
+  spatial stack is behind a dynamic import, and the conventional Atlas remains
+  the renderer-failure path in source rather than in principle.
+
+  Verification is `npm test` plus `scripts/verify-spatial-atlas.mjs` and
+  `tests/browser/spatial-atlas.spec.ts`. The [`invariant harness`](issue-119-invariant-harness.md)
+  remains the acceptance map, and [`issue-119-plan.md`](issue-119-plan.md) the
+  execution authority.
+
+  Physical-device acceptance is **not claimed and not inferable**. Real GPU frame
+  pacing, thermals, battery, Android/iOS edge-gesture coexistence, installed-PWA
+  behaviour and the actual feel of drag and pinch remain owner judgement on real
+  hardware. Headless Chromium under SwiftShader is engineering evidence only.
+
+  Supporting historical evidence remains available and is explicitly not binding:
+  [`renderer comparison`](issue-119-renderer-comparison.md) (PARKED/AMBER; its
+  recorded defects mean it did not settle F2), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
+  [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md),
+  and the 2D probe/phone-comparison records.
 
 - [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
   **Audit complete; implementation not started.** Report:

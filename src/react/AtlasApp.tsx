@@ -23,6 +23,8 @@ import { createOutlinesRound } from '../state/outlines-round.js';
 import { invalidatePendingRoundLaunch } from '../state/round-launch-guard.js';
 import type { RoundContext } from '../state/round-context.js';
 import { AppStore } from '../state/store.js';
+import { SpatialShell } from '../spatial/SpatialShell.js';
+import { deriveSpatialState, resolveTapTarget, type SpatialState } from '../spatial/spatial-state.js';
 import { AtlasActionsContext, type AtlasActions } from './actions.js';
 import { Icon } from './components/Icon.js';
 import { DomainScreen, FlagsStudyScreen, HomeScreen, ProfileScreen } from './screens/PassiveScreens.js';
@@ -60,6 +62,7 @@ export function AtlasApp() {
   const [notice, setNotice] = useState('');
   const [revealedFlags, setRevealedFlags] = useState<ReadonlySet<string>>(new Set());
   const [revealAll, setRevealAll] = useState(false);
+  const [spatialAvailable, setSpatialAvailable] = useState(true);
 
   const announce = useCallback((message: string) => {
     if (!message) return;
@@ -231,6 +234,30 @@ export function AtlasApp() {
   const ledgers: ProgressLedgers = { flags: store.progress, locations: store.locationProgress, outlines: store.outlineProgress, neighbors: store.neighborProgress };
   const persisting = store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting;
   const routeKey = currentRouteKey(currentRoute.current, store);
+  const stableKey = serializeRoutePath(currentRoute.current);
+
+  /**
+   * Issue #119 — the spatial presentation is derived from authoritative state,
+   * never from the stage's own history. Memoised on the durable screen identity
+   * so an answered question does not re-aim the camera.
+   */
+  const spatialState = useMemo<SpatialState>(() => deriveSpatialState({
+    route: currentRoute.current,
+    view: store.view.name,
+    resultScope: 'result' in store.view ? store.view.result.session.scope : undefined,
+    achievements: store.achievements,
+  }), [stableKey, store.view.name, store.achievements, store]);
+
+  const selectCountry = useCallback((countryId: string) => {
+    const target = resolveTapTarget(spatialState, countryId);
+    if (!target || !spatialState.domain) return;
+    const route = routeForScopeId(spatialState.domain, target);
+    // Geography resolves through exactly the action a DOM control would call,
+    // so a tap and its equivalent button can never diverge.
+    if (route) navigateStable(route);
+  }, [navigateStable, spatialState]);
+
+  const rendererUnavailable = useCallback(() => setSpatialAvailable(false), []);
 
   useEffect(() => {
     document.title = documentTitle(currentRoute.current, store);
@@ -252,8 +279,12 @@ export function AtlasApp() {
 
   useGlobalLifecycle(currentRoute, actions, store);
 
+  const content = screen(store, ledgers, persisting, revealedFlags, revealAll, rounds.neighbors.getQuery());
+
   return <AtlasActionsContext.Provider value={actions}>
-    {screen(store, ledgers, persisting, revealedFlags, revealAll, rounds.neighbors.getQuery())}
+    {spatialAvailable
+      ? <SpatialShell state={spatialState} contentKey={routeKey} onSelectCountry={selectCountry} onRendererUnavailable={rendererUnavailable}>{content}</SpatialShell>
+      : content}
     <p className="visually-hidden" role="status" aria-live="polite">{announcement}</p>
     {notice ? <div className="app-notice" role="status" aria-live="polite"><span className="app-notice__body"><span className="app-notice__icon" aria-hidden="true"><Icon name="warning" /></span><span className="app-notice__message">{notice}</span></span><button className="app-notice__dismiss" type="button" onClick={dismissNotice} aria-label="Dismiss message"><Icon name="close" /></button></div> : null}
     <InstallBanner />
