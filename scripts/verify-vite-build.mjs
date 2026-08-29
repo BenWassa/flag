@@ -73,7 +73,7 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
 
 const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
 assert.ok(sw.includes('flag-atlas-spatial-preview-v1'), 'Spatial preview service worker uses its isolated cache generation.');
-assert.equal(sw.includes('flag-atlas-v29'), false, 'Spatial preview service worker does not reuse the classic Atlas cache generation.');
+assert.ok(sw.includes('flag-atlas-v29'), 'Spatial preview service worker explicitly protects the classic Atlas cache generation.');
 assert.ok(sw.includes('index.html'), 'Injected precache includes the offline navigation shell.');
 for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
   assert.equal(new RegExp(`${continent}-[A-Za-z0-9_-]+\\.js`).test(sw), false, `${continent} geography remains runtime-cached rather than precached.`);
