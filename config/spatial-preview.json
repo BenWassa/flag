@@ -1,0 +1,7 @@
+{
+  "sourceBranch": "preview/spatial-atlas-deployed",
+  "sourceCommit": "7e7cdce6266b8308a5339175ab8691126460729b",
+  "candidateCommit": "fa09e3991c693684694e51041499d5cc943edbd1",
+  "deployPath": "spatial",
+  "cachePrefix": "flag-atlas-spatial-preview-v1"
+}

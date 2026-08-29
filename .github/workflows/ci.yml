@@ -23,6 +23,22 @@ jobs:
       - run: npm install
       - run: npm run check
       - run: npm test
+      - name: Read pinned Spatial Atlas preview source
+        id: spatial-preview
+        run: echo "sha=$(node -p \"require('./config/spatial-preview.json').sourceCommit\")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.spatial-preview.outputs.sha }}
+          path: .spatial-preview-source
+      - name: Build pinned Spatial Atlas preview
+        working-directory: .spatial-preview-source
+        run: npm ci && npm run build
+      - name: Assemble combined deployment artifact
+        run: npm run build:spatial-preview
+      - name: Install Chromium for deployed-preview acceptance
+        run: npx playwright install --with-deps chromium
+      - name: Verify classic ↔ spatial deployed experience
+        run: npm run test:spatial-deployment
       - uses: actions/upload-artifact@v4
         with:
           name: flag-atlas-dist

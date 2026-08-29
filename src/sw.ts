@@ -11,7 +11,7 @@ declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision?: string | null }>;
 };
 
-const CACHE_PREFIX = 'flag-atlas-v29';
+const CACHE_PREFIX = 'flag-atlas-v30';
 const FLAG_CACHE = `${CACHE_PREFIX}-flags`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime`;
 

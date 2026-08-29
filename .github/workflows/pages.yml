@@ -28,6 +28,18 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Read pinned Spatial Atlas preview source
+        id: spatial-preview
+        run: echo "sha=$(node -p \"require('./config/spatial-preview.json').sourceCommit\")" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.spatial-preview.outputs.sha }}
+          path: .spatial-preview-source
+      - name: Build pinned Spatial Atlas preview
+        working-directory: .spatial-preview-source
+        run: npm ci && npm run build
+      - name: Assemble combined deployment artifact
+        run: npm run build:spatial-preview
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
