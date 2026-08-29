@@ -36,8 +36,8 @@ The stage has five modes. Nothing else varies.
 | --- | --- | --- | --- |
 | `world` | Home, and each domain's continent index | whole Earth, neutral | continents (none at Home) |
 | `focus` | a continent or region launcher | that scope framed and lit, the rest context | regions |
-| `context` | a live Flags question | framed but inert and **unlit** | nothing |
-| `results` | any domain's results view | the scope just played, re-framed | nothing |
+| `context` | a live Flags question | framed but inert and **unlit**; takes no pointer events at all | nothing |
+| `results` | any domain's results view | the scope just played, re-framed | nothing, but the globe still turns |
 | `yielded` | Locations / Outlines / Neighbours questions, the Flags study gallery, Profile | not rendered at all | nothing |
 
 Progressive disclosure is the ladder itself: the deeper the route, the fewer
@@ -75,7 +75,11 @@ surface is untouched, not reimplemented.
 Flags is the exception, and it earns it: a flag cannot be read off a map. There
 the globe stays mounted as quiet context at a reduced share of the viewport. It
 carries **no scope highlighting at all** while a question is live — an in-scope
-tint during a question is a hint — and it takes no pointer events.
+tint during a question is a hint — and it takes no pointer events, so it can
+never intercept a tap meant for an answer.
+
+Results deliberately keeps the pointer. Nothing there is selectable either, but
+the learner has finished and the place is theirs to look around.
 
 The alternative considered and rejected: making the globe itself the Locations
 answer surface. It would have to reproduce zoom, pan, tiny-country assist discs,
