@@ -64,13 +64,14 @@ test('serves the pinned Spatial Atlas preview on the same Firebase origin (#119)
   const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
   const manifestResponse = await page.request.get(new URL(manifestHref ?? '', page.url()).href);
   expect(manifestResponse.ok()).toBe(true);
-  const manifest = await manifestResponse.json() as { name?: string; scope?: string };
-  expect(manifest).toMatchObject({ name: 'Atlas Spatial Preview', scope: './' });
+  const manifest = await manifestResponse.json() as { name?: string; scope?: string; id?: string };
+  expect(manifest).toMatchObject({ name: 'Atlas', scope: './', id: './' });
+  expect(new URL(manifestHref ?? '', page.url()).pathname).toContain('/spatial/');
 
   const sourceResponse = await page.request.get(new URL('./preview-source.json', page.url()).href);
   expect(sourceResponse.ok()).toBe(true);
   const source = await sourceResponse.json() as { sourceCommit?: string; candidateCommit?: string };
-  expect(source.sourceCommit).toBe('7e7cdce6266b8308a5339175ab8691126460729b');
+  expect(source.sourceCommit).toBe('f995428784eac343ac49a6b7b1ecd3a177810756');
   expect(source.candidateCommit).toBe('fa09e3991c693684694e51041499d5cc943edbd1');
 
   await page.getByRole('link', { name: 'Return to classic Atlas' }).click();
