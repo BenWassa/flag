@@ -163,38 +163,31 @@ references; install nothing else.
 
 ## 5. Follow-up issue map
 
-Seven focused issues, all filed 2026-08-28. None is a redesign, none is "fix all UX", and each is
+Seven focused issues, filed as #146-#152 on 2026-08-28. None is a redesign, none is "fix all UX", and each is
 independently valuable and independently shippable. Ordered by impact.
 
-1. **[#153](https://github.com/BenWassa/flag/issues/153) — launcher scope rows hide count, progress
-   and earned Mastery from assistive technology.** — A-01, A-02, G-03, F-03.
+1. **[#146](https://github.com/BenWassa/flag/issues/146) — restore launcher scope-row semantics and surface earned Mastery.** — A-01, A-02, G-03, F-03.
    The row's `aria-label` suppresses count, progress and Mastered state; complete-region is
    colour-only; Mastery has no visual mark at all. One surface, one coherent change. Must satisfy
    `DESIGN.md` principle 8 and must not add a purple star that merely repeats state.
-2. **[#154](https://github.com/BenWassa/flag/issues/154) — Outlines Play advances after 180 ms flat,
-   and shows no live score.** — G-01, G-02, M-03.
+2. **[#147](https://github.com/BenWassa/flag/issues/147) — align Outlines Play feedback weight and live-score parity.** — G-01, G-02, M-03.
    Replace the flat `180 ms` with the correct/wrong dwell split, decide the live-score question
    deliberately, and extract the duplicated dwell constants into one shared timing module. Carries
    the additional finding that `verify-play-feedback.mjs` asserts outcome-aware dwell for Flags and
    Locations only, while naming Outlines in its pass message — which is how this drifted in.
-3. **[#155](https://github.com/BenWassa/flag/issues/155) — wrong-guess map colour never clears under
-   `prefers-reduced-motion`.** — M-01.
+3. **[#148](https://github.com/BenWassa/flag/issues/148) — make Locations wrong-answer feedback correct under reduced motion.** — M-01.
    Move the neutral resting state out of the `map-wrong` terminal keyframe. Small, self-contained,
    and currently a real reduced-motion regression.
-4. **[#156](https://github.com/BenWassa/flag/issues/156) — Neighbours suggestion list is a
-   half-implemented ARIA combobox.** — A-03.
+4. **[#149](https://github.com/BenWassa/flag/issues/149) — complete Neighbours suggestion accessibility semantics.** — A-03.
    Either implement ARIA 1.2 properly with arrow-key navigation, or drop `role="listbox"`/`option`
    for a plain labelled button group. The current half-pattern is worse than either.
-5. **[#157](https://github.com/BenWassa/flag/issues/157) — add motion tokens and a control-height
-   scale.** — M-02, F-01.
+5. **[#150](https://github.com/BenWassa/flag/issues/150) — introduce a small motion-token and control-height scale.** — M-02, F-01.
    A small `--duration-*` / `--ease-*` set plus a documented height scale beside the existing radius
-   tiers, then migrate. This is the durable fix that makes #154 and #155 hard to reintroduce.
-6. **[#158](https://github.com/BenWassa/flag/issues/158) — remove retired-subsystem CSS and the empty
-   launcher badge placeholder.** — F-02, T-02.
+   tiers, then migrate. This is the durable fix that makes findings M-03 and F-01 hard to reintroduce.
+6. **[#151](https://github.com/BenWassa/flag/issues/151) — remove retired CSS and duplicate shared control styles.** — F-02, T-02.
    Delete the ~80 lines of retired-subsystem CSS and the triple-defined `.text-icon-button`; remove
    or fill the empty dashed `.launcher-header__badge`.
-7. **[#159](https://github.com/BenWassa/flag/issues/159) — all four Home domain cards now read
-   "World" after Oceania shipped.** — T-01.
+7. **[#152](https://github.com/BenWassa/flag/issues/152) — replace the degenerate Home coverage label now that every domain is worldwide.** — T-01.
    Decide what that line should say, or drop it. Distinct from #138, which owns the Crown surface.
 
 **Deferred, not filed:** A-04 (Locations map tab stops) needs a product decision about whether
@@ -219,7 +212,7 @@ speculative issue. E-02 and E-03 belong to **#71** and are recorded there rather
 | #104 remains deferred | Yes — untouched |
 | adopt/selective/reference/reject for each candidate | Yes — §4 |
 | Redundant generalist skills identified rather than retained | Yes — five rejections, two on redundancy grounds |
-| Implementation split into focused follow-ups | Yes — §5; #153–#159 filed 2026-08-28 |
+| Implementation split into focused follow-ups | Yes — §5; #146–#152 filed 2026-08-28 |
 | No production application changes | Yes — this document is the only change |
 
 `npm test` (check + unit + Firebase rules + production build + full verifier suite) passes on the
