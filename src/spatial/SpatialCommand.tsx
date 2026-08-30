@@ -13,7 +13,7 @@ import {
 import { scopeSupportsDomain } from '../domain/scope-support.js';
 import { useAtlasActions } from '../react/actions.js';
 import { DomainIcon, Icon } from '../react/components/Icon.js';
-import { scopeModelFor, storageNoticeFor, type ScopeRegion } from '../react/scope-model.js';
+import { START_ACTIONS, scopeModelFor, storageNoticeFor, type ScopeRegion } from '../react/scope-model.js';
 import type { ScopeStatus, SpatialState } from './spatial-state.js';
 
 /**
@@ -216,7 +216,7 @@ function Scope({ state, ledgers, achievements }: {
         <button
           className="button button--primary"
           type="button"
-          data-action="start-play"
+          data-action={START_ACTIONS[domain].play}
           data-domain={domain}
           data-scope-id={activeId}
           onClick={(event) => activeId && actions.playScope(domain, activeId, event.currentTarget)}
@@ -224,7 +224,7 @@ function Scope({ state, ledgers, achievements }: {
         <button
           className="button button--secondary"
           type="button"
-          data-action="start-learn"
+          data-action={START_ACTIONS[domain].learn}
           data-domain={domain}
           data-scope-id={activeId}
           onClick={(event) => activeId && actions.learnScope(domain, activeId, event.currentTarget)}

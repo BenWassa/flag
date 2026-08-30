@@ -26,6 +26,19 @@ import type { ProgressLedgers } from '../domain/progress-summary.js';
  * them drifting apart in what they offer, what they count or what they call it.
  */
 
+/**
+ * Stable internal action identifiers, per domain. These are compatibility
+ * contracts rather than cosmetic hooks — `test` is the internal activity value
+ * behind the learner-facing "Play" — so the spatial command surface and the
+ * conventional launcher publish exactly the same ones.
+ */
+export const START_ACTIONS: Record<LearningDomain, { play: string; learn: string }> = {
+  flags: { play: 'start-test', learn: 'start-learn' },
+  locations: { play: 'start-map-test', learn: 'start-map-learn' },
+  outlines: { play: 'start-outline-test', learn: 'start-outline-learn' },
+  neighbors: { play: 'start-neighbor-test', learn: 'start-neighbor-learn' },
+};
+
 export interface ScopeRegion {
   scope: StudyScope;
   stats: ScopeStats;

@@ -1,7 +1,7 @@
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import { domainDisplayName } from '../../domain/display.js';
 import { useAtlasActions } from '../actions.js';
-import type { ScopeModel } from '../scope-model.js';
+import { START_ACTIONS, type ScopeModel } from '../scope-model.js';
 import { DomainIcon, Icon } from './Icon.js';
 import { ProgressStrip } from './ProgressStrip.js';
 
@@ -9,13 +9,6 @@ export interface LauncherModel extends ScopeModel {
   persisting: boolean;
   storageNotice: string;
 }
-
-const START_ACTIONS: Record<LearningDomain, { play: string; learn: string }> = {
-  flags: { play: 'start-test', learn: 'start-learn' },
-  locations: { play: 'start-map-test', learn: 'start-map-learn' },
-  outlines: { play: 'start-outline-test', learn: 'start-outline-learn' },
-  neighbors: { play: 'start-neighbor-test', learn: 'start-neighbor-learn' },
-};
 
 function ScopeRow({ domain, scope, stats, unitLabel, variant, domainMastered, complete }: {
   domain: LearningDomain;
