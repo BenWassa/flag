@@ -13,6 +13,7 @@ import {
 import { scopeSupportsDomain } from '../domain/scope-support.js';
 import { useAtlasActions } from '../react/actions.js';
 import { DomainIcon, Icon } from '../react/components/Icon.js';
+import { ProgressStrip } from '../react/components/ProgressStrip.js';
 import { START_ACTIONS, scopeModelFor, storageNoticeFor, type ScopeRegion } from '../react/scope-model.js';
 import type { ScopeStatus, SpatialState } from './spatial-state.js';
 
@@ -216,8 +217,12 @@ function Scope({ state, ledgers, achievements }: {
           {notes.length ? <span className="visually-hidden">, {notes.join(', ')}</span> : null}
           {status ? <span className={`spatial-command__mark spatial-command__mark--${status}`} aria-hidden="true">{statusMark(status)}</span> : null}
         </h1>
-        <p className="spatial-command__meta">{model.stats.total} {model.unitLabel} · {model.stats.cleared} cleared{model.stats.due > 0 ? ` · ${model.stats.due} due` : ''}</p>
+        <p className="spatial-command__meta">{model.stats.total} {model.unitLabel}{model.stats.due > 0 ? ` · ${model.stats.due} due` : ''}</p>
       </div>
+
+      {/* Ordinary progress stays the quiet blue retrieval strip the design
+          system fixes it as, rather than being demoted to a figure in a line. */}
+      <ProgressStrip stats={model.stats} />
 
       <div className="spatial-command__actions">
         <button
