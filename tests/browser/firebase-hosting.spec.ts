@@ -67,7 +67,9 @@ test('serves Spatial Atlas as the default presentation on the live origin (#166)
   expect(manifestResponse.ok()).toBe(true);
   expect(await manifestResponse.json()).toMatchObject({ name: 'Atlas', scope: './', start_url: './#/' });
 
-  // The retired preview path is gone from the deployed origin.
+  // The retired preview path no longer serves the preview artefact. Hosting
+  // rewrites every unknown path to index.html, so the check is that the pinned
+  // source manifest is gone, not that the request 404s.
   const retired = await page.request.get(new URL('./spatial/preview-source.json', page.url()).href);
-  expect(retired.ok()).toBe(false);
+  expect(await retired.text()).not.toContain('candidateCommit');
 });

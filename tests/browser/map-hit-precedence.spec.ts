@@ -10,7 +10,7 @@ import { expect, test, type Page } from '@playwright/test';
 // within 22 CSS px of Liechtenstein's callout answered Liechtenstein.
 
 async function openWesternEuropeRound(page: Page) {
-  await page.goto('/#/locations/europe');
+  await page.goto('/#/locations/europe/western-europe');
   await page.getByRole('button', { name: 'Play Western Europe' }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40000 });
   await page.waitForFunction(() => {

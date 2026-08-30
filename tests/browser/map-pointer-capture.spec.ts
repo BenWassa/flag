@@ -11,7 +11,7 @@ function countryIdForName(name: string): string {
 
 async function openCaribbean(page: Page) {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/#/locations/north-america');
+  await page.goto('/#/locations/north-america/caribbean');
   await page.getByRole('button', { name: 'Play Caribbean' }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');

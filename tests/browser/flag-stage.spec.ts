@@ -39,7 +39,7 @@ async function serveFlagsAt(context: BrowserContext, width: number, height: numb
 }
 
 async function startFlagsRound(page: Page) {
-  await page.goto('/#/flags/africa');
+  await page.goto('/#/flags/africa/west-africa');
   await page.getByRole('button', { name: 'Play West Africa' }).click();
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toBeVisible();
 }

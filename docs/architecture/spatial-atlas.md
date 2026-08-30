@@ -128,7 +128,12 @@ runtime-cached, exactly as the projected 2D continent assets already do.
 ## History
 
 - #119 — exploration, renderer selection, the accepted candidate and the
-  deployed `/spatial/` preview.
+  deployed `/spatial/` preview. Its interaction and geography contracts are
+  [`issue-119-spatial-interaction-contract.md`](../open/issue-119-spatial-interaction-contract.md)
+  and [`issue-119-spherical-geography-contract.md`](../open/issue-119-spherical-geography-contract.md);
+  the deployed-preview contract is closed at
+  [`issue-119-deployed-preview.md`](../closed/issue-119-deployed-preview.md).
 - #166 — production cutover: the command surface, the removal of the
   conventional launcher from under the globe, the tiny-country touch fix, and
-  the retirement of the preview path.
+  the retirement of the preview path. Record:
+  [`issue-166-spatial-production-cutover.md`](../open/issue-166-spatial-production-cutover.md).

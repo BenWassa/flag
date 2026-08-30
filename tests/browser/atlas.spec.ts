@@ -1,30 +1,38 @@
 import { expect, test, type Page } from '@playwright/test';
 
-test('plays a whole continent from its launcher row', async ({ page }) => {
+test('walks domain to continent to Play without a launcher page', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
-  await page.getByRole('button', { name: /Flags/i }).click();
-  await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
-  await page.getByRole('button', { name: /Africa/i }).click();
-  await expect(page.getByRole('heading', { name: /Africa/i })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Choose what to learn' })).toBeVisible();
+  await page.getByRole('button', { name: /^Flags/ }).click();
+  await expect(page.getByRole('heading', { name: 'Choose a continent' })).toBeVisible();
+  await page.getByRole('button', { name: /^Africa/ }).click();
+  // The selected place is the dominant label and Play is immediately available.
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
+  await expect(page.locator('.page--launcher')).toHaveCount(0);
   await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^1\./ })).toBeVisible();
 });
 
-test('plays a region directly from its launcher row', async ({ page }) => {
+test('selecting a region focuses it, and Play is a separate deliberate act', async ({ page }) => {
   await page.goto('/#/flags/africa');
+  // Issue #166: choosing an area selects the durable scope; it never starts a
+  // round. The region is a real route, so Back returns to it.
+  await page.getByRole('button', { name: /^West Africa/ }).click();
+  await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
+  await expect(page.getByRole('progressbar', { name: 'Round progress' })).toHaveCount(0);
+
   await page.getByRole('button', { name: 'Play West Africa' }).click();
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'West Africa' })).toBeVisible();
-  // The round was started from the continent launcher, so Back returns there
-  // rather than to an intermediate region selection.
+  await page.goBack();
+  await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
   await page.goBack();
   await expect(page).toHaveURL(/#\/flags\/africa$/);
 });
 
-test('starts a Locations region round without a separate selection step', async ({ page }) => {
-  await page.goto('/#/locations/africa');
+test('starts a Locations region round from the focused scope', async ({ page }) => {
+  await page.goto('/#/locations/africa/west-africa');
   await page.getByRole('button', { name: 'Play West Africa' }).click();
   await expect(page.getByRole('heading', { name: 'Find' })).toBeHidden();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 30000 });

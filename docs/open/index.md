@@ -97,13 +97,25 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
   the candidate build and the deployed `./spatial/` preview all belong to #119;
   its durable architecture record is
   [`../architecture/spatial-atlas.md`](../architecture/spatial-atlas.md).
-  Supporting evidence remains in
+  Supporting evidence and the contracts the implementation holds to remain in
+  [`plan of record`](issue-119-plan.md),
+  [`canonical scope`](issue-119-spatial-atlas-moonshot.md),
+  [`prototype verification plan`](issue-119-prototype-verification-plan.md),
+  [`principal packet`](issue-119-principal-packet.md),
+  [`renderer decision`](issue-119-renderer-decision.md),
+  [`H1 verdict`](issue-119-h1-verdict.md),
+  [`interaction contract`](issue-119-spatial-interaction-contract.md),
+  [`spherical geography contract`](issue-119-spherical-geography-contract.md),
+  [`invariant harness`](issue-119-invariant-harness.md),
   [`renderer comparison`](issue-119-renderer-comparison.md),
   [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
   [`R3F spike`](issue-119-r3f-spike-results.md) and
-  [`MapLibre spike`](issue-119-maplibre-spike-results.md); the deployed-preview
+  [`MapLibre spike`](issue-119-maplibre-spike-results.md). The deployed-preview
   contract is closed at
   [`issue-119-deployed-preview.md`](../closed/issue-119-deployed-preview.md).
+
+  These stay in `docs/open/` until the owner closes #119 itself; moving the whole
+  #119 record is housekeeping for that decision, not for #166.
 
 - [#166 — Spatial Atlas production cutover](https://github.com/BenWassa/flag/issues/166).
   Promotes the accepted candidate to the default presentation, replaces the
