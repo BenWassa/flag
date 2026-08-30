@@ -11,9 +11,11 @@ declare let self: ServiceWorkerGlobalScope & {
   __WB_MANIFEST: Array<{ url: string; revision?: string | null }>;
 };
 
-const CACHE_PREFIX = 'flag-atlas-v29';
+const CACHE_PREFIX = 'flag-atlas-v30';
+const PREVIOUS_CACHE_PREFIX = 'flag-atlas-v29';
 const FLAG_CACHE = `${CACHE_PREFIX}-flags`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime`;
+const SPATIAL_PREVIEW_PATH = new URL('spatial/', self.registration.scope).pathname;
 
 precacheAndRoute(self.__WB_MANIFEST);
 cleanupOutdatedCaches();
@@ -24,7 +26,9 @@ self.addEventListener('activate', (event) => {
   event.waitUntil(
     caches.keys().then((keys) => Promise.all(
       keys
-        .filter((key) => /^flag-atlas-v\d+(?:-.+)?$/.test(key) && key !== FLAG_CACHE && key !== RUNTIME_CACHE)
+        .filter((key) => (
+          key.startsWith(PREVIOUS_CACHE_PREFIX) || /^flag-atlas-v\d+(?:-.+)?$/.test(key)
+        ) && key !== FLAG_CACHE && key !== RUNTIME_CACHE)
         .map((key) => caches.delete(key)),
     )),
   );
@@ -42,7 +46,7 @@ registerRoute(
 );
 
 registerRoute(
-  ({ url }) => url.origin === self.location.origin,
+  ({ url }) => url.origin === self.location.origin && !url.pathname.startsWith(SPATIAL_PREVIEW_PATH),
   new NetworkFirst({
     cacheName: RUNTIME_CACHE,
     networkTimeoutSeconds: 4,

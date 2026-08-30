@@ -29,6 +29,20 @@ jobs:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Read pinned Spatial Atlas preview source
+        id: spatial-preview
+        run: |
+          sha="$(node -e 'const fs=require("fs"); process.stdout.write(JSON.parse(fs.readFileSync("config/spatial-preview.json", "utf8")).sourceCommit)')"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.spatial-preview.outputs.sha }}
+          path: .spatial-preview-source
+      - name: Build pinned Spatial Atlas preview
+        working-directory: .spatial-preview-source
+        run: npm ci && npm run build
+      - name: Assemble combined deployment artifact
+        run: npm run build:spatial-preview
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -56,7 +70,7 @@ jobs:
           {
             echo '## Firebase Hosting acceptance'
             echo '```text'
-            tail -n 120 "$RUNNER_TEMP/firebase-acceptance.log"
+            tail -n 160 "$RUNNER_TEMP/firebase-acceptance.log"
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"

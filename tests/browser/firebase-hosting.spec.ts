@@ -50,6 +50,35 @@ test('accepts the live Firebase Hosting PWA origin (#107)', async ({ page, conte
   await context.setOffline(false);
 });
 
+test('serves the pinned Spatial Atlas preview on the same Firebase origin (#119)', async ({ page }) => {
+  await page.goto('/#/');
+  await expect(page.getByRole('link', { name: 'Try Spatial Atlas' })).toBeVisible();
+  await page.evaluate(() => localStorage.setItem('atlas-spatial-live-probe', 'shared'));
+
+  await page.getByRole('link', { name: 'Try Spatial Atlas' }).click();
+  await expect(page).toHaveURL(/\/spatial\/#\/$/);
+  await expect(page.getByText('Spatial preview', { exact: true })).toBeVisible();
+  await expect(page.locator('.spatial-shell')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('atlas-spatial-live-probe'))).toBe('shared');
+
+  const manifestHref = await page.locator('link[rel="manifest"]').getAttribute('href');
+  const manifestResponse = await page.request.get(new URL(manifestHref ?? '', page.url()).href);
+  expect(manifestResponse.ok()).toBe(true);
+  const manifest = await manifestResponse.json() as { name?: string; scope?: string; id?: string };
+  expect(manifest).toMatchObject({ name: 'Atlas', scope: './', id: './' });
+  expect(new URL(manifestHref ?? '', page.url()).pathname).toContain('/spatial/');
+
+  const sourceResponse = await page.request.get(new URL('./preview-source.json', page.url()).href);
+  expect(sourceResponse.ok()).toBe(true);
+  const source = await sourceResponse.json() as { sourceCommit?: string; candidateCommit?: string };
+  expect(source.sourceCommit).toBe('13f0903649ee3838d4ed01660c9fa9be362a42dc');
+  expect(source.candidateCommit).toBe('fa09e3991c693684694e51041499d5cc943edbd1');
+
+  await page.getByRole('link', { name: 'Return to classic Atlas home' }).click();
+  await expect(page).toHaveURL(/\/#\/$/);
+  await expect.poll(() => page.evaluate(() => localStorage.getItem('atlas-spatial-live-probe'))).toBe('shared');
+});
+
 test('Firebase-origin Google sign-in reaches the provider flow without an unauthorised-domain failure (#107)', async ({ page }) => {
   await page.goto('/#/profile');
   await expect(page.getByRole('heading', { name: 'Profile' })).toBeVisible();
