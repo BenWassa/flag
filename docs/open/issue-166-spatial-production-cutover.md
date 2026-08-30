@@ -149,5 +149,77 @@ results reframe the scope just played.
 
 ## Verification
 
-Recorded in the closeout section below once the full suite, artifact inspection
-and deployment checks have run.
+### Node gate
+
+`npm run check`, 74 unit tests (19 of them new, covering the picking contract and
+gesture ownership), the Firebase rules suite, the production build and all 32
+verifiers pass under Node 22.22.
+
+Two verifiers are new: `verify-spatial-touch.mjs` proves the touch contract
+against every production frame, and `verify-ia.mjs` and
+`verify-british-english.mjs` now render `SpatialCommand` so the IA and copy
+contracts are asserted on the production surface rather than only on the
+fallback launcher.
+
+### Exact production artifact
+
+48 files, 11 MB. No `dist/spatial/`. `<title>Atlas</title>`, `spatial.css` linked
+once. Service worker on `flag-atlas-v30` with zero occurrences of the retired
+preview namespace, precaching `stage-controller-*.js` and `world-*.js`. Manifest
+unchanged (`Atlas`, `en-GB`, `start_url ./#/`, `scope ./`). `app.js` 103,161
+bytes gzip against a 120 kB budget; the spatial entry is 178,833 gzip against
+256,000; continent detail stays lazy.
+
+### Browser
+
+Chromium under SwiftShader, desktop and Pixel 7 projects. Directly verified
+against the built artifact at 390x844, 320x568, 320x480, 768x1024 and 844x390:
+all four domains reach a focused scope with Play on screen and no launcher page
+beneath, deep links and hashes resolve, refusing every WebGL context falls back
+to the conventional launcher with the route intact, a Locations round yields the
+screen entirely, and Flags Play keeps the globe inert and unhighlighted.
+
+At 320x480 with Asia — the widest area list on the smallest phone — the globe
+keeps 163 px, Play stays fully visible, the command band scrolls internally
+rather than clipping, and neither axis of the page overflows.
+
+### Pre-existing failures, separated by baseline
+
+The browser suite is **not** wholly green, and the failures that remain were
+measured against a build of `origin/main` in a worktree rather than assumed.
+Ten fail identically on both:
+
+- `north-america` — the full Caribbean answer system, all five viewports, and
+  Central America dense targets;
+- `oceania` — all 14 Locations pointer-answerable, two viewports;
+- `map-neighbors-rounds` — two Neighbours cases.
+
+The Caribbean case fails on `main` with a byte-identical measurement: an assisted
+hit surface of **16.814376831054688 px** against a required 43.5. That is the
+projected 2D map's assistance, not the globe's, and it is the same family of
+defect #137 owns. The spatial shell was ruled out as a cause directly: with WebGL
+enabled and with it refused, the Locations map renders an identical `viewBox` and
+an identical 382x506 stage.
+
+`map-pointer-capture` › *sub-threshold movement preserves assisted-tap scoring*
+is a pre-existing flake driven by the same undersized surfaces: its round order
+is unseeded, so whether it lands on an assisted Caribbean target varies. Repeated
+five times it fails once on **both** this branch and `origin/main`.
+
+One test failed only on this branch and is fixed: the Locations review fixture
+overran the 30 s default because every launcher route now boots the globe. It
+measures 23.5 s alone, so the file's budget was raised for the boot — no
+assertion relaxed. One test fails only on `origin/main` and passes here: North
+America framing on modern phone portrait.
+
+None of the ten pre-existing failures is absorbed into this issue. Fixing the 2D
+map's assist sizing is #137's workstream and needs its own evidence.
+
+### Not performed
+
+**Physical-device testing.** Everything above is headless Chromium under
+SwiftShader, which is engineering evidence and not device evidence. GPU frame
+pacing, thermals, battery and platform edge gestures are unverified, and so is
+the thing this issue most cares about — whether a real thumb reaches Singapore.
+The touch work is measured geometrically and in-browser; real-device feel remains
+open, as it already is under #71.
