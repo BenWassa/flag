@@ -6,7 +6,7 @@
 
 The full Spatial Atlas candidate is deployed as a sibling static app at `./spatial/`, not as the default production shell and not as a new typed learning route.
 
-Classic Atlas remains the deployment root. Its router, progress/storage namespaces, service worker and learning semantics stay authoritative. The Spatial candidate keeps its own existing hash routes beneath the sibling deployment path, so `./spatial/#/flags/africa` represents the same durable learning state as `./#/flags/africa` with a different presentation artifact.
+Classic Atlas remains the deployment root. Its router, progress/storage namespaces, service worker and learning semantics stay authoritative. The Spatial candidate keeps its own existing hash routes beneath the sibling deployment path, so `./spatial/#/flags/africa` represents the same durable learning state as `./#/flags/africa` while the preview is running.
 
 ## Why a sibling artifact
 
@@ -28,7 +28,7 @@ Changing the preview therefore requires an explicit source-pin update and a new 
 
 - Classic Home exposes one restrained `Try Spatial Atlas` Preview entry.
 - The preview exposes a persistent `Classic Atlas` escape and an always-visible `Spatial preview` label.
-- Returning to classic preserves the current hash route when practical.
+- The escape always returns to classic Home. It deliberately does not inspect, reconstruct or mutate the current hash route; the spatial presentation layer owns no navigation state.
 - Neither direction writes a presentation choice to storage; reopening normal Atlas remains classic by default.
 
 ## PWA and service-worker boundary
@@ -44,9 +44,10 @@ The classic root service worker is generated before `dist/spatial/` is assembled
 Before merge:
 
 - normal `npm run check` and full `npm test` pass on the main integration branch;
-- the pinned preview source builds exactly;
+- the pinned preview source builds exactly and passes the existing #119 spatial invariant harness;
 - the combined `dist/` contains both roots and records `spatial/preview-source.json`;
-- Chromium desktop and Pixel emulation prove classic → preview → classic navigation, route-preserving exit and same-origin storage continuity;
+- Chromium desktop and Pixel emulation prove classic → preview → classic-Home navigation and same-origin storage continuity;
+- a deep-linked preview route still exposes the same static classic-Home escape, proving the spatial shell is independent of route state;
 - classic root does not render a spatial shell;
 - root and preview service-worker/cache scopes remain isolated;
 - exact combined artifact is uploaded from CI.
