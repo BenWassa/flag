@@ -29,12 +29,12 @@ async function stageMode(page: Page) {
 }
 
 /**
- * The domain index renders each continent as one button whose accessible name
- * also carries its progress figures, so it is addressed by its row rather than
- * by an exact name match.
+ * Continents and areas are the same control at every level of the spatial
+ * interface: a quiet chip whose accessible name also carries its progress, so
+ * each is addressed by its visible label rather than by an exact name match.
  */
-function continentControl(page: Page, name: string) {
-  return page.locator('.continent-row__open', { hasText: name });
+function scopeChip(page: Page, name: string) {
+  return page.locator('.spatial-chip', { hasText: name });
 }
 
 test.describe('persistent spatial shell', () => {
@@ -51,7 +51,7 @@ test.describe('persistent spatial shell', () => {
     await expect(page).toHaveURL(/#\/flags$/);
     expect(await stageMode(page)).toBe('world');
 
-    await continentControl(page, 'Africa').click();
+    await scopeChip(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
     expect(await stageMode(page)).toBe('focus');
 
@@ -62,9 +62,9 @@ test.describe('persistent spatial shell', () => {
 
   test('native Back and Forward walk the same spatial hierarchy', async ({ page }) => {
     await openSpatial(page, '/flags');
-    await continentControl(page, 'Africa').click();
+    await scopeChip(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
-    await page.locator('.spatial-scopes__item', { hasText: 'West Africa' }).click();
+    await scopeChip(page, 'West Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
 
     await page.goBack();
@@ -110,7 +110,7 @@ test.describe('geography and DOM parity', () => {
     await expect(page).toHaveURL(/#\/flags$/);
     const continent = viaGeography.split('/').pop()!;
     const label = { africa: 'Africa', europe: 'Europe', asia: 'Asia' }[continent]!;
-    await continentControl(page, label).click();
+    await scopeChip(page, label).click();
     expect(page.url()).toBe(viaGeography);
   });
 
@@ -132,7 +132,7 @@ test.describe('activities own the screen', () => {
     expect(await stageMode(page)).toBe('context');
     // No scope highlighting and no pointer target while a question is live.
     await expect(page.locator('.spatial-stage[data-mode="context"] .spatial-stage__surface')).toHaveCSS('pointer-events', 'none');
-    await expect(page.locator('.spatial-scopes')).toHaveCount(0);
+    await expect(page.locator('.spatial-command')).toHaveCount(0);
     await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);
 
     for (let index = 0; index < 40; index += 1) {
@@ -172,7 +172,8 @@ test.describe('activities own the screen', () => {
 
     for (const domain of ['locations', 'outlines', 'neighbors']) {
       await openSpatial(page, `/${domain}/africa/southern-africa`);
-      await page.getByRole('button', { name: 'Learn Africa' }).click();
+      // Learn follows the framed scope, exactly as Play does.
+      await page.getByRole('button', { name: 'Learn Southern Africa' }).click();
       await page.waitForFunction(() => document.querySelector('.spatial-shell')?.getAttribute('data-mode') === 'yielded', null, { timeout: 30000 });
       expect(await stageMode(page), domain).toBe('yielded');
     }
@@ -198,17 +199,19 @@ test.describe('accessibility and resilience', () => {
     await page.keyboard.press('Tab');
     const focused = await page.evaluate(() => document.activeElement?.tagName);
     expect(focused).not.toBe('CANVAS');
-    await expect(page.getByRole('button', { name: 'Play All Africa' })).toBeVisible();
+    // The framed scope offers Play immediately, without another page.
+    await expect(page.getByRole('button', { name: 'Play Africa' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Learn Africa' })).toBeVisible();
+    // Every area a geography tap could select is also a real control.
     for (const region of ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa']) {
-      await expect(page.getByRole('button', { name: `Play ${region}` })).toBeVisible();
-      // ...and the scope bar offers the selection a geography tap performs.
-      await expect(page.locator('.spatial-scopes__item', { hasText: region })).toBeVisible();
+      await expect(scopeChip(page, region)).toBeVisible();
     }
-    // The scope bar is a real control set, reachable and operable by keyboard.
-    const bar = page.locator('.spatial-scopes__item', { hasText: 'East Africa' });
-    await bar.focus();
+    // Reachable and operable by keyboard, and it selects rather than starting a
+    // round: choosing a place and playing it stay separate, deliberate acts.
+    await scopeChip(page, 'East Africa').focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/#\/flags\/africa\/east-africa$/);
+    await expect(page.getByRole('button', { name: 'Play East Africa' })).toBeVisible();
   });
 
   test('reduced motion arrives at the destination without animating', async ({ page }) => {
@@ -217,7 +220,7 @@ test.describe('accessibility and resilience', () => {
     await page.addInitScript(() => {
       (window as unknown as { __frames: number }).__frames = 0;
     });
-    await continentControl(page, 'Asia').click();
+    await scopeChip(page, 'Asia').click();
     await expect(page).toHaveURL(/#\/flags\/asia$/);
     expect(await stageMode(page)).toBe('focus');
   });
@@ -297,10 +300,18 @@ test.describe('layout matrix', () => {
       // The primary control is reachable without horizontal scrolling.
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(1);
-      await expect(page.getByRole('button', { name: 'Play All Africa' })).toBeVisible();
+      const play = page.getByRole('button', { name: 'Play Africa' });
+      await expect(play).toBeVisible();
+
+      // Issue #166: Play is on screen when the scope is focused. Reaching it
+      // must not need a scroll, and no launcher page sits under the globe.
+      const playBox = (await play.boundingBox())!;
+      expect(playBox.bottom).toBeLessThanOrEqual(viewport.height + 1);
+      expect(playBox.top).toBeGreaterThanOrEqual(-1);
+      await expect(page.locator('.page--launcher')).toHaveCount(0);
 
       // ...and so is a live question, with its answers fully on screen.
-      await page.getByRole('button', { name: 'Play All Africa' }).click();
+      await play.click();
       await expect(page.locator('.answer-button').first()).toBeVisible();
       const quiz = await page.evaluate(() => {
         const answers = [...document.querySelectorAll('.answer-button')].map((element) => element.getBoundingClientRect());

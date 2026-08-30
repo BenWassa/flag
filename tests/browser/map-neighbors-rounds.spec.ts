@@ -194,7 +194,7 @@ test.describe('Locations browser matrix (#98)', () => {
     await answerLocation(page, targetId);
     await page.reload();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa$/);
-    await expect(page.getByRole('heading', { name: /Southern Africa locations launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Southern Africa', exact: true })).toBeVisible();
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:location-progress:v1') ?? '{}'));
     expect(persisted.records?.[targetId]?.lifetimeResolved).toBeGreaterThanOrEqual(1);
 
@@ -237,7 +237,7 @@ test.describe('Neighbours browser matrix (#99)', () => {
     await expect(page.getByText('Correct: South Africa.', { exact: true })).toBeVisible();
     await page.reload();
     await expect(page).toHaveURL(/#\/neighbors\/africa\/southern-africa$/);
-    await expect(page.getByRole('heading', { name: /Southern Africa neighbours launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Southern Africa', exact: true })).toBeVisible();
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:neighbor-progress:v1') ?? '{}'));
     expect(persisted.records?.LSO?.lifetimeCompleted).toBe(1);
   });

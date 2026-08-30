@@ -40,7 +40,6 @@ export interface SpatialCommandProps {
   persisting: boolean;
 }
 
-const statusWord = (status: ScopeStatus) => (status === 'complete' ? 'complete' : 'Mastered');
 /** A shape as well as a colour: a diamond for complete, a dot for Mastered. */
 const statusMark = (status: ScopeStatus) => (status === 'complete' ? '◆' : '●');
 
@@ -50,19 +49,31 @@ function statusOf(region: Pick<ScopeRegion, 'complete' | 'domainMastered'>): Sco
   return null;
 }
 
+/**
+ * Both earned states in words. The chip carries one mark, but a region can be
+ * Mastered in this domain and complete across all four, and colour never
+ * carries either on its own.
+ */
+function statusNotes(region: Pick<ScopeRegion, 'complete' | 'domainMastered'>): string[] {
+  return [region.domainMastered ? 'Mastered' : null, region.complete ? 'complete' : null]
+    .filter((word): word is string => word !== null);
+}
+
 /** `12 of 54 cleared`, the one progress figure a chip has room for. */
 const clearedLabel = (stats: ScopeStats) => `${stats.cleared} of ${stats.total} cleared`;
 
-function Chip({ label, detail, status, current, onClick, disabled, hint }: {
+function Chip({ label, detail, status, notes, current, onClick, disabled }: {
   label: string;
   detail?: string;
+  /** Drives the visual mark. Complete outranks Mastered for the single mark. */
   status?: ScopeStatus | null;
+  /** Everything the mark cannot say. A region can be both Mastered and complete. */
+  notes?: readonly string[];
   current?: boolean;
   onClick(): void;
   disabled?: boolean;
-  hint?: string;
 }) {
-  const name = [label, detail, status ? statusWord(status) : null, hint].filter(Boolean).join(', ');
+  const name = [label, detail, ...(notes ?? [])].filter(Boolean).join(', ');
   return (
     <button
       className={`spatial-chip${status ? ` spatial-chip--${status}` : ''}`}
@@ -144,7 +155,7 @@ function Continents({ domain, ledgers, achievements }: {
               key={continent.id}
               label={continent.name}
               detail={model ? clearedLabel(model.stats) : undefined}
-              hint={supported ? undefined : 'coming soon'}
+              notes={supported ? undefined : ['coming soon']}
               disabled={!supported}
               onClick={() => actions.openScope(domain, continent.id)}
             />
@@ -172,7 +183,9 @@ function Scope({ state, ledgers, achievements }: {
   const activeId = active.id ?? '';
   const continentId = model.continentScope.id ?? '';
   const onContinent = activeId === continentId;
+  const activeRegion = model.regions.find((region) => region.scope.id === activeId);
   const status = activeId ? state.scopeStatus.get(activeId) ?? null : null;
+  const notes = activeRegion ? statusNotes(activeRegion) : [];
 
   return (
     <>
@@ -182,7 +195,7 @@ function Scope({ state, ledgers, achievements }: {
         {/* The selected place is the one dominant label on the screen. */}
         <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>
           {active.label}
-          {status ? <span className="visually-hidden">, {statusWord(status)}</span> : null}
+          {notes.length ? <span className="visually-hidden">, {notes.join(', ')}</span> : null}
           {status ? <span className={`spatial-command__mark spatial-command__mark--${status}`} aria-hidden="true">{statusMark(status)}</span> : null}
         </h1>
         <p className="spatial-command__meta">{model.stats.total} {model.unitLabel} · {model.stats.cleared} cleared{model.stats.due > 0 ? ` · ${model.stats.due} due` : ''}</p>
@@ -223,6 +236,7 @@ function Scope({ state, ledgers, achievements }: {
               label={region.scope.label}
               detail={clearedLabel(region.stats)}
               status={statusOf(region)}
+              notes={statusNotes(region)}
               current={id === activeId}
               onClick={() => id && actions.openScope(domain, id)}
             />

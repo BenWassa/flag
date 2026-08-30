@@ -28,7 +28,7 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
     await expectNoHorizontalOverflow(page);
 
     await page.getByRole('button', { name: 'Africa' }).click();
-    await expect(page.getByRole('heading', { name: /Africa flags launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   }
 });
@@ -43,7 +43,7 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
 
   await page.goBack();
   await expect(page).toHaveURL(/#\/flags\/africa$/);
-  await expect(page.getByRole('heading', { name: /Africa flags launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
   await page.goForward();
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
@@ -59,7 +59,7 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
   // stable scope rather than pretending that the in-memory round survived.
   await page.goto('/#/flags/asia/caucasus/test');
   await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
-  await expect(page.getByRole('heading', { name: /Caucasus flags launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
 });
 
 test('keeps North America and Oceania live after complete continent coverage', async ({ page }) => {
@@ -70,7 +70,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await expect(northAmerica).toBeVisible();
   await northAmerica.click();
   await expect(page).toHaveURL(/#\/locations\/north-america$/);
-  await expect(page.getByRole('heading', { name: /North America locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Northern America' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Central America' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
@@ -80,7 +80,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   // unsupported synthetic scope in verify-action-feedback rather than making
   // a real production continent unavailable for this browser fixture.
   await page.goto('/#/locations');
-  await expect(page.locator('button.continent-row__open')).toHaveCount(6);
+  await expect(page.locator('.spatial-command[data-surface="continents"] .spatial-chip')).toHaveCount(6);
   await expect(page.locator('.continent-row--shell')).toHaveCount(0);
   await expect(page.getByText('Coming soon')).toHaveCount(0);
 
@@ -88,7 +88,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await expect(oceania).toBeVisible();
   await oceania.click();
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
-  await expect(page.getByRole('heading', { name: /Oceania locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Australia & New Zealand' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Melanesia' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Micronesia' })).toBeVisible();
@@ -97,7 +97,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   // A directly typed durable Oceania scope now resolves to the real launcher.
   await page.goto('/#/locations/oceania');
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
-  await expect(page.getByRole('heading', { name: /Oceania locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
 });
 
 test('reports a failed lazy map load and recovers on retry', async ({ page }) => {
@@ -111,16 +111,16 @@ test('reports a failed lazy map load and recovers on retry', async ({ page }) =>
   });
 
   await page.goto('/#/locations/africa');
-  await expect(page.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Play All Africa' }).click();
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Africa map could not be loaded' })).toBeVisible();
 
   // Chromium keeps a failed dynamic-import URL rejected for the lifetime of a
   // document. A reload is the user-visible recovery path; the loader itself
   // also drops its rejected promise so the next document can retry cleanly.
   await page.reload();
-  await expect(page.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Play All Africa' }).click();
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page).toHaveURL(/#\/locations\/africa\/test$/);
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');

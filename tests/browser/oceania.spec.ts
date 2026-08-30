@@ -82,7 +82,7 @@ async function waitForMap(page: Page) {
 
 async function openLocationScope(page: Page, action: string) {
   await page.goto('/#/locations/oceania');
-  await expect(page.getByRole('heading', { name: /Oceania locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
   await page.getByRole('button', { name: action }).click();
   await waitForMap(page);
 }
@@ -526,9 +526,14 @@ test('presents complete-region Mastery for Micronesia across all four domains', 
   });
   for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
     await page.goto(`/#/${domain}/oceania`);
-    const row = page.locator('.region-row--complete').filter({ hasText: 'Micronesia' });
-    await expect(row).toBeVisible();
-    await expect(row.locator('.visually-hidden')).toHaveText(', Mastered');
-    await expect(row.getByRole('button', { name: 'Play Micronesia' })).toBeVisible();
+    // The spatial surface marks an earned scope on its chip, and says both
+    // earned states in words rather than in colour alone.
+    const chip = page.locator('.spatial-chip--complete').filter({ hasText: 'Micronesia' });
+    await expect(chip).toBeVisible();
+    await expect(chip).toHaveAccessibleName(/Mastered/);
+    await expect(chip).toHaveAccessibleName(/complete/);
+    // Selecting it exposes Play for that scope, without starting a round.
+    await chip.click();
+    await expect(page.getByRole('button', { name: 'Play Micronesia' })).toBeVisible();
   }
 });

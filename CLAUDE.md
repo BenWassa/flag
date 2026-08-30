@@ -70,13 +70,15 @@ src/react/           React application shell, screens and components
 src/ui/              framework-independent adapters + temporary verifier fixtures
 ```
 
-On this exploration branch only, `src/spatial/` adds the Issue #119 Spatial Atlas
-candidate: a persistent Three.js Earth that **interprets** the typed route and
-wraps the existing screens rather than replacing them. It is presentation only —
-`spatial-state.ts` is a pure function and writes no navigation state, the
-renderer imports no curriculum table, and turning WebGL off yields the
-conventional application. Read `docs/open/issue-119-principal-packet.md` before
-touching it. It must not merge to `main` without a separate owner decision.
+`src/spatial/` is the **production navigation presentation** since #166: a
+persistent Three.js Earth that **interprets** the typed route, with a compact
+command surface that is the navigation interface rather than a band above the
+old one. It is presentation only — `spatial-state.ts` is a pure function and
+writes no navigation state, the renderer imports no curriculum table, and a
+device without WebGL falls back to the conventional `Launcher`, which is
+retained for exactly that purpose. Both are built from `scopeModelFor`, so they
+cannot offer different scopes, counts or labels. Read
+`docs/architecture/spatial-atlas.md` before touching it.
 
 Key rules:
 

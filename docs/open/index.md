@@ -90,47 +90,32 @@ All six continents satisfy the four-domain curriculum gate used by the achieveme
 
 **Continent payload follow-up (#86).** Context clipping is complete. Europe is 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a 500,000-byte budget, while Africa and South America remain byte-identical. See the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
 
-### 6. Exploration — not scheduled for production
+### 6. Spatial Atlas
 
 - [#119 — continuous spatial Atlas shell](https://github.com/BenWassa/flag/issues/119).
-  **Owner-authorised full candidate, built and implemented on the exploration line. No production migration is authorised and none is claimed.**
+  **Accepted and shipped.** The renderer comparison, the geometry/LOD envelope,
+  the candidate build and the deployed `./spatial/` preview all belong to #119;
+  its durable architecture record is
+  [`../architecture/spatial-atlas.md`](../architecture/spatial-atlas.md).
+  Supporting evidence remains in
+  [`renderer comparison`](issue-119-renderer-comparison.md),
+  [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
+  [`R3F spike`](issue-119-r3f-spike-results.md) and
+  [`MapLibre spike`](issue-119-maplibre-spike-results.md); the deployed-preview
+  contract is closed at
+  [`issue-119-deployed-preview.md`](../closed/issue-119-deployed-preview.md).
 
-  The candidate is complete in the sense the plan defines: a persistent Three.js
-  Earth interprets the typed route across `Mode → World → Continent → Region →
-  Learn/Play → Results → spatial return`, for all four domains and all six
-  continents, running the real production learning, scoring, evidence, Mastery
-  and storage lifecycle. The isolated `experiments/spatial-atlas` prototype is
-  **retired**: keeping a second globe implementation beside the real one is the
-  duplication the plan forbids, and its capabilities now live in `src/spatial/`
-  under test.
+- [#166 — Spatial Atlas production cutover](https://github.com/BenWassa/flag/issues/166).
+  Promotes the accepted candidate to the default presentation, replaces the
+  globe-over-launcher composition with a single spatial navigation surface, and
+  fixes the shared tiny-country touch defect that blocked it. Record:
+  [`issue-166-spatial-production-cutover.md`](issue-166-spatial-production-cutover.md).
 
-  The three reserved decisions are made and recorded:
+  #104's map-first launcher question is answered by the cutover: continent and
+  region selection now happen on real geography, without colour-only progress
+  encoding.
 
-  - [`F1 — spatial interaction contract`](issue-119-spatial-interaction-contract.md);
-  - [`F2 — renderer/scene/camera architecture`](issue-119-renderer-decision.md);
-  - [`F3 — spherical geography and LOD contract`](issue-119-spherical-geography-contract.md).
-
-  Measured spatial entry payload is **178.8 kB gzip** (renderer 125.7 + world
-  geography 53.0) against the plan's ≤ 250 kB direction, down from the
-  prototype's 405 kB. Core `app.js` is 102.0 kB gzip: the whole
-  spatial stack is behind a dynamic import, and the conventional Atlas remains
-  the renderer-failure path in source rather than in principle.
-
-  Verification is `npm test` plus `scripts/verify-spatial-atlas.mjs` and
-  `tests/browser/spatial-atlas.spec.ts`. The [`invariant harness`](issue-119-invariant-harness.md)
-  remains the acceptance map, and [`issue-119-plan.md`](issue-119-plan.md) the
-  execution authority.
-
-  Physical-device acceptance is **not claimed and not inferable**. Real GPU frame
-  pacing, thermals, battery, Android/iOS edge-gesture coexistence, installed-PWA
-  behaviour and the actual feel of drag and pinch remain owner judgement on real
-  hardware. Headless Chromium under SwiftShader is engineering evidence only.
-
-  Supporting historical evidence remains available and is explicitly not binding:
-  [`renderer comparison`](issue-119-renderer-comparison.md) (PARKED/AMBER; its
-  recorded defects mean it did not settle F2), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
-  [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md),
-  and the 2D probe/phone-comparison records.
+### 7. Other open work
 
 - [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
   **Audit complete; implementation not started.** Report:

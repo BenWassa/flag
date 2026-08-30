@@ -92,7 +92,7 @@ test.describe('Flags Play browser matrix (#96)', () => {
     await expect(page.getByRole('progressbar', { name: 'Round progress' })).toBeVisible();
     await page.getByRole('button', { name: 'Exit quiz' }).click();
     await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
-    await expect(page.getByRole('heading', { name: /Caucasus flags launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
   });
 
   test('records a wrong Play answer, reviews the mistake, and exits review', async ({ page }) => {
@@ -118,7 +118,7 @@ test.describe('Flags Play browser matrix (#96)', () => {
     await page.reload();
 
     await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
-    await expect(page.getByRole('heading', { name: /Caucasus flags launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
     await expect(page.getByRole('img', { name: '1 of 3 cleared' }).last()).toBeVisible();
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:progress:v1') ?? '{}'));
     const target = COUNTRIES.find((country) => country.id === questions[0].countryId);
@@ -184,6 +184,6 @@ test.describe('Outlines Play browser matrix (#97)', () => {
     await openOutlinesPlay(page);
     await page.reload();
     await expect(page).toHaveURL(/#\/outlines\/asia\/caucasus$/);
-    await expect(page.getByRole('heading', { name: /Caucasus outlines launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
   });
 });

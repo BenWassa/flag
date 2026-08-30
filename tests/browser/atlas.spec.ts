@@ -7,7 +7,7 @@ test('plays a whole continent from its launcher row', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
   await page.getByRole('button', { name: /Africa/i }).click();
   await expect(page.getByRole('heading', { name: /Africa/i })).toBeVisible();
-  await page.getByRole('button', { name: 'Play All Africa' }).click();
+  await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toBeVisible();
   await expect(page.getByRole('button', { name: /^1\./ })).toBeVisible();
 });

@@ -83,8 +83,8 @@ async function cacheState(page: Page, africaUrl?: string) {
 
 async function openAfricaMap(page: Page, origin: string) {
   await page.goto(`${origin}/#/locations/africa`);
-  await expect(page.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
-  await page.getByRole('button', { name: 'Play All Africa' }).click();
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');
 }
@@ -139,8 +139,8 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
     await waitForServiceWorkerControl(firstTimePage);
     await firstTimeContext.setOffline(true);
     await firstTimePage.goto(`${server.origin}/#/locations/africa`, { waitUntil: 'domcontentloaded' });
-    await expect(firstTimePage.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
-    await firstTimePage.getByRole('button', { name: 'Play All Africa' }).click();
+    await expect(firstTimePage.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
+    await firstTimePage.getByRole('button', { name: 'Play Africa' }).click();
     await expect(firstTimePage.getByRole('status').filter({ hasText: 'Africa map could not be loaded' })).toBeVisible();
 
     // Switch only the fixture server's deployed artifact. The same origin and
@@ -164,7 +164,7 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
     await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v30-runtime']) });
     // An active map route remains intentionally ephemeral after a document
     // reload, so update recovery returns to its stable Africa launcher.
-    await expect(page.getByRole('heading', { name: /Africa locations launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
   } finally {
     await firstTimeContext?.close();
     await context?.close();

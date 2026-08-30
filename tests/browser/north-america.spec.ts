@@ -67,7 +67,7 @@ async function waitForMap(page: Page) {
 
 async function openLocationScope(page: Page, action: string) {
   await page.goto('/#/locations/north-america');
-  await expect(page.getByRole('heading', { name: /North America locations launcher/ })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
   await page.getByRole('button', { name: action }).click();
   await waitForMap(page);
 }
@@ -478,9 +478,14 @@ test('presents complete-region Mastery for Northern America across all four doma
   });
   for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
     await page.goto(`/#/${domain}/north-america`);
-    const row = page.locator('.region-row--complete').filter({ hasText: 'Northern America' });
-    await expect(row).toBeVisible();
-    await expect(row.locator('.visually-hidden')).toHaveText(', Mastered');
-    await expect(row.getByRole('button', { name: 'Play Northern America' })).toBeVisible();
+    // The spatial surface marks an earned scope on its chip, and says both
+    // earned states in words rather than in colour alone.
+    const chip = page.locator('.spatial-chip--complete').filter({ hasText: 'Northern America' });
+    await expect(chip).toBeVisible();
+    await expect(chip).toHaveAccessibleName(/Mastered/);
+    await expect(chip).toHaveAccessibleName(/complete/);
+    // Selecting it exposes Play for that scope, without starting a round.
+    await chip.click();
+    await expect(page.getByRole('button', { name: 'Play Northern America' })).toBeVisible();
   }
 });

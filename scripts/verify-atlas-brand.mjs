@@ -38,7 +38,6 @@ assert.equal(
 );
 
 assert.ok(serviceWorker.includes('flag-atlas-v30'), 'The React/Vite app-shell cache version is asserted explicitly.');
-assert.equal(serviceWorker.includes('flag-atlas-spatial-preview-v1'), false, 'Classic install metadata never points at the Spatial preview cache namespace.');
 assert.ok(serviceWorker.includes('manifest.webmanifest'), 'Updated install metadata remains in the offline shell.');
 
 const storageSources = await Promise.all([
