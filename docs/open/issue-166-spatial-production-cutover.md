@@ -152,8 +152,8 @@ results reframe the scope just played.
 ### Node gate
 
 `npm run check`, 74 unit tests (19 of them new, covering the picking contract and
-gesture ownership), the Firebase rules suite, the production build and all 32
-verifiers pass under Node 22.22.
+gesture ownership), the Firebase rules suite, the production build and all 34
+verifiers in the chain pass under Node 22.22.
 
 Two verifiers are new: `verify-spatial-touch.mjs` proves the touch contract
 against every production frame, and `verify-ia.mjs` and
