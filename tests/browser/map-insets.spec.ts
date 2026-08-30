@@ -13,6 +13,10 @@ for (const viewport of VIEWPORTS) {
     await page.goto('/#/locations/asia/middle-east');
     await page.getByRole('button', { name: 'Play Middle East' }).click();
     await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 30_000 });
+    // The inset panel is measured against the stage, so the opening frame has to
+    // have landed first. Issue #166 boots the globe ahead of the map, which
+    // widened the window in which this measured a stage still settling.
+    await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 
     let prompt = '';
     for (let index = 0; index < 20; index += 1) {
