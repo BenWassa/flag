@@ -26,11 +26,6 @@ export interface SpatialShellProps {
   children: ReactNode;
 }
 
-function classicAtlasHref(): string {
-  const hash = typeof window === 'undefined' ? '#/' : window.location.hash || '#/';
-  return `../${hash}`;
-}
-
 export function SpatialShell({ state, contentKey, onSelectCountry, onRendererUnavailable, children }: SpatialShellProps) {
   const panel = useRef<HTMLDivElement | null>(null);
 
@@ -43,7 +38,7 @@ export function SpatialShell({ state, contentKey, onSelectCountry, onRendererUna
   return <>
     <div className="spatial-preview-switch" role="status" aria-label="Spatial Atlas preview">
       <span>Spatial preview</span>
-      <a href={classicAtlasHref()} aria-label="Return to classic Atlas">Classic Atlas</a>
+      <a href="../#/" aria-label="Return to classic Atlas home">Classic Atlas</a>
     </div>
     <div className="spatial-shell" data-mode={state.mode}>
       <SpatialStage state={state} onSelectCountry={onSelectCountry} onUnavailable={onRendererUnavailable}>
