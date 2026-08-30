@@ -56,7 +56,11 @@ async function openLocationsPlay(page: Page, sessionId = LOCATION_SESSION_ID, sc
   await page.getByRole('button', { name: `Play ${getMapScopeConfig(scopeId)?.scope.label}` }).click();
   await expect(page).toHaveURL(new RegExp(`#/locations/africa/${scopeId}/test$`));
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');
+  // Issue #166: the opening frame lands about 200ms later now that the
+  // launcher route boots the globe first, and much later than that under a
+  // loaded SwiftShader runner. Given the same allowance as the prompt above
+  // it, rather than the 5s expect default.
+  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 }
 
 async function currentLocationId(page: Page): Promise<string> {

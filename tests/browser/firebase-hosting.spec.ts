@@ -35,7 +35,11 @@ test('accepts the live Firebase Hosting PWA origin (#107)', async ({ page, conte
 
   await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');
+  // Issue #166: the opening frame lands about 200ms later now that the
+  // launcher route boots the globe first, and much later than that under a
+  // loaded SwiftShader runner. Given the same allowance as the prompt above
+  // it, rather than the 5s expect default.
+  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
   const africaUrl = await page.evaluate(() => performance.getEntriesByType('resource')
     .map((entry) => entry.name)
     .find((name) => /\/assets\/africa-[^/]+\.js$/.test(name)) ?? null);

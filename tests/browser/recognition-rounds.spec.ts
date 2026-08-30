@@ -157,7 +157,9 @@ test.describe('Outlines Play browser matrix (#97)', () => {
 
   test('keeps the silhouette answer-safe and supports number selection with focus restoration', async ({ page }) => {
     await fixSessionId(page, OUTLINES_SESSION_ID);
-    await page.goto('/#/outlines/asia/caucasus');
+    // Issue #166: Learn follows the framed scope, so a whole-Asia round starts
+    // from Asia rather than from one of its areas.
+    await page.goto('/#/outlines/asia');
     await page.getByRole('button', { name: 'Learn Asia' }).click();
     await expect(page).toHaveURL(/#\/outlines\/asia\/learn$/);
     await expect(page.locator('.outline-svg')).toBeVisible();
