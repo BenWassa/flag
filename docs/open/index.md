@@ -23,28 +23,19 @@ This directory mirrors active product/engineering work that benefits from a dura
 
 #32, #35 and #40 are complete through PR #38. Their closeout records are [`issue-32-atlas-visual-system.md`](../closed/issue-32-atlas-visual-system.md), [`issue-35-region-detail.md`](../closed/issue-35-region-detail.md) and [`issue-40-phosphor-icon-system.md`](../closed/issue-40-phosphor-icon-system.md).
 
+#138 is complete and closed through PR #145: the earned World Crown now has a learner-facing surface, consuming #34's existing achievement/read model without changing qualification, persistence or Mastery semantics.
+
 ### 3. Existing presentation bugs / cartography
 
 #19 and #20 are complete and closed. Their closeout records are [`issue-19-neighbours-mobile-keyboard.md`](../closed/issue-19-neighbours-mobile-keyboard.md) and [`issue-20-map-colour-contrast.md`](../closed/issue-20-map-colour-contrast.md). #54's completed river removal narrows the shared physical-context policy without changing canonical country geometry, topology or adjacency.
 
 #31 (short-landscape sizing) is resolved — see [`closed/issue-31-short-landscape.md`](../closed/issue-31-short-landscape.md).
 
-#111 is complete. Its launcher-list, seeded-progress and brushed-metal completion
-treatment decisions and verification evidence are recorded in
-[`issue-111-launcher-polish.md`](../closed/issue-111-launcher-polish.md).
-#112 is complete. Its Africa opening-frame and generated Togo-callout decisions
-and verification evidence are recorded in
-[`issue-112-africa-framing-togo-callout.md`](../closed/issue-112-africa-framing-togo-callout.md).
-#113 is complete. Its Europe/Asia audit, generated inset contract and Eastern
-Mediterranean prototype evidence are recorded in
-[`issue-113-mobile-inset-pattern.md`](../closed/issue-113-mobile-inset-pattern.md).
+#111 is complete. Its launcher-list, seeded-progress and brushed-metal completion treatment decisions and verification evidence are recorded in [`issue-111-launcher-polish.md`](../closed/issue-111-launcher-polish.md).
+#112 is complete. Its Africa opening-frame and generated Togo-callout decisions and verification evidence are recorded in [`issue-112-africa-framing-togo-callout.md`](../closed/issue-112-africa-framing-togo-callout.md).
+#113 is complete. Its Europe/Asia audit, generated inset contract and Eastern Mediterranean prototype evidence are recorded in [`issue-113-mobile-inset-pattern.md`](../closed/issue-113-mobile-inset-pattern.md).
 
-The three largest follow-ups from #113 are complete. #115 corrected Western
-Europe framing, #116 corrected Asia's Russia-driven canvas fit, #86 clipped
-out-of-canvas context to return both modules inside their payload budgets, and
-#117 made real country polygons win contested taps over assisted marks. #90's
-stable Flags stage and #108's complete-region Mastery guard shipped in the same
-production merge. Durable closeout records:
+The three largest follow-ups from #113 are complete. #115 corrected Western Europe framing, #116 corrected Asia's Russia-driven canvas fit, #86 clipped out-of-canvas context to return both modules inside their payload budgets, and #117 made real country polygons win contested taps over assisted marks. #90's stable Flags stage and #108's complete-region Mastery guard shipped in the same production merge. Durable closeout records:
 
 - [`#86 map-context clipping`](../closed/issue-86-clip-map-context.md)
 - [`#90 stable Flags stage`](../closed/issue-90-stable-flag-stage.md)
@@ -53,75 +44,29 @@ production merge. Durable closeout records:
 - [`#116 Asia/Russia framing`](../closed/issue-116-asia-russia-framing.md)
 - [`#117 map hit precedence`](../closed/issue-117-map-hit-precedence.md)
 
-Measured on-screen linear change was Western Europe **4.50x**, whole Europe
-**1.59x**, and every Asian country **2.30x** at maximum zoom. No region became
-smaller.
-- [#104 — map-first continent launcher](https://github.com/BenWassa/flag/issues/104).
-  **Deferred, captured only.** The launcher now has exactly one selection
-  method: one tap on a scope row starts Play for that scope. The full-bleed
-  region-map alternative (calm per-region colour, progress encoded into the
-  geography) conflicts with the locked "no region colour taxonomy" decision in
-  [`../product/colour-system.md`](../product/colour-system.md) and would encode
-  progress in colour alone, so it needs its own product decision before any
-  implementation. Scope and reasoning:
-  [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
+Measured on-screen linear change was Western Europe **4.50x**, whole Europe **1.59x**, and every Asian country **2.30x** at maximum zoom. No region became smaller.
+
+#104 (map-first continent launcher) is **closed**, not an open/deferred dependency. Its geography-first selection question remains historical input to #119's completed 2D continuity probe; #119 must not revive #104's conflicting colour-only progress or region-colour taxonomy. Historical scope/reasoning remains in [`issue-104-map-first-launcher.md`](issue-104-map-first-launcher.md).
+
 ### 4. Platform quality and IA
 
-#89 and its final child validation issues (#93, #96–#101) are complete through
-PR #128 (`4275f1f`) and merged-main CI #33069168541. The production React/Vite
-closeout record is [`issue-89-react-vite-migration.md`](../closed/issue-89-react-vite-migration.md),
-with the executed plan and evidence log in
-[`issue-89-execution-plan.md`](../closed/issue-89-execution-plan.md) and
-[`issue-89-implementation-worklog.md`](../closed/issue-89-implementation-worklog.md).
-Physical-device validation remains separately open in #71.
+#89 and its final child validation issues (#93, #96–#101) are complete through PR #128 (`4275f1f`) and merged-main CI #33069168541. The production React/Vite closeout record is [`issue-89-react-vite-migration.md`](../closed/issue-89-react-vite-migration.md), with the executed plan and evidence log in [`issue-89-execution-plan.md`](../closed/issue-89-execution-plan.md) and [`issue-89-implementation-worklog.md`](../closed/issue-89-implementation-worklog.md). Physical-device validation remains separately open in #71.
 
-#72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are
-complete and closed. Their closeout records are
-[`issue-72-legacy-code-css-audit.md`](../closed/issue-72-legacy-code-css-audit.md)
-and [`issue-74-full-continent-play.md`](../closed/issue-74-full-continent-play.md); each
-spun off a focused follow-up issue below.
+#72 (legacy code/CSS audit) and #74 (full-continent Play evaluation) are complete and closed. Their closeout records are [`issue-72-legacy-code-css-audit.md`](../closed/issue-72-legacy-code-css-audit.md) and [`issue-74-full-continent-play.md`](../closed/issue-74-full-continent-play.md); each spun off a focused follow-up issue below.
 
 - [#71 — mobile gestures, map immersion, safe areas](https://github.com/BenWassa/flag/issues/71).
-  The gesture layer, map immersion and safe-area work are implemented and
-  browser-verified; see [`issue-71-mobile-interaction.md`](issue-71-mobile-interaction.md)
-  and [`issue-71-implementation-notes.md`](issue-71-implementation-notes.md).
-  **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS
-  Safari and installed PWA). Nothing further is verifiable in an emulator, so do
-  not re-run browser checks expecting to close it. #89 must not claim this
-  physical evidence unless #71 actually records it.
+  The gesture layer, map immersion and safe-area work are implemented and browser-verified; see [`issue-71-mobile-interaction.md`](issue-71-mobile-interaction.md) and [`issue-71-implementation-notes.md`](issue-71-implementation-notes.md).
+  **Open only on physical-device validation** (Pixel/Android Chrome, iPhone/iOS Safari and installed PWA). Nothing further is verifiable in an emulator, so do not re-run browser checks expecting to close it. #89 must not claim this physical evidence unless #71 actually records it.
 
 The Firebase programme (#46) is complete. #106 shipped optional local-first cloud progress/account lifecycle and #107 accepted Firebase Hosting as a live secondary target while GitHub Pages remains primary. Durable production architecture is [`../architecture/firebase.md`](../architecture/firebase.md); final programme and Hosting evidence are [`../closed/issue-46-firebase.md`](../closed/issue-46-firebase.md) and [`../closed/issue-107-firebase-hosting.md`](../closed/issue-107-firebase-hosting.md).
 
-#87 (gamification connective-tissue defects: due-state reporting, Play
-feedback parity, Progress evidence coverage) is complete and closed. Its
-closeout record is
-[`issue-87-gamification-connective-tissue.md`](../closed/issue-87-gamification-connective-tissue.md).
-The same 2026-08-23 review that surfaced #87 also identified a larger
-achievement-milestone delivery/ceremony feature and full Locations/Neighbours
-retention-scheduler unification; both were deliberately excluded from #87 and
-need their own issues if pursued.
+#87 (gamification connective-tissue defects: due-state reporting, Play feedback parity, Progress evidence coverage) is complete and closed. Its closeout record is [`issue-87-gamification-connective-tissue.md`](../closed/issue-87-gamification-connective-tissue.md). The same 2026-08-23 review that surfaced #87 also identified a larger achievement-milestone delivery/ceremony feature and full Locations/Neighbours retention-scheduler unification; both were deliberately excluded from #87 and need their own issues if pursued.
 
-#77 (full-width continent/region navigation, Quick Play removal) and #78
-(explicit Locations Play feedback) shipped in v0.7.0; their closeout records are
-[`issue-77-full-width-navigation.md`](../closed/issue-77-full-width-navigation.md)
-and [`issue-78-locations-play-feedback.md`](../closed/issue-78-locations-play-feedback.md).
+#77 (full-width continent/region navigation, Quick Play removal) and #78 (explicit Locations Play feedback) shipped in v0.7.0; their closeout records are [`issue-77-full-width-navigation.md`](../closed/issue-77-full-width-navigation.md) and [`issue-78-locations-play-feedback.md`](../closed/issue-78-locations-play-feedback.md).
 
-#75 (silent round-drop on refresh) and #76 (full-continent Play) are complete
-and closed. #76 remains the historical record for the direct-play experiment,
-but #77 supersedes its learner-facing row-level Quick Play direction. Whole-
-continent Play still exists as a normal deliberate launcher action; it is no
-longer exposed as a trailing shortcut on continent or region selection rows.
+#75 (silent round-drop on refresh) and #76 (full-continent Play) are complete and closed. #76 remains the historical record for the direct-play experiment, but #77 supersedes its learner-facing row-level Quick Play direction. Whole-continent Play still exists as a normal deliberate launcher action; it is no longer exposed as a trailing shortcut on continent or region selection rows.
 
-**Mode-first IA change.** Navigation remains mode-first: Home lists the four
-learning modes with their progress, `/{domain}` lists that mode's continents,
-and `/{domain}/{continent}` is the launcher. Issue #77 refines the post-Home
-presentation so continents and regions are full-width selection rows and the
-active launcher owns Play/Learn. The `/atlas/*` routes, `src/ui/views/atlas.ts`
-and the region card's four-domain launch row remain retired. Normative
-descriptions live in `PRODUCT.md`, `DESIGN.md` and
-[`../architecture/routing.md`](../architecture/routing.md); the closed records of
-#35, #74 and #76 describe superseded historical presentation/shortcut decisions
-and should be read as history.
+**Mode-first IA change.** Navigation remains mode-first: Home lists the four learning modes with their progress, `/{domain}` lists that mode's continents, and `/{domain}/{continent}` is the launcher. Issue #77 refines the post-Home presentation so continents and regions are full-width selection rows and the active launcher owns Play/Learn. The `/atlas/*` routes, `src/ui/views/atlas.ts` and the region card's four-domain launch row remain retired. Normative descriptions live in `PRODUCT.md`, `DESIGN.md` and [`../architecture/routing.md`](../architecture/routing.md); the closed records of #35, #74 and #76 describe superseded historical presentation/shortcut decisions and should be read as history.
 
 ### 5. Geography expansion
 
@@ -141,40 +86,51 @@ Atlas now ships production curriculum for all six real continents — Africa, So
 
 All six continents satisfy the four-domain curriculum gate used by the achievement read model. Learner-facing World Crown surfacing remains separate under #138; #27 did not alter achievement semantics.
 
-**Continent payload follow-up (#86).** Context clipping is complete. Europe is
-432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a
-500,000-byte budget, while Africa and South America remain byte-identical. See
-the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
+- [#137 — Asia Locations/cartography hardening](https://github.com/BenWassa/flag/issues/137) remains open. It no longer blocks #119's owner-authorised full-candidate implementation; any eventual production migration must reconcile against then-current `main`.
+
+**Continent payload follow-up (#86).** Context clipping is complete. Europe is 432,961 bytes gzip against a 440,000-byte budget and Asia is 493,590 against a 500,000-byte budget, while Africa and South America remain byte-identical. See the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
 
 ### 6. Exploration — not scheduled for production
 
 - [#119 — continuous spatial Atlas shell](https://github.com/BenWassa/flag/issues/119).
-  **Moonshot exploration. No production commitment, no renderer selected.**
-  Plan of record: [`issue-119-plan.md`](issue-119-plan.md); canonical scope:
-  [`issue-119-spatial-atlas-moonshot.md`](issue-119-spatial-atlas-moonshot.md);
-  acceptance criteria:
-  [`issue-119-prototype-verification-plan.md`](issue-119-prototype-verification-plan.md).
+  **Owner-authorised full candidate, built and implemented on the exploration line. No production migration is authorised and none is claimed.**
 
-  Current position: the renderer comparison gate is **AMBER, not GREEN** — the
-  R3F and MapLibre spikes did not attempt the same task and MapLibre's failures
-  are headless-environment artifacts that were never reproduced headed. Two
-  cheap repair runs precede any principal session. The next action is **not**
-  the Africa globe slice: it is a Stage 0 production baseline on a physical
-  phone (shared with #71) followed by a Stage 1 continuity probe built from
-  existing 2D geography with no renderer at all, which tests the load-bearing
-  claim before any renderer budget is spent. Gate G is a human verdict on a
-  real device, not an agent review. Supporting evidence:
-  [`renderer comparison`](issue-119-renderer-comparison.md),
-  [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
-  [`R3F spike`](issue-119-r3f-spike-results.md),
-  [`MapLibre spike`](issue-119-maplibre-spike-results.md). Superseded planning
-  documents are archived in `docs/closed/` as `issue-119-llm-execution-plan.md`,
-  `issue-119-pre-opus-handoff.md`, `issue-119-principal-handoff.md`,
-  `issue-119-support-evidence.md` and `issue-119-renderer-spike-prep.md`.
+  The candidate is complete in the sense the plan defines: a persistent Three.js
+  Earth interprets the typed route across `Mode → World → Continent → Region →
+  Learn/Play → Results → spatial return`, for all four domains and all six
+  continents, running the real production learning, scoring, evidence, Mastery
+  and storage lifecycle. The isolated `experiments/spatial-atlas` prototype is
+  **retired**: keeping a second globe implementation beside the real one is the
+  duplication the plan forbids, and its capabilities now live in `src/spatial/`
+  under test.
 
-  #104 stops being indefinitely deferred at Stage 1: a continuous 2D prototype
-  is substantially the #104 design space, so Stage 1's outcome decides it either
-  way. It must not reintroduce colour-only progress encoding.
+  The three reserved decisions are made and recorded:
+
+  - [`F1 — spatial interaction contract`](issue-119-spatial-interaction-contract.md);
+  - [`F2 — renderer/scene/camera architecture`](issue-119-renderer-decision.md);
+  - [`F3 — spherical geography and LOD contract`](issue-119-spherical-geography-contract.md).
+
+  Measured spatial entry payload is **178.8 kB gzip** (renderer 125.7 + world
+  geography 53.0) against the plan's ≤ 250 kB direction, down from the
+  prototype's 405 kB. Core `app.js` is 102.0 kB gzip: the whole
+  spatial stack is behind a dynamic import, and the conventional Atlas remains
+  the renderer-failure path in source rather than in principle.
+
+  Verification is `npm test` plus `scripts/verify-spatial-atlas.mjs` and
+  `tests/browser/spatial-atlas.spec.ts`. The [`invariant harness`](issue-119-invariant-harness.md)
+  remains the acceptance map, and [`issue-119-plan.md`](issue-119-plan.md) the
+  execution authority.
+
+  Physical-device acceptance is **not claimed and not inferable**. Real GPU frame
+  pacing, thermals, battery, Android/iOS edge-gesture coexistence, installed-PWA
+  behaviour and the actual feel of drag and pinch remain owner judgement on real
+  hardware. Headless Chromium under SwiftShader is engineering evidence only.
+
+  Supporting historical evidence remains available and is explicitly not binding:
+  [`renderer comparison`](issue-119-renderer-comparison.md) (PARKED/AMBER; its
+  recorded defects mean it did not settle F2), [`geometry/LOD envelope`](issue-119-geometry-lod-experiment.md),
+  [`R3F spike`](issue-119-r3f-spike-results.md), [`MapLibre spike`](issue-119-maplibre-spike-results.md),
+  and the 2D probe/phone-comparison records.
 
 - [#118 — audit Atlas mobile UX, motion and game feel](https://github.com/BenWassa/flag/issues/118).
   **Audit complete; implementation not started.** Report:
@@ -209,11 +165,7 @@ the [`#86 closeout record`](../closed/issue-86-clip-map-context.md).
   already locked. The motion and game-feel lenses were the only ones that found
   what the existing Impeccable/Taste workflow does not.
 
-  Its mobile-ergonomics and motion-timing lenses produce exactly the
-  current-launcher interaction baseline #119 Stage 0 needs; §2's confirmed
-  strengths and measured timings are that baseline, so **do not capture it
-  twice**. Physical-device questions raised by the audit (E-02, E-03) were
-  deferred to #71 rather than answered, and #104 was not reopened.
+  Its mobile-ergonomics and motion-timing measurements remain reusable baseline evidence for #119 rather than something that must be recaptured before the full candidate can start. Physical-device questions raised by the audit (E-02, E-03) were deferred to #71 rather than answered, and #104 was not reopened.
 
 ## Working rules
 

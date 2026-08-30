@@ -1,0 +1,210 @@
+/*
+ * Issue #119 — Spatial Atlas stage.
+ *
+ * Tokens only: every colour and radius here already exists in atlas-theme.css.
+ * The stage adds geography and a caption; it introduces no new visual language,
+ * no glass, no gradient furniture and no motion beyond the camera itself.
+ */
+
+.spatial-preview-switch {
+  position: fixed;
+  inset-block-start: max(8px, env(safe-area-inset-top));
+  inset-inline-end: max(8px, env(safe-area-inset-right));
+  z-index: 1000;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 36px;
+  padding: 5px 8px 5px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  color: var(--text-muted);
+  box-shadow: var(--shadow-soft);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.spatial-preview-switch a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding-inline: 9px;
+  border-radius: var(--radius-sm);
+  background: var(--action-soft);
+  color: var(--action-pressed);
+  text-decoration: none;
+}
+
+.spatial-preview-switch a:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--action) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.spatial-shell {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100svh;
+}
+
+/* The activity owns the screen: the shell steps out of the way entirely so
+   viewport-sized quiz layouts behave exactly as they do without the stage. */
+.spatial-shell[data-mode='yielded'] {
+  display: block;
+  height: auto;
+}
+
+.spatial-shell__panel {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.spatial-shell[data-mode='yielded'] .spatial-shell__panel { overflow: visible; }
+
+/* `.quiz-shell` and friends size against the viewport. Inside the stage layout
+   the panel is the viewport, so the same rule has to resolve against it. */
+.spatial-shell:not([data-mode='yielded']) .quiz-shell,
+.spatial-shell:not([data-mode='yielded']) .page--home,
+.spatial-shell:not([data-mode='yielded']) .page--atlas { min-height: 100%; }
+
+.spatial-stage {
+  position: relative;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: var(--spatial-stage-height, 40svh);
+  background: var(--canvas);
+  border-block-end: 1px solid var(--line);
+}
+
+.spatial-shell[data-mode='yielded'] .spatial-stage { display: none; }
+
+/* An activity is running over the geography. The place persists but must not
+   compete with the learning object, so it takes a quieter share of the screen. */
+.spatial-shell[data-mode='context'] .spatial-stage { --spatial-stage-height: 22svh; }
+
+.spatial-stage__surface {
+  position: relative;
+  min-height: 0;
+  /* Scoped to the stage, never to the document: page scrolling elsewhere and
+     the platform edge-back gesture both keep working. */
+  touch-action: none;
+  cursor: grab;
+}
+
+.spatial-stage__surface:active { cursor: grabbing; }
+
+/* A live question owns the pointer completely: the geography must not intercept
+   a tap meant for an answer, and it offers nothing to select in any case.
+   Results deliberately keeps the pointer — nothing there is selectable either,
+   but the learner has finished and the place is theirs to look around. */
+.spatial-stage[data-mode='context'] .spatial-stage__surface {
+  pointer-events: none;
+  cursor: default;
+}
+
+.spatial-stage__canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Until the first sized frame the canvas has no meaningful contents; fading in
+   avoids a one-frame flash of an unsized viewport. Not a decorative animation. */
+.spatial-stage__surface > canvas { opacity: 0; transition: opacity 160ms ease; }
+.spatial-stage[data-ready='true'] .spatial-stage__surface > canvas { opacity: 1; }
+
+.spatial-stage__controls {
+  display: grid;
+  gap: 6px;
+  padding: 6px max(var(--space-4), env(safe-area-inset-left)) 8px max(var(--space-4), env(safe-area-inset-left));
+}
+
+.spatial-stage__caption {
+  margin: 0;
+  color: var(--text-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+/*
+ * The DOM twin of the globe's selection. Wraps rather than scrolls: DESIGN.md
+ * forbids horizontal scrolling for primary selection, and a learner on a 320 px
+ * screen must be able to see every area of a continent at once.
+ */
+.spatial-scopes {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 6px;
+}
+
+.spatial-scopes__item {
+  min-height: 32px;
+  padding: 5px 11px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* The mark is a shape, not only a colour: a diamond for complete, a dot for
+   Mastered, beside a visually-hidden word for assistive technology. */
+.spatial-scopes__mark { margin-inline-start: 5px; font-size: 9px; vertical-align: 1px; }
+.spatial-scopes__item--mastered { border-color: color-mix(in srgb, var(--mastery) 45%, var(--line)); }
+.spatial-scopes__item--mastered .spatial-scopes__mark { color: var(--mastery); }
+.spatial-scopes__item--complete { border-color: color-mix(in srgb, var(--prestige) 58%, var(--line)); }
+.spatial-scopes__item--complete .spatial-scopes__mark { color: color-mix(in srgb, var(--prestige) 70%, var(--text)); }
+
+.spatial-scopes__item[aria-current='true'] {
+  border-color: color-mix(in srgb, var(--action) 55%, var(--line));
+  background: var(--action-soft);
+  color: var(--action-pressed);
+}
+
+/* Wide and short viewports both want geography beside the controls rather than
+   above them: a 390px-tall landscape phone has no room for a stacked band. */
+@media (min-width: 860px), (orientation: landscape) and (max-height: 540px) {
+  .spatial-shell {
+    grid-template-rows: none;
+    grid-template-columns: minmax(0, 1fr) minmax(340px, 42%);
+  }
+  .spatial-stage {
+    height: auto;
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--line);
+  }
+  .spatial-shell[data-mode='context'] .spatial-stage { --spatial-stage-height: auto; }
+}
+
+/* A short landscape phone has no room to share. Splitting 844x390 between a
+   globe and a Flags question squeezes the answers into a column too narrow to
+   read, and the activity is the content: here the geography stands down
+   completely for the duration of the question, exactly as it already does for
+   the map-native domains. The contract is unchanged; only the layout adapts. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .spatial-shell[data-mode='context'] {
+    display: block;
+    height: auto;
+  }
+  .spatial-shell[data-mode='context'] .spatial-stage { display: none; }
+  .spatial-shell[data-mode='context'] .spatial-shell__panel { overflow: visible; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spatial-stage__surface > canvas { transition: none; }
+}
+
+/* Forced-colours mode replaces the palette wholesale; a WebGL canvas cannot
+   follow it, so the geography is hidden rather than left as an unreadable
+   rectangle. Every action it offered is already a real control below. */
+@media (forced-colors: active) {
+  .spatial-stage { display: none; }
+  .spatial-shell { display: block; height: auto; }
+  .spatial-shell__panel { overflow: visible; }
+  .spatial-preview-switch { border: 1px solid ButtonText; box-shadow: none; }
+}
