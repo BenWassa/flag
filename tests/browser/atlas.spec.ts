@@ -2,9 +2,9 @@ import { expect, test, type Page } from '@playwright/test';
 
 test('walks domain to continent to Play without a launcher page', async ({ page }) => {
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Choose what to learn' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
   await page.getByRole('button', { name: /^Flags/ }).click();
-  await expect(page.getByRole('heading', { name: 'Choose a continent' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
   await page.getByRole('button', { name: /^Africa/ }).click();
   // The selected place is the dominant label and Play is immediately available.
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();

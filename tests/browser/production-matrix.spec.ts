@@ -71,8 +71,14 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await northAmerica.click();
   await expect(page).toHaveURL(/#\/locations\/north-america$/);
   await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Play Northern America' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Play Central America' })).toBeVisible();
+  // Issue #166: the continent surface offers its own Play and every area as a
+  // quiet selection control; the area's own Play appears once it is focused.
+  await expect(page.getByRole('button', { name: 'Play North America' })).toBeVisible();
+  for (const area of ['Northern America', 'Central America', 'Caribbean']) {
+    await expect(page.locator('.spatial-chip', { hasText: area })).toBeVisible();
+  }
+  await page.locator('.spatial-chip', { hasText: 'Caribbean' }).click();
+  await expect(page).toHaveURL(/#\/locations\/north-america\/caribbean$/);
   await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
 
   // The stacked #22 + #27 curriculum deliberately completes every production
@@ -89,9 +95,12 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await oceania.click();
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
   await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Play Australia & New Zealand' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Play Melanesia' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Play Micronesia' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Play Oceania' })).toBeVisible();
+  for (const area of ['Australia & New Zealand', 'Melanesia', 'Micronesia', 'Polynesia']) {
+    await expect(page.locator('.spatial-chip', { hasText: area })).toBeVisible();
+  }
+  await page.locator('.spatial-chip', { hasText: 'Polynesia' }).click();
+  await expect(page).toHaveURL(/#\/locations\/oceania\/polynesia$/);
   await expect(page.getByRole('button', { name: 'Play Polynesia' })).toBeVisible();
 
   // A directly typed durable Oceania scope now resolves to the real launcher.

@@ -275,7 +275,8 @@ test.describe('accessibility and resilience', () => {
     if (lost === 'unavailable') test.skip(true, 'WEBGL_lose_context is unavailable in this runner.');
     await page.waitForTimeout(1200);
     await expect(page.locator('.spatial-stage__surface')).not.toHaveAttribute('data-context-lost', 'true');
-    await expect(page.getByRole('button', { name: 'Play West Africa' })).toBeVisible();
+    // The framed scope's own Play, which is what this surface offers.
+    await expect(page.getByRole('button', { name: 'Play Africa' })).toBeVisible();
   });
 });
 
@@ -305,9 +306,10 @@ test.describe('layout matrix', () => {
 
       // Issue #166: Play is on screen when the scope is focused. Reaching it
       // must not need a scroll, and no launcher page sits under the globe.
+      // Playwright's boundingBox is {x, y, width, height} — no bottom/top.
       const playBox = (await play.boundingBox())!;
-      expect(playBox.bottom).toBeLessThanOrEqual(viewport.height + 1);
-      expect(playBox.top).toBeGreaterThanOrEqual(-1);
+      expect(playBox.y + playBox.height).toBeLessThanOrEqual(viewport.height + 1);
+      expect(playBox.y).toBeGreaterThanOrEqual(-1);
       await expect(page.locator('.page--launcher')).toHaveCount(0);
 
       // ...and so is a live question, with its answers fully on screen.

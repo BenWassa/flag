@@ -95,12 +95,19 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
   const crown = getWorldAchievementReadModel(achievements).crownEarned;
   return (
     <>
+      {/* The heading names where the learner is, exactly as it does for a
+          framed place. Home's own semantics — the brand heading, the World
+          Crown block and the Modes heading — are preserved verbatim: #166
+          redesigns the navigation surface, not Home's information, and the
+          Crown's learner-facing presentation belongs to #138. */}
       <div className="spatial-command__head">
-        <p className="spatial-command__domain">Atlas</p>
-        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>Choose what to learn</h1>
+        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>Atlas</h1>
         <button className="icon-button spatial-command__aside" type="button" onClick={actions.openProfile} aria-label="Profile"><Icon name="profile" /></button>
       </div>
-      {crown ? <p className="spatial-command__meta" data-world-crown-earned>World Crown earned · all six continents complete</p> : null}
+      {crown ? <section className="world-crown" aria-labelledby="world-crown-title" data-world-crown-earned>
+        <div className="world-crown__identity"><h2 id="world-crown-title">World Crown</h2><p>Earned · all six continents complete</p></div>
+      </section> : null}
+      <h2 className="atlas-eyebrow">Modes</h2>
       <nav className="spatial-command__choices" aria-label="Learning modes">
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
@@ -133,10 +140,10 @@ function Continents({ domain, ledgers, achievements }: {
     <>
       <div className="spatial-command__head">
         <button className="icon-button spatial-command__back" type="button" onClick={actions.goBack} aria-label="Back to modes"><Icon name="back" /></button>
-        <p className="spatial-command__domain"><span className="spatial-command__domain-mark" aria-hidden="true"><DomainIcon domain={domain} /></span>{domainDisplayName(domain)}</p>
-        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>Choose a continent</h1>
-        {/* A concrete figure rather than the coverage word: "World" reads as a
-            place under this heading, and #152 owns that label's own defects. */}
+        <p className="spatial-command__domain"><span className="spatial-command__domain-mark" aria-hidden="true"><DomainIcon domain={domain} /></span>Choose a continent</p>
+        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>{domainDisplayName(domain)}</h1>
+        {/* A concrete figure rather than the coverage word, which degenerates to
+            "World" once every continent ships; #152 owns that label's defects. */}
         <p className="spatial-command__meta">
           {summary.supportedContinentIds.length} continents · {summary.cleared} of {summary.total} cleared
         </p>
