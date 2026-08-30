@@ -28,7 +28,7 @@ import { deriveSpatialState, resolveTapTarget, type SpatialState } from '../spat
 import { AtlasActionsContext, type AtlasActions } from './actions.js';
 import { Icon } from './components/Icon.js';
 import { DomainScreen, FlagsStudyScreen, HomeScreen, ProfileScreen } from './screens/PassiveScreens.js';
-import { FlagsLauncherScreen, GeographyLauncherScreen } from './screens/LauncherScreens.js';
+import { LauncherScreen } from './screens/LauncherScreens.js';
 import { FlagsQuizScreen, OutlineQuizScreen, RecognitionResultsScreen } from './screens/RecognitionScreens.js';
 import { LocationQuizScreen, LocationResultsScreen } from './screens/LocationScreens.js';
 import { NeighborQuizScreen, NeighborResultsScreen } from './screens/NeighborScreens.js';
@@ -283,7 +283,15 @@ export function AtlasApp() {
 
   return <AtlasActionsContext.Provider value={actions}>
     {spatialAvailable
-      ? <SpatialShell state={spatialState} contentKey={routeKey} onSelectCountry={selectCountry} onRendererUnavailable={rendererUnavailable}>{content}</SpatialShell>
+      ? <SpatialShell
+          state={spatialState}
+          contentKey={routeKey}
+          ledgers={ledgers}
+          achievements={store.achievements}
+          persisting={spatialState.domain ? domainPersisting(store, spatialState.domain) : persisting}
+          onSelectCountry={selectCountry}
+          onRendererUnavailable={rendererUnavailable}
+        >{content}</SpatialShell>
       : content}
     <p className="visually-hidden" role="status" aria-live="polite">{announcement}</p>
     {notice ? <div className="app-notice" role="status" aria-live="polite"><span className="app-notice__body"><span className="app-notice__icon" aria-hidden="true"><Icon name="warning" /></span><span className="app-notice__message">{notice}</span></span><button className="app-notice__dismiss" type="button" onClick={dismissNotice} aria-label="Dismiss message"><Icon name="close" /></button></div> : null}
@@ -304,17 +312,17 @@ function screen(store: AppStore, ledgers: ProgressLedgers, allPersisting: boolea
     case 'home': return <HomeScreen ledgers={ledgers} achievements={store.achievements} persisting={allPersisting} />;
     case 'profile': return <ProfileScreen />;
     case 'domain': return <DomainScreen domain={store.view.domain} ledgers={ledgers} achievements={store.achievements} persisting={domainPersisting(store, store.view.domain)} />;
-    case 'scope': return <FlagsLauncherScreen progress={store.progress} scope={store.view.scope} achievements={store.achievements} persisting={store.persisting} />;
+    case 'scope': return <LauncherScreen domain="flags" scope={store.view.scope} ledgers={ledgers} achievements={store.achievements} persisting={store.persisting} />;
     case 'flags-study': return <FlagsStudyScreen scope={store.view.scope} revealedIds={revealed} revealAll={revealAll} />;
     case 'quiz': return store.session ? <FlagsQuizScreen session={store.session} progress={store.progress} answeredCountryId={store.answeredCountryId} /> : null;
     case 'results': return <RecognitionResultsScreen result={store.view.result} domain="flags" />;
-    case 'map-home': return <GeographyLauncherScreen domain="locations" scope={store.view.scope} achievements={store.achievements} persisting={store.mapPersisting} progress={store.locationProgress} />;
+    case 'map-home': return <LauncherScreen domain="locations" scope={store.view.scope} ledgers={ledgers} achievements={store.achievements} persisting={store.mapPersisting} />;
     case 'map-quiz': return store.mapSession && store.mapAsset ? <LocationQuizScreen asset={store.mapAsset} session={store.mapSession} lastWrongCountryId={store.mapLastWrongCountryId} /> : null;
     case 'map-results': return store.mapAsset ? <LocationResultsScreen asset={store.mapAsset} result={store.view.result} /> : null;
-    case 'outline-home': return <GeographyLauncherScreen domain="outlines" scope={store.view.scope} achievements={store.achievements} persisting={store.outlinePersisting} progress={store.outlineProgress} />;
+    case 'outline-home': return <LauncherScreen domain="outlines" scope={store.view.scope} ledgers={ledgers} achievements={store.achievements} persisting={store.outlinePersisting} />;
     case 'outline-quiz': return store.outlineSession && store.outlineAsset ? <OutlineQuizScreen asset={store.outlineAsset} session={store.outlineSession} progress={store.outlineProgress} answeredCountryId={store.outlineAnsweredCountryId} /> : null;
     case 'outline-results': return <RecognitionResultsScreen result={store.view.result} domain="outlines" />;
-    case 'neighbor-home': return <GeographyLauncherScreen domain="neighbors" scope={store.view.scope} achievements={store.achievements} persisting={store.neighborPersisting} progress={store.neighborProgress} />;
+    case 'neighbor-home': return <LauncherScreen domain="neighbors" scope={store.view.scope} ledgers={ledgers} achievements={store.achievements} persisting={store.neighborPersisting} />;
     case 'neighbor-quiz': return store.neighborSession ? <NeighborQuizScreen session={store.neighborSession} lastOutcome={store.neighborLastOutcome} query={neighborQuery} /> : null;
     case 'neighbor-results': return <NeighborResultsScreen result={store.view.result} />;
   }

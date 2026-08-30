@@ -54,6 +54,20 @@ export type PickingMode = 'none' | 'continent' | 'region';
 /** Earned state for one selectable scope. Always accompanied by text. */
 export type ScopeStatus = 'mastered' | 'complete';
 
+/**
+ * Issue #166 — which navigation surface the spatial interface is presenting.
+ *
+ * When this is set, the stage and its command surface ARE the screen: no
+ * conventional launcher page renders beneath them. It is null whenever an
+ * activity or a results screen owns the panel, which is what keeps the #119
+ * activity boundary intact.
+ *
+ *   `domains`     choose what to learn; the globe is quiet context.
+ *   `continents`  choose a continent, on the globe or in its equivalent list.
+ *   `scope`       a continent or region is framed and Play is one tap away.
+ */
+export type SpatialSurface = 'domains' | 'continents' | 'scope';
+
 export interface SpatialState {
   mode: SpatialStageMode;
   /** Continent detail LOD the stage should have mounted, beyond the world asset. */
@@ -70,6 +84,8 @@ export interface SpatialState {
   scopeStatus: ReadonlyMap<string, ScopeStatus>;
   /** Sentence describing the spatial state for assistive technology. */
   description: string;
+  /** Set when the spatial interface is the screen rather than a band above one. */
+  navigation: SpatialSurface | null;
 }
 
 export interface SpatialInput {
@@ -242,6 +258,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       countryStates: EMPTY,
       scopeStatus: NO_STATUS,
       description: '',
+      navigation: null,
     };
   }
 
@@ -257,6 +274,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       countryStates: countryStatesForScope(scope, domain, achievements, inScope),
       scopeStatus: NO_STATUS,
       description: scope ? `${scope.label} is framed on the globe.` : '',
+      navigation: null,
     };
   }
 
@@ -273,6 +291,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       countryStates: EMPTY,
       scopeStatus: NO_STATUS,
       description: '',
+      navigation: null,
     };
   }
 
@@ -286,7 +305,8 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       domain,
       countryStates: countryStatesForScope(route.scope, domain, achievements, inScope),
       scopeStatus: scopeStatusFor(detailContinent(route.scope), domain, achievements),
-      description: `${route.scope.label} is framed on the globe. Tap a country to choose its region.`,
+      description: `${route.scope.label} is framed on the globe. Tap a country to choose its area.`,
+      navigation: 'scope',
     };
   }
 
@@ -298,8 +318,9 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
     countryStates: worldCountryStates(domain),
     scopeStatus: NO_STATUS,
     description: domain
-      ? 'The whole Earth is framed. Tap a continent, or use the list below.'
+      ? 'The whole Earth is framed. Tap a continent, or choose one below.'
       : 'The whole Earth is framed. Choose what to learn.',
+    navigation: domain ? 'continents' : 'domains',
   };
 }
 

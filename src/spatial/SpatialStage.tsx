@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { SpatialState } from './spatial-state.js';
 import type { StageController } from './stage-controller.js';
 
@@ -9,8 +9,8 @@ import type { StageController } from './stage-controller.js';
  * the scene graph, the camera or the frame loop: `createStageController` does,
  * and this component only pushes the derived `SpatialState` into it. The whole
  * spatial stack — Three.js, the scene, the world geography — sits behind the
- * dynamic import below, so a learner who never reaches a spatial route never
- * downloads it.
+ * dynamic import below, so a learner whose device cannot run it never downloads
+ * it and falls back to the conventional presentation.
  */
 
 export interface SpatialStageProps {
@@ -18,8 +18,6 @@ export interface SpatialStageProps {
   onSelectCountry(countryId: string): void;
   /** Renderer could not start. The shell falls back to conventional presentation. */
   onUnavailable(): void;
-  /** Equivalent DOM controls, rendered beneath the geography they mirror. */
-  children?: ReactNode;
 }
 
 const prefersReducedMotion = () =>
@@ -27,7 +25,7 @@ const prefersReducedMotion = () =>
   && typeof window.matchMedia === 'function'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function SpatialStage({ state, onSelectCountry, onUnavailable, children }: SpatialStageProps) {
+export function SpatialStage({ state, onSelectCountry, onUnavailable }: SpatialStageProps) {
   const container = useRef<HTMLDivElement | null>(null);
   const controller = useRef<StageController | null>(null);
   const latest = useRef(state);
@@ -76,11 +74,11 @@ export function SpatialStage({ state, onSelectCountry, onUnavailable, children }
   return (
     <div className="spatial-stage" data-mode={state.mode} data-ready={ready ? 'true' : undefined}>
       <div className="spatial-stage__surface" ref={container} />
-      {state.description || children
-        ? <div className="spatial-stage__controls">
-            {state.description ? <p className="spatial-stage__caption">{state.description}</p> : null}
-            {children}
-          </div>
+      {/* The geography's own description. Every action it offers is a real
+          control in the command surface below, so this describes rather than
+          instructs, and it takes no visible space away from the globe. */}
+      {state.description
+        ? <p className="spatial-stage__caption visually-hidden">{state.description}</p>
         : null}
     </div>
   );

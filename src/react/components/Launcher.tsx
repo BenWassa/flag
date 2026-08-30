@@ -1,23 +1,11 @@
 import type { LearningDomain, ScopeStats, StudyScope } from '../../domain/models.js';
 import { domainDisplayName } from '../../domain/display.js';
 import { useAtlasActions } from '../actions.js';
+import type { ScopeModel } from '../scope-model.js';
 import { DomainIcon, Icon } from './Icon.js';
 import { ProgressStrip } from './ProgressStrip.js';
 
-export interface LauncherRegion {
-  scope: StudyScope;
-  stats: ScopeStats;
-  domainMastered?: boolean;
-  complete?: boolean;
-}
-
-export interface LauncherModel {
-  domain: LearningDomain;
-  continentScope: StudyScope;
-  selectedRegion?: StudyScope;
-  stats: ScopeStats;
-  regions: readonly LauncherRegion[];
-  unitLabel: string;
+export interface LauncherModel extends ScopeModel {
   persisting: boolean;
   storageNotice: string;
 }
