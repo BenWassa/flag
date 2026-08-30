@@ -14,7 +14,7 @@ test('accepts the live Firebase Hosting PWA origin (#107)', async ({ page, conte
   const origin = new URL(baseURL).origin;
 
   await page.goto('/#/');
-  await expect(page.getByRole('heading', { name: 'Choose what to learn' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();
 
   const assetUrls = await page.evaluate(() => performance.getEntriesByType('resource').map((entry) => entry.name));
   expect(assetUrls.some((url) => /\/app\.js$/.test(url))).toBe(true);
