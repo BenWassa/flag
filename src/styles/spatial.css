@@ -10,10 +10,25 @@
 
 .spatial-shell {
   display: grid;
-  grid-template-rows: minmax(0, 1fr) auto;
   height: 100svh;
   background: var(--canvas);
 }
+
+/*
+ * Navigating: geography dominates and the command surface takes only what it
+ * needs. The stage keeps a floor even on the shortest phone, and the band is
+ * capped so it can never grow past it and clip. Its parts are already ordered by
+ * need — place, then Play, then the lateral choices — so if anything has to
+ * scroll on a 320x480 screen it is the chips, never the primary action.
+ */
+.spatial-shell[data-surface] { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
+
+/*
+ * An activity or results screen occupies the second row instead. There the
+ * panel is the thing that scrolls, so the stage takes a fixed share and the
+ * panel gets the constrained remainder.
+ */
+.spatial-shell:not([data-surface]) { grid-template-rows: var(--spatial-stage-height, 40svh) minmax(0, 1fr); }
 
 /* The activity owns the screen: the shell steps out of the way entirely so
    viewport-sized quiz layouts behave exactly as they do without the stage. */
@@ -45,13 +60,17 @@
   position: relative;
   min-height: 0;
   background: var(--canvas);
+  /* A hairline, not a card edge: it exists only so what follows the geography
+     reads as ground rather than as something floating over it. One rule, so it
+     holds for the command surface and for an activity panel alike. */
+  border-block-end: 1px solid var(--line);
 }
 
 .spatial-shell[data-mode='yielded'] .spatial-stage { display: none; }
 
 /* An activity is running over the geography. The place persists but must not
-   compete with the learning object, so it takes a fixed, quieter share. */
-.spatial-shell[data-mode='context'] { grid-template-rows: 22svh minmax(0, 1fr); }
+   compete with the learning object, so it takes a quieter share. */
+.spatial-shell[data-mode='context'] { --spatial-stage-height: 22svh; }
 
 .spatial-stage__surface {
   position: relative;
@@ -100,10 +119,10 @@
     max(var(--space-4), env(safe-area-inset-right))
     max(var(--space-4), env(safe-area-inset-bottom))
     max(var(--space-4), env(safe-area-inset-left));
-  /* A hairline, not a card: it exists only so the band reads as ground rather
-     than as something floating over the globe. */
-  border-block-start: 1px solid var(--line);
   background: var(--canvas);
+  max-height: 66svh;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
 }
 
 .spatial-command__head {
@@ -232,17 +251,17 @@
 /* Wide and short viewports both want geography beside the controls rather than
    above them: a 390px-tall landscape phone has no room for a stacked band. */
 @media (min-width: 860px), (orientation: landscape) and (max-height: 540px) {
-  .spatial-shell,
-  .spatial-shell[data-mode='context'] {
+  /* Matching specificity, so these actually replace the stacked templates. */
+  .spatial-shell[data-surface],
+  .spatial-shell:not([data-surface]) {
     grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 38%);
   }
-  .spatial-command {
-    align-content: start;
-    overflow-y: auto;
-    border-block-start: 0;
-    border-inline-start: 1px solid var(--line);
+  .spatial-stage {
+    border-block-end: 0;
+    border-inline-end: 1px solid var(--line);
   }
+  .spatial-command { align-content: start; max-height: none; }
 }
 
 @media (min-width: 860px) {
@@ -277,6 +296,5 @@
   .spatial-stage { display: none; }
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
-  .spatial-command { border-block-start: 0; }
   .spatial-chip, .spatial-mode { border: 1px solid ButtonText; }
 }

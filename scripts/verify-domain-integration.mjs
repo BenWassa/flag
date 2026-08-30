@@ -17,7 +17,7 @@ import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
-const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 
 assert.deepEqual(
   [...AFRICA_NEIGHBOR_COVERAGE_EXCLUDED_IDS],
@@ -97,9 +97,9 @@ for (const domain of ['locations', 'outlines', 'neighbors']) {
 }
 
 const launchers = [
-  ['Locations', renderScreen(GeographyLauncherScreen, { domain: 'locations', progress: locationProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
-  ['Outlines', renderScreen(GeographyLauncherScreen, { domain: 'outlines', progress: outlineProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
-  ['Neighbours', renderScreen(GeographyLauncherScreen, { domain: 'neighbors', progress: neighborProgress, scope: AFRICA_MAP_SCOPE, achievements, persisting: true })],
+  ['Locations', renderScreen(LauncherScreen, { domain: 'locations', scope: AFRICA_MAP_SCOPE, ledgers, achievements, persisting: true })],
+  ['Outlines', renderScreen(LauncherScreen, { domain: 'outlines', scope: AFRICA_MAP_SCOPE, ledgers, achievements, persisting: true })],
+  ['Neighbours', renderScreen(LauncherScreen, { domain: 'neighbors', scope: AFRICA_MAP_SCOPE, ledgers, achievements, persisting: true })],
 ];
 for (const [name, html] of launchers) {
   assert.ok(html.includes('All Africa') && html.includes('Learn Africa'), `${name} opens directly on the Africa launcher.`);

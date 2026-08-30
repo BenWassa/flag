@@ -22,7 +22,7 @@ import {
 import { sanitizeLocationRecord } from '../.verify-dist/infrastructure/map-storage.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
-const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 const { LocationQuizScreen, LocationResultsScreen } = await loadScreens('LocationScreens.js');
 
 const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(LocationQuizScreen, {
@@ -31,12 +31,12 @@ const renderMapQuiz = (asset, session, lastWrongCountryId) => renderScreen(Locat
   lastWrongCountryId,
 });
 const renderMapResults = (asset, result) => renderScreen(LocationResultsScreen, { asset, result });
-const renderMapHome = (progress, scope, achievements, selectedRegion = false) => renderScreen(GeographyLauncherScreen, {
+const renderMapHome = (progress, scope, achievements, selectedRegion = false) => renderScreen(LauncherScreen, {
   domain: 'locations',
   scope: selectedRegion ? { ...scope, kind: 'region' } : scope,
   achievements,
   persisting: true,
-  progress,
+  ledgers: { flags: progress, locations: progress, outlines: progress, neighbors: progress },
 });
 
 const country = (id) => COUNTRIES.find((item) => item.id === id);

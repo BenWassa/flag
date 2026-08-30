@@ -384,7 +384,7 @@ export class GeographyIndex {
    *      nearest anchor wins, ties broken by smaller span then by ISO3, so
    *      overlapping open-water envelopes resolve deterministically. An envelope
    *      reaching onto another country's land is bounded by that country's own
-   *      narrow dimension, so it can never cover a neighbour over;
+   *      room, so it can never cover a neighbour over;
    *   3. with no such candidate, the containing polygon wins unchanged.
    *
    * This is what #117's "real polygons beat assisted surfaces" means once the

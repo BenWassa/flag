@@ -177,7 +177,18 @@ function Scope({ state, ledgers, achievements }: {
   const framed = state.framedScope;
   if (!domain || !framed) return null;
   const model = scopeModelFor(domain, framed, ledgers, achievements);
-  if (!model) return null;
+  // Route normalisation keeps unsupported scopes off this surface, so this is a
+  // guard rather than a state. It still has to leave a way out.
+  if (!model) {
+    return (
+      <div className="spatial-command__head">
+        <button className="icon-button spatial-command__back" type="button" onClick={actions.goBack} aria-label={`Back to ${domainDisplayName(domain)}`}><Icon name="back" /></button>
+        <p className="spatial-command__domain">{domainDisplayName(domain)}</p>
+        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>{framed.label}</h1>
+        <p className="spatial-command__meta">Not available yet.</p>
+      </div>
+    );
+  }
 
   const active = model.activeScope;
   const activeId = active.id ?? '';

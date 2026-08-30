@@ -20,16 +20,16 @@ import { escapeHtml } from '../.verify-dist/ui/format.js';
 import { parentRoute, parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
-const { GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 const { OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
 
 function renderOutlineHome(progress, scope, achievements, persisting) {
-  return renderScreen(GeographyLauncherScreen, {
+  return renderScreen(LauncherScreen, {
     domain: 'outlines',
     scope,
     achievements,
     persisting,
-    progress,
+    ledgers: { flags: progress, locations: progress, outlines: progress, neighbors: progress },
   });
 }
 

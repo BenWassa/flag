@@ -10,12 +10,14 @@ import { createInitialNeighborProgress } from '../.verify-dist/domain/neighbor-g
 import { createInitialProgress } from '../.verify-dist/domain/progress.js';
 import { LEARNING_DOMAIN_IDS } from '../.verify-dist/domain/models.js';
 import { scopeSupportsDomain } from '../.verify-dist/domain/scope-support.js';
-import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+import { deriveSpatialState } from '../.verify-dist/spatial/spatial-state.js';
+import { loadScreens, loadSpatial, renderScreen } from './lib/react-markup.mjs';
 
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
-const { FlagsLauncherScreen, GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 const { RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');
 const { NeighborResultsScreen } = await loadScreens('NeighborScreens.js');
+const { SpatialCommand } = await loadSpatial('SpatialCommand.js');
 const africa = { kind: 'continent', id: 'africa', label: 'Africa' };
 const westAfrica = { kind: 'region', id: 'west-africa', label: 'West Africa' };
 const ledgers = {
@@ -27,6 +29,59 @@ const ledgers = {
 const achievements = createInitialAchievementState();
 const visibleText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 const buttons = (html) => [...html.matchAll(/<button\b[^>]*>/g)].map(([tag]) => tag);
+
+// ---------------------------------------------------------------------------
+// Issue #166 — the production navigation surface
+//
+// Spatial is the default presentation, so the IA contract is asserted against
+// what learners are actually served. The conventional launcher assertions below
+// stay as the renderer-failure fallback's own contract.
+// ---------------------------------------------------------------------------
+
+const LAUNCHER_VIEW = { flags: 'scope', locations: 'map-home', outlines: 'outline-home', neighbors: 'neighbor-home' };
+
+function renderCommand(route, view) {
+  const state = deriveSpatialState({ route, view, achievements });
+  assert.ok(state.navigation, `${view} is a navigation surface.`);
+  return renderScreen(SpatialCommand, { state, ledgers, achievements, persisting: true });
+}
+
+{
+  const domains = renderCommand({ name: 'home' }, 'home');
+  assert.equal((domains.match(/class="spatial-mode"/g) ?? []).length, LEARNING_DOMAIN_IDS.length,
+    'Home offers one control per learning domain.');
+  for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
+    assert.ok(visibleText(domains).includes(label), `Home names ${label} visibly.`);
+  }
+  assert.equal(/Play /.test(domains), false, 'Home starts no round.');
+  assert.equal(domains.includes('region-row'), false, 'Home renders no launcher markup.');
+
+  for (const domain of LEARNING_DOMAIN_IDS) {
+    const continents = renderCommand({ name: 'learning', domain }, 'domain');
+    assert.equal((continents.match(/<button class="spatial-chip/g) ?? []).length, CONTINENTS.length,
+      `${domain} lists every continent.`);
+    const supported = CONTINENTS.filter((continent) => scopeSupportsDomain(
+      { kind: 'continent', id: continent.id, label: continent.name }, domain));
+    assert.equal((continents.match(/disabled=""/g) ?? []).length, CONTINENTS.length - supported.length,
+      `${domain} names unshipped continents honestly rather than offering them.`);
+    if (supported.length < CONTINENTS.length) {
+      assert.ok(continents.includes('coming soon'), `${domain} says so in words.`);
+    }
+  }
+
+  // A framed scope exposes Play immediately, for its own scope, in every domain.
+  for (const [domain, scope] of [['flags', africa], ['flags', westAfrica], ['locations', africa],
+    ['outlines', africa], ['neighbors', westAfrica]]) {
+    const html = renderCommand({ name: 'learning', domain, scope }, LAUNCHER_VIEW[domain]);
+    assert.ok(html.includes(`Play ${scope.label}`), `${domain}/${scope.id} offers Play for the framed scope.`);
+    assert.ok(html.includes(`Learn ${scope.label}`), `${domain}/${scope.id} offers Learn for the framed scope.`);
+    assert.equal((html.match(/class="spatial-command__place"/g) ?? []).length, 1,
+      `${domain}/${scope.id} names the selected place exactly once.`);
+    assert.equal(html.includes('region-row'), false, `${domain}/${scope.id} renders no launcher rows.`);
+    // Lateral choices select a scope; they never start a round.
+    assert.ok(html.includes(`All ${africa.label}`), `${domain}/${scope.id} offers its parent continent.`);
+  }
+}
 
 const home = renderScreen(HomeScreen, { ledgers, achievements, persisting: true });
 const homeWithoutPersistence = renderScreen(HomeScreen, { ledgers, achievements, persisting: false });
@@ -44,11 +99,14 @@ for (const domain of LEARNING_DOMAIN_IDS) {
   if (supported.length < CONTINENTS.length) assert.ok(html.includes('Coming soon'), `${domain} exposes unavailable coverage in words.`);
 }
 
+// The conventional launcher is now the renderer-failure fallback. It still has
+// to be complete and correct, so its invariants stay asserted here; the
+// production spatial surface is asserted separately below.
 const launchers = [
-  ['flags', renderScreen(FlagsLauncherScreen, { progress: ledgers.flags, scope: africa, achievements, persisting: true })],
-  ['locations', renderScreen(GeographyLauncherScreen, { domain: 'locations', progress: ledgers.locations, scope: africa, achievements, persisting: true })],
-  ['outlines', renderScreen(GeographyLauncherScreen, { domain: 'outlines', progress: ledgers.outlines, scope: africa, achievements, persisting: true })],
-  ['neighbors', renderScreen(GeographyLauncherScreen, { domain: 'neighbors', progress: ledgers.neighbors, scope: westAfrica, achievements, persisting: true })],
+  ['flags', renderScreen(LauncherScreen, { domain: 'flags', scope: africa, ledgers, achievements, persisting: true })],
+  ['locations', renderScreen(LauncherScreen, { domain: 'locations', scope: africa, ledgers, achievements, persisting: true })],
+  ['outlines', renderScreen(LauncherScreen, { domain: 'outlines', scope: africa, ledgers, achievements, persisting: true })],
+  ['neighbors', renderScreen(LauncherScreen, { domain: 'neighbors', scope: westAfrica, ledgers, achievements, persisting: true })],
 ];
 for (const [domain, html] of launchers) {
   assert.equal((html.match(/class="region-row__progress/g) ?? []).length, AFRICA_MAP_REGION_CONFIGS.length + 1, `${domain} exposes progress for every launcher row.`);
@@ -83,4 +141,4 @@ assert.match(atlasTheme, /\.page--tile-index \.continent-list\s*\{[^}]*grid-temp
 assert.match(atlasTheme, /\.page--tile-index \.continent-row__open\s*\{[^}]*width:\s*100%/, 'The whole continent row is the navigation target.');
 assert.match(atlasTheme, /\.region-row__open\s*\{[^}]*width:\s*100%/, 'The whole region row is the selection target.');
 assert.equal(styles.includes('.launcher-map'), false, 'Retired launcher-map styling stays removed.');
-console.log('IA verification passed: React mode-first Home, full-width geography launchers, honest unsupported shells, review/exit paths, and responsive layout contracts.');
+console.log('IA verification passed: spatial navigation surface (domains, continents, framed scope with immediate Play/Learn and no launcher beneath), React mode-first fallback Home and launchers, honest unsupported shells, review/exit paths, and responsive layout contracts.');

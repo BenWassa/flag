@@ -374,9 +374,9 @@ assert.equal(masteredState.scopeStatus.get('west-africa'), 'mastered', 'Mastery 
 assert.equal(masteredState.scopeStatus.get('southern-africa'), 'complete', 'Completion reaches the DOM control as state, not only as colour.');
 assert.equal(masteredState.scopeStatus.get('north-africa'), undefined, 'Unearned scopes carry no status.');
 assert.equal(otherDomain.scopeStatus.get('west-africa'), undefined, 'Scope status is per domain.');
-const scopeBarSource = await readFile('src/spatial/SpatialScopeBar.tsx', 'utf8');
-assert.match(scopeBarSource, /visually-hidden/, 'The scope bar names earned state for assistive technology.');
-assert.match(scopeBarSource, /aria-hidden="true"/, 'The scope bar mark is decorative beside that text.');
+const commandSource = await readFile('src/spatial/SpatialCommand.tsx', 'utf8');
+assert.match(commandSource, /visually-hidden/, 'The command surface names earned state for assistive technology.');
+assert.match(commandSource, /aria-hidden="true"/, 'Its marks are decorative beside that text.');
 // World level stays neutral: the globe never becomes a progress choropleth.
 const worldWithMastery = deriveSpatialState({ route: { name: 'learning', domain: 'flags' }, view: 'domain', achievements: earned });
 for (const value of worldWithMastery.countryStates.values()) {
@@ -479,6 +479,14 @@ assert.match(stageSource, /onUnavailable\(\)/, 'A renderer that cannot start fal
 
 const appSource = await readFile('src/react/AtlasApp.tsx', 'utf8');
 assert.match(appSource, /spatialAvailable\s*\n?\s*\?\s*<SpatialShell/, 'Renderer failure renders the conventional shell.');
+// Issue #166: for ordinary navigation the spatial surface IS the screen. The
+// conventional panel renders only when an activity or results owns the content.
+const shellSource = await readFile('src/spatial/SpatialShell.tsx', 'utf8');
+assert.match(
+  shellSource,
+  /state\.navigation\s*\n?\s*\?\s*<SpatialCommand[\s\S]*?:\s*<div className="spatial-shell__panel"/,
+  'No conventional launcher page renders beneath spatial navigation.',
+);
 assert.match(appSource, /resolveTapTarget\(spatialState, countryId\)/, 'Geography selection resolves through the shared contract.');
 assert.match(appSource, /navigateStable\(route\)/, 'Geography selection dispatches the same navigation the DOM controls use.');
 
