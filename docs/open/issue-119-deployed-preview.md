@@ -27,13 +27,15 @@ Changing the preview therefore requires an explicit source-pin update and a new 
 ## User entry / exit
 
 - Classic Home exposes one restrained `Try Spatial Atlas` Preview entry.
-- The preview exposes a persistent `Classic Atlas` escape.
+- The preview exposes a persistent `Classic Atlas` escape and an always-visible `Spatial preview` label.
 - Returning to classic preserves the current hash route when practical.
 - Neither direction writes a presentation choice to storage; reopening normal Atlas remains classic by default.
 
-## Service-worker boundary
+## PWA and service-worker boundary
 
-Cache Storage is origin-wide even when service-worker scopes differ. The preview therefore uses `flag-atlas-spatial-preview-v*`; classic Atlas continues the normal `flag-atlas-v*` convention. A preview build using a classic cache prefix is a release blocker.
+Cache Storage is origin-wide even when service-worker scopes differ. The preview therefore creates only `flag-atlas-spatial-preview-v*` caches; classic Atlas continues the normal `flag-atlas-v*` convention. The preview worker names the current classic cache generation only as an explicit do-not-delete guard.
+
+The preview keeps the accepted candidate's ordinary Atlas manifest metadata. Because the manifest is served from `./spatial/`, its relative `id`, `scope` and `start_url` resolve inside that sibling path rather than taking over the root PWA. The in-app preview label, not a parallel product brand, identifies the experiment.
 
 The classic root service worker is generated before `dist/spatial/` is assembled, so the root precache deliberately does not absorb the experimental renderer/geography payload. The preview owns its own precache inside its narrower scope.
 
@@ -46,7 +48,7 @@ Before merge:
 - the combined `dist/` contains both roots and records `spatial/preview-source.json`;
 - Chromium desktop and Pixel emulation prove classic → preview → classic navigation, route-preserving exit and same-origin storage continuity;
 - classic root does not render a spatial shell;
-- preview cache/manifest identity is isolated;
+- root and preview service-worker/cache scopes remain isolated;
 - exact combined artifact is uploaded from CI.
 
 After merge, Pages and Firebase must both deploy the combined artifact and live-origin acceptance must include the preview. Physical-device judgement remains the actual #119 product gate; this deployment mechanism does not itself accept the moonshot direction.
