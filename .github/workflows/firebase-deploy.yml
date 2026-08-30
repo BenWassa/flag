@@ -31,7 +31,9 @@ jobs:
       - run: npm run build
       - name: Read pinned Spatial Atlas preview source
         id: spatial-preview
-        run: echo "sha=$(node -p \"require('./config/spatial-preview.json').sourceCommit\")" >> "$GITHUB_OUTPUT"
+        run: |
+          sha="$(node -e 'const fs=require("fs"); process.stdout.write(JSON.parse(fs.readFileSync("config/spatial-preview.json", "utf8")).sourceCommit)')"
+          echo "sha=$sha" >> "$GITHUB_OUTPUT"
       - uses: actions/checkout@v4
         with:
           ref: ${{ steps.spatial-preview.outputs.sha }}
