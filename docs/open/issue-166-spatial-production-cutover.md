@@ -183,37 +183,56 @@ At 320x480 with Asia — the widest area list on the smallest phone — the glob
 keeps 163 px, Play stays fully visible, the command band scrolls internally
 rather than clipping, and neither axis of the page overflows.
 
-### Pre-existing failures, separated by baseline
+Full matrix, both projects: **161 passed, 22 failed**, reduced to 21 by the last
+fix below. Every remaining failure was attributed against a build of
+`origin/main` in a worktree rather than assumed.
 
-The browser suite is **not** wholly green, and the failures that remain were
-measured against a build of `origin/main` in a worktree rather than assumed.
-Ten fail identically on both:
+#### Pre-existing on `main` (21)
 
-- `north-america` — the full Caribbean answer system, all five viewports, and
-  Central America dense targets;
-- `oceania` — all 14 Locations pointer-answerable, two viewports;
-- `map-neighbors-rounds` — two Neighbours cases.
+- `north-america` — the full Caribbean answer system across five viewports, and
+  Central America dense targets (12 across both projects);
+- `oceania` — all 14 Locations pointer-answerable, two viewports (4);
+- `map-neighbors-rounds` — two Neighbours cases (3);
+- `pwa-runtime` — the production PWA shell case (1);
+- `map-pointer-capture` — *sub-threshold movement preserves assisted-tap
+  scoring* (1).
 
 The Caribbean case fails on `main` with a byte-identical measurement: an assisted
 hit surface of **16.814376831054688 px** against a required 43.5. That is the
-projected 2D map's assistance, not the globe's, and it is the same family of
-defect #137 owns. The spatial shell was ruled out as a cause directly: with WebGL
-enabled and with it refused, the Locations map renders an identical `viewBox` and
-an identical 382x506 stage.
+projected 2D map's assistance, not the globe's, and the same family of defect
+#137 owns. The spatial shell was ruled out directly: with WebGL enabled and with
+it refused, the Locations map renders an identical `viewBox` and an identical
+382x506 stage. `map-pointer-capture` taps those same undersized surfaces on an
+unseeded round order; repeated five times it fails once on **both** branches.
 
-`map-pointer-capture` › *sub-threshold movement preserves assisted-tap scoring*
-is a pre-existing flake driven by the same undersized surfaces: its round order
-is unseeded, so whether it lands on an assisted Caribbean target varies. Repeated
-five times it fails once on **both** this branch and `origin/main`.
+None of these is absorbed here. Fixing the 2D map's assist sizing is #137's
+workstream and needs its own evidence.
 
-One test failed only on this branch and is fixed: the Locations review fixture
-overran the 30 s default because every launcher route now boots the globe. It
-measures 23.5 s alone, so the file's budget was raised for the boot — no
-assertion relaxed. One test fails only on `origin/main` and passes here: North
-America framing on modern phone portrait.
+#### Caused here, and fixed (6)
 
-None of the ten pre-existing failures is absorbed into this issue. Fixing the 2D
-map's assist sizing is #137's workstream and needs its own evidence.
+Four were errors in this work rather than in the tests:
+
+- the command surface had replaced Home's brand heading with an instruction,
+  compressed the World Crown block into one line and dropped the Modes heading.
+  #138 owns the Crown's learner-facing presentation and the brand heading is a
+  contract several suites assert, so all three are restored verbatim;
+- it had demoted ordinary progress from the retrieval strip the design system
+  fixes it as to a figure in a text line. The `ProgressStrip` is back on the
+  focused scope, which also restores the accessible name `recognition-rounds`
+  reads;
+- the layout matrix read `bottom`/`top` off a Playwright `boundingBox`, which
+  carries only x, y, width and height — so the no-scroll assertion threw instead
+  of measuring, and had never actually run;
+- two fixtures expected a region's Play while on a continent surface.
+
+Two were timing, and were measured rather than waved through. Against the built
+artifact at 1280x800 with no contention the Locations map reaches
+`data-map-positioned` in **184–258 ms** with the globe booting ahead of it and
+**25–48 ms** without: a real cost, two orders of magnitude inside the 5 s the
+assertion allowed. The failures were load starvation under three parallel
+SwiftShader workers, so that assertion now carries the same 40 s allowance as the
+prompt assertion above it, and the inset fixture waits for the frame to land
+before measuring geometry against it. Eight consecutive runs pass.
 
 ### Not performed
 
