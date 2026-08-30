@@ -13,6 +13,13 @@ import {
 } from '../../src/domain/neighbor-game.js';
 import type { StudyMode } from '../../src/domain/models.js';
 
+// Issue #166: every launcher route now boots the persistent spatial stage, and
+// these fixtures navigate to one several times each. Under SwiftShader that
+// costs real seconds — this file's longest case measures 23.5s alone and
+// overruns the 30s default under parallel load — so the budget is raised for
+// the boot rather than the assertions being relaxed.
+test.setTimeout(90_000);
+
 // The app's round order is seeded from its session id. Pinning crypto.randomUUID
 // keeps these browser fixtures stable without replacing the production round
 // builders or injecting application-only state into the page.
