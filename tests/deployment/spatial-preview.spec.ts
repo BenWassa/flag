@@ -22,7 +22,7 @@ async function classicCachesContainSpatialRequests(page: Page): Promise<boolean>
 
 test('classic Atlas opts into the same-origin Spatial Atlas preview safely', async ({ page }) => {
   await page.goto('/#/');
-  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();
   await expect(page.locator('.spatial-shell')).toHaveCount(0);
   await waitForServiceWorkerControl(page);
 
@@ -41,7 +41,7 @@ test('classic Atlas opts into the same-origin Spatial Atlas preview safely', asy
 
   await page.getByRole('link', { name: 'Return to classic Atlas home' }).click();
   await expect(page).toHaveURL(/\/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();
   await expect(page.locator('.spatial-shell')).toHaveCount(0);
   await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), STORAGE_PROBE)).toBe('shared');
 });
@@ -53,6 +53,6 @@ test('preview escape stays independent of spatial navigation state', async ({ pa
   await expect(classic).toHaveAttribute('href', '../#/');
   await classic.click();
   await expect(page).toHaveURL(/\/#\/$/);
-  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();
   await expect(page.locator('.spatial-shell')).toHaveCount(0);
 });
