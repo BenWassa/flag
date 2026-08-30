@@ -139,7 +139,13 @@ assert.ok(
 // ---------------------------------------------------------------------------
 
 const worldIndex = new GeographyIndex(assets.world.countries);
-assert.equal(worldIndex.resolve(-30, 35, 0), null, 'Open ocean resolves to no country.');
+/**
+ * Degrees per CSS pixel at roughly a continent frame on a phone. Interaction
+ * envelopes are sized in pixels, so picking with assistance needs a camera.
+ */
+const PHONE_SCALE = { degreesPerPixel: 0.2 };
+
+assert.equal(worldIndex.resolve(-30, 35), null, 'Open ocean resolves to no country.');
 for (const [lon, lat, expected] of [
   [1.5, 8.5, 'TGO'],
   [-3.7, 40.4, 'ESP'],
@@ -148,46 +154,49 @@ for (const [lon, lat, expected] of [
   [-58.4, -34.6, 'ARG'],
   [139.7, 35.6, 'JPN'],
 ]) {
-  assert.equal(worldIndex.resolve(lon, lat, 0), expected, `World LOD picking resolves ${expected} from its own territory.`);
+  assert.equal(worldIndex.resolve(lon, lat), expected, `World LOD picking resolves ${expected} from its own territory.`);
 }
 /*
- * HIT PRECEDENCE — the same rule Issue #117 settled for the projected maps:
- * real geography wins a contested tap, and an assist mark only claims a point no
- * polygon covers. So an ENCLAVED microstate (Monaco inside France, San Marino
- * inside Italy) is not separately tappable, while an island state over open
- * water is. That costs nothing navigationally, because tapping geography selects
- * a SCOPE, never a country: Monaco and France both resolve to Western Europe.
+ * HIT PRECEDENCE — Issue #117's rule, as Issue #166 refined it for touch.
+ *
+ * Real geography still wins a contested tap wherever the country contesting it
+ * can actually be aimed at. What changed is that a country too small to aim at
+ * is no longer shadowed by whatever it happens to sit beside: it carries an
+ * invisible interaction envelope, bounded by the room its neighbour has, so an
+ * ENCLAVED microstate is now selectable too and the country around it keeps its
+ * interior. `verify-spatial-touch.mjs` proves both halves of that against every
+ * production frame; this file asserts only that every locator-only country in
+ * the world asset is reachable at its own position.
  */
 let enclavedLocators = 0;
 let openWaterLocators = 0;
 for (const country of assets.world.countries) {
   if (country.polygons.length) continue;
   const [lon, lat] = country.locator;
-  const strict = worldIndex.resolve(lon, lat, 0);
-  const assisted = worldIndex.resolve(lon, lat, 1);
-  if (strict === null) {
-    openWaterLocators += 1;
-    assert.equal(assisted, country.id, `${country.id} is selectable as a locator where no polygon contests it.`);
-  } else {
-    enclavedLocators += 1;
-    assert.equal(assisted, strict, `${country.id}'s enclosing geography keeps the tap, per the #117 precedence.`);
-  }
+  const strict = worldIndex.resolve(lon, lat);
+  if (strict === null) openWaterLocators += 1; else enclavedLocators += 1;
+  assert.equal(
+    worldIndex.resolve(lon, lat, PHONE_SCALE),
+    country.id,
+    `${country.id} is selectable at its own locator, enclaved or not.`,
+  );
 }
 assert.ok(openWaterLocators >= 25, `Island locators stay selectable (${openWaterLocators} of them).`);
-assert.ok(enclavedLocators <= 12, `Only genuinely enclaved microstates defer to their neighbour (${enclavedLocators}).`);
-// A locator never claims a tap unless the caller asked for assistance.
+assert.ok(enclavedLocators <= 12, `Only genuinely enclaved microstates sit inside other geography (${enclavedLocators}).`);
+// Assistance is opt-in: without a camera scale, picking is pure containment and
+// can never silently widen a target.
 const islandLocator = assets.world.countries.find(
-  (country) => !country.polygons.length && worldIndex.resolve(country.locator[0], country.locator[1], 0) === null,
+  (country) => !country.polygons.length && worldIndex.resolve(country.locator[0], country.locator[1]) === null,
 );
-assert.equal(worldIndex.resolve(islandLocator.locator[0], islandLocator.locator[1], 0), null,
+assert.equal(worldIndex.resolve(islandLocator.locator[0], islandLocator.locator[1]), null,
   'Locator picking is opt-in, so it can never silently widen a target.');
 
 // Antimeridian cases resolve on both sides of the date line.
-assert.equal(worldIndex.resolve(178.5, -17.8, 0), 'FJI', 'Fiji resolves west of the date line.');
-assert.equal(worldIndex.resolve(179, 69, 0), 'RUS', 'Russian Chukotka resolves west of the date line.');
-assert.equal(worldIndex.resolve(-175, 66, 0), 'RUS', 'Russian Chukotka resolves east of the date line too.');
-assert.equal(worldIndex.resolve(185, 66, 0), 'RUS', 'The same position resolves identically when expressed past 180.');
-assert.equal(worldIndex.resolve(-175 - 360, 66, 0), 'RUS', 'And when expressed below -180.');
+assert.equal(worldIndex.resolve(178.5, -17.8), 'FJI', 'Fiji resolves west of the date line.');
+assert.equal(worldIndex.resolve(179, 69), 'RUS', 'Russian Chukotka resolves west of the date line.');
+assert.equal(worldIndex.resolve(-175, 66), 'RUS', 'Russian Chukotka resolves east of the date line too.');
+assert.equal(worldIndex.resolve(185, 66), 'RUS', 'The same position resolves identically when expressed past 180.');
+assert.equal(worldIndex.resolve(-175 - 360, 66), 'RUS', 'And when expressed below -180.');
 
 // fromSphere/toSphere are exact inverses, which is what makes picking geographic.
 for (const [lon, lat] of [[0, 0], [179.5, -12], [-179.5, 61], [12, -83]]) {

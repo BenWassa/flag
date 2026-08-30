@@ -12,7 +12,7 @@
 import { loadGlobeAsset } from '../data/globe/index.js';
 import type { ContinentId } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
-import { DEG, framingFor, GeographyIndex } from './geo.js';
+import { DEG, framingFor, GeographyIndex, mergeForPicking, type TouchScale } from './geo.js';
 import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
@@ -35,8 +35,6 @@ export { WebGLUnavailableError };
 /** Distance limits: closer than this clips the surface, further reads as a marble. */
 const MIN_DISTANCE = 1.06;
 const MAX_DISTANCE = 4.2;
-/** Comfortable touch radius for a locator-only country, in CSS pixels. */
-const LOCATOR_TOUCH_PX = 24;
 /**
  * A country narrower than this fraction of the framed span is unreadable at that
  * frame and gets a scope marker instead. Roughly six pixels on a 400 px stage.
@@ -60,8 +58,13 @@ export async function createStageController(
   const world = await loadGlobeAsset('world');
   const scene: GlobeHandle = createGlobeScene(container, world);
 
-  const worldIndex = new GeographyIndex(world.countries);
-  let detailIndex: GeographyIndex | null = null;
+  /**
+   * One picking surface, rebuilt when a continent's detail LOD mounts. Detail
+   * geometry wins for the countries it carries and the world asset supplies the
+   * rest, so a tap outside the framed continent still resolves and assistance
+   * never disappears just because higher-detail geometry arrived (#166).
+   */
+  let pickingIndex = new GeographyIndex(world.countries);
   let detailId: ContinentId | null = null;
   /** Guards a detail load that was superseded before it resolved. */
   let detailToken = 0;
@@ -115,22 +118,24 @@ export async function createStageController(
   );
 
   /**
-   * Angular tolerance for locator picking, derived from the current camera so a
-   * locator keeps roughly a fixed touch radius on screen. A fixed value in
-   * degrees would be unusable at world zoom or would swallow half a continent
-   * close in.
+   * How many degrees of arc one CSS pixel covers at the current camera.
+   *
+   * Interaction envelopes are sized in pixels and converted through this, so a
+   * microstate keeps a constant practical touch radius on screen instead of a
+   * constant angular one — which would be unusable at world zoom and would
+   * swallow half a continent close in. It follows manual pinch and wheel zoom
+   * too, so assistance retires itself as the learner zooms in.
    */
-  function locatorToleranceDeg(): number {
+  function touchScale(): TouchScale {
     const height = container.clientHeight || 1;
     const visibleSpanDeg = (2 * Math.atan(Math.tan((GLOBE_FOV / 2) * DEG) * Math.max(0.01, director.pose.distance - 1))) / DEG;
-    return Math.max(0.2, (visibleSpanDeg * LOCATOR_TOUCH_PX) / height);
+    return { degreesPerPixel: visibleSpanDeg / height };
   }
 
   function resolveCountry(clientX: number, clientY: number): string | null {
     const hit = scene.pickAt(clientX, clientY);
     if (!hit) return null;
-    const tolerance = locatorToleranceDeg();
-    return detailIndex?.resolve(hit.lon, hit.lat, tolerance) ?? worldIndex.resolve(hit.lon, hit.lat, tolerance);
+    return pickingIndex.resolve(hit.lon, hit.lat, touchScale());
   }
 
   const removeGestures = installGestures(container, {
@@ -172,20 +177,23 @@ export async function createStageController(
     detailId = continentId;
     const token = ++detailToken;
     if (!continentId) {
-      detailIndex = null;
+      pickingIndex = new GeographyIndex(world.countries);
       scene.setDetail(null);
       return;
     }
     try {
       const asset: GlobeAsset = await loadGlobeAsset(continentId);
       if (destroyed || token !== detailToken) return;
-      detailIndex = new GeographyIndex(asset.countries);
+      pickingIndex = new GeographyIndex(mergeForPicking(asset.countries, world.countries));
       scene.setDetail(asset);
       if (state) scene.setCountryStates(state.countryStates);
     } catch {
       // Detail is an enhancement. The world LOD stays mounted and every scope
       // remains navigable and selectable without it.
-      if (token === detailToken) { detailIndex = null; detailId = null; }
+      if (token === detailToken) {
+        pickingIndex = new GeographyIndex(world.countries);
+        detailId = null;
+      }
     }
   }
 

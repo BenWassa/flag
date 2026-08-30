@@ -11,6 +11,24 @@
  * gesture both keep working. A drag that STARTS inside the edge gutter is left
  * entirely to the browser: Android and iOS both begin their back gesture there,
  * and a globe that swallows it would break system navigation.
+ *
+ * POINTER OWNERSHIP (#166) follows the contract #22 established for the
+ * projected 2D map, for the same reason it was established there — a tap on a
+ * small target must not be retargeted by the gesture layer:
+ *
+ *   - no pointer capture on an initial single `pointerdown`; capture is taken
+ *     only once movement crosses the drag threshold, and immediately for the
+ *     multi-pointer pinch;
+ *   - the globe does not move at all below the threshold, so a resting finger
+ *     cannot rotate the geography out from under itself;
+ *   - crossing the threshold is sticky: a drag never later resolves as a tap;
+ *   - a tap reports the position of the POINTERDOWN, which is where the learner
+ *     aimed, not the position of the release, which a finger roll has moved.
+ *
+ * Before this, every `pointermove` rotated the camera and a tap resolved at the
+ * release point, so the few pixels of jitter present in any real phone tap
+ * rotated the target away and then picked the displaced position — which is how
+ * a microstate stayed unselectable no matter how large its hit area was.
  */
 
 export interface GestureHandlers {
@@ -21,11 +39,23 @@ export interface GestureHandlers {
 
 /** Matches the platform back-gesture gutter the production launcher already reserves. */
 export const EDGE_GUTTER_PX = 28;
-const TAP_SLOP_PX = 10;
+
+/**
+ * Movement that turns a press into a drag.
+ *
+ * The 2D map uses 4 px, where the browser still synthesises its own `click` on
+ * the SVG target. Here the gesture layer synthesises the tap itself, so this
+ * single value also stands in for the platform's tap slop; 8 px sits inside the
+ * range browsers use for that and keeps a tap unambiguous, while starting
+ * rotation 4 px later than the 2D map is imperceptible.
+ */
+export const DRAG_THRESHOLD_PX = 8;
 
 export function installGestures(stage: HTMLElement, handlers: GestureHandlers): () => void {
   const points = new Map<number, { x: number; y: number }>();
-  let moved = 0;
+  /** Where the press began, for the drag threshold and for the tap position. */
+  let origin: { x: number; y: number } | null = null;
+  let dragging = false;
   let pinchStart = 0;
   let ignore = false;
 
@@ -34,16 +64,26 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
     return a && b ? Math.hypot(a.x - b.x, a.y - b.y) : 0;
   };
 
+  const capture = (pointerId: number) => {
+    try { stage.setPointerCapture(pointerId); } catch { /* Pointer may already have ended. */ }
+  };
+
   const onPointerDown = (event: PointerEvent) => {
     if (points.size === 0) {
       const rect = stage.getBoundingClientRect();
       ignore = event.clientX - rect.left < EDGE_GUTTER_PX || rect.right - event.clientX < EDGE_GUTTER_PX;
-      moved = 0;
+      origin = { x: event.clientX, y: event.clientY };
+      dragging = false;
     }
     if (ignore) return;
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (points.size === 2) pinchStart = spread();
-    stage.setPointerCapture(event.pointerId);
+    if (points.size === 2) {
+      pinchStart = spread();
+      // A second pointer establishes a pinch, which owns the gesture outright
+      // and can never be a tap.
+      dragging = true;
+      for (const pointerId of points.keys()) capture(pointerId);
+    }
   };
 
   const onPointerMove = (event: PointerEvent) => {
@@ -57,9 +97,20 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
       if (next > 0) { handlers.onDolly(pinchStart / next); pinchStart = next; }
       return;
     }
+    if (points.size !== 1 || !origin) return;
+
+    if (!dragging) {
+      if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) <= DRAG_THRESHOLD_PX) return;
+      dragging = true;
+      // Capture only now, so a press that stays a tap keeps ordinary delegated
+      // semantics. The threshold itself is absorbed rather than applied, so the
+      // globe does not jump the moment a drag is recognised.
+      capture(event.pointerId);
+      return;
+    }
+
     const dx = event.clientX - previous.x;
     const dy = event.clientY - previous.y;
-    moved += Math.hypot(dx, dy);
     // Degrees per pixel scales with the stage so the globe tracks the thumb at
     // any size rather than feeling geared.
     const perPixel = 180 / Math.max(stage.clientWidth, 1);
@@ -71,13 +122,15 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
     const had = points.size;
     points.delete(event.pointerId);
     if (points.size < 2) pinchStart = 0;
-    if (had === 1 && moved < TAP_SLOP_PX) handlers.onTap(event.clientX, event.clientY);
+    // The press never became a drag, so it was aimed: report where it started.
+    if (had === 1 && !dragging && origin) handlers.onTap(origin.x, origin.y);
+    if (points.size === 0) { origin = null; dragging = false; }
   };
 
   const onPointerCancel = (event: PointerEvent) => {
     points.delete(event.pointerId);
     pinchStart = 0;
-    if (points.size === 0) ignore = false;
+    if (points.size === 0) { ignore = false; origin = null; dragging = false; }
   };
 
   const onWheel = (event: WheelEvent) => {
