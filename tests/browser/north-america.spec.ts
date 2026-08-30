@@ -65,10 +65,17 @@ async function waitForMap(page: Page) {
   });
 }
 
-async function openLocationScope(page: Page, action: string) {
-  await page.goto('/#/locations/north-america');
-  await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: action }).click();
+/**
+ * Issue #166: a scope is focused by its own route, and Play/Learn then act on
+ * that scope. Selecting an area no longer starts a round, so the two steps are
+ * separate here as well.
+ */
+async function openLocationScope(page: Page, scopeId: string, action: string) {
+  const path = scopeId === 'north-america' ? '/#/locations/north-america' : `/#/locations/north-america/${scopeId}`;
+  await page.goto(path);
+  const start = page.getByRole('button', { name: action });
+  await expect(start).toBeVisible();
+  await start.click();
   await waitForMap(page);
 }
 
@@ -205,7 +212,7 @@ for (const viewport of VIEWPORTS) {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     for (const scope of LOCATION_SCOPES) {
-      await openLocationScope(page, scope.action);
+      await openLocationScope(page, scope.id, scope.action);
       await expect(page.locator('.map-active-countries > .map-country')).toHaveCount(scope.count);
       const metrics = await page.evaluate(() => {
         const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
@@ -248,7 +255,7 @@ for (const viewport of VIEWPORTS) {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     await fixSessionId(page, `north-america-caribbean-${viewport.width}x${viewport.height}`);
-    await openLocationScope(page, 'Play Caribbean');
+    await openLocationScope(page, 'caribbean', 'Play Caribbean');
     const seen = new Set<string>();
     let precedenceTested = false;
     for (let index = 0; index < 13; index += 1) {
@@ -280,7 +287,7 @@ test('keeps Central America dense targets usable and preserves correct/wrong fee
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 320, height: 568 });
   await fixSessionId(page, 'north-america-central-density');
-  await openLocationScope(page, 'Play Central America');
+  await openLocationScope(page, 'central-america', 'Play Central America');
   const seen = new Set<string>();
   let sawWrong = false;
   for (let index = 0; index < 8; index += 1) {
@@ -313,7 +320,7 @@ test('keeps Central America dense targets usable and preserves correct/wrong fee
 
 test('supports North America wheel zoom and pointer pan without losing the map', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openLocationScope(page, 'Learn North America');
+  await openLocationScope(page, 'north-america', 'Learn North America');
   const viewport = page.locator('[data-map-viewport]');
   const svg = viewport.locator('.map-svg');
   const initial = await svg.getAttribute('viewBox');
@@ -400,7 +407,7 @@ async function submitNeighbor(page: Page, countryId: string) {
 async function completeNeighborScope(page: Page, scopeId: 'central-america' | 'caribbean', label: string) {
   const adjacency = landAdjacencyForScope(scopeId);
   if (!adjacency) throw new Error(`Missing adjacency for ${scopeId}`);
-  await page.goto('/#/neighbors/north-america');
+  await page.goto(`/#/neighbors/north-america/${scopeId}`);
   await page.getByRole('button', { name: `Play ${label}` }).click();
   await expect(page.getByRole('heading', { name: 'Name every land-border neighbour' })).toBeVisible({ timeout: 40_000 });
   const expectedCount = scopeId === 'central-america' ? 8 : 13;

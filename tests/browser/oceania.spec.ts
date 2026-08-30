@@ -80,10 +80,17 @@ async function waitForMap(page: Page) {
   });
 }
 
-async function openLocationScope(page: Page, action: string) {
-  await page.goto('/#/locations/oceania');
-  await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
-  await page.getByRole('button', { name: action }).click();
+/**
+ * Issue #166: a scope is focused by its own route, and Play/Learn then act on
+ * that scope. Selecting an area no longer starts a round, so the two steps are
+ * separate here as well.
+ */
+async function openLocationScope(page: Page, scopeId: string, action: string) {
+  const path = scopeId === 'oceania' ? '/#/locations/oceania' : `/#/locations/oceania/${scopeId}`;
+  await page.goto(path);
+  const start = page.getByRole('button', { name: action });
+  await expect(start).toBeVisible();
+  await start.click();
   await waitForMap(page);
 }
 
@@ -207,7 +214,7 @@ for (const viewport of VIEWPORTS) {
     test.setTimeout(180_000);
     await page.setViewportSize({ width: viewport.width, height: viewport.height });
     for (const scope of LOCATION_SCOPES) {
-      await openLocationScope(page, scope.action);
+      await openLocationScope(page, scope.id, scope.action);
       await expect(page.locator('.map-active-countries > .map-country')).toHaveCount(scope.count);
       const metrics = await page.evaluate(() => {
         const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
@@ -255,7 +262,7 @@ for (const viewport of [VIEWPORTS[0], VIEWPORTS[1]]) {
     const assistedSeen = new Set<string>();
     let precedenceOverlapSamples = 0;
     for (const scope of REGION_SCOPES) {
-      await openLocationScope(page, scope.action);
+      await openLocationScope(page, scope.id, scope.action);
       for (let index = 0; index < scope.count; index += 1) {
         const targetId = await currentLocationId(page);
         seen.add(targetId);
@@ -287,7 +294,7 @@ test('preserves wrong feedback and real-polygon scoring in Melanesia', async ({ 
   test.setTimeout(120_000);
   await page.setViewportSize({ width: 320, height: 568 });
   await fixSessionId(page, 'oceania-melanesia-feedback');
-  await openLocationScope(page, 'Play Melanesia');
+  await openLocationScope(page, 'melanesia', 'Play Melanesia');
   const targetId = await currentLocationId(page);
   const wrongId = targetId === 'PNG' ? 'SLB' : 'PNG';
   const wrongPoint = await realPolygonPoint(page, wrongId);
@@ -301,7 +308,7 @@ test('preserves North America pointer ownership semantics on Pacific assisted ta
   await instrumentPointerCapture(page);
   await fixSessionId(page, 'oceania-pointer-ownership');
   await page.setViewportSize({ width: 390, height: 844 });
-  await openLocationScope(page, 'Play Micronesia');
+  await openLocationScope(page, 'micronesia', 'Play Micronesia');
   const targetId = await currentLocationId(page);
   expect(HIT_ASSIST_IDS.has(targetId)).toBe(true);
   const point = await assistOnlyPoint(page, targetId);
@@ -321,7 +328,7 @@ test('preserves North America pointer ownership semantics on Pacific assisted ta
 
 test('supports Oceania wheel zoom and pointer pan without losing the map', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await openLocationScope(page, 'Learn Oceania');
+  await openLocationScope(page, 'oceania', 'Learn Oceania');
   const viewport = page.locator('[data-map-viewport]');
   const svg = viewport.locator('.map-svg');
   const initial = await svg.getAttribute('viewBox');
@@ -367,7 +374,7 @@ for (const viewport of [VIEWPORTS[0], VIEWPORTS[3]]) {
     const checked = new Set<string>();
     for (const scope of REGION_SCOPES) {
       const { questions, asset } = await expectedOutlineRound(scope.id, scope.label, sessionId);
-      await page.goto('/#/outlines/oceania');
+      await page.goto(`/#/outlines/oceania/${scope.id}`);
       await page.getByRole('button', { name: scope.action }).click();
       await expect(page.locator('.outline-svg')).toBeVisible();
       for (const [index, question] of questions.entries()) {
@@ -446,7 +453,7 @@ async function completeNeighborScope(
 ): Promise<{ seen: Set<string>; zeroCount: number; sawPngIndonesia: boolean; sawZeroBeforePng: boolean }> {
   const adjacency = landAdjacencyForScope(scope.id);
   if (!adjacency) throw new Error(`Missing adjacency for ${scope.id}`);
-  await page.goto('/#/neighbors/oceania');
+  await page.goto(`/#/neighbors/oceania/${scope.id}`);
   await page.getByRole('button', { name: `Play ${scope.label}` }).click();
   await expect(page.getByRole('heading', { name: 'Name every land-border neighbour' })).toBeVisible({ timeout: 40_000 });
   const seen = new Set<string>();
