@@ -18,19 +18,20 @@ test('classic Atlas opts into the same-origin Spatial Atlas preview safely', asy
   await expect(page.locator('.spatial-shell')).toBeVisible();
   await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), STORAGE_PROBE)).toBe('shared');
 
-  await page.getByRole('link', { name: 'Return to classic Atlas' }).click();
+  await page.getByRole('link', { name: 'Return to classic Atlas home' }).click();
   await expect(page).toHaveURL(/\/#\/$/);
   await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
   await expect(page.locator('.spatial-shell')).toHaveCount(0);
   await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), STORAGE_PROBE)).toBe('shared');
 });
 
-test('preview escape preserves the current typed hash route', async ({ page }) => {
+test('preview escape stays independent of spatial navigation state', async ({ page }) => {
   await page.goto('/spatial/#/flags/africa');
   await expect(page.getByText('Spatial preview', { exact: true })).toBeVisible();
-  const classic = page.getByRole('link', { name: 'Return to classic Atlas' });
-  await expect(classic).toHaveAttribute('href', '../#/flags/africa');
+  const classic = page.getByRole('link', { name: 'Return to classic Atlas home' });
+  await expect(classic).toHaveAttribute('href', '../#/');
   await classic.click();
-  await expect(page).toHaveURL(/\/#\/flags\/africa$/);
-  await expect(page.getByRole('heading', { name: /Africa flags launcher/ })).toBeVisible();
+  await expect(page).toHaveURL(/\/#\/$/);
+  await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+  await expect(page.locator('.spatial-shell')).toHaveCount(0);
 });
