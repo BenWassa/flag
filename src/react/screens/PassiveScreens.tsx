@@ -68,11 +68,6 @@ export function HomeScreen({ ledgers, achievements, persisting }: { ledgers: Pro
           </button>;
         })}
       </div>
-      <section className="atlas-section" aria-labelledby="spatial-preview-heading" data-spatial-preview-entry>
-        <div className="list-heading"><h2 id="spatial-preview-heading">Spatial Atlas preview</h2></div>
-        <p className="study-hint">Experimental globe navigation. Uses the same saved progress.</p>
-        <div className="primary-actions"><a className="button button--secondary" href="./spatial/#/">Try Spatial Atlas</a></div>
-      </section>
     </main>
   );
 }

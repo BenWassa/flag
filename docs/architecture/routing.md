@@ -4,6 +4,14 @@
 **Transport:** hash URLs on GitHub Pages
 **Source of truth:** `src/routing/routes.ts`
 
+> **Spatial Atlas candidate (Issue #119, exploration line).** The spatial shell
+> adds **no** route, parameter or history entry. `src/spatial/spatial-state.ts` is
+> a pure function from the route and the current view to a presentation state; it
+> writes no navigation state, and a verifier asserts that nothing under
+> `src/spatial/` touches `pushState`, `replaceState` or `location`. Geography taps
+> dispatch the same `openScope` action the DOM controls call. See
+> [`../open/issue-119-spatial-interaction-contract.md`](../open/issue-119-spatial-interaction-contract.md).
+
 ## Product hierarchy
 
 Atlas composes three independent dimensions:

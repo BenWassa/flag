@@ -78,16 +78,41 @@ Respect reduced-motion preferences and never make completion or correctness depe
 
 ## Information architecture presentation
 
-The current production hierarchy is mode-first:
+The current production hierarchy is mode-first and spatial (#166):
 
-`Home → domain continent index → continent launcher → Play`
+`Home → domain continent index → continent → region → Play`
 
-- **Home**: four peer domain cards; no direct Play action.
-- **Domain index**: full-width continent rows; supported rows navigate, unsupported rows are inert honest shells.
-- **Continent launcher**: full-width whole-continent and region rows; tapping a row starts Play for that scope.
-- **Learn**: one subordinate whole-continent action beneath the launcher list. Flags Learn opens the browse/reveal gallery; the other domains start their domain-appropriate Learn activity.
+A persistent globe is the dominant visual object at every navigation step, and a
+compact command surface sits directly beneath the place it names. It is one
+continuous surface, not a globe above a page: no conventional launcher renders
+underneath it.
 
-Do not document or restore the retired select-region-then-Play launcher as current behaviour. The richer map-first launcher remains a deferred exploration under #104, not an alternate production path.
+- **Home**: four peer domain rows; no direct Play action. The globe is quiet
+  context, because nothing is selectable until a domain is chosen.
+- **Domain index**: the globe is the continent picker, with a wrapping row of
+  quiet continent chips as its equivalent control. Unsupported continents are
+  inert honest shells.
+- **Continent or region focus**: the selected place is the one dominant label,
+  the domain sits above it small and muted, **Play {Scope}** is the primary
+  action and immediately available, **Learn {Scope}** is secondary, and the
+  parent continent and sibling areas are quiet lateral chips.
+- **Learn**: follows the framed scope, exactly as Play does. Flags Learn opens
+  the browse/reveal gallery; the other domains start their domain-appropriate
+  Learn activity.
+
+Tapping geography **selects** a scope and never starts a round. Choosing a place
+and playing it are separate, deliberate acts.
+
+The command surface is label, proximity, rules and a small control group — not a
+card stack, not a floating dashboard, and never glass. Lateral choices wrap
+rather than scroll: no horizontal scrolling for primary selection.
+
+The conventional `Launcher` survives only as the renderer-failure fallback. Do
+not restore it as a visible layer beneath the spatial surface, and do not
+document its full-width Play rows as current production behaviour.
+
+#104's map-first question is answered by the cutover: selection happens on real
+geography, and progress is still never encoded in colour alone.
 
 ## Geography surfaces
 

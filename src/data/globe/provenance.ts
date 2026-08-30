@@ -1,0 +1,121 @@
+/**
+ * GENERATED FILE - do not edit by hand.
+ *
+ * Source: scripts/generate-globe-assets.mjs
+ *
+ * Verifiers read this module rather than the JSON so provenance travels with
+ * the built artifact instead of only with the repository.
+ */
+export const GLOBE_PROVENANCE = {
+  "generator": "scripts/generate-globe-assets.mjs",
+  "upstream": "nvkelso/natural-earth-vector",
+  "upstreamCommit": "ca96624a56bd078437bca8184e78163e5039ad19",
+  "sourcePath": "geojson/ne_10m_admin_0_countries.geojson",
+  "sourceSha256": "239eec57ac17f100a11e2536cffc56752c318b50ae765b0918ff7aab4ce8f255",
+  "sourceVersion": "5.1.1",
+  "identityPolicy": [
+    "ISO_A3_EH",
+    "ADM0_A3",
+    "ISO_A3",
+    "SOV_A3",
+    "SU_A3",
+    "GU_A3"
+  ],
+  "encoding": "delta-varint",
+  "framingPolicySource": "scripts/map-continent-configs.mjs",
+  "framingExclusions": {
+    "europe": [
+      "FRA",
+      "NLD",
+      "NOR",
+      "RUS"
+    ],
+    "asia": [
+      "RUS"
+    ]
+  },
+  "framingClamps": {
+    "north-america": [
+      "USA"
+    ]
+  },
+  "lods": {
+    "world": {
+      "retained": 0.08,
+      "precision": 32,
+      "countries": 195,
+      "withGeometry": 158,
+      "locators": 37,
+      "rings": 265,
+      "points": 36163,
+      "moduleBytes": 88420,
+      "moduleGzipBytes": 53527
+    },
+    "africa": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 54,
+      "withGeometry": 54,
+      "locators": 0,
+      "rings": 86,
+      "points": 22114,
+      "moduleBytes": 50616,
+      "moduleGzipBytes": 31807
+    },
+    "asia": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 48,
+      "withGeometry": 47,
+      "locators": 1,
+      "rings": 323,
+      "points": 44072,
+      "moduleBytes": 96010,
+      "moduleGzipBytes": 59531
+    },
+    "europe": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 44,
+      "withGeometry": 41,
+      "locators": 3,
+      "rings": 406,
+      "points": 50229,
+      "moduleBytes": 110466,
+      "moduleGzipBytes": 68972
+    },
+    "north-america": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 23,
+      "withGeometry": 23,
+      "locators": 0,
+      "rings": 410,
+      "points": 51106,
+      "moduleBytes": 111212,
+      "moduleGzipBytes": 69353
+    },
+    "oceania": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 14,
+      "withGeometry": 11,
+      "locators": 3,
+      "rings": 117,
+      "points": 9873,
+      "moduleBytes": 22538,
+      "moduleGzipBytes": 14173
+    },
+    "south-america": {
+      "retained": 0.42,
+      "precision": 128,
+      "countries": 12,
+      "withGeometry": 12,
+      "locators": 0,
+      "rings": 179,
+      "points": 19765,
+      "moduleBytes": 42747,
+      "moduleGzipBytes": 26616
+    }
+  }
+} as const;

@@ -78,8 +78,14 @@ describe('React screen actions', () => {
     const model: LauncherModel = {
       domain: 'flags',
       continentScope: { kind: 'continent', id: 'africa', label: 'Africa' },
+      activeScope: { kind: 'continent', id: 'africa', label: 'Africa' },
       stats,
-      regions: [{ scope: { kind: 'region', id: 'west-africa', label: 'West Africa' }, stats }],
+      regions: [{
+        scope: { kind: 'region', id: 'west-africa', label: 'West Africa' },
+        stats,
+        domainMastered: false,
+        complete: false,
+      }],
       unitLabel: 'flags', persisting: true, storageNotice: '',
     };
     render(<AtlasActionsContext value={atlasActions}><Launcher model={model} /></AtlasActionsContext>);

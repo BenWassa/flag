@@ -15,13 +15,15 @@ import { createInitialProgress } from '../.verify-dist/domain/progress.js';
 import { buildQuiz } from '../.verify-dist/domain/quiz.js';
 import { parseRoutePath, routeTitle, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { neighborMapSummary, renderNeighborMap } from '../.verify-dist/ui/components/neighbor-map.js';
-import { loadScreens, renderScreen } from './lib/react-markup.mjs';
+import { deriveSpatialState } from '../.verify-dist/spatial/spatial-state.js';
+import { loadScreens, loadSpatial, renderScreen } from './lib/react-markup.mjs';
 
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
-const { FlagsLauncherScreen, GeographyLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 const { FlagsQuizScreen, OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
 const { LocationQuizScreen } = await loadScreens('LocationScreens.js');
 const { NeighborQuizScreen } = await loadScreens('NeighborScreens.js');
+const { SpatialCommand } = await loadSpatial('SpatialCommand.js');
 
 const flagProgress = createInitialProgress(COUNTRIES);
 const locationProgress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
@@ -51,10 +53,29 @@ const achievements = createInitialAchievementState();
 const homeHtml = renderScreen(HomeScreen, { ledgers: britishLedgers, achievements, persisting: true });
 const flagsDomainHtml = renderScreen(DomainScreen, { domain: 'flags', ledgers: britishLedgers, achievements, persisting: true });
 const neighborsDomainHtml = renderScreen(DomainScreen, { domain: 'neighbors', ledgers: britishLedgers, achievements, persisting: true });
-const flagsLauncherHtml = renderScreen(FlagsLauncherScreen, { progress: flagProgress, scope: africaScope, achievements, persisting: true });
-const locationsLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'locations', progress: locationProgress, scope: africaScope, achievements, persisting: true });
-const outlinesLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'outlines', progress: outlineProgress, scope: africaScope, achievements, persisting: true });
-const neighborsLauncherHtml = renderScreen(GeographyLauncherScreen, { domain: 'neighbors', progress: neighborProgress, scope: westAfricaScope, achievements, persisting: true });
+const launcher = (domain, scope) => renderScreen(LauncherScreen, {
+  domain, scope, ledgers: britishLedgers, achievements, persisting: true,
+});
+const flagsLauncherHtml = launcher('flags', africaScope);
+const locationsLauncherHtml = launcher('locations', africaScope);
+const outlinesLauncherHtml = launcher('outlines', africaScope);
+const neighborsLauncherHtml = launcher('neighbors', westAfricaScope);
+
+// The spatial command surface is the production navigation copy, so it carries
+// the same British-English contract as the fallback launcher beneath it.
+const LAUNCHER_VIEW = { flags: 'scope', locations: 'map-home', outlines: 'outline-home', neighbors: 'neighbor-home' };
+const command = (route, view) => renderScreen(SpatialCommand, {
+  state: deriveSpatialState({ route, view, achievements }),
+  ledgers: britishLedgers,
+  achievements,
+  persisting: true,
+});
+const spatialHomeHtml = command({ name: 'home' }, 'home');
+const spatialContinentsHtml = command({ name: 'learning', domain: 'neighbors' }, 'domain');
+const spatialFlagsScopeHtml = command({ name: 'learning', domain: 'flags', scope: africaScope }, LAUNCHER_VIEW.flags);
+const spatialLocationsScopeHtml = command({ name: 'learning', domain: 'locations', scope: africaScope }, LAUNCHER_VIEW.locations);
+const spatialOutlinesScopeHtml = command({ name: 'learning', domain: 'outlines', scope: africaScope }, LAUNCHER_VIEW.outlines);
+const spatialNeighborsScopeHtml = command({ name: 'learning', domain: 'neighbors', scope: westAfricaScope }, LAUNCHER_VIEW.neighbors);
 
 const flagQuestions = buildQuiz({
   countries: COUNTRIES,
@@ -115,6 +136,12 @@ const outlinePlayHtml = renderScreen(OutlineQuizScreen, { asset: outlineAsset, s
 const neighborPlayHtml = renderScreen(NeighborQuizScreen, { session: neighborPlaySession, lastOutcome: null, query: '' });
 
 const renderedSurfaces = [
+  ['Spatial Home', spatialHomeHtml],
+  ['Spatial continents', spatialContinentsHtml],
+  ['Spatial Flags scope', spatialFlagsScopeHtml],
+  ['Spatial Locations scope', spatialLocationsScopeHtml],
+  ['Spatial Outlines scope', spatialOutlinesScopeHtml],
+  ['Spatial Neighbours scope', spatialNeighborsScopeHtml],
   ['Home', homeHtml],
   ['Flags domain', flagsDomainHtml],
   ['Neighbours domain', neighborsDomainHtml],
@@ -129,6 +156,14 @@ const renderedSurfaces = [
 ];
 
 assert.ok(flagsDomainHtml.includes('Play world'));
+// The production surface names Play for the framed scope, and calls the domain
+// Neighbours rather than Neighbors wherever a learner can read it.
+assert.ok(spatialFlagsScopeHtml.includes('Play Africa'));
+assert.ok(spatialLocationsScopeHtml.includes('Play Africa'));
+assert.ok(spatialOutlinesScopeHtml.includes('Play Africa'));
+assert.ok(spatialNeighborsScopeHtml.includes('Play West Africa'));
+assert.ok(spatialNeighborsScopeHtml.includes('Neighbours'));
+assert.ok(spatialHomeHtml.includes('Neighbours'));
 assert.ok(flagsLauncherHtml.includes('Play All Africa'));
 assert.ok(locationsLauncherHtml.includes('Play All Africa'));
 assert.ok(outlinesLauncherHtml.includes('Play All Africa'));

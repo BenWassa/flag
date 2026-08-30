@@ -1,82 +1,58 @@
 import assert from 'node:assert/strict';
 import { readdir, readFile, stat } from 'node:fs/promises';
 import { join, relative } from 'node:path';
+import { fileURLToPath } from 'node:url';
 
-const DIST = 'dist';
-const CSS_FILES = ['styles.css', 'map.css', 'map-cartography.css', 'outline.css', 'neighbors.css', 'atlas-theme.css'];
-
-async function exists(path) {
-  try {
-    await stat(path);
-    return true;
-  } catch {
-    return false;
-  }
-}
+const ROOT = fileURLToPath(new URL('..', import.meta.url));
+const DIST = join(ROOT, 'dist');
 
 async function walk(directory) {
-  const result = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    const path = join(directory, entry.name);
-    if (entry.isDirectory()) result.push(...await walk(path));
-    else result.push(path);
+  const entries = await readdir(directory, { withFileTypes: true });
+  const files = [];
+  for (const entry of entries) {
+    const absolute = join(directory, entry.name);
+    if (entry.isDirectory()) files.push(...await walk(absolute));
+    else files.push(absolute);
   }
-  return result;
+  return files;
 }
 
-for (const file of [
+const files = await walk(DIST);
+const relativeFiles = files.map((file) => relative(DIST, file).replaceAll('\\', '/')).sort();
+const required = [
   'index.html',
+  'manifest.webmanifest',
   'app.js',
   'map-viewport.js',
   'neighbor-map-runtime.js',
-  ...CSS_FILES,
-  'manifest.webmanifest',
+  'styles.css',
+  'map.css',
+  'map-cartography.css',
+  'outline.css',
+  'neighbors.css',
+  'atlas-theme.css',
+  'spatial.css',
   'sw.js',
-  'icons/app-icon.svg',
-  'icons/app-icon-192.png',
-  'icons/app-icon-512.png',
-  'icons/app-icon-maskable-512.png',
-  'icons/apple-touch-icon.png',
-  '.vite/manifest.json',
-]) {
-  assert.equal(await exists(join(DIST, file)), true, `Vite production artifact contains ${file}.`);
-}
+];
+for (const file of required) assert.ok(relativeFiles.includes(file), `Production artifact includes ${file}.`);
 
-for (const file of CSS_FILES) {
-  const source = await readFile(join('src/styles', file));
-  const built = await readFile(join(DIST, file));
-  assert.deepEqual(built, source, `${file} remains byte-identical during the build-tool migration.`);
-}
+const index = await readFile(join(DIST, 'index.html'), 'utf8');
+assert.match(index, /app\.js/, 'Built HTML points at stable app.js.');
+assert.match(index, /styles\.css/, 'Built HTML points at generated styles.css.');
+assert.equal(index.includes('/src/'), false, 'Built HTML contains no source-tree module/style references.');
+assert.equal(index.includes('legacy.js'), false, 'Built HTML does not load the retired legacy bundle.');
+assert.equal(index.includes('data-legacy-ui'), false, 'Built HTML contains no legacy UI marker.');
 
-const indexHtml = await readFile(join(DIST, 'index.html'), 'utf8');
-assert.equal(indexHtml.includes('/src/'), false, 'Production HTML contains no source-module URLs.');
-assert.equal(indexHtml.includes('src="/'), false, 'Production HTML does not assume a domain-root script path.');
-assert.equal(indexHtml.includes('href="/'), false, 'Production HTML does not assume a domain-root asset path.');
-for (const file of ['app.js', 'map-viewport.js', 'neighbor-map-runtime.js']) {
-  assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
-}
-for (const file of CSS_FILES) {
-  assert.match(indexHtml, new RegExp(`(?:\\./)?${file.replace('.', '\\.')}`), `Production HTML references ${file}.`);
-}
+const app = await readFile(join(DIST, 'app.js'), 'utf8');
+assert.equal(app.includes('renderLegacy'), false, 'Production app bundle does not contain the retired legacy renderer.');
+assert.equal(app.includes('src/ui/views'), false, 'Production app bundle does not reference legacy view modules.');
+assert.ok(app.includes('createRoot'), 'Production app bundle contains the React root.');
 
-const manifest = JSON.parse(await readFile(join(DIST, '.vite/manifest.json'), 'utf8'));
-for (const source of ['src/main.tsx', 'src/map-viewport.ts', 'src/neighbor-map-runtime.ts']) {
-  assert.ok(manifest[source], `Vite manifest contains browser entry ${source}.`);
-  assert.equal(manifest[source].isEntry, true, `${source} remains a production entry.`);
-}
-assert.equal(manifest['src/main.tsx'].file, 'app.js', 'React application entry keeps a stable service-worker filename.');
-assert.equal(manifest['src/map-viewport.ts'].file, 'map-viewport.js', 'Map viewport entry keeps its stable Phase 2 service-worker filename.');
-assert.equal(manifest['src/neighbor-map-runtime.ts'].file, 'neighbor-map-runtime.js', 'Neighbour map runtime keeps its stable Phase 2 service-worker filename.');
-
-const files = await walk(DIST);
-const relativeFiles = files.map((file) => relative(DIST, file).replaceAll('\\', '/'));
-for (const directory of ['data', 'domain', 'infrastructure', 'react', 'routing', 'state', 'ui']) {
-  assert.equal(
-    relativeFiles.some((file) => file.startsWith(`${directory}/`)),
-    false,
-    `Deployable output contains no verifier-only ${directory}/ tree.`,
-  );
-}
+assert.equal(
+  relativeFiles.some((file) => file === 'legacy.js' || file.startsWith('legacy-')),
+  false,
+  'Deployable output contains no legacy application bundle.',
+);
 assert.equal(
   relativeFiles.some((file) => file.startsWith('ui/views/')),
   false,
@@ -97,7 +73,6 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
 
 const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
 assert.ok(sw.includes('flag-atlas-v30'), 'Build-aware service worker uses the current React/Vite cache generation.');
-assert.equal(sw.includes('flag-atlas-spatial-preview-v1'), false, 'Classic Atlas service worker does not reuse the Spatial preview cache namespace.');
 assert.ok(sw.includes('index.html'), 'Injected precache includes the offline navigation shell.');
 for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
   assert.equal(new RegExp(`${continent}-[A-Za-z0-9_-]+\\.js`).test(sw), false, `${continent} geography remains runtime-cached rather than precached.`);

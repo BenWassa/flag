@@ -363,8 +363,16 @@ function suppressDraggedClick(event: MouseEvent): void {
 function positionViewport(viewport: HTMLElement): void {
   const sessionId = viewport.dataset.mapSession;
   if (!sessionId || viewport.dataset.mapPositioned === 'true') return;
-  viewport.dataset.mapPositioned = 'true';
   requestAnimationFrame(() => {
+    // A viewport that is not laid out yet has no aspect. `viewportAspect` falls
+    // back to 1:1, the opening frame is computed against that square, and
+    // `applyBox` then REMEMBERS it — after which the resize path faithfully
+    // re-applies the wrong frame at the real aspect instead of correcting it,
+    // leaving the continent cropped. React can hand this observer a subtree it
+    // has built but not yet attached, so whether the opening frame is right is
+    // otherwise decided by mutation timing. Wait for a real box.
+    if (viewport.clientWidth <= 0 || viewport.clientHeight <= 0) return;
+    viewport.dataset.mapPositioned = 'true';
     const saved = states.get(sessionId);
     if (saved) {
       applyBox(viewport, saved.box, false);
@@ -384,6 +392,8 @@ function discoverViewports(): void {
     resizeObserver = new ResizeObserver((entries) => {
       for (const entry of entries) {
         const viewport = entry.target as HTMLElement;
+        // Gaining a size is the signal a deferred opening frame was waiting for.
+        if (viewport.dataset.mapPositioned !== 'true') { positionViewport(viewport); continue; }
         const box = currentBox(viewport);
         if (box) applyBox(viewport, box);
       }

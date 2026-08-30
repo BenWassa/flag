@@ -19,18 +19,27 @@ The product is deliberately mobile-first, progressively disclosed and minimally 
 
 ## Current production information architecture
 
-Navigation is **mode-first**:
+Navigation is **mode-first** and, since #166, **spatial**:
 
-`Home → learning domain → continent → Play scope`
+`Home → learning domain → continent → region → Play scope`
 
-Home contains the four domain choices and starts no round. A domain index shows all six continents. Supported continents open their continent launcher; unsupported scopes, if introduced in future, must remain honest inert shells.
+The Spatial Atlas is the default presentation wherever WebGL is available. A
+persistent globe takes the viewport and a compact command surface sits beneath
+the place it names; no conventional launcher page renders under it. On a device
+that cannot start the renderer, the conventional `Launcher` is the fallback and
+offers the same scopes, counts and labels.
 
-Inside a supported continent launcher:
+Home contains the four domain choices and starts no round. A domain index shows all six continents. Supported continents open their continent scope; unsupported scopes, if introduced in future, must remain honest inert shells.
 
-- the whole-continent row starts **Play** for the continent;
-- each region row starts **Play** for that region;
-- a subordinate **Learn {Continent}** action starts Learn for the whole continent;
-- there is no select-region-then-Play intermediate state in the ordinary v1 UI.
+With a continent or region focused:
+
+- the selected place is the one dominant label, with its domain beside it;
+- **Play {Scope}** is the primary action and is immediately available, with no
+  further page and no scrolling;
+- **Learn {Scope}** is the secondary action and follows the same scope;
+- the parent continent and the sibling areas are quiet lateral controls.
+
+Tapping geography **selects** the durable scope; it never starts a round. Choosing a place and playing it stay separate, deliberate acts.
 
 Flags additionally exposes deliberate World Play/Learn actions because the complete 195-country flag curriculum exists globally.
 

@@ -1,0 +1,91 @@
+/* Issue #119 Stage 1 probe. Disposable. Uses production tokens only — no new
+   palette, no region colour taxonomy, no colour-only state. */
+
+.probe {
+  display: grid;
+  grid-template-rows: auto 1fr auto auto auto;
+  gap: var(--space-3);
+  min-height: 100svh;
+  padding:
+    max(var(--space-3), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-4), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  background: var(--canvas);
+  color: var(--text);
+}
+
+.probe-bar { display: flex; align-items: center; gap: var(--space-3); }
+.probe-back {
+  min-width: 48px;
+  min-height: 48px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font-size: 20px;
+}
+.probe-crumb { color: var(--text-muted); font-size: 12px; }
+
+.probe-stage {
+  position: relative;
+  min-height: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--map-water, #dce9f5);
+  overflow: hidden;
+}
+#probe-map { display: block; width: 100%; height: 100%; }
+
+.probe-context { fill: #cfd8e3; stroke: #b9c4d2; stroke-width: .5; }
+
+.probe-country {
+  fill: #f4f7fb;
+  stroke: #9fb0c4;
+  stroke-width: .6;
+  /* No transition on the camera itself — the viewBox is driven by rAF so it
+     stays interruptible. Only the tint is transitioned. */
+  transition: fill 140ms ease-out;
+}
+.probe-region.is-active .probe-country { fill: var(--action-soft); stroke: var(--action); stroke-width: 1; }
+.probe-region.is-dimmed .probe-country { fill: #eef2f7; stroke: #c3cedd; }
+
+.probe-status { margin: 0; min-height: 2.6em; color: var(--text-muted); font-size: 13px; }
+
+.probe-scopes { display: flex; flex-wrap: wrap; gap: var(--space-2); }
+.probe-scopes button {
+  min-height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+  font-weight: 650;
+}
+/* State carries a border and a weight change, not colour alone. */
+.probe-scopes button[aria-current='true'] {
+  border-color: var(--action);
+  background: var(--action-soft);
+  box-shadow: inset 0 0 0 1px var(--action);
+}
+
+.probe-activity {
+  display: grid;
+  gap: 2px;
+  padding: var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: #fff;
+}
+.probe-activity span { color: var(--text-muted); font-size: 12px; }
+.probe-play { min-height: 52px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .probe-country { transition: none; }
+}
+
+/* First-paint gate: the stage reveals once its size has settled, so a cold deep
+   link never shows a letterbox adjustment. Not a transition on the camera. */
+#probe-map { opacity: 0; }
+.probe-stage.is-ready #probe-map { opacity: 1; transition: opacity 120ms ease-out; }
+@media (prefers-reduced-motion: reduce) {
+  .probe-stage.is-ready #probe-map { transition: none; }
+}

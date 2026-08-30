@@ -13,6 +13,13 @@ import {
 } from '../../src/domain/neighbor-game.js';
 import type { StudyMode } from '../../src/domain/models.js';
 
+// Issue #166: every launcher route now boots the persistent spatial stage, and
+// these fixtures navigate to one several times each. Under SwiftShader that
+// costs real seconds — this file's longest case measures 23.5s alone and
+// overruns the 30s default under parallel load — so the budget is raised for
+// the boot rather than the assertions being relaxed.
+test.setTimeout(90_000);
+
 // The app's round order is seeded from its session id. Pinning crypto.randomUUID
 // keeps these browser fixtures stable without replacing the production round
 // builders or injecting application-only state into the page.
@@ -49,7 +56,11 @@ async function openLocationsPlay(page: Page, sessionId = LOCATION_SESSION_ID, sc
   await page.getByRole('button', { name: `Play ${getMapScopeConfig(scopeId)?.scope.label}` }).click();
   await expect(page).toHaveURL(new RegExp(`#/locations/africa/${scopeId}/test$`));
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');
+  // Issue #166: the opening frame lands about 200ms later now that the
+  // launcher route boots the globe first, and much later than that under a
+  // loaded SwiftShader runner. Given the same allowance as the prompt above
+  // it, rather than the 5s expect default.
+  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 }
 
 async function currentLocationId(page: Page): Promise<string> {
@@ -194,7 +205,7 @@ test.describe('Locations browser matrix (#98)', () => {
     await answerLocation(page, targetId);
     await page.reload();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa$/);
-    await expect(page.getByRole('heading', { name: /Southern Africa locations launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Southern Africa', exact: true })).toBeVisible();
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:location-progress:v1') ?? '{}'));
     expect(persisted.records?.[targetId]?.lifetimeResolved).toBeGreaterThanOrEqual(1);
 
@@ -237,7 +248,7 @@ test.describe('Neighbours browser matrix (#99)', () => {
     await expect(page.getByText('Correct: South Africa.', { exact: true })).toBeVisible();
     await page.reload();
     await expect(page).toHaveURL(/#\/neighbors\/africa\/southern-africa$/);
-    await expect(page.getByRole('heading', { name: /Southern Africa neighbours launcher/ })).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Southern Africa', exact: true })).toBeVisible();
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:neighbor-progress:v1') ?? '{}'));
     expect(persisted.records?.LSO?.lifetimeCompleted).toBe(1);
   });

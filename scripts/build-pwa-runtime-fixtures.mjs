@@ -38,9 +38,6 @@ function build(marker) {
   if (!serviceWorker.includes('flag-atlas-v30') || !serviceWorker.includes('index.html')) {
     throw new Error(`PWA runtime fixture ${marker} does not contain the production Workbox policy.`);
   }
-  if (serviceWorker.includes('flag-atlas-spatial-preview-v1')) {
-    throw new Error(`PWA runtime fixture ${marker} must remain on the classic Atlas cache namespace.`);
-  }
 
   return {
     marker,

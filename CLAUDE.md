@@ -70,6 +70,16 @@ src/react/           React application shell, screens and components
 src/ui/              framework-independent adapters + temporary verifier fixtures
 ```
 
+`src/spatial/` is the **production navigation presentation** since #166: a
+persistent Three.js Earth that **interprets** the typed route, with a compact
+command surface that is the navigation interface rather than a band above the
+old one. It is presentation only — `spatial-state.ts` is a pure function and
+writes no navigation state, the renderer imports no curriculum table, and a
+device without WebGL falls back to the conventional `Launcher`, which is
+retained for exactly that purpose. Both are built from `scopeModelFor`, so they
+cannot offer different scopes, counts or labels. Read
+`docs/architecture/spatial-atlas.md` before touching it.
+
 Key rules:
 
 - **Domain layer has zero DOM/React dependency.** Keep learning/evidence rules separate from rendering.

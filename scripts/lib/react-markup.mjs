@@ -32,3 +32,8 @@ export function renderScreen(Screen, props = {}) {
 export async function loadScreens(modulePath) {
   return import(`../../.verify-dist/react/screens/${modulePath}`);
 }
+
+/** Loads a production spatial module through the same asset stub. */
+export async function loadSpatial(modulePath) {
+  return import(`../../.verify-dist/spatial/${modulePath}`);
+}

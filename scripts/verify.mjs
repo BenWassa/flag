@@ -95,12 +95,18 @@ assert.equal(getRecord(lapsed, 'GHA').confusionCounts.MLI, 1, 'Wrong selections 
 // the learner-facing presentation rather than the retired string renderers.
 const { loadScreens, renderScreen } = await import('./lib/react-markup.mjs');
 const { HomeScreen, DomainScreen } = await loadScreens('PassiveScreens.js');
-const { FlagsLauncherScreen } = await loadScreens('LauncherScreens.js');
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
 const { FlagsQuizScreen, RecognitionResultsScreen } = await loadScreens('RecognitionScreens.js');
 
 const renderHome = (ledgers, persisting = true) => renderScreen(HomeScreen, { ledgers, achievements, persisting });
 const renderDomainIndex = (domain, ledgers, achievements, persisting = true) => renderScreen(DomainScreen, { domain, ledgers, achievements, persisting });
-const renderScope = (progress, scope, achievements, persisting = true) => renderScreen(FlagsLauncherScreen, { progress, scope, achievements, persisting });
+const renderScope = (progress, scope, achievements, persisting = true) => renderScreen(LauncherScreen, {
+  domain: 'flags',
+  scope,
+  achievements,
+  persisting,
+  ledgers: { flags: progress, locations: progress, outlines: progress, neighbors: progress },
+});
 const renderQuiz = (session, progress, answeredCountryId) => renderScreen(FlagsQuizScreen, { session, progress, answeredCountryId });
 const renderResults = (result) => renderScreen(RecognitionResultsScreen, { result, domain: 'flags' });
 const { renderFocusIntent } = await import('../.verify-dist/ui/focus.js');
