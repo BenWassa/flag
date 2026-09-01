@@ -312,7 +312,7 @@ s = replace_once(s,
 'renormalise rerendered hits')
 s = replace_once(s,
 "  new MutationObserver(discoverViewports).observe(root, { childList: true, subtree: true });",
-"  // React reuses the question-specific assist circle between prompts and\n  // updates its data-id/radius in place. Observe that identity change as well\n  // as inserted nodes so every new target is normalised back to 44 CSS px.\n  new MutationObserver(discoverViewports).observe(root, {\n    childList: true,\n    subtree: true,\n    attributes: true,\n    attributeFilter: ['data-id'],\n  });",
+"  // React reuses the question-specific assist circle between prompts and\n  // updates its data-id/radius in place. Observe that identity change as well\n  // as inserted nodes so every new target is normalised back to 44 CSS px.\n  new MutationObserver(discoverViewports).observe(root, {\n    childList: true,\n    subtree: true,\n    attributes: true,\n    attributeFilter: ['data-id', 'cx', 'cy'],\n  });",
 'renormalise reused prompt hit')
 write(p, s)
 
