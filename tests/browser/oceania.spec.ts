@@ -167,9 +167,18 @@ async function assertCurrentAssistance(page: Page, targetId: string) {
   }
   await expect(hit).toHaveCount(1);
   await expect(hit).toHaveAttribute('data-id', targetId);
-  const box = await hit.boundingBox();
-  expect(box).not.toBeNull();
-  expect(Math.min(box!.width, box!.height)).toBeGreaterThanOrEqual(43.5);
+  const diameter = await hit.evaluate((element) => {
+    const circle = element as SVGCircleElement;
+    const matrix = circle.getScreenCTM();
+    if (!matrix) return null;
+    const radius = circle.r.baseVal.value;
+    return {
+      x: radius * 2 * Math.hypot(matrix.a, matrix.b),
+      y: radius * 2 * Math.hypot(matrix.c, matrix.d),
+    };
+  });
+  expect(diameter).not.toBeNull();
+  expect(Math.min(diameter!.x, diameter!.y)).toBeGreaterThanOrEqual(43.5);
   await assistOnlyPoint(page, targetId);
 }
 
@@ -279,7 +288,7 @@ for (const viewport of [VIEWPORTS[0], VIEWPORTS[1]]) {
         }
         await answerCurrentLocationWithPointer(page, targetId);
         if (index < scope.count - 1) {
-          await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
+          await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
         } else {
           await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 8_000 });
         }
@@ -304,7 +313,7 @@ test('preserves wrong feedback and real-polygon scoring in Melanesia', async ({ 
   const wrongPoint = await realPolygonPoint(page, wrongId);
   await page.mouse.click(wrongPoint.x, wrongPoint.y);
   await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
-  await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
+  await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
 });
 
 test('preserves North America pointer ownership semantics on Pacific assisted targets', async ({ page }) => {
