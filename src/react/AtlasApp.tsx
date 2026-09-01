@@ -225,7 +225,7 @@ export function AtlasApp() {
     setNeighborQuery: (value) => { rounds.neighbors.setQuery(value); revise(); },
     submitNeighbor: (id) => rounds.neighbors.submitGuess(id),
     submitNeighborQuery: () => { const country = resolveCountryGuess(COUNTRIES, new Set(NEIGHBOR_GUESS_COUNTRY_IDS), rounds.neighbors.getQuery()); country ? rounds.neighbors.submitGuess(country.id) : notify('Choose a country from the suggestions, or type a complete supported country name.'); },
-    advance: (domain) => { if (domain === 'flags') { store.advance(); rounds.flags.announceResult(); finishInteraction(null); } else if (domain === 'outlines') { store.advanceOutline(); rounds.outlines.announceResult(); finishInteraction(null); } else if (domain === 'neighbors') rounds.neighbors.advance(); },
+    advance: (domain) => { if (domain === 'flags') { store.advance(); rounds.flags.announceResult(); finishInteraction(null); } else if (domain === 'outlines') { if (!rounds.outlines.advanceNow()) { store.advanceOutline(); rounds.outlines.announceResult(); finishInteraction(null); } } else if (domain === 'neighbors') rounds.neighbors.advance(); },
     exitRound: () => { if (!getActiveRoundRoute()) return; rounds.cancelAllPending(); discardRound(); router.back(); },
     review: (domain) => { if (domain === 'flags') rounds.flags.reviewMistakes(); if (domain === 'locations') rounds.locations.reviewMistakes(); if (domain === 'outlines') rounds.outlines.reviewMistakes(); if (domain === 'neighbors') rounds.neighbors.reviewMistakes(); },
     repeat: (domain) => { if (domain === 'flags') rounds.flags.repeat(); if (domain === 'locations') rounds.locations.repeat(); if (domain === 'outlines') rounds.outlines.repeat(); if (domain === 'neighbors') rounds.neighbors.repeat(); },
@@ -373,6 +373,7 @@ function useGlobalLifecycle(currentRoute: React.MutableRefObject<AppRoute>, acti
       }
       if (event.key === 'Enter' && store.view.name === 'quiz' && store.answeredCountryId !== null && store.session?.mode === 'learn') actions.advance('flags');
       if (event.key === 'Enter' && store.view.name === 'outline-quiz' && store.outlineAnsweredCountryId !== null && store.outlineSession?.mode === 'learn') actions.advance('outlines');
+      if (event.key === 'Enter' && store.view.name === 'outline-quiz' && store.outlineAnsweredCountryId !== null && store.outlineSession?.mode === 'test') { event.preventDefault(); actions.advance('outlines'); }
     };
     window.addEventListener('keydown', keyboard);
     const register = () => { if ('serviceWorker' in navigator) void navigator.serviceWorker.register('./sw.js').catch(() => undefined); };

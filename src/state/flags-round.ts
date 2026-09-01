@@ -5,6 +5,7 @@ import { getRecord, masteryGoal } from '../domain/progress.js';
 import { roundScore, scoreAnnouncement } from '../domain/round-feedback.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
+import { playFeedbackDwellMs } from './play-feedback-timing.js';
 import type { RoundContext } from './round-context.js';
 
 export interface FlagsRound {
@@ -29,14 +30,6 @@ export interface FlagsRound {
   /** Returns false (and does nothing) if there is no captured result to repeat. */
   repeat(): boolean;
 }
-
-/**
- * Play dwell before the round moves on. A missed answer needs long enough to
- * read the country that was actually being asked for; a correct one does not.
- * Both are skippable with Enter so rapid play is never gated on the timer.
- */
-const PLAY_DWELL_CORRECT_MS = 620;
-const PLAY_DWELL_WRONG_MS = 1500;
 
 export function createFlagsRound(context: RoundContext): FlagsRound {
   const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
@@ -127,7 +120,7 @@ export function createFlagsRound(context: RoundContext): FlagsRound {
       cancelPending();
       pendingAdvance = window.setTimeout(
         advancePending,
-        attempt.correct ? PLAY_DWELL_CORRECT_MS : PLAY_DWELL_WRONG_MS,
+        playFeedbackDwellMs(attempt.correct),
       );
     }
   }
