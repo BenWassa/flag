@@ -44,8 +44,9 @@ jobs:
           test -f dist/manifest.webmanifest
           test -f dist/sw.js
           grep -R "round-score" dist/app.js >/dev/null
-          grep -R "playFeedbackDwellMs" dist/app.js >/dev/null
+          grep -R "Not quite" dist/app.js >/dev/null
           ! grep -R "issue-147-post-137-apply" dist >/dev/null
+          ! grep -R "issue-147-fix-actions" dist >/dev/null
       - name: Candidate diff guard
         shell: bash
         run: |
