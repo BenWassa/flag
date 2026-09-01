@@ -1,185 +1,125 @@
 # Routing and Product Information Architecture
 
-**Status:** Atlas v1.0 route/product contract
-**Transport:** hash URLs on GitHub Pages
+**Status:** current production route/product contract  
+**Transport:** hash URLs on GitHub Pages  
 **Source of truth:** `src/routing/routes.ts`
 
-> **Spatial Atlas candidate (Issue #119, exploration line).** The spatial shell
-> adds **no** route, parameter or history entry. `src/spatial/spatial-state.ts` is
-> a pure function from the route and the current view to a presentation state; it
-> writes no navigation state, and a verifier asserts that nothing under
-> `src/spatial/` touches `pushState`, `replaceState` or `location`. Geography taps
-> dispatch the same `openScope` action the DOM controls call. See
-> [`../open/issue-119-spatial-interaction-contract.md`](../open/issue-119-spatial-interaction-contract.md).
+## Core rule
 
-## Product hierarchy
+**Routes own durable navigation state; Spatial Atlas interprets routes.**
 
-Atlas composes three independent dimensions:
+`src/spatial/spatial-state.ts` is a pure presentation adapter. It does not call `pushState`, `replaceState` or maintain a second camera-owned navigation stack. Geography taps dispatch the same `AtlasActions` as equivalent DOM controls.
 
-1. **learning domain** — Flags, Locations, Outlines, Neighbours;
-2. **geographic scope** — World where applicable, continent, region;
-3. **activity** — Learn, Play, Review.
+## Product dimensions
 
-Navigation is **mode-first**: Home chooses the learning domain first. The next stable screen is that domain's continent index. Supported continent rows open a continent launcher; unavailable scopes, if any are introduced in future, remain honest inert shells.
+Atlas composes:
 
-## Current production flow
+1. learning domain — Flags, Locations, Outlines, Neighbours;
+2. geographic scope — World where applicable, continent, region;
+3. activity — Learn, Play (`test` internally), Review where supported.
+
+Navigation remains mode-first, but the normal presentation is spatial:
 
 ```text
-Home
-├── Flags ─────► continent index ─► continent launcher ─► Play continent/region
-├── Locations ─► continent index ─► continent launcher ─► Play continent/region
-├── Outlines ──► continent index ─► continent launcher ─► Play continent/region
-└── Neighbours ► continent index ─► continent launcher ─► Play continent/region
+Home / choose domain
+→ world Earth / choose continent
+→ continent stable scope
+   ├── Play continent
+   └── choose region
+        → region stable scope
+           ├── Play region
+           └── Learn region
 ```
 
-Inside a supported continent launcher:
+A geography tap selects/focuses a scope. It does **not** start Play. This deliberate selection→action seam is the production #166 behaviour and supersedes the old one-tap launcher-row interaction.
 
-- the whole-continent row starts Play for the continent;
-- each region row starts Play for that region;
-- a subordinate `Learn {Continent}` action starts whole-continent Learn;
-- there is no ordinary select-region-then-Play step;
-- no separate launcher map is required for the current production interaction.
+## Availability
 
-Flags also exposes World Play/Learn because its curriculum is global. Flags Learn is the addressable browse/reveal study surface rather than an active quiz session.
+All six real continents currently have intended four-domain production curriculum. Availability nevertheless remains explicit data so a future unsupported scope cannot become playable merely because its route parses.
 
-This one-tap launcher contract supersedes the older Issue #77 select-then-play composition. Issue #104 records a deferred map-first alternative; it is not a second production navigation model.
+A syntactically valid but unavailable scope normalises to an honest domain-level navigation state rather than silently substituting another continent.
 
-## Current availability
-
-| Domain | Production-ready geography |
-| --- | --- |
-| Flags | World, all six continents, all learner-facing regions in the 195-country curriculum |
-| Locations | Africa, South America, Europe, Asia, North America and Oceania plus supported regions |
-| Outlines | Africa, South America, Europe, Asia, North America and Oceania plus supported regions |
-| Neighbours | Africa, South America, Europe, Asia, North America and Oceania plus eligible topology-complete/verified-zero-neighbour targets and regions |
-
-All six real continents are now supported across all four learning domains. The route grammar still keeps availability as an explicit data concern so future unsupported scopes cannot become playable merely because their IDs parse.
-
-The route grammar can parse canonical continent/region identity independently of whether a domain currently ships that scope. `normalizeAvailableRoute(...)` owns availability: an unsupported scoped route falls back to that **domain's continent index**, not to Africa and not to an invented substitute continent.
-
-## Product language versus stable identifiers
-
-Learner-facing copy uses **Neighbours** and **Play**.
-
-Compatibility identifiers remain:
-
-- route/domain identifier `neighbors`;
-- learner-facing Play activity stored/routed internally as `test`;
-- existing storage/action identifiers where renaming would create migration risk.
-
-Do not create a copy-only route/storage migration.
-
-## Route schema
-
-Representative stable routes:
+## Representative routes
 
 | State | URL |
 | --- | --- |
 | Home | `/#/` |
 | Profile | `/#/profile` |
-| Flags continent index | `/#/flags` |
-| Flags → Africa launcher | `/#/flags/africa` |
-| Flags → West Africa stable scope | `/#/flags/africa/west-africa` |
+| Flags world/domain navigation | `/#/flags` |
+| Flags → Africa focus | `/#/flags/africa` |
+| Flags → West Africa focus | `/#/flags/africa/west-africa` |
 | Flags → West Africa Learn | `/#/flags/africa/west-africa/learn` |
 | Flags → World Play | `/#/flags/test` |
-| Locations continent index | `/#/locations` |
-| Locations → Africa launcher | `/#/locations/africa` |
+| Locations → Africa focus | `/#/locations/africa` |
 | Locations → West Africa Play | `/#/locations/africa/west-africa/test` |
-| Locations → Oceania launcher | `/#/locations/oceania` |
 | Locations → Micronesia Play | `/#/locations/oceania/micronesia/test` |
 | Locations → West Africa Review | `/#/locations/africa/west-africa/review` |
-| Outlines → Europe launcher | `/#/outlines/europe` |
-| Neighbours → South America launcher | `/#/neighbors/south-america` |
-| Neighbours → Oceania launcher | `/#/neighbors/oceania` |
+| Outlines → Europe focus | `/#/outlines/europe` |
+| Neighbours → South America focus | `/#/neighbors/south-america` |
 
-Region routes always serialise with their canonical parent continent. The parser rejects a known region under the wrong continent.
+Region routes always serialise with their canonical parent continent; mismatched ancestry is invalid.
 
-The retired `/atlas/*` scope-first route family is not part of the current grammar.
-
-## Stable route versus action meaning
-
-A stable region URL such as `/#/locations/africa/west-africa` identifies the region scope within the typed route model, but the normal current launcher no longer asks the learner to park on that region selection before pressing a separate Play button. Tapping the West Africa launcher row starts the Play activity directly.
-
-The stable scoped route remains useful as:
-
-- the activity's refresh fallback;
-- the route identity used by Back/Forward within a still-live process;
-- a canonical directly addressable scope state when reached by URL/normalisation.
-
-UI composition must not infer the old two-step launcher from the existence of a stable region route.
+The retired `/atlas/*` scope-first family is not part of the grammar.
 
 ## URL state versus session state
 
 ### URL owns
 
-- Home/profile stable screen identity;
+- Home/profile stable identity;
 - learning domain;
 - continent/region scope;
-- activity identity (`learn`, `test`, `review`) while active.
+- activity identity while active.
 
 ### Session/application state owns
 
 - shuffled question/target order;
 - current index;
 - submitted answers/guesses;
-- transient reveal/feedback state;
-- map asset/session objects;
-- timers and pending auto-advance;
-- final result object retained during the current process.
+- transient feedback/reveal state;
+- map/session objects;
+- timers/pending advance;
+- current-process result state.
 
 The URL is not a quiz event log.
 
-## Refresh during an active activity
+## Refresh during an activity
 
-If an activity URL loads without its matching in-memory activity/session, the app returns to the corresponding stable scope using replacement navigation.
+If an activity URL loads without its matching in-memory session, the app returns by replacement navigation to that activity's stable scope. Persisted learning/achievement evidence survives; partial round internals are intentionally discarded.
 
-Example:
-
-`/#/locations/europe/western-europe/test` → `/#/locations/europe/western-europe`
-
-Existing persisted learning/achievement evidence survives; partial round internals are intentionally discarded.
-
-Flags Learn is different: the browse/reveal study surface is stable without a quiz session and therefore remains directly addressable. Its reveal state itself is ephemeral.
+Flags Learn is directly addressable as a stable browse/reveal surface; reveal state itself remains ephemeral.
 
 ## Back/Forward
 
-`parentRoute(...)` defines conceptual ancestry:
+Conceptual ancestry follows durable spatial scope:
 
-- activity → stable scope;
-- stable continent/region scope → that domain's continent index;
-- domain index → Home;
-- Profile → Home.
+```text
+activity
+→ region focus (when region-scoped)
+→ continent focus
+→ domain/world navigation
+→ Home
+```
 
-Starting Play/Learn pushes an activity route. Exiting/Back returns toward the stable entry. Forward into an abandoned activity is normalised safely rather than reviving stale state.
+Whole-continent activity returns to continent focus. Browser history remains native; camera travel merely visualises the route transition.
 
-Because launcher rows now start Play directly, a region round launched from a continent launcher should return to the continent launcher experience rather than recreating a retired intermediate selected-region UI.
+Cold deep links initialise at their target spatial state rather than replaying every ancestor camera move.
 
-Browser history remains native; Atlas does not maintain a parallel application-owned navigation stack.
+## Renderer failure
 
-## Invalid and unavailable routes
+WebGL failure changes **presentation**, not route semantics. The conventional launcher fallback is built from the same scope model and must offer equivalent supported scopes/actions. Do not create fallback-only routes or different navigation truth.
 
-The parser rejects malformed paths, unknown IDs, mismatched continent/region ancestry and invalid activity combinations.
+## Product language versus identifiers
 
-A syntactically valid but unsupported future scope is normalised to the relevant domain index. That screen must expose availability honestly rather than fabricate a playable route.
-
-Unsupported geography must not appear Play/Learn-ready and must not become Mastery/completion eligible merely because the route grammar recognises its ID.
+Learner-facing copy uses **Neighbours** and **Play**. Stable identifiers remain `neighbors`, `/neighbors`, `test`, `/test` and existing action/storage names. Do not create copy-only migrations.
 
 ## Document titles
 
-Titles derive from typed route/result state and learner-facing domain names, for example:
+Titles derive from typed route/result state and learner-facing names, e.g. `Flags · Atlas`, `West Africa flags · Atlas`, `Play West Africa locations · Atlas`, `Round complete · West Africa neighbours · Atlas`.
 
-- `Flags · Atlas`;
-- `West Africa flags · Atlas`;
-- `Play West Africa locations · Atlas`;
-- `Play West Africa neighbours · Atlas`;
-- `Round complete · West Africa neighbours · Atlas`.
+## Hosting
 
-## Hosting decision
+Hash routing remains appropriate for GitHub Pages and installed PWA cold starts. A future transport change may swap the browser adapter without changing the typed product hierarchy.
 
-Hash routing remains appropriate on GitHub Pages because the fragment is not sent to the static host. Cold deep links load the known app root, Back/Forward remains meaningful, and the installed PWA can launch deterministically.
+## Historical navigation work
 
-A future hosting change may swap the transport adapter for clean History paths, but the typed route/product hierarchy should remain stable unless a separate product decision changes it.
-
-## Deferred map-first exploration
-
-Issue #104 is **DEFERRED PRODUCT EXPLORATION**. It may revisit the launcher as a geography-first interactive map, but it must not create a second concurrent selection model and must reconcile the locked colour/accessibility rules before implementation.
+#104 recorded an earlier map-first launcher exploration and the pre-Spatial row-launcher trade-offs. #119 established the continuous spatial architecture; #166 made it production. These are historical lineage, not concurrent navigation models. See [`../history.md`](../history.md).

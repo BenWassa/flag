@@ -2,43 +2,58 @@
 
 These instructions apply to the whole repository.
 
-## Start with project context
+## Establish current truth first
 
-- Read `PRODUCT.md` and `DESIGN.md` before changing product behaviour or interface code.
-- `DESIGN.md` defines the implemented Tactile Atlas production system. Issue #34 owns the remaining achievement-art direction for mastery badges, continent crests, the world Crown and milestone ceremony.
-- Read `docs/product/colour-system.md`, `docs/product/gamification.md`, and `docs/product/learning-and-mastery.md` before changing colours, mastery, completion, progress or achievement presentation.
-- Use `docs/index.md` as the documentation map and `docs/open/index.md` as the active-work/sequencing map.
-- Learner-facing product name is **Atlas** across production UI and install metadata. Issue #36 records the rollout; preserve stable legacy repository/storage/cache identifiers unless a migration is explicitly justified.
-- Preserve the language contracts: learner-facing copy uses British English, `Neighbours`, and `Play`; stable internal identifiers such as `neighbors`, `/neighbors`, `test`, `/test`, and `start-test` remain unchanged unless a migration is explicitly requested.
-- Do not hand-edit generated cartography in `src/data/maps/africa.ts`. Follow `docs/architecture/cartography.md` and use the generation workflow.
+Read `PRODUCT.md`, `DESIGN.md`, `.impeccable/design.json`, `docs/architecture/spatial-atlas.md`, `docs/architecture/routing.md`, `docs/open/index.md` and the relevant GitHub issue before changing product behaviour.
 
-## Current learning/achievement boundary
+Use `docs/history.md` and `docs/closed/` when you need rationale or lineage. Closed issue bodies are historical evidence, not automatically current instructions.
 
-- Country-level records are live learning evidence and may remain rich/revisable.
-- Do not present an individual country as a prestigious learner-facing Mastery achievement.
-- Region × domain is the first learner-facing Mastery unit.
-- Complete region = restrained gold treatment; complete continent = continent crest; complete World = Crown only.
-- Earned mastery/completion is persistent in the current product model even if live country evidence later lapses/revalidates.
-- Africa is the first complete four-domain proving ground. Unsupported continent/domain shells must not count as complete.
+## Production baseline
+
+- Atlas is a mobile-first React/Vite PWA across Flags, Locations, Outlines and Neighbours.
+- **Spatial Atlas is the default production navigation presentation.** Do not treat it as a preview or rebuild a parallel launcher.
+- The typed hash router remains authoritative; the spatial layer interprets it.
+- Geography taps select/focus scope; Play/Learn are deliberate separate actions.
+- The conventional `Launcher` is the equivalent WebGL/renderer-failure fallback only.
+- Domain-native activities retain their own primary learning surfaces.
+- All six real continents have intended four-domain curriculum.
+- Learner-facing copy uses British English. Stable compatibility identifiers such as `neighbors`, `/neighbors`, `test` and existing `flag-atlas:*` namespaces remain.
+
+## Learning / achievement boundary
+
+- Country-level records are live learning evidence and may change.
+- Do not present an individual country as prestigious learner-facing Mastery.
+- Region × domain is the first durable Mastery unit.
+- Complete region = restrained gold treatment.
+- Complete continent = persisted crest/trophy completion state.
+- Complete World = singular earned-only Crown; #138 already shipped its Home surface.
+- Earned prestige is monotonic under the current model unless a future explicit migration changes that rule.
+
+## Geography
+
+Canonical country identity is ISO3. Projected maps, outlines, neighbours and spherical Spatial assets derive from the pinned Natural Earth 1:10m production pipeline/policy. Never hand-edit generated country geometry, create a second topology source or maintain handwritten neighbour tables.
 
 ## Verification
 
-- `npm run check` type-checks the source.
-- `npm test` builds the production output and runs the complete verification suite. Verification scripts import from `dist/`, so build before running an individual script.
-- Add focused assertions to the existing plain-Node verifier family rather than introducing a test framework without an explicit decision.
-- Match validation to the risk. Interface work should include keyboard, accessibility semantics, responsive layouts, and loading/failure behaviour where relevant.
-- Never claim a manual gate was run when it was inferred from code or automated coverage. Record substituted evidence and any unavailable environment explicitly.
+- `npm run check` type-checks the application.
+- `npm test` is the primary full repository gate under Node 22.
+- Match additional validation to risk: browser matrices, keyboard/accessibility, reduced motion, responsive layout, renderer failure, PWA/offline, generated geography and exact artifact inspection where relevant.
+- Never claim physical device/manual evidence that was inferred from automated tests.
 
-## Issue delivery and closeout
+## Issue delivery
 
-Treat issue completion as a repository state transition, not just a code change:
+1. Fetch current `main` and read the full issue plus related durable/historical docs.
+2. Use a focused branch and PR.
+3. Keep domain rules separate from presentation and fix root causes rather than adding parallel systems.
+4. Run focused checks plus the full required gate; inspect the built artifact where relevant.
+5. Sync current `main` before merge and resolve semantically.
+6. Require green CI and required deployment acceptance.
+7. Put lasting decisions in `PRODUCT.md`, `DESIGN.md`, `docs/product/` or `docs/architecture/`.
+8. Move completed working records from `docs/open/` to `docs/closed/` and keep `docs/open/index.md` aligned with GitHub.
+9. Close the GitHub issue only when its acceptance criteria and required evidence are genuinely satisfied.
 
-1. Read the GitHub issue and its document under `docs/open/`. Establish exact acceptance criteria and deferred work.
-2. Implement on a feature branch. Keep durable decisions in `PRODUCT.md`, `DESIGN.md`, `docs/product/`, or `docs/architecture/`; do not leave the issue worklog as the only source of truth.
-3. Run the required automated and manual gates. Record concrete evidence, including viewport, keyboard, assistive-technology, degraded-state, or network conditions when the brief requires them.
-4. Commit and push the implementation intentionally. Stage only confirmed paths and preserve unrelated or untracked user files.
-5. Merge into `main`, update from `origin/main`, rerun `npm test` on the merged tree, and confirm `main` matches the intended remote commit.
-6. Change the issue document status to `Complete`, add a closeout section with commit and verification evidence, move it from `docs/open/` to `docs/closed/`, and update every inbound link.
-7. Commit and push the closeout documentation. Close the GitHub issue only after the closing commit is reachable from `origin/main`, and leave a concise comment with the shipped commit and verification summary.
+## Repository hygiene
 
-If a required gate cannot be run, do not silently close the issue. Either complete it in a suitable environment or record the unavailable gate and obtain explicit user direction to accept the substitute evidence.
+Preserve **issue/document history**, not every implementation branch. Closed issues and `docs/closed/` records explain why the product evolved. Remote feature, spike, verification and agent branches should be deleted once merged/superseded and their useful evidence is captured.
+
+The intentional pre-Spatial archive branch is a historical checkpoint; ordinary merged branches are not.

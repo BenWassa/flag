@@ -1,240 +1,181 @@
 # Atlas Design System
 
-**Status:** Tactile Atlas production system for v1.0
-**Mode:** operate
-**Primary surface:** mobile-first geography learning
+**Status:** current production design system  
+**Mode:** operate  
+**Primary surface:** mobile-first Spatial Atlas geography learning
 
 ## Design thesis
 
 **Geography is the content; the interface is the instrument.**
 
-Atlas should feel tactile and game-like enough to make repeated retrieval satisfying, while remaining visually quiet, information-first and credible as a learning tool. The map, flag or outline should usually carry more visual weight than surrounding chrome.
+Atlas should feel tactile and game-like enough to make repeated retrieval satisfying while remaining visually quiet, information-first and credible as a learning tool. The Earth, map, flag or outline should normally carry more visual weight than surrounding chrome.
 
-The system is not decorative arcade UI. Interaction depth is purposeful; prestige is scarce; ordinary progress is understated.
+Spatial Atlas is the accepted production navigation presentation. It is not decorative 3D placed above a conventional app page.
 
 ## Locked principles
 
 1. Mobile portrait is the primary composition; short landscape must remain usable.
-2. System sans typography; no ornamental display type required for ordinary product UI.
-3. Cool near-white canvas and graphite text form the neutral base.
-4. Atlas Blue is ordinary action and selection.
-5. Green and red are correctness feedback, not navigation identities.
-6. Purple is durable region × domain Mastery.
-7. Gold is scarce completion/prestige.
-8. State must never rely on colour alone.
-9. Geography identity comes from shape, label and hierarchy — not a continent, region or hemisphere colour taxonomy.
-10. Use spacing, alignment, rules and proximity before adding cards or containers.
-11. Modest radii and controlled depth; avoid glassmorphism, bento dashboards, decorative gradients and excessive elevation.
-12. Tactile press physics should communicate control activation without toy-like bounce.
-13. Progressive disclosure beats explanatory text blocks inside routine learning flows.
-14. Achievement treatment must remain subordinate to the learning task until something genuinely scarce has been earned.
+2. System sans typography; cool near-white canvas and graphite text form the neutral base.
+3. Atlas Blue is ordinary action/selection/progress.
+4. Green/red are correctness feedback, not navigation identity.
+5. Purple is durable region × domain Mastery.
+6. Gold is scarce completion/prestige.
+7. State never relies on colour alone.
+8. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
+9. Use spacing, alignment, rules and proximity before adding cards/containers.
+10. Modest radii and controlled depth; no glassmorphism, bento dashboards, decorative gradients or excessive elevation.
+11. Tactile press physics communicate activation without springy/toy-like bounce.
+12. Progressive disclosure beats explanatory text in routine flows.
+13. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
+14. Spatial motion must preserve orientation but remain interruptible and respect reduced motion.
+15. A 3D surface never replaces equivalent real DOM controls or answer-safe accessibility semantics.
 
 ## Core palette
 
-| Role | Token | Value | Meaning |
-| --- | --- | --- | --- |
-| Canvas | `--canvas` | `#F6F8FB` | cool near-white page ground |
-| Primary text | `--text` | `#101318` | graphite text / strongest neutral |
-| Atlas Blue | action | `#2563EB` | ordinary action, selection, focus family |
-| Pressed blue | action pressed | `#1749B8` | physical depth/pressed state |
-| Action tint | action soft | `#EAF0FF` | quiet selected/action background |
-| Correct | semantic correct | `#137A55` | correct retrieval feedback |
-| Wrong | semantic wrong | `#B42318` | incorrect retrieval feedback |
-| Mastery | durable mastery | `#6D3FC0` | earned region × domain competency |
-| Prestige | completion | `#E0AF2F` | scarce complete-region/continent prestige |
+| Role | Value | Meaning |
+| --- | --- | --- |
+| Canvas | `#F6F8FB` | cool near-white ground |
+| Primary text | `#101318` | graphite text / strongest neutral |
+| Atlas Blue | `#2563EB` | ordinary action, selection, focus, progress |
+| Pressed blue | `#1749B8` | physical pressed/depth state |
+| Action tint | `#EAF0FF` | quiet selected/action background |
+| Correct | `#137A55` | correct retrieval feedback |
+| Wrong | `#B42318` | incorrect retrieval feedback |
+| Mastery | `#6D3FC0` | durable region × domain competency |
+| Prestige | `#E0AF2F` | scarce completion/prestige |
 
-Colour is semantic, not geographic branding. Do not invent continent colours, region colours or hemisphere themes. Do not encode progress only as saturation/fill colour.
+Colour is semantic, not geographic branding.
 
-## Shape and radius
+## Shape and depth
 
-Current radius tiers remain:
+Radius tiers:
 
-- compact: `8px`;
-- controls: `12px`;
-- tiles/rows: `18px`;
-- hero/large surface: `24px`.
+- compact `8px`;
+- controls `12px`;
+- tiles/rows `18px`;
+- hero/large surface `24px`.
 
-Use the smallest tier that supports the component. Large rounded containers should not become the default page grammar.
+Use the smallest tier that supports the component. Large rounded containers are not the page grammar.
 
-## Depth and press physics
+Primary Atlas Blue controls use the established restrained tactile depth and collapse approximately `translateY(3px)` on press. Quiz answers use the shallower ~`2px` treatment. Home may retain the stronger hard-edged arcade exception; that exception does not spread through Spatial navigation or activities.
 
-### Primary controls
+Reduced motion must preserve semantic correctness and usability; animation may decorate state but may never be the mechanism that restores or determines state.
 
-Primary Atlas Blue controls use the established tactile depth and collapse on press with approximately `translateY(3px)`. The motion communicates a physical press rather than a springy bounce.
+## Spatial navigation composition
 
-### Answer controls
+Current production hierarchy:
 
-Quiz answer controls use the shallower answer-button press treatment, approximately `translateY(2px)`, so the task remains fast and controlled.
+```text
+Home / domain
+→ world Earth / continent
+→ continent focus
+→ optional region focus
+→ Play or Learn
+→ activity
+→ Results / spatial context
+```
 
-### Interactive rows/tiles
+The persistent Earth is the dominant navigation object. A compact real-DOM command surface is anchored to the geography it names.
 
-Post-mode continent and region navigation uses the softer standing tile depth rather than hard arcade outlines.
+At continent/region focus:
 
-### Home exception
+- selected geography is the one dominant label;
+- domain is visible but secondary;
+- **Play {Scope}** is the primary action and immediately available;
+- **Learn {Scope}** is secondary where supported;
+- parent/sibling geography is quiet lateral navigation;
+- tapping geography selects/focuses scope and never starts a round;
+- whole-continent Play is available at continent focus;
+- region Play follows deliberate region focus;
+- primary choices wrap rather than requiring horizontal scrolling.
 
-Home intentionally has the strongest arcade treatment in the product. The four learning-domain cards may use the harder graphite border/offset-shadow treatment and diagonal press collapse. This is a scoped personality moment at the entry surface, not a licence to spread hard arcade chrome through launchers, quizzes or results.
+The command surface is label, proximity, rules and a small control group — not a dashboard/card stack and never glass.
 
-Respect reduced-motion preferences and never make completion or correctness dependent on motion.
+The conventional `Launcher` is renderer-failure fallback only. Do not restore it beneath the globe or document its old full-width rows as the normal product experience.
 
-## Information architecture presentation
+## Spatial motion and gesture ownership
 
-The current production hierarchy is mode-first and spatial (#166):
+- one-finger drag rotates the Earth after the drag threshold;
+- a tap resolves where the press began and must not be retargeted by finger jitter;
+- pinch zooms/dollies;
+- platform/browser edge-back gestures keep ownership of the edge gutter;
+- camera travel is a visual interpretation of authoritative route changes, not application state;
+- cold deep links initialise directly at the target spatial state rather than replaying a cinematic ancestry;
+- reduced-motion users receive direct/shortened transitions with the same destination and focus semantics.
 
-`Home → domain continent index → continent → region → Play`
+Tiny geography may use invisible source-derived interaction envelopes. Display geography remains truthful; giant visible hit circles are not the interaction model.
 
-A persistent globe is the dominant visual object at every navigation step, and a
-compact command surface sits directly beneath the place it names. It is one
-continuous surface, not a globe above a page: no conventional launcher renders
-underneath it.
-
-- **Home**: four peer domain rows; no direct Play action. The globe is quiet
-  context, because nothing is selectable until a domain is chosen.
-- **Domain index**: the globe is the continent picker, with a wrapping row of
-  quiet continent chips as its equivalent control. Unsupported continents are
-  inert honest shells.
-- **Continent or region focus**: the selected place is the one dominant label,
-  the domain sits above it small and muted, **Play {Scope}** is the primary
-  action and immediately available, **Learn {Scope}** is secondary, and the
-  parent continent and sibling areas are quiet lateral chips.
-- **Learn**: follows the framed scope, exactly as Play does. Flags Learn opens
-  the browse/reveal gallery; the other domains start their domain-appropriate
-  Learn activity.
-
-Tapping geography **selects** a scope and never starts a round. Choosing a place
-and playing it are separate, deliberate acts.
-
-The command surface is label, proximity, rules and a small control group — not a
-card stack, not a floating dashboard, and never glass. Lateral choices wrap
-rather than scroll: no horizontal scrolling for primary selection.
-
-The conventional `Launcher` survives only as the renderer-failure fallback. Do
-not restore it as a visible layer beneath the spatial surface, and do not
-document its full-width Play rows as current production behaviour.
-
-#104's map-first question is answered by the cutover: selection happens on real
-geography, and progress is still never encoded in colour alone.
-
-## Geography surfaces
+## Learning surfaces
 
 ### Flags
 
-Preserve true flag aspect ratios. The flag is the primary recognition object. Hidden Flags Learn cards must not leak country names through visible or accessible metadata before reveal.
+Preserve true flag aspect ratios. The flag is the primary recognition object. Hidden Flags Learn items must not leak names through visible or accessible metadata. Flags Play may retain quiet inert globe context only when it cannot hint the answer.
 
 ### Locations
 
-The map is the dominant object. Use canonical production geometry and keep geographic context legible. Pan/zoom controls and feedback must not compete visually with the map.
+The canonical projected map owns the activity screen. Pan/zoom and feedback must not compete visually with the geography. Spatial navigation yields rather than placing a second competing map behind the question.
 
 ### Outlines
 
-The silhouette is the dominant object. Normalisation may remove absolute scale/location cues but must preserve canonical shape and aspect ratio.
+The silhouette is dominant. Normalisation may remove absolute scale/location cues but must preserve canonical shape/aspect ratio. Spatial navigation yields during live questions.
 
 ### Neighbours
 
-The target geography and land-neighbour context remain primary. Input/suggestions are instruments for set retrieval, not the visual centre of the screen.
+Target geography and complete land-neighbour context remain primary. Input/suggestions are retrieval instruments, not the visual centre. Spatial navigation yields during live questions.
 
-## Progress and learning evidence
+## Progress and achievement presentation
 
-Ordinary progress is intentionally low-prestige.
+Ordinary progress is low-prestige: the quiet Atlas Blue successful-retrieval strip. Individual countries remain learning evidence, not purple prestige objects.
 
-The current shared progress strip is a single Atlas Blue cleared bar representing countries/targets with successful retrieval evidence. It is not a segmented Mastery gauge and does not expose scheduler `x/y` counters.
-
-Country-level states are learning/scheduling evidence. Routine UI may communicate unseen/learning/strong/due concepts where useful, but individual countries do not receive learner-facing Mastered prestige treatment.
-
-The dedicated Progress screen is retired. Do not treat its former hierarchy, evidence browser or reset utility as current production composition. Progress now appears in Home, domain indexes, launchers and Results.
-
-## Achievement presentation
-
-Achievement hierarchy:
+Hierarchy:
 
 `country evidence → region × domain Mastery → complete region → complete continent → World Crown`
 
-### Perfect round
+- **Perfect round:** transient miss-free Results feedback, not persistent Mastery.
+- **Region × domain Mastery:** purple plus explicit non-colour wording/mark.
+- **Complete region:** restrained brushed-metal gold treatment; no separate Crown.
+- **Complete continent:** persisted completion with dedicated crest/trophy artwork and explicit semantics wherever current navigation surfaces it.
+- **World Crown:** singular highest tier. #138 shipped an earned-only Home surface; do not show locked/decorative Crowns or add a higher tier.
 
-A single miss-free Play result receives transient **Perfect round** treatment on Results. It is performance feedback, not persistent prestige and not equivalent to Mastery.
-
-### Region × domain Mastery
-
-Earned Mastery is purple and must include a non-colour cue. Compact launcher rows use accessible Mastered labelling without adding a purple star merely to repeat state inside navigation.
-
-The qualification engine counts two consecutive perfect complete-region Play
-results. It verifies exact supported-target coverage in every domain; sampled
-rounds do not affect the qualification streak. Issue #108 closed the earlier
-v1 defect.
-
-### Complete region
-
-A complete region receives a restrained brushed-metal gold edge while preserving the region name, trailing useful count, progress strip and accessible Mastery labelling. The material effect uses subtle light and shadow tones rather than a flat saturated yellow stripe. There is no separate region badge, medal, shield or Crown.
-
-### Complete continent
-
-A completed continent uses the dedicated continent trophy/crest artwork on the **domain continent index**, replacing the normal neutral continent silhouette for that completed row. The trophy assets are shipped and production-rendered.
-
-Do not imply that a separate full-screen trophy ceremony ships today; it does not.
-
-### World Crown
-
-The World Crown is the highest and final prestige tier. All six continents now have complete four-domain curriculum, so the existing `worldCrown` state is genuinely reachable. When earned, Home shows one quiet World Crown line with explicit earned wording; the state is not duplicated across domain indexes or expanded into a ceremony/dashboard.
-
-Do not show locked/decorative Crowns in routine states, and do not introduce a prestige tier above the Crown.
+Spatial and fallback presentations consume the same achievement read model. Presentation must not invent qualification logic.
 
 ## Results and feedback
 
-Results should answer what happened and what to do next, not become a reward dashboard.
+Results answer what happened and what to do next rather than becoming reward dashboards.
 
-- green: correct outcome;
-- red: wrong outcome;
-- domain-specific assisted/reveal states may use additional restrained feedback already established by that mechanic;
-- Play can show live score/feedback where production currently does so;
-- Perfect round is the one-off gold result treatment for a miss-free Play result;
+- green = correct;
+- red = wrong;
+- domain-specific assisted/reveal states remain restrained;
+- live score/feedback should be consistent where mechanics are equivalent;
+- Perfect round is the one-result gold acknowledgement;
 - repeat and mistake review remain practical next actions.
 
 Avoid confetti or repeated celebration for ordinary correct answers.
 
 ## Accessibility
 
-- visible keyboard focus;
-- keyboard operation where the mechanic permits it;
+- real DOM equivalents for spatial choices;
+- visible focus;
+- keyboard operation where mechanics permit it;
 - no colour-only state;
 - reduced-motion support;
 - mobile safe-area awareness;
-- readable zoomed text;
-- no horizontal scrolling for primary selection flows;
-- answer-safe accessible labels that do not leak solutions;
-- stable focus restoration after route/question transitions;
-- honest unavailable and asset-failure states.
+- readable zoomed text and reflow;
+- no horizontal scrolling for primary selection;
+- answer-safe accessible labels;
+- stable focus/announcement after durable transitions;
+- honest unavailable, loading and renderer-failure states.
 
-Spatial geography exercises may have inherent accessibility limits; do not solve those by exposing the answer in accessible metadata.
+Spatial geography has inherent non-visual limits; do not “solve” them by leaking a quiz answer in accessibility metadata.
 
 ## Product language
 
-Learner-facing copy uses modern British English:
-
-- **Neighbours**;
-- **colour**;
-- **centre**;
-- **behaviour**;
-- **practise** as a verb / **practice** as a noun.
-
-Stable technical identifiers may retain American spelling or legacy naming where changing them would break routing/storage/API compatibility.
+Learner-facing copy uses modern British English: **Neighbours, colour, centre, behaviour, practise** as the verb / **practice** as the noun. Stable technical identifiers may retain legacy American spelling where compatibility requires it.
 
 ## Intentionally excluded aesthetics
 
-Do not introduce by default:
+No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion.
 
-- glassmorphism;
-- bento/dashboard card grids;
-- ornamental gradients as structure;
-- decorative UI illustration that competes with geography;
-- fantasy badges/ranks;
-- XP/coin economies;
-- constant crowns, medals or confetti;
-- continent/region colour branding;
-- large floating-card stacks when spacing/rules can establish hierarchy;
-- exaggerated spring/bounce motion.
+## Historical design work
 
-## Deferred design work
-
-- #104 remains a **deferred product exploration** of a map-first launcher. Any region-colour or geography-encoded progress approach must explicitly reconcile current semantic-colour and non-colour accessibility rules before implementation.
-- A richer earned-milestone ceremony is optional future work, not current production behaviour.
-- A new dedicated Progress screen is not currently promised.
-- World Crown learner-facing artwork/surface remains future work tied to a genuine world-completion product state.
+#104's map-first exploration is historical input, not an active alternative product direction. #119 proved the continuous spatial interaction; #166 made it the default. The #118 audit remains valuable historical evidence and its surviving concrete follow-ups are #146–#152. See [`docs/history.md`](docs/history.md).

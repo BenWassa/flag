@@ -2,143 +2,108 @@
 
 ## Objective
 
-Keep Atlas easy to deploy while preserving clean boundaries for a larger geography-learning product. React 19 owns production presentation and Vite owns browser builds; curriculum, learning rules, achievements, persistence and typed routing remain framework-independent TypeScript.
+Keep Atlas easy to deploy while preserving clean boundaries for a world-scale geography-learning product. React 19 owns production presentation, Vite owns browser builds, and the persistent Spatial Atlas is the default navigation presentation. Curriculum, learning rules, achievements, persistence and typed routing remain framework-independent TypeScript.
 
 ## Layers
 
 ```text
 src/
-  data/             curriculum + generated geography configuration
-  domain/           pure learning, scoring, achievement and IA rules
-  infrastructure/   storage + asset providers
+  data/             curriculum + generated projected/spherical geography
+  domain/           pure learning, scoring, evidence and achievement rules
+  infrastructure/   storage, asset and cloud providers
   routing/          typed routes + browser routing adapter
   state/            application/session orchestration
-  react/            production React shell, screens and shared components
-  ui/               framework-independent formatting/map/icon adapters + legacy verifier fixtures
-  main.tsx          production browser entry point
+  react/            production React shell + domain activities
+  spatial/          production Three.js Earth, camera, picking and spatial state
+  ui/               framework-independent formatting/map/icon adapters
+  main.tsx          production browser entry
   sw.ts             Workbox service-worker policy
 ```
 
-### Data
+## Authority boundaries
 
-`countries.ts` is the canonical 195-country curriculum. Country identity is ISO3. `continents.ts` and `learning-scopes.ts` own canonical navigation/learning scope identity; individual UI surfaces must not create competing geography trees.
+### Data and geography
 
-Locations, Outlines and Neighbours reuse the generated production geography foundation. Neighbour adjacency is derived from canonical topology rather than handwritten tables.
+`countries.ts` owns canonical 195-country identity (ISO3). `continents.ts` / learning-scope data own navigable geography identity. UI surfaces do not create competing geography trees.
 
-Oceania #27 extends that same foundation rather than creating a Pacific subsystem. Its only generic cartography extension is optional projection rotation; Oceania uses a Pacific-centred Natural Earth rotation while source topology, scoring geometry, Outlines and adjacency remain canonical and shared.
+Locations, Outlines, Neighbours and Spatial Atlas reuse the canonical Natural Earth 1:10m source/policy. Projected continent assets and spherical world/continent LODs are generated outputs of the same pinned source, not parallel datasets. Neighbour adjacency is topology-derived.
 
 ### Domain
 
-`models.ts` owns shared primitives including learning domains, activities, study scopes and persisted evidence shape.
+Domain modules own learning/scoring/evidence/achievement rules and have no DOM/React dependency. Presentation never reimplements evidence weights or mastery thresholds.
 
-`evidence.ts` normalises passive exposure, assisted retrieval, clean retrieval and contradictory evidence across domain-native ledgers. It is the live **country learning/scheduling** layer.
-
-`achievements.ts` owns the separate earned hierarchy: region × domain Mastery, complete region, complete continent and World Crown. In v1 this hierarchy is driven by persisted region-scoped Play perfect-run streaks, not by aggregating country `mastered` status.
-
-`qualifiesForRegionMastery(record)` remains in `evidence.ts` under a historical compatibility name for per-country strong-evidence qualification; it is **not** the current earned-achievement integration seam.
-
-Issue #108 closed the qualification-integrity defect: all domains launch complete-region Play and verify the exact supported target set before recording a region perfect-run event.
-
-`progress.ts` owns Flags/Outlines country-record transitions. Locations and Neighbours retain domain-native session/progress models because their retrieval mechanics are not equivalent to multiple-choice recognition.
-
-These rules remain DOM-independent.
+Country evidence is the live learning/scheduling layer. `achievements.ts` owns separate persistent region × domain Mastery, complete-region, complete-continent and World Crown state. #108 ensures only exact complete-region qualifying Play can advance Mastery streaks.
 
 ### Infrastructure
 
-`storage.ts`, `outline-storage.ts`, `map-storage.ts` and `neighbor-storage.ts` persist independent learning ledgers. `evidence-storage.ts` provides shared sanitisation/migration support.
-
-`achievement-storage.ts` separately persists earned achievements and in-progress region-perfect-run streaks. Storage helpers also define explicit reset semantics, but the current React product does not expose a learner-facing coordinated full-reset action.
-
-`flags.ts` remains the flag asset-provider seam.
+Domain ledgers persist independently. Achievement state and in-progress region-perfect-run streaks persist separately. Firebase/Auth/Firestore remains optional local-first infrastructure and must not leak account concerns into geography/domain rules.
 
 ### Routing
 
-`routing/routes.ts` owns the typed route union plus parse/serialise, parent, stable-route, availability normalisation and title helpers. `routing/router.ts` is the current hash-URL browser adapter for GitHub Pages.
+`routing/routes.ts` owns typed route identity, parse/serialise, ancestry, stable-route and availability normalisation. Hash transport remains appropriate for GitHub Pages/PWA.
 
-URLs own durable navigation state: learning domain, geographic scope, profile/stable screen identity and activity identity. Quiz ordering, current index, guesses, feedback, timers and result objects remain ephemeral session state.
-
-A hard refresh of an activity route without its matching in-memory session returns to the activity's stable scope rather than serialising a partial quiz.
-
-See `routing.md`.
+URLs own durable navigation state (domain, scope, activity, profile). Round order, question index, guesses, timers and result process state remain ephemeral.
 
 ### State
 
-`AppStore` coordinates the four domain sessions, applies evidence transitions, persists attempts, records region-scoped Play outcomes into achievement streaks and refreshes earned achievements.
+`AppStore` coordinates domain sessions, evidence persistence and achievement recording. Stable internal `test` is learner-facing **Play**.
 
-The stable internal `test` mode is learner-facing **Play**. Presentation must not duplicate scoring/evidence/achievement thresholds in React components.
+### React and Spatial presentation
 
-Completed session objects may remain in memory so browser Back/Forward can revisit live round/result state within the same process. They are not persisted as durable route state.
+`src/react/AtlasApp.tsx` composes the router, store and activities. `src/spatial/` is the normal navigation presentation:
 
-### React production UI
+```text
+route + current view + achievements
+        ↓
+deriveSpatialState(...)    # pure
+        ↓
+SpatialShell
+  ├── SpatialStage         # persistent Earth
+  └── SpatialCommand       # real DOM navigation
+```
 
-`src/react/AtlasApp.tsx` composes the typed router, `AppStore` and round controllers into the production application. React components own production controls, lifecycle and screen composition.
+There is no second spatial navigation stack. Geography taps and DOM controls dispatch the same `AtlasActions`.
 
-Generated geography, projection maths, map pan/zoom and Neighbours map runtime remain imperative/framework-independent boundaries mounted by React where appropriate.
+When WebGL cannot start, the conventional `Launcher` renders from the same `scopeModelFor` model. It is fallback infrastructure, not an alternate product IA.
 
-The legacy string-renderer tree was removed after the React/Vite migration; `src/ui` now contains framework-independent UI/map adapters used by React and the isolated verifier build.
+## Production information architecture
 
-## Product-information-architecture boundary
+```text
+choose domain
+→ Earth: choose continent
+→ continent focus: Play continent or choose region
+→ region focus: Play/Learn region
+→ domain-native activity
+→ Results / spatial context
+```
 
-The current production flow is mode-first:
+Geography selection and starting a round are deliberately separate. The old one-tap region launcher row is historical, not normal production behaviour.
 
-`Home → domain index → supported continent launcher → Play continent/region`
+The dedicated Progress route/screen is retired. Progress and prestige are disclosed in current navigation/activity/results surfaces rather than a separate dashboard.
 
-Launcher rows start Play directly. Learn remains a subordinate whole-continent action; Flags Learn opens its browse/reveal gallery while the other domains start domain-appropriate Learn rounds.
+## Activity boundary
 
-Unsupported scopes normalise to the relevant **domain index**, which exposes honest availability shells. They are never silently substituted with Africa or treated as completed curriculum.
+Spatial Atlas yields the viewport when a second geography/recognition surface would compete or leak information:
 
-The dedicated Progress route/screen is retired; progress/achievement presentation now lives in Home, domain indexes, continent launchers and Results.
+- Locations Play/Learn: projected map owns the screen;
+- Outlines Play/Learn: silhouette owns the screen;
+- Neighbours Play/Learn: neighbour map/set interaction owns the screen;
+- Flags Learn/Profile: full surface;
+- Flags Play: inert answer-safe spatial context may remain;
+- Results: reframe the scope just practised.
 
 ## Persistence
 
-The four learning-ledger payloads use current versioned schemas while retaining stable compatibility namespaces including:
-
-- `flag-atlas:progress:v1`;
-- `flag-atlas:outline-progress:v1`;
-- `flag-atlas:location-progress:v1`;
-- `flag-atlas:neighbor-progress:v1`.
-
-Loaders accept supported legacy/current payloads and migrate deterministically without inventing historical Learn/Play mode where it cannot be known.
-
-Earned achievements and perfect-run streaks use independent namespaces:
-
-- `flag-atlas:earned-achievements:v1`;
-- `flag-atlas:region-domain-perfect-run-streaks:v1`.
-
-Earned achievement is monotonic under the current product model; live country evidence may lapse independently.
-
-## Firebase path
-
-Firebase/Auth/Firestore integration remains a separate infrastructure concern with its own authoritative documentation. Product/geography work must preserve local-first cloud-progress behaviour, tests and hosting acceptance rather than coupling geography changes into account semantics.
+Stable compatibility namespaces remain versioned (`flag-atlas:*`). Persisted schema changes require migration rather than silent key changes. Earned achievement is monotonic under the current model while live evidence may lapse independently.
 
 ## PWA
 
-Vite builds `src/sw.ts` through Workbox InjectManifest. The generated precache owns the versioned shell; runtime caching covers same-origin lazy assets and the existing external flag-asset strategy. Hash deep links remain compatible with GitHub Pages and the installed PWA.
+Vite/Workbox builds the service worker. The shell and required Spatial bootstrap are cached according to the established policy; heavy continent detail remains lazy/runtime-cached. Renderer failure must remain recoverable and the app remains usable without WebGL.
 
-Lazy continent chunks become available offline after first use through runtime caching rather than being forced into the initial precache. Oceania follows this same rule: its generated geography chunk is lazy and absent from the service-worker precache.
+## Current support
 
-## Current geography support
-
-- Flags: full 195-country curriculum.
-- Locations: Africa, South America, Europe, Asia, North America and Oceania.
-- Outlines: Africa, South America, Europe, Asia, North America and Oceania.
-- Neighbours: Africa, South America, Europe, Asia, North America and Oceania, using complete canonical land-neighbour truth plus explicit verified zero-land-neighbour targets.
-
-All six real continents therefore have complete four-domain curriculum. `worldHasCompleteCurriculum()` is true; existing achievement semantics still require all six continent-completion achievements before `worldCrown` becomes eligible. Learner-facing World Crown surfacing remains #138.
-
-Availability is a data/support concern, not a reason for parallel routers or duplicate domain architectures.
+Flags, Locations, Outlines and Neighbours now ship intended production curriculum across all six real continents, with the domain-specific completeness constraints documented in `PRODUCT.md`. `worldHasCompleteCurriculum()` is true; the World Crown still requires all six actual continent-completion achievements and #138 already surfaces it when earned.
 
 ## Quality gates
 
-`npm test` is the primary repository gate under Node 22. It covers type checking, React component tests, Firebase rules, the production Vite/PWA build and the plain-Node verification suite.
-
-Product-semantics ownership is split intentionally:
-
-- learning-evidence verification owns country evidence weighting, lapse/recovery, migration and domain mappings;
-- achievement verification owns perfect-run streaks, support guards, persistence and region/continent/world aggregation;
-- #108 owns complete-target-set qualification coverage without coupling achievements back to raw country scheduler fields;
-- routing/IA verification owns the current one-tap launcher contract and unavailable-scope fallback;
-- continent verifiers own curriculum, topology/provenance, adjacency and payload invariants;
-- browser production tests cover desktop/mobile flows, pointer ownership, multipart geography and PWA behaviour.
-
-Exact production-artifact inspection and current-main sync remain required before merge for changes that affect production behaviour.
+`npm test` is the primary repository gate under Node 22. Changes additionally exercise the relevant browser/accessibility/PWA/geography matrix based on risk. Production changes require current-main sync, exact artifact inspection where relevant and green CI before merge. Physical-device evidence is only claimed when actually performed.

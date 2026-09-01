@@ -1,80 +1,49 @@
 # Atlas Colour System
 
-**Status:** locked v1 semantic palette
+**Status:** locked production semantic palette
 
-Atlas uses one restrained semantic colour system across all learning domains. Geography does not receive an identity palette by continent, region or hemisphere.
-
-## Locked semantic roles
+Atlas uses one restrained semantic colour system across all learning domains and Spatial navigation. Geography does not receive an identity palette by continent, region or hemisphere.
 
 | Role | Value | Use |
 | --- | --- | --- |
-| Canvas | `#F6F8FB` | cool near-white page ground |
+| Canvas | `#F6F8FB` | cool near-white ground |
 | Primary text | `#101318` | graphite text / strongest neutral |
-| Atlas Blue | `#2563EB` | ordinary action, selection, focus family, ordinary progress |
+| Atlas Blue | `#2563EB` | ordinary action, selection, focus and progress |
 | Pressed blue | `#1749B8` | tactile pressed/depth state |
-| Action tint | `#EAF0FF` | quiet action/selected background |
+| Action tint | `#EAF0FF` | quiet action/selection background |
 | Correct | `#137A55` | correct retrieval feedback |
 | Wrong | `#B42318` | incorrect retrieval feedback |
 | Mastery | `#6D3FC0` | durable region × domain Mastery |
-| Prestige | `#E0AF2F` | scarce completion / prestige |
+| Prestige | `#E0AF2F` | scarce completion/prestige |
 
 ## Rules
 
-### Blue is ordinary
+**Blue is ordinary.** It is the workhorse action/selection/progress colour and must not be mistaken for prestige.
 
-Atlas Blue is the workhorse colour. Use it for primary action, focus/selection family and the ordinary successful-retrieval progress strip. Blue must not be mistaken for prestige.
+**Green/red are feedback.** They do not become geography identity colours or persistent navigation theming.
 
-### Green and red are feedback
+**Purple is durable Mastery.** Individual country evidence does not become a purple prestige object. Purple state requires a non-colour cue.
 
-Green means correct and red means wrong. They should not become continent/region identity colours or long-lived decorative fills.
+**Gold is scarce.** It is reserved for Perfect-round acknowledgement, completion treatment, continent crest/trophy state and genuine World Crown prestige. It is not a routine button/progress/geography fill.
 
-Domain-specific corrective mechanics may retain established intermediate/reveal treatments where they communicate outcome quality, but those colours do not create new product-level achievement tiers.
+**Colour is never sufficient by itself.** Pair colour with label, icon/mark, geometry, border/material treatment or accessible wording.
 
-### Purple is durable Mastery
+## Spatial geography
 
-Purple is reserved for learner-facing **region × domain Mastery**. Country-level learning evidence may be strong internally or operationally, but individual countries do not become purple prestige objects merely because their evidence is strong.
+Spatial Atlas keeps ordinary geography neutral. Selection may receive restrained Atlas Blue emphasis. Mastery/completion can augment geography/DOM controls using their semantic colours, but exact state remains explicit in real DOM semantics.
 
-Purple state must include a non-colour cue such as the current Mastered mark/accessible label.
+Tiny-country touch assistance is invisible interaction geometry, not a coloured locator system by default.
 
-### Gold is scarce
+## No geography identity palette
 
-Gold is reserved for genuine prestige/completion:
+No continent colour taxonomy, region colour taxonomy or hemisphere theming. The historical #104 map-first exploration considered region tinting; the successful #119/#166 Spatial direction answered the geography-first interaction problem without adopting that conflicting colour taxonomy. #104 is historical, not deferred current work.
 
-- transient Perfect round result treatment;
-- complete-region treatment;
-- completed-continent trophy/crest treatment;
-- eventual World Crown presentation.
+## Achievement hierarchy
 
-Gold should not appear as a routine progress fill, common button colour or geographic identity theme.
+`ordinary blue progress → purple Mastery → restrained gold completion → continent crest/trophy → World Crown`
 
-### Colour is not sufficient by itself
-
-State must remain understandable without colour. Pair semantic colour with label, icon/mark, geometry, border/treatment, accessible name or another perceivable cue appropriate to the component.
-
-## Geography has no identity palette
-
-Locked decision:
-
-- no continent colour taxonomy;
-- no region colour taxonomy;
-- no hemisphere theming;
-- do not derive UI identity colours from flag-colour distributions;
-- geography identity comes from shape, name, hierarchy and context.
-
-Issue #104 deliberately remains a deferred exploration because its map-first proposal includes region tinting and geography-encoded progress. Any future implementation must explicitly revisit this locked decision and provide a non-colour progress cue; the current colour system must not be silently weakened as a side effect of a launcher redesign.
-
-## Achievement interaction
-
-The current visual hierarchy is:
-
-`ordinary blue progress → purple Mastery → restrained gold completion → continent trophy/crest → World Crown`
-
-A Perfect round is a one-result gold acknowledgement, not a persistent Mastery state. Completed-continent trophy assets are currently rendered on completed rows in domain continent indexes. The World Crown state exists in the achievement model but has no learner-facing React renderer in v1.
+A Perfect round remains transient. The World Crown state is reachable and #138 already ships an earned-only learner-facing Home surface; do not describe Crown presentation as future work.
 
 ## Accessibility
 
-- preserve sufficient text/control contrast;
-- keep visible focus independent of hover;
-- support forced-colour/high-contrast fallbacks where applicable;
-- never remove the text/icon cue solely because a colour treatment exists;
-- avoid saturation/density as the only encoding of progress.
+Preserve sufficient contrast, visible focus, forced-colour fallbacks, non-colour cues and progress encodings that remain understandable without saturation/fill alone.
