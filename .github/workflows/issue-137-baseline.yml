@@ -1,15 +1,13 @@
 name: Issue 137 post-Spatial baseline
 
 on:
-  push:
-    branches: [issue-137-asia-location-hardening-post-spatial]
+  pull_request:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   baseline:
-    if: ${{ !contains(github.event.head_commit.message, 'record temporary baseline evidence') }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -25,7 +23,7 @@ jobs:
       - run: npm run build
       - name: Audit pinned Cyprus source features
         run: |
-          node --input-type=module <<'NODE' > issue-137-source-audit.json
+          node --input-type=module <<'NODE'
           import { fetchPinnedSource } from './scripts/lib/pinned-natural-earth.mjs';
           const pinned = await fetchPinnedSource('countries');
           const source = pinned.json();
@@ -54,27 +52,16 @@ jobs:
                 pointCount: countPoints(coordinates),
               };
             });
-          console.log(JSON.stringify({
+          console.log(`ISSUE137_CYPRUS_SOURCE ${JSON.stringify({
             upstream: pinned.manifest.upstream,
             upstreamCommit: pinned.manifest.upstreamCommit,
             sourcePath: pinned.source.path,
             sha256: pinned.source.sha256,
             rows,
-          }, null, 2));
+          })}`);
           NODE
-          cat issue-137-source-audit.json
       - name: Run exact-production baseline browser measurements
         shell: bash
         run: |
           set -o pipefail
-          npx playwright test tests/browser/issue-137-baseline.spec.ts --project=chromium --workers=1 | tee issue-137-browser-baseline.log
-      - name: Record temporary evidence on branch
-        run: |
-          mkdir -p docs/open
-          mv issue-137-source-audit.json docs/open/issue-137-source-audit.tmp.json
-          mv issue-137-browser-baseline.log docs/open/issue-137-browser-baseline.tmp.log
-          git config user.name github-actions[bot]
-          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-          git add docs/open/issue-137-source-audit.tmp.json docs/open/issue-137-browser-baseline.tmp.log
-          git commit -m "chore(#137): record temporary baseline evidence"
-          git push
+          npx playwright test tests/browser/issue-137-baseline.spec.ts --project=chromium --workers=1
