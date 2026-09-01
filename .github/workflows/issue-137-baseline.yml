@@ -88,7 +88,15 @@ jobs:
           test -f dist/index.html
           test -f dist/manifest.webmanifest
           test -f dist/sw.js
-          test "$(find dist/assets -maxdepth 1 -type f -name 'asia-*.js' | wc -l)" -eq 1
+          node --input-type=module - <<'NODE'
+          import { readFile, stat } from 'node:fs/promises';
+          const manifest = JSON.parse(await readFile('dist/.vite/manifest.json', 'utf8'));
+          for (const source of ['src/data/maps/asia.ts', 'src/data/globe/asia.ts']) {
+            const file = manifest[source]?.file;
+            if (!file) throw new Error(`Missing production Asia entry for ${source}`);
+            await stat(`dist/${file}`);
+          }
+          NODE
           ! grep -R "eastern-mediterranean" dist/app.js dist/assets/asia-*.js
           grep -R 'data-map-max-zoom' dist/app.js >/dev/null
           ! grep -R "issue-137-post-spatial-apply" dist >/dev/null
