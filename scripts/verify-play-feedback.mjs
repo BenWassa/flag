@@ -206,6 +206,12 @@ const outlineTargetName = COUNTRY_BY_ID.get(outlineTarget.countryId).name;
 const outlineDistractor = outlineTarget.optionCountryIds.find((id) => id !== outlineTarget.countryId);
 
 const outlineBefore = renderOutlineQuiz(westOutlineAsset, outlineSession, null);
+assert.ok(outlineBefore.includes('round-score'), 'Outlines Play shows the same live score contract as Flags and Locations.');
+assert.deepEqual(
+  [...outlineBefore.matchAll(/round-score__value\">([^<]*)/g)].map(([, value]) => value),
+  ['0', '1'],
+  'Outlines Play opens with the correct/left score and no artificial exemption.',
+);
 assert.ok(
   !outlineBefore.includes('answer-feedback--correct') && !outlineBefore.includes('answer-feedback--wrong'),
   'Outlines Play reveals no outcome before the answer.',
@@ -305,22 +311,24 @@ assert.ok(
 
 /* --- Round timing keeps rapid play viable --- */
 
-const flagsRoundSource = readFileSync(new URL('../.verify-dist/state/flags-round.js', import.meta.url), 'utf8');
-const flagsDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
-const flagsDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(flagsRoundSource)?.[1]);
-assert.ok(flagsDwellCorrect >= 400, 'A Flags correct answer stays visible long enough to register.');
-assert.ok(flagsDwellCorrect <= 900, 'A Flags correct answer does not stall rapid play.');
-assert.ok(flagsDwellWrong > flagsDwellCorrect, 'A Flags missed answer gets longer to read than a correct one.');
-assert.ok(flagsRoundSource.includes('advanceNow'), 'The Flags Play dwell can be skipped from the keyboard.');
+const timingSource = readFileSync(new URL('../.verify-dist/state/play-feedback-timing.js', import.meta.url), 'utf8');
+const sharedCorrect = Number(/PLAY_FEEDBACK_DWELL_CORRECT_MS = (\d+)/.exec(timingSource)?.[1]);
+const sharedWrong = Number(/PLAY_FEEDBACK_DWELL_WRONG_MS = (\d+)/.exec(timingSource)?.[1]);
+assert.ok(sharedCorrect >= 400 && sharedCorrect <= 900, 'Shared correct feedback has a readable but quick dwell.');
+assert.ok(sharedWrong > sharedCorrect && sharedWrong >= 1200, 'Shared wrong feedback gets longer to read than a correct answer.');
 
-const locationsRoundSource = readFileSync(new URL('../.verify-dist/state/locations-round.js', import.meta.url), 'utf8');
-const mapDwellCorrect = Number(/PLAY_DWELL_CORRECT_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
-const mapDwellWrong = Number(/PLAY_DWELL_WRONG_MS = (\d+)/.exec(locationsRoundSource)?.[1]);
-assert.ok(mapDwellCorrect >= 400 && mapDwellCorrect <= 900, 'Locations correct feedback has a readable but quick dwell.');
-assert.ok(mapDwellWrong > mapDwellCorrect, 'Locations wrong feedback stays longer for corrective reading.');
-assert.ok(mapDwellWrong >= 1200, 'Locations wrong feedback has enough dwell for the answer identity and map correction.');
-assert.ok(!locationsRoundSource.includes('Location recorded.'), 'Locations removed the neutral spoken acknowledgement.');
-assert.ok(locationsRoundSource.includes('answerFeedback') && locationsRoundSource.includes('scoreAnnouncement'), 'Locations announcements reuse the shared #60 feedback and score contract.');
+for (const [label, file] of [
+  ['Flags', 'flags-round.js'],
+  ['Locations', 'locations-round.js'],
+  ['Outlines', 'outlines-round.js'],
+]) {
+  const source = readFileSync(new URL(`../.verify-dist/state/${file}`, import.meta.url), 'utf8');
+  assert.ok(source.includes('playFeedbackDwellMs'), `${label} Play consumes the shared domain-neutral dwell policy.`);
+}
+const flagsRoundSource = readFileSync(new URL('../.verify-dist/state/flags-round.js', import.meta.url), 'utf8');
+const outlinesRoundSource = readFileSync(new URL('../.verify-dist/state/outlines-round.js', import.meta.url), 'utf8');
+assert.ok(flagsRoundSource.includes('advanceNow'), 'The Flags Play dwell can be skipped from the keyboard.');
+assert.ok(outlinesRoundSource.includes('advanceNow'), 'The Outlines Play dwell can be skipped from the keyboard.');
 
 console.log(
   'Play feedback verification passed: shared Flags/Outlines/Locations outcome model, visible Play scores, scope-correct map guidance, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',

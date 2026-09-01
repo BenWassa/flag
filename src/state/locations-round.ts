@@ -7,10 +7,8 @@ import { answerFeedback, roundScore, scoreAnnouncement } from '../domain/round-f
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
 import { beginRoundLaunch, isCurrentRoundLaunch } from './round-launch-guard.js';
+import { playFeedbackDwellMs } from './play-feedback-timing.js';
 import type { RoundContext } from './round-context.js';
-
-const PLAY_DWELL_CORRECT_MS = 620;
-const PLAY_DWELL_WRONG_MS = 1500;
 
 export interface LocationsRound {
   currentScope(): StudyScope;
@@ -117,7 +115,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
 
     const outcome = store.answerMap(countryId);
     const advanceDelay = store.mapSession.mode === 'test'
-      ? outcome.correct ? PLAY_DWELL_CORRECT_MS : PLAY_DWELL_WRONG_MS
+      ? playFeedbackDwellMs(outcome.correct)
       : outcome.revealed
         ? 1400
         : outcome.misses >= 2

@@ -7,6 +7,7 @@ import { getRecord, masteryGoal } from '../domain/progress.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
 import { beginRoundLaunch, isCurrentRoundLaunch } from './round-launch-guard.js';
+import { playFeedbackDwellMs } from './play-feedback-timing.js';
 import type { RoundContext } from './round-context.js';
 
 export interface OutlinesRound {
@@ -21,6 +22,8 @@ export interface OutlinesRound {
   submitAnswer(countryId: string): void;
   announceResult(): void;
   cancelPending(): void;
+  /** Skips the remaining Play feedback dwell. Returns false when nothing is pending. */
+  advanceNow(): boolean;
   /** No-op unless an outline round has just finished (mirrors the original app.ts view-name guard). */
   reviewMistakes(): void;
   repeat(): void;
@@ -109,19 +112,28 @@ export function createOutlinesRound(context: RoundContext): OutlinesRound {
 
   function submitAnswer(countryId: string): void {
     if (!store.outlineSession || store.outlineAnsweredCountryId !== null) return;
-    store.answerOutline(countryId);
+    const attempt = store.answerOutline(countryId);
     announce(answerAnnouncement(countryId));
 
     if (store.outlineSession.mode === 'test') {
       cancelPending();
-      pendingOutlineAdvance = window.setTimeout(() => {
-        pendingOutlineAdvance = null;
-        if (store.view.name !== 'outline-quiz') return;
-        store.advanceOutline();
-        announceResult();
-        finishInteraction(null);
-      }, 180);
+      pendingOutlineAdvance = window.setTimeout(advancePending, playFeedbackDwellMs(attempt.correct));
     }
+  }
+
+  function advancePending(): void {
+    pendingOutlineAdvance = null;
+    if (store.view.name !== 'outline-quiz') return;
+    store.advanceOutline();
+    announceResult();
+    finishInteraction(null);
+  }
+
+  function advanceNow(): boolean {
+    if (pendingOutlineAdvance === null) return false;
+    cancelPending();
+    advancePending();
+    return true;
   }
 
   function reviewMistakes(): void {
@@ -141,5 +153,5 @@ export function createOutlinesRound(context: RoundContext): OutlinesRound {
     );
   }
 
-  return { currentScope, begin, submitAnswer, announceResult, cancelPending, reviewMistakes, repeat };
+  return { currentScope, begin, submitAnswer, announceResult, cancelPending, advanceNow, reviewMistakes, repeat };
 }
