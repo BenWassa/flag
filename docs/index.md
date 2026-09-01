@@ -1,52 +1,47 @@
 # Documentation
 
-The documentation is organised by purpose rather than by file format or feature name.
+Atlas documentation is organised by **authority and purpose** so current product truth is easy to distinguish from historical issue evidence.
 
-## Start here
+## Read order
 
-- [`../PRODUCT.md`](../PRODUCT.md) — current Atlas product truth.
-- [`../DESIGN.md`](../DESIGN.md) — the Tactile Atlas visual system: locked and implemented, with achievement art direction open pending #34.
-- [`product/colour-system.md`](product/colour-system.md) — quantitative flag-derived colour decision and semantic palette.
-- [`product/gamification.md`](product/gamification.md) — mastery/completion hierarchy and scarcity rules.
-- [`product/learning-and-mastery.md`](product/learning-and-mastery.md) — live country evidence vs persistent earned mastery.
-- [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema, qualification seam, support guards and reset semantics.
-- [`architecture/react-vite-migration.md`](architecture/react-vite-migration.md) — #89 platform-migration architecture boundary, adapters, build/PWA strategy and rollback model.
-- [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md) — #166 production spatial navigation: composition, preservation boundaries, activity boundary, touch and pointer contracts.
-- [`closed/issue-89-react-vite-migration.md`](closed/issue-89-react-vite-migration.md) — #89 closeout record, acceptance evidence and independent #71 boundary.
-- [`closed/issue-89-execution-plan.md`](closed/issue-89-execution-plan.md) — executed 12-phase #89 delivery plan and acceptance gates.
-- [`closed/issue-89-implementation-worklog.md`](closed/issue-89-implementation-worklog.md) — staged #89 decisions, deviations and verification evidence.
-- [`closed/issue-90-stable-flag-stage.md`](closed/issue-90-stable-flag-stage.md) — shipped stable Flags question geometry across aspect ratios and loading states.
-- [`closed/issue-86-clip-map-context.md`](closed/issue-86-clip-map-context.md) — shipped clipping of decorative map context to continent viewports.
-- [`closed/issue-22-north-america-expansion.md`](closed/issue-22-north-america-expansion.md) — shipped North America four-domain expansion, final payload evidence, browser acceptance and deployment closeout.
-- [`closed/issue-27-oceania-expansion.md`](closed/issue-27-oceania-expansion.md) — shipped Oceania four-domain expansion, antimeridian/adjacency policy, final payload evidence and deployment closeout.
-- [`open/index.md`](open/index.md) — current issue map and recommended sequencing.
+### Normative current truth
 
-## Sections
+- [`../PRODUCT.md`](../PRODUCT.md) — current product behaviour and preservation boundaries.
+- [`../DESIGN.md`](../DESIGN.md) — current production visual/interaction system.
+- [`../.impeccable/design.json`](../.impeccable/design.json) — compact machine-readable design constraints.
+- [`product/requirements.md`](product/requirements.md) — durable implementation requirements.
+- [`architecture/overview.md`](architecture/overview.md) — system/layer boundaries.
+- [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md) — production Spatial Atlas composition, touch/picking and fallback contracts.
+- [`architecture/routing.md`](architecture/routing.md) — typed URL, history and durable-scope contract.
+- [`architecture/cartography.md`](architecture/cartography.md) — canonical Natural Earth source/provenance/boundary policy for projected and spherical outputs.
+- [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema and qualification seam.
 
-- [`architecture/`](architecture/) — durable technical decisions, system boundaries, routing, and data provenance.
-- [`product/`](product/) — current product requirements, behaviour, learning rules and content policies.
-- [`research/`](research/) — supporting investigations and evidentiary material that inform product decisions without replacing current product truth.
-- [`open/`](open/) — active issue plans and unresolved implementation work.
-- [`closed/`](closed/) — completed issue worklogs, release records, superseded plans, and historical reviews.
+### Current work
 
-Repository-level documents remain at the project root when they describe the whole project: [`README.md`](../README.md), [`PRODUCT.md`](../PRODUCT.md), and [`DESIGN.md`](../DESIGN.md).
+- [`open/index.md`](open/index.md) — only genuinely open issues/sequencing.
+- GitHub Issues are the canonical task tracker; not every issue needs a duplicate plan file.
 
-## Current documentation status
+### Historical evidence
 
-The learner-facing product name is **Atlas** across current product documentation, production UI, browser titles, and install metadata. Stable legacy technical identifiers remain compatible as documented in `PRODUCT.md`.
+- [`history.md`](history.md) — issue lineage, major supersessions and where to look for decision history.
+- [`closed/`](closed/) — completed issue worklogs, experiments, closeout evidence and superseded plans.
+- [`research/`](research/) — supporting investigations/evidence that inform but do not override current product truth.
 
-The old flat “Flag Atlas / atlas-index” visual system is superseded. `DESIGN.md` documents the implemented Tactile Atlas system, closed through #32/#35/#40; achievement art direction (badges/crest/Crown) stays open under #34.
+## Current production state
 
-Atlas ships production four-domain geography for all six real continents: Africa, South America, Europe, Asia, North America and Oceania. North America completed delivery through #22 / PR #140; Oceania completed delivery through #27 / PR #143. The persistent World Crown curriculum gate is therefore complete; learner-facing Crown surfacing remains separate under #138.
+Atlas ships React/Vite, all six continents across the intended four-domain curriculum, and **Spatial Atlas as the default production navigation presentation**. The globe is not a preview: #119 established the accepted architecture and #166 completed the production cutover.
 
-Issue #89's React/Vite migration is complete. The existing typed router, product engine, persistence, geography and learning semantics remain preservation boundaries; use the architecture decision and closeout records above rather than treating the platform as a rewrite brief.
+The conventional launcher remains only as the WebGL/renderer-failure fallback. The typed router, learning engines, persistence, achievement semantics and canonical geography remain authoritative beneath both presentations.
 
-## Filing rules
+The World Crown is reachable and #138 already shipped its earned-only learner-facing Home surface.
 
-- Use lowercase kebab-case filenames.
-- Keep this structure shallow; add a new top-level category only when the existing categories do not fit.
-- Move an issue document from `open/` to `closed/` when the issue is completed or superseded.
-- Put lasting decisions in `architecture/` or `product/`; do not make worklogs or research reports the only source of truth.
-- Put supporting studies, experiments and evidence in `research/`, and link the accepted interpretation back to product or design truth.
-- Keep `open/index.md` aligned with the active backlog when product sequencing changes.
-- Update this index and inbound links when moving a document.
+## Documentation rules
+
+- Current behaviour belongs in root/product/architecture docs, not only issue comments.
+- `open/` contains unresolved working records only.
+- Move completed/superseded working records to `closed/`; preserve them rather than deleting useful rationale.
+- Closed issue/history docs may describe behaviour that has since been superseded; current normative docs win.
+- Update inbound links when moving records.
+- Keep filenames lowercase kebab-case.
+- Keep the hierarchy shallow.
+- Preserve GitHub issues as historical decision threads even after implementation branches are deleted.

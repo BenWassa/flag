@@ -17,7 +17,7 @@ This report still **does not select a renderer by itself**. Its key historical w
 
 ## How F2 should use it now
 
-Use these findings as constraints, not a scoreboard. Re-run only the focused measurements needed to choose the production candidate architecture, then record the actual F2 decision in `docs/open/issue-119-renderer-decision.md` as required by the plan.
+Use these findings as constraints, not a scoreboard. Re-run only the focused measurements needed to choose the production candidate architecture, then record the actual F2 decision in `docs/closed/issue-119-renderer-decision.md` as required by the plan.
 
 Raw source reports remain available:
 

@@ -1,224 +1,123 @@
 # Atlas — Product Requirements
 
-**Status:** current v1.0 product baseline
+**Status:** current production baseline  
 **Normative overview:** `../../PRODUCT.md`
-
-This document records durable implementation requirements without duplicating closed-issue history.
 
 ## 1. Product thesis
 
-Atlas is a mobile-first geography-learning PWA across Flags, Locations, Outlines and Neighbours.
+Atlas is a mobile-first geography-learning PWA across Flags, Locations, Outlines and Neighbours. It provides direct geographic practice, domain-appropriate Learn experiences, scored Play, persistent learning evidence and scarce higher-order achievement without an XP/currency/reward economy.
 
-It should provide direct geographic practice, domain-appropriate Learn experiences, clean scored Play, persistent country-level learning evidence and a deliberately scarce higher-order achievement hierarchy.
-
-Engagement should come from learning, tactile interaction and meaningful completion rather than XP, currency, lives, reward stores, leaderboards or constant celebration.
-
-## 2. Product identity and language
+## 2. Identity and language
 
 - Learner-facing product name: **Atlas**.
-- Learner-facing language: modern British English (`en-GB`).
-- Use **Neighbours**, **colour**, **centre**, **behaviour**, **practise** as the verb / **practice** as the noun.
-- Stable technical identifiers may retain `flag`, `flag-atlas`, `neighbors` and `test` where compatibility requires them.
-- Canonical country identity is ISO3 and follows `country-naming.md`.
+- Language: modern British English (`en-GB`).
+- Use **Neighbours, colour, centre, behaviour, practise** as the verb / **practice** as the noun.
+- Stable compatibility identifiers may retain `flag`, `flag-atlas`, `neighbors` and `test`.
+- Canonical country identity is ISO3.
 
-## 3. Current navigation
+## 3. Navigation
 
-Production navigation is mode-first:
+Spatial Atlas is the default production navigation presentation.
 
-`Home → domain → supported continent launcher → Play continent/region`
+```text
+choose domain
+→ select continent on Earth
+→ continent focus: Play continent or select region
+→ region focus: Play/Learn region
+→ activity
+```
 
 Requirements:
 
-- Home chooses one of the four peer learning domains and starts no round;
-- every domain index exposes all six continents;
-- supported continent rows open launchers;
-- any future unsupported scope must remain an inert honest shell;
-- launcher whole-continent and region rows start Play directly;
-- a subordinate whole-continent Learn action remains available;
-- Flags additionally supports World Play/Learn;
-- do not restore the retired select-region-then-Play flow without a focused product decision;
-- browser Back/Forward, deep links and activity-refresh fallback remain first-class.
-
-See `../architecture/routing.md`.
+- typed hash routes remain authoritative;
+- geography taps select/focus scope and never implicitly start a round;
+- focused scope exposes Play immediately and Learn secondarily where supported;
+- equivalent DOM controls exist for spatial choices;
+- Back/Forward and cold deep links remain native/durable;
+- WebGL failure uses the equivalent conventional launcher fallback;
+- no second map/router/navigation truth may be introduced.
 
 ## 4. Geography and coverage
 
-Core curriculum: 195 sovereign states (193 UN members + Palestine + Vatican City/Holy See).
-
-Current production coverage:
+Core curriculum is 195 sovereign states (193 UN members + Palestine + Vatican City/Holy See).
 
 | Domain | Coverage |
 | --- | --- |
-| Flags | all 195 countries; World/all continents/learner regions |
-| Locations | Africa, South America, Europe, Asia, North America, Oceania |
-| Outlines | Africa, South America, Europe, Asia, North America, Oceania |
-| Neighbours | Africa, South America, Europe, Asia, North America, Oceania, limited to complete canonical land-neighbour truth and including explicit verified zero-land-neighbour targets |
+| Flags | all 195 countries; World/all six continents/learner regions |
+| Locations | all six continents plus supported regions |
+| Outlines | all six continents plus supported regions |
+| Neighbours | all six continents, limited to complete canonical land-neighbour truth and explicit verified zero-neighbour targets |
 
-All six real continents now have intended four-domain curriculum. Unsupported future geography must not imply gameplay availability or completion eligibility.
-
-Oceania #27 preserves the shared architecture: canonical multipart geometry, Pacific-centred projection, topology-derived `PNG ↔ IDN`, explicit truthful zero-neighbour records and evidence-based invisible hit assistance without a parallel topology system.
+Projected learning assets and spherical Spatial assets derive from the same pinned Natural Earth 1:10m source/policy. No parallel geography system.
 
 ## 5. Domain requirements
 
 ### Flags
-
-- preserve true flag aspect ratios;
-- avoid answer leakage before scored responses;
-- use plausible/confusion-aware distractors where applicable;
+- preserve true aspect ratios;
+- prevent answer leakage;
 - Play is scored recognition;
-- Learn is the shipped browse/reveal gallery for the complete selected scope;
-- gallery browsing/reveal is passive familiarisation and writes no evidence.
+- Learn is the complete-scope browse/reveal gallery and passive browsing writes no evidence.
 
 ### Locations
-
-- use canonical generated production cartography;
-- keep geography dominant and mobile-usable;
-- Learn distinguishes first-try, assisted and revealed outcomes;
-- Play gives one scored tap per target and current feedback/result treatment;
-- preserve pan/zoom/context behaviour and truthful geography;
-- no parallel map dataset.
+- canonical generated projected cartography;
+- geography dominant/mobile-usable;
+- Learn distinguishes clean, assisted and revealed outcomes;
+- Play gives one scored selection per target under current semantics;
+- preserve pan/zoom/context and truthful geography.
 
 ### Outlines
-
-- derive silhouettes only from canonical production geometry;
-- preserve shape/aspect ratio while removing avoidable absolute-size/location cues;
-- preserve canonical multipart identity;
-- prevent answer leakage through accessible metadata;
-- Learn gives immediate corrective feedback;
-- Play is scored recognition;
-- remain usable on mobile portrait and short landscape.
+- canonical geometry only;
+- preserve shape/aspect ratio while removing avoidable absolute scale/location cues;
+- answer-safe accessible metadata;
+- Learn gives corrective feedback; Play is scored recognition.
 
 ### Neighbours
+- topology-derived adjacency only;
+- never teach known incomplete land-neighbour sets;
+- preserve complete-set building and explicit zero-neighbour answers where supported;
+- input/suggestions remain mobile-usable, keyboard-usable and answer-safe;
+- no maritime adjacency invention.
 
-- derive adjacency from canonical topology only;
-- never teach a known incomplete land-neighbour set;
-- preserve set-building mechanics and explicit zero-neighbour answer where supported;
-- Learn/Play retain domain-native clean/assisted/exhausted semantics;
-- keep input/autocomplete mobile-usable and answer-safe;
-- never invent maritime adjacency.
+## 6. Spatial activity boundary
 
-## 6. Learn versus Play
+Locations, Outlines, Neighbours and Flags Learn yield the globe when their own learning surface should dominate. Flags Play may retain quiet inert context only if it cannot hint an answer. Results may reframe the completed scope.
 
-**Learn** supports familiarisation/correction. Passive exposure never creates scored strength credit. Genuine clean retrieval in interactive Learn modes may create learning evidence according to the shared evidence reducer.
+## 7. Learning evidence
 
-**Play** is scored retrieval/assessment and may create stronger diagnostic evidence. Presentation code must not own evidence weights.
-
-Flags Learn is intentionally exceptional: it is a passive browse/reveal surface and creates no evidence.
-
-## 7. Country learning evidence
-
-Country records are the scheduler/evidence layer, not learner-facing prestige.
-
-They must preserve or derive:
-
-- unseen/weak/strong evidence;
-- clean versus assisted/revealed outcomes;
-- contradictions/lapses;
-- relevant confusion/miss history;
-- due/review state where supported;
-- domain-specific outcome quality.
-
-Do not present an individual country as a prestigious Mastered achievement. Internal `mastered` compatibility state may remain.
-
-Do not expose the current strength-credit algorithm as immutable product UI.
+Country records are scheduler/evidence state, not learner-facing prestige. Preserve clean vs assisted/revealed evidence, contradictions/lapses, useful confusion history and due state where supported. Do not expose internal country `mastered` compatibility state as a prestigious achievement.
 
 ## 8. Perfect round and Mastery
 
-A **Perfect round** is one Play result with no misses under the domain's native scoring rule. It is transient Results feedback and does not persist.
+A Perfect round is transient miss-free Play feedback.
 
-**Region × domain Mastery** is persistent prestige.
+Region × domain Mastery is persistent and currently requires two consecutive perfect **complete-region** Play results with exact supported-target coverage validation (#108). Non-qualifying sampled/review rounds do not advance/reset the streak; earned Mastery is not revoked.
 
-Current v1 engine behaviour:
+## 9. Completion
 
-- two consecutive perfect region-scoped Play results award Mastery;
-- a non-perfect qualifying region-scoped Play resets the unearned streak;
-- earned Mastery is not revoked;
-- Learn/Review/continent/world rounds do not qualify.
+- Complete region: all four domain Masteries plus genuine four-domain curriculum; restrained gold, no separate Crown.
+- Complete continent: all required regions complete; persisted crest/trophy completion state.
+- Complete World: all six continent-completion achievements earned; singular World Crown. #138 shipped the earned-only Home surface. No tier above it.
 
-The product requirement and shipped implementation require two consecutive perfect **complete-region** Play results. Issue #108 added full-region launches and exact supported-target coverage validation across all four domains.
+## 10. Persistence
 
-## 9. Completion hierarchy
+Domain ledgers stay independent; achievements/streaks persist separately; schema changes require deterministic migration; stable namespaces are not renamed casually; active round internals remain ephemeral.
 
-### Complete region
+## 11. Progress
 
-Requires genuine non-empty curriculum in all four domains plus all four region × domain Masteries.
-
-Presentation requirements:
-
-- preserve useful scope count/progress;
-- use restrained gold completion treatment;
-- no separate region emblem/crown.
-
-### Complete continent
-
-Requires every learner-facing required region to have complete four-domain curriculum and to be complete.
-
-Production presentation uses the shipped continent trophy/crest artwork on completed rows in domain continent indexes. No separate full-screen trophy ceremony ships today.
-
-### Complete World
-
-World completion is the final tier and reserves the Crown.
-
-With Oceania #27, all six continents now satisfy the curriculum-completeness gate. Existing achievement semantics remain: `worldCrown` is awarded only when all six continent-completion achievements have also been earned.
-
-The persistent state/read model is therefore reachable, but no learner-facing React Crown surface ships in current v1. Issue #138 owns that presentation and final acceptance. Do not create a higher tier.
-
-## 10. Persistence and reset
-
-- four domain learning ledgers remain independent;
-- achievement state and in-progress perfect-run streaks persist separately;
-- earned achievements are monotonic under the current model;
-- evidence can lapse/become due independently;
-- persisted schema changes require deterministic migration;
-- stable storage namespaces are not renamed casually;
-- active round internals remain ephemeral unless a separate recovery design is approved.
-
-Current production exposes no learner-facing coordinated full reset. Any future reset must account for all learning ledgers plus achievements/streaks together.
-
-## 11. Progress presentation
-
-The dedicated Progress screen is retired and no replacement dashboard is currently promised.
-
-Current progress appears in Home, domain indexes, continent launchers and Results. Ordinary progress uses the quiet blue successful-retrieval strip; Mastery/completion remains visually distinct.
+The dedicated Progress screen is retired. Ordinary progress is a quiet blue successful-retrieval strip disclosed in current navigation/activity/results surfaces. Mastery/completion remains distinct and scarce.
 
 ## 12. Visual requirements
 
-`DESIGN.md` is authoritative for Tactile Atlas.
-
-Locked semantic colour roles:
-
-- Atlas Blue `#2563EB` — ordinary action/progress;
-- green `#137A55` — correct;
-- red `#B42318` — wrong;
-- purple `#6D3FC0` — durable Mastery;
-- gold `#E0AF2F` — scarce prestige/completion.
-
-No continent/region/hemisphere colour taxonomy. State cannot rely on colour alone.
-
-Geography should usually be the richest visual object. No glassmorphism, bento dashboards or decorative overload.
+`DESIGN.md` is authoritative. Atlas Blue `#2563EB` = ordinary action/progress; green `#137A55` = correct; red `#B42318` = wrong; purple `#6D3FC0` = durable Mastery; gold `#E0AF2F` = scarce prestige. State is never colour-only. Geography is normally the richest object. No glassmorphism, bento dashboard or decorative overload.
 
 ## 13. Cartography
 
-- one reproducible Natural Earth 1:10m production topology pipeline;
-- no handwritten country geometry;
-- no second topology source;
-- no handwritten neighbour tables;
-- reuse canonical geometry for Locations, Outlines and Neighbours;
-- preserve documented boundary/geopolitical policy;
-- do not theme maps by continent flag colours;
-- projection extensions must remain deterministic/shared rather than handwritten per-country surgery.
+One reproducible Natural Earth 1:10m source/policy; no handwritten country geometry, second topology source or handwritten neighbour tables. Projection/spherical generation remains deterministic/shared and preserves documented geopolitical policy.
 
-## 14. Accessibility
+## 14. Accessibility and mobile
 
-Atlas must preserve:
+Preserve real DOM equivalents for spatial controls, keyboard operation where applicable, visible focus, reduced motion, safe areas, text zoom/reflow, answer-safe labels, stable transition focus, portrait + short-landscape usability, platform edge gestures and honest renderer/unavailable states.
 
-- keyboard operation where applicable;
-- visible focus;
-- non-colour-only state communication;
-- reduced motion;
-- mobile safe areas;
-- readable zoomed text;
-- answer-safe accessible descriptions;
-- stable focus after route/question transitions;
-- portrait and short-landscape usability;
-- honest unavailable/asset-failure states.
+## 15. History and supersession
+
+#104's separate map-first launcher idea is historical and superseded by the accepted Spatial path. #119 established Spatial; #166 made it production. #118 is closed audit evidence whose surviving follow-ups are #146–#152. See `../history.md` rather than reopening those historical briefs as current requirements.

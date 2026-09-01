@@ -1,164 +1,143 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code when working with code in this repository.
+Guidance for Claude Code and other coding agents working in this repository.
 
 ## What this is
 
-**Atlas** — a mobile-first TypeScript PWA for learning world geography across four learning domains: **Flags**, **Locations**, **Outlines**, and **Neighbours**. Deployed as a static site to GitHub Pages.
+**Atlas** is a mobile-first TypeScript/React/Vite PWA for learning world geography across **Flags, Locations, Outlines and Neighbours**.
 
-The repository remains named `flag`, and stable technical identifiers may retain legacy `flag-atlas` / American-spelled forms for compatibility. Do not rename routes, storage namespaces, cache identifiers, filenames/types, or internal action values merely to match the learner-facing Atlas brand.
+The repository remains named `flag`. Stable technical identifiers may retain legacy `flag-atlas`, `neighbors` and `test` forms for compatibility. Learner-facing copy is modern British English (`en-GB`): **Neighbours** and **Play**.
 
-Product copy is modern British English (`en-GB`). The learner-facing domain label is **Neighbours** and the learner-facing assessment activity is **Play**; stable technical identifiers such as `neighbors`, `/neighbors`, `neighbors.css`, `/test`, `test`, and `start-test` remain compatibility contracts.
+## Read first
 
-## Current product reset
+Before product/UI work, read:
 
-Read these before making product/UI changes:
+1. `PRODUCT.md` — current product truth.
+2. `DESIGN.md` and `.impeccable/design.json` — current production design system.
+3. `docs/architecture/spatial-atlas.md` — production Spatial Atlas architecture.
+4. `docs/architecture/routing.md` — typed routes/history semantics.
+5. `docs/architecture/cartography.md` — canonical geography/provenance.
+6. `docs/open/index.md` — current work and sequencing.
+7. `docs/history.md` — issue lineage and superseded directions.
 
-- `PRODUCT.md` — current Atlas product truth.
-- `DESIGN.md` — implemented Tactile Atlas production system; #34 owns remaining achievement art.
-- `docs/product/colour-system.md` — flag-derived semantic palette.
-- `docs/product/gamification.md` — mastery/completion scarcity hierarchy.
-- `docs/product/learning-and-mastery.md` — live country evidence vs persistent earned mastery.
-- `docs/architecture/react-vite-migration.md` — #89 platform-migration architecture decision.
-- `docs/closed/issue-89-execution-plan.md` — completed #89 dependency/order and closeout record.
-- `docs/open/index.md` — active work and recommended sequencing.
+Closed GitHub issues and `docs/closed/` are intentional historical evidence. Do not infer current behaviour from an old issue body when normative docs/current `main` disagree.
 
-Important current decisions:
+## Current product truth
 
-- country records are live learning evidence, not learner-facing prestige objects;
-- **region × domain** is the first learner-facing Mastery unit;
-- complete region = restrained gold treatment;
-- complete continent = continent-silhouette crest;
-- complete world = Crown only;
-- earned mastery/completion is persistent for now, even if live country evidence later lapses/revalidates;
-- Atlas Blue is action, green is correct, red is wrong, purple is mastery, gold is scarce prestige;
-- Africa was the first complete four-domain production proving ground and remains the reference baseline; South America, Europe, Asia, North America and Oceania now ship to the same bar;
-- all six real continents have intended four-domain production curriculum; future unsupported scopes must remain honest and must never count as complete;
-- navigation is **mode-first**: Home chooses a learning domain, `/{domain}` lists that domain's continents, and `/{domain}/{continent}` is the launcher (whole-continent Play plus its region list). The scope-first `/atlas/*` surface and the region card's four-domain launch row are retired;
-- the production visual style is **Tactile Atlas**. Preserve its documented system unless a focused product decision changes it;
-- Issue #89's integrated candidate runs the production presentation/build layers on React and Vite. Treat the existing router, product engine, persistence, learning rules, cartography and CSS semantics as preservation boundaries; the remaining legacy view modules are verifier fixtures, not the production entry path.
+- **Spatial Atlas is production navigation.** It is not a preview or experiment.
+- Navigation remains mode-first: choose a domain, use the Earth to select a continent/region, then deliberately choose Play or Learn for the focused scope.
+- Geography taps select scope; they do not start rounds.
+- The typed hash router is authoritative. `src/spatial/` interprets route/application state and must never become a second navigation state machine.
+- The conventional `Launcher` survives only as the equivalent WebGL/renderer-failure fallback and shares `scopeModelFor` with the Spatial command surface.
+- Domain-native activities own their learning surface. Locations/Outlines/Neighbours and Flags Learn yield the globe; Flags Play may keep inert answer-safe context; Results can reframe the completed scope.
+- Country records are live learning evidence, not learner-facing prestige.
+- Region × domain is the first durable Mastery unit.
+- Complete region = restrained gold; complete continent = persisted crest/trophy state; complete World = earned-only Crown.
+- #138 already shipped the learner-facing earned World Crown line. Do not describe it as future work.
+- All six real continents have intended four-domain production curriculum.
+- #104, #118, #119 and #166 are closed history. Their records remain useful but their old implementation instructions are not current work.
 
 ## Commands
 
 ```bash
 npm install
-npm run dev      # Vite development server
-npm run check    # strict application + Vite-config type-check
-npm run build    # Vite production build + temporary verifier compatibility emit
-npm run verify   # run every invariant verifier against the built artifact/contracts
-npm test         # check + production build + complete verifier suite (CI gate)
-npm run test:browser          # production-preview desktop/mobile Chromium smoke matrix
-npm run maps:generate            # regenerate canonical generated geography from pinned Natural Earth sources
-npm run maps:generate -- --update-hashes   # only after a reviewed, intentional upstream source change
+npm run dev
+npm run check
+npm run build
+npm run verify
+npm test
+npm run test:browser
+npm run maps:generate
+npm run maps:generate -- --update-hashes   # only after reviewed upstream source change
+npm run globe:generate
 ```
 
-Phase #92 uses Vite for browser development and the deployable `dist/` artifact. The existing plain-Node invariant suite still imports framework-independent compiled modules from `dist/`; a narrow `tsconfig.verify.json` compatibility emit preserves that coverage during the staged migration. Do not treat that temporary emit as a second production build system. It is removed/adapted when legacy compatibility is retired in #100.
-
-Requires Node 22.12+.
+Requires Node 22.12+; CI uses Node 22. `npm test` is the primary repository gate.
 
 ## Architecture
 
-The product engine remains layered TypeScript under `src/`. React owns browser presentation, but the dependency direction does not:
-
 ```text
-src/data/            static curriculum + generated geography fixtures
-src/domain/          pure learning/evidence/game rules — no DOM/React dependency
-src/infrastructure/  persistence and asset providers
-src/routing/         typed route model + hash-router transport
+src/data/            curriculum + generated geography
+src/domain/          pure learning/evidence/scoring/achievement rules
+src/infrastructure/  persistence, assets and cloud adapters
+src/routing/         typed routes + hash-router transport
 src/state/           application/session orchestration
-src/react/           React application shell, screens and components
-src/ui/              framework-independent adapters + temporary verifier fixtures
+src/react/           production React shell and activities
+src/spatial/         production Three.js Spatial Atlas presentation
+src/ui/              framework-independent UI/map adapters
 ```
 
-`src/spatial/` is the **production navigation presentation** since #166: a
-persistent Three.js Earth that **interprets** the typed route, with a compact
-command surface that is the navigation interface rather than a band above the
-old one. It is presentation only — `spatial-state.ts` is a pure function and
-writes no navigation state, the renderer imports no curriculum table, and a
-device without WebGL falls back to the conventional `Launcher`, which is
-retained for exactly that purpose. Both are built from `scopeModelFor`, so they
-cannot offer different scopes, counts or labels. Read
-`docs/architecture/spatial-atlas.md` before touching it.
+### Spatial Atlas
 
-Key rules:
+`src/spatial/` is presentation only. `deriveSpatialState(...)` is pure and owns no navigation state. Geography taps and DOM controls dispatch the same `AtlasActions`. Read `docs/architecture/spatial-atlas.md` before touching the globe, camera, picking, touch envelopes or composition.
 
-- **Domain layer has zero DOM/React dependency.** Keep learning/evidence rules separate from rendering.
-- **Canonical country ID is ISO3.** `src/data/countries.ts` and the documented country-naming policy remain authoritative for application identity.
-- **Routing is typed and durable.** URLs own stable navigation state; session state owns quiz internals. Preserve Back/Forward, direct links and activity-refresh fallback.
-- **Map/outline/neighbour geometry is generated, not hand-authored.** Use the canonical Natural Earth production topology pipeline; never create a second map source or handwritten neighbour table.
-- **Country learning ledgers remain domain-specific.** New earned achievement state should be layered cleanly above them rather than flattening the domain mechanics.
-- **Flags** supports the full world/195-country curriculum. **Locations**, **Outlines**, and **Neighbours** support all six real continents: Africa (5 regions), South America (3), Europe (4), Asia (6 learner-facing regions, including the cross-continental Middle East scope from #28), North America (3) and Oceania (4).
-- Oceania uses the shared canonical topology pipeline, Pacific-centred projection, topology-derived `PNG ↔ IDN` adjacency and explicit truthful zero-land-neighbour records; do not fork those rules into a second geography system.
-- `worldHasCompleteCurriculum()` is now true, but learner-facing World Crown presentation remains a separate #138 concern; do not alter achievement semantics incidentally.
-- **React is a presentation dependency only.** Keep adapters around the typed router, `AppStore`, round controllers, map viewport maths and persistence rather than replacing those systems.
+Preserve:
+
+- route → spatial state as one-way interpretation;
+- WebGL failure fallback;
+- invisible source-derived tiny-country interaction envelopes;
+- tap/drag threshold and pointerdown-position tap resolution;
+- platform edge-back gesture ownership;
+- reduced-motion behaviour;
+- lazy/adaptive spatial payload strategy;
+- answer-safe activity boundary.
+
+### Domain and persistence
+
+The domain layer has zero DOM/React dependency. Scoring/evidence/achievement semantics do not belong in presentation components.
+
+Country identity is ISO3. Learning ledgers remain domain-specific. Earned achievements and region-perfect-run streaks persist separately. Stable storage namespaces require explicit migration if changed.
+
+### Geography
+
+Projected learning maps and spherical Spatial assets are generated from the same pinned Natural Earth 1:10m source/policy. Never create handwritten country geometry, a second topology source or handwritten neighbour tables. Use the generator and documented geopolitical policy.
 
 ## Product naming and compatibility
 
-The learner-facing brand is **Atlas**.
+Do not casually rename:
 
-Issue #36 records the production UI/metadata rollout. Learner-facing surfaces use Atlas while stable technical identifiers remain compatible.
+- repository `flag`;
+- `flag-atlas:*` localStorage/cache namespaces;
+- `/neighbors` or neighbour internal identifiers;
+- internal `test`, `/test`, `start-test` values.
 
-Do not casually rename stable legacy identifiers such as:
-
-- repository name `flag`;
-- localStorage keys such as `flag-atlas:progress:v1`;
-- service-worker/cache keys;
-- `/neighbors`;
-- internal `test` activity values/routes/actions.
-
-Compatibility outranks cosmetic consistency unless a migration has explicit product value.
-
-## Learning evidence vs mastery
-
-Do not use `mastered` internal country state as a reason to call an individual country “Mastered” in the UI.
-
-The backend may retain rich country states and fields for compatibility/scheduling. Learner-facing achievement aggregation belongs above that layer.
-
-Read Issue #29 and `docs/product/learning-and-mastery.md` before changing scheduler/evidence semantics. Read #34 before adding mastery/completion persistence.
+Compatibility outranks cosmetic consistency unless a migration has explicit value.
 
 ## Visual work
 
-`DESIGN.md` contains the implemented **Tactile Atlas** visual system.
+`DESIGN.md` is authoritative. The production direction is visually quiet, geography-first and tactile without becoming toy-like. Atlas Blue is ordinary action/progress; green/red are correctness; purple is Mastery; gold is scarce prestige. No colour-only state, continent/region identity palette, glassmorphism, bento dashboard treatment or reward economy.
 
-Implemented:
+Do not revive pre-Spatial launcher layouts simply because old CSS/tests/issues mention them. Fallback UI is a compatibility/accessibility surface, not the normal visual direction.
 
-- semantic palette and mastery/prestige hierarchy;
-- mobile-first mode-first navigation;
-- four-tier radius system and restrained tactile depth;
-- system-sans typography and reduced-motion behaviour;
-- Phosphor Bold routine iconography;
-- geography dominance and no horizontal scrolling for primary selection;
-- no XP/coin/reward economy.
+## Current open work
 
-Open under #34:
+Treat GitHub as the task authority and `docs/open/index.md` as the sequencing map. Current open work is #71, #137, #146–#152 and #160.
 
-- exact mastery-badge, continent-crest and world-Crown artwork;
-- earned-milestone ceremony.
+Key dependency rules:
 
-Issue #89 does not authorise a visual redesign. React ports preserve existing Tactile Atlas tokens, CSS semantics, interaction physics and learner-facing hierarchy unless a separate focused product decision changes them. Do not introduce Tailwind or CSS-in-JS as part of the migration.
+- #137 must be reconciled against current Spatial `main`; its old branch predates the cutover and must not be merged mechanically.
+- #148 follows #137 because both touch Locations map feedback/rendering.
+- #150 follows #147 and #148 so tokens codify corrected behaviour.
+- #146 must be re-scoped against Spatial production because its original launcher assumptions predate #166; #152 follows the resulting navigation semantics.
+- #71 owns real physical-device/iOS/installed-PWA evidence. Never claim that evidence from emulation.
 
-## Working on issues
+## Issue delivery and repository hygiene
 
-Before starting work on an issue (and again before wrapping up a session that touched issues):
+Before implementation, fetch current `main`, read the complete GitHub issue, inspect related closed decisions, and branch from current truth.
 
-- Run `gh issue list --state open` and compare it against `docs/open/index.md` and the files in `docs/open/`. Close out any GitHub issue that is actually done, superseded, or merged into another issue.
-- For any issue that is closed on GitHub but still has a doc in `docs/open/`, `git mv` that doc into `docs/closed/` and update `docs/open/index.md` to drop it from active sequencing (linking to the closed doc instead where useful, matching the existing `closed/issue-NN-*.md` closeout pattern).
-- `docs/open/index.md` is the source of truth for what's actually still active — keep it reconciled with GitHub state rather than letting it drift.
-- The completed #89 migration record retains its focused-PR, Node verification and artifact-inspection evidence in `docs/closed/issue-89-implementation-worklog.md`.
+For a production change:
 
-## Where to look before changing things
+1. use a focused branch/PR;
+2. preserve unrelated work;
+3. run risk-appropriate focused checks and the complete `npm test` gate;
+4. inspect the exact production artifact where behaviour changed;
+5. sync current `main` before merge and resolve conflicts semantically;
+6. require green CI;
+7. verify merged-main deployment where the issue requires it;
+8. record durable decisions in product/architecture docs, not only an issue comment.
 
-- `docs/index.md` — documentation entry point.
-- `docs/open/index.md` — current backlog/sequencing.
-- `docs/architecture/routing.md` — route schema and Back/Forward semantics.
-- `docs/architecture/cartography.md` — canonical topology/provenance policy.
-- `docs/architecture/react-vite-migration.md` — #89 migration architecture and preserved contracts.
-- `docs/closed/issue-89-execution-plan.md` — completed #89 phase order, gates and rollback boundaries.
-- `PRODUCT.md` — product truth.
-- `DESIGN.md` — implemented production design system.
-- `docs/product/colour-system.md` — colour rationale/tokens.
-- `docs/product/gamification.md` — achievement hierarchy.
-- `docs/product/learning-and-mastery.md` — evidence/mastery split.
-- `docs/product/country-naming.md` — country display naming.
+Closed issue documents belong in `docs/closed/`; only genuinely unresolved working records belong in `docs/open/`.
 
-Persisted localStorage keys are versioned with separate namespaces per domain; introducing a new persisted shape needs a migration layer, not a silent key change.
+**Branch history is not project history.** Once a branch is merged, superseded, or its unique evidence is captured in `main`/closed docs, delete the remote branch. Preserve closed GitHub issues and closeout/history documents so future agents can trace decisions without carrying every implementation ref forever.
+
+Do not claim browser/device/manual testing that was not actually performed.

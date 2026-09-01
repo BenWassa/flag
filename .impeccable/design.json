@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "surface": "Atlas web app",
   "visitorMode": "operate",
-  "status": "tactile-atlas-v1",
+  "status": "spatial-tactile-atlas-production",
   "tokens": {
     "colors": {
       "canvas": "#F6F8FB",
@@ -22,10 +22,10 @@
       "hero": "24px"
     },
     "depth": {
-      "primary": "0 4px 0 pressed-blue, collapsing to 0 1px 0 + translateY(3px) on press",
-      "answer": "shallower tactile press, approximately translateY(2px)",
-      "tile": "soft two-layer standing shadow (--depth-tile) on interactive post-mode rows/tiles",
-      "arcade": "Home mode-card exception only: 2px solid text-colour border + 2px 2px 0 hard offset shadow, collapsing via diagonal translate(2px, 2px) on press"
+      "primary": "restrained tactile depth; approximately translateY(3px) on press",
+      "answer": "shallower tactile press; approximately translateY(2px)",
+      "tile": "soft standing depth where an interactive DOM surface needs separation",
+      "arcade": "Home mode-card exception only; do not propagate through Spatial navigation"
     },
     "breakpoints": {
       "compact": "639px",
@@ -35,21 +35,22 @@
   },
   "principles": [
     "Geography is the content; interface is the instrument",
+    "Spatial Atlas is the default production navigation presentation, not a preview",
+    "Navigation stays mode-first: choose domain, select continent or region on the Earth, then deliberately choose Play or Learn",
+    "The typed route is authoritative; camera and globe state interpret navigation rather than owning a second stack",
+    "The conventional launcher is renderer-failure fallback only and must remain semantically equivalent",
     "Atlas is mobile-first, low-friction, information-first and minimally gamified",
-    "Atlas Blue drives ordinary action while green and red stay correctness feedback",
+    "Atlas Blue drives ordinary action and progress while green and red stay correctness feedback",
     "Region-by-domain Mastery is purple; gold is deliberately scarce completion/prestige",
     "Country records are live learning evidence, not learner-facing prestige objects",
     "Ordinary progress is a quiet blue successful-retrieval strip rather than a mastery dashboard",
-    "The dedicated Progress screen is retired; progress is surfaced in Home, domain indexes, launchers and Results",
+    "Complete regions use restrained gold; complete continents use persisted crest/trophy state; genuine world completion alone earns the Crown",
     "A single Perfect round is transient result feedback and is not persistent Mastery",
-    "Complete regions use restrained gold without a separate badge or Crown",
-    "Completed continent rows render the shipped continent trophy/crest artwork on domain continent indexes",
-    "World completion alone reserves the Crown; an earned-only World Crown state is surfaced quietly on Home",
-    "Mobile-first interaction and no horizontal scrolling for primary selection",
-    "Radius, depth, typography, navigation composition and milestone scarcity remain locked as Tactile Atlas",
-    "Navigation is mode-first: Home chooses the learning domain, the domain index chooses a supported continent, and launcher rows start Play directly for continent or region scope",
-    "Learn remains a subordinate whole-continent action on launchers; Flags Learn is a browse-and-reveal gallery",
-    "No continent, region or hemisphere colour taxonomy; colour always reinforces another state cue",
-    "No glassmorphism, bento dashboards or decorative UI overload"
+    "The dedicated Progress screen is retired; progress is disclosed in the learning/navigation flow rather than a dashboard",
+    "Real DOM controls remain equivalent to spatial selection; no colour-only or 3D-only state",
+    "Tiny geography uses truthful display geometry and source-derived invisible interaction envelopes when necessary",
+    "Mobile edge gestures, reduced motion and answer-safe accessibility remain first-class",
+    "No continent, region or hemisphere colour taxonomy",
+    "No glassmorphism, bento dashboards, decorative UI overload or reward economy"
   ]
 }

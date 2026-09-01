@@ -90,8 +90,8 @@ Before production-code changes, read:
 6. `docs/MAP_GEOMETRY_SOURCES.md` and `docs/CARTOGRAPHY_PROVENANCE.json`;
 7. this plan;
 8. `experiments/spatial-atlas/README.md` — current working prototype and measured gaps;
-9. `docs/open/issue-119-invariant-harness.md`;
-10. `docs/open/issue-119-renderer-comparison.md` and `docs/open/issue-119-geometry-lod-experiment.md` only as evidence, not as binding decisions.
+9. `docs/closed/issue-119-invariant-harness.md`;
+10. `docs/closed/issue-119-renderer-comparison.md` and `docs/closed/issue-119-geometry-lod-experiment.md` only as evidence, not as binding decisions.
 
 Do **not** burn context reading archived #119 handoffs unless a historical fact is contested.
 
@@ -156,7 +156,7 @@ The existing conventional shell should remain available in source as the rendere
 
 Before broad implementation, write a concise living decision record at:
 
-`docs/open/issue-119-spatial-interaction-contract.md`
+`docs/closed/issue-119-spatial-interaction-contract.md`
 
 Then implement it. Do not turn this into a documentation-only sprint.
 
@@ -213,7 +213,7 @@ Use the Impeccable-style sequence where useful: critique → clarify → simplif
 
 Write the decision record at:
 
-`docs/open/issue-119-renderer-decision.md`
+`docs/closed/issue-119-renderer-decision.md`
 
 Evaluate the current plain-Three prototype and the existing R3F/MapLibre evidence against the actual Atlas task. Re-run focused spikes if a decision-relevant fact is still ambiguous, then choose.
 
@@ -255,7 +255,7 @@ Idle geography must not require a permanent animation loop when nothing is movin
 
 Write the contract at:
 
-`docs/open/issue-119-spherical-geography-contract.md`
+`docs/closed/issue-119-spherical-geography-contract.md`
 
 Extend the existing canonical generator. Do not create a parallel cartography pipeline.
 

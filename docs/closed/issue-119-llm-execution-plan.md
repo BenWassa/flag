@@ -1,13 +1,13 @@
 # Issue #119 — LLM Execution Plan
 
-> **Superseded by [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+> **Superseded by [`../closed/issue-119-plan.md`](../closed/issue-119-plan.md).**
 >
 > Its model-tiering principle survives in condensed form in §7 of the plan of record; its F1-F7 task definitions survive in the revised stage sequence. Retained for tracing the original reasoning only.
 
 
 **Issue:** #119 — Continuous spatial Atlas shell with interactive 3D Earth navigation  
 **Branch:** `explore/spatial-atlas-moonshot`  
-**Companion scope:** [`issue-119-spatial-atlas-moonshot.md`](../open/issue-119-spatial-atlas-moonshot.md)  
+**Companion scope:** [`issue-119-spatial-atlas-moonshot.md`](../closed/issue-119-spatial-atlas-moonshot.md)  
 **Purpose:** concentrate frontier-model reasoning on the few decisions where additional intelligence materially changes the outcome
 
 ## 1. Operating principle

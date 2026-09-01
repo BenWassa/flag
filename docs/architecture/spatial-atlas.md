@@ -1,139 +1,105 @@
 # Spatial Atlas architecture
 
-The Spatial Atlas is Atlas's **production navigation presentation** since Issue
-#166. A persistent Three.js Earth interprets the typed route and a compact
-command surface beneath it is the navigation interface. It replaced the Issue
-#119 preview composition, which mounted the globe as a fixed band above an
-unchanged conventional Atlas page.
+**Status:** production navigation architecture since Issue #166
 
-Renderer selection, the generated spherical assets, the route adapter and the
-activity boundary were all settled in #119 and are not reopened here. This
-document records what the production architecture is and which contracts hold.
+Spatial Atlas is Atlas's accepted default navigation presentation. A persistent Three.js Earth interprets the authoritative typed route and a compact real-DOM command surface is the navigation interface. It is not a preview and it does not sit above a conventional launcher page.
+
+Renderer selection, generated spherical assets, the route adapter and activity boundary were established by #119; #166 completed the production cutover.
 
 ## Composition
 
 ```text
-AtlasApp                authoritative router, AppStore and AtlasActions
-  └── deriveSpatialState(route, view, achievements)   pure, no state of its own
+AtlasApp                         authoritative router, AppStore, AtlasActions
+  └── deriveSpatialState(...)    pure; no navigation state of its own
         └── SpatialShell
-              ├── SpatialStage      React host for the persistent globe
-              │     └── stage-controller  scene, camera, gestures, picking
-              └── SpatialCommand    the navigation interface, or
-                  SpatialShell__panel  the activity/results screen
+              ├── SpatialStage       persistent Earth / camera / gestures / picking
+              └── SpatialCommand     navigation interface, or
+                  activity/results panel when the globe yields
 ```
 
-`deriveSpatialState` is a pure function. It owns no state, so there is no second
-navigation state machine and interrupted camera travel can never desynchronise
-the application — the route was never waiting on the camera. Its `navigation`
-field decides whether the spatial surface *is* the screen (`domains`,
-`continents`, `scope`) or whether an activity owns the panel (`null`).
+Geography taps and DOM controls dispatch the same `AtlasActions` (`openScope`, `playScope`, `learnScope`). The route is never waiting on a camera animation, so interrupted travel cannot desynchronise application state.
 
-Geography taps and DOM controls dispatch the **same** `AtlasActions`
-(`openScope`, `playScope`, `learnScope`), so they cannot diverge semantically.
+## Product navigation contract
+
+- choose a domain at Home/world level;
+- select a continent on the Earth or equivalent DOM control;
+- at continent focus, Play the continent or select a region;
+- at region focus, Play/Learn that region;
+- geography selection never starts a round implicitly;
+- Back/Forward follows route ancestry while camera motion visually interprets it;
+- cold deep links initialise directly at the requested scope.
+
+The old one-tap launcher-row presentation is not the normal product surface.
 
 ## Preservation boundaries
 
-The spatial layer is presentation only. It does not change, and must not change:
+The spatial layer must not change:
 
-- canonical ISO3 country identity, or the Natural Earth 1:10m source and
-  provenance the generated spherical assets are derived from;
-- typed hash routes, the URL schema `/{domain}/{continent}/{region}`, browser
-  Back/Forward, or cold deep links;
-- scoring, evidence, Mastery or achievement qualification;
-- storage namespaces or Firebase data contracts;
-- the ephemeral active-round state model;
-- supported/unavailable geography truth;
-- PWA and offline guarantees.
+- canonical ISO3 identity or Natural Earth 1:10m source/provenance;
+- typed hash route schema/history;
+- scoring, learning evidence, Mastery or achievement qualification;
+- storage/Firebase contracts;
+- ephemeral active-round semantics;
+- availability truth;
+- PWA/offline guarantees;
+- British English product language.
 
-## Renderer failure
+## Renderer failure and non-visual equivalence
 
-A device that cannot start WebGL gets the conventional `Launcher`. It is
-retained for exactly this purpose and must not be deleted. Both presentations
-are built from `scopeModelFor`, so the fallback cannot offer different scopes,
-counts or labels than the spatial surface. Forced-colours mode hides the canvas
-(a WebGL surface cannot follow a forced palette) and leaves the command surface,
-which is real DOM, exactly where it is.
+A device that cannot start WebGL gets the conventional `Launcher`. It is retained for exactly this purpose and is built from the same `scopeModelFor` model, so fallback and Spatial cannot legitimately offer different scopes/counts/actions.
 
-## The activity boundary
+Forced-colours mode can hide the canvas while leaving real DOM navigation usable. A 3D-only selection state is out of scope.
 
-Not every quiz belongs on a globe. A persistent Earth behind "where is Ghana?"
-is a second map competing with the answer surface, and behind an outline
-question it is a shape the learner could match.
+## Activity boundary
 
-| Domain activity | Stage mode | Why |
+| Activity | Stage mode | Reason |
 | --- | --- | --- |
-| Locations Play/Learn | `yielded` | the activity's own map is the answer surface |
-| Outlines Play/Learn | `yielded` | the silhouette is the recognition object |
-| Neighbours Play/Learn | `yielded` | the neighbour map owns the screen |
-| Flags Learn, Profile | `yielded` | scrolling surfaces that need the viewport |
-| Flags Play | `context` | the flag cannot be read off the globe |
-| Results, all domains | `results` | the scope just played is re-framed |
+| Locations Play/Learn | yielded | projected map is the answer surface |
+| Outlines Play/Learn | yielded | silhouette is the recognition object |
+| Neighbours Play/Learn | yielded | neighbour map/set interaction owns the screen |
+| Flags Learn, Profile | yielded | full/scrolling surfaces need the viewport |
+| Flags Play | context | flag cannot be read from an inert unhighlighted Earth |
+| Results | results | reframe geography just practised |
 
-In `context` mode the globe carries **no** scope highlighting and takes no
-pointer events: an in-scope highlight during a live question is a hint.
+In live `context` mode the globe carries no answer-leaking scope highlight and takes no competing pointer input.
 
 ## Touch and picking
 
-Picking geometry is not display geometry. The renderer draws tessellated,
-subdivided triangles; identity is resolved in `geo.ts` against the source rings
-in lat/lon, so picking cannot drift with a tessellation change.
+Picking geometry is not display geometry. Identity is resolved against canonical source rings/anchors rather than tessellated display triangles.
 
-**Visible marker and touch target are separate concepts.** A country too small
-to aim at carries an invisible *interaction envelope* derived from the canonical
-geometry already in the asset. Nothing is drawn for it, it depends only on
-geometry and the camera — never on the current question — and it retires itself
-as the learner zooms in.
+Tiny geography can receive an invisible interaction envelope derived from canonical geometry and camera scale. Nothing larger is drawn merely to satisfy touch targeting; the envelope is stable, answer-independent and retires as the learner zooms in.
 
-Precedence, refined by #166 from the rule #117 settled for the projected maps:
+Precedence preserves truthful ownership:
 
-1. a speck owns its own land outright;
-2. otherwise every speck whose envelope covers the point competes, and the
-   nearest anchor wins, ties broken by smaller span then by ISO3, so
-   overlapping open-water envelopes resolve deterministically;
-3. an envelope reaching onto another country's land is bounded by that
-   country's own room — twice area over perimeter, not its bounding box — so no
-   country can be covered over;
-4. with no such candidate, the containing polygon wins unchanged.
+1. a tiny country owns its own land;
+2. eligible overlapping envelopes compete deterministically;
+3. assistance reaching toward a neighbour is bounded so an aimable neighbour retains practical ownership;
+4. otherwise the containing polygon wins normally.
 
-A country a learner can actually aim at is therefore never displaced.
-`scripts/verify-spatial-touch.mjs` proves this against every production frame;
-`src/spatial/geo.test.ts` states the contract on synthetic geography.
+`scripts/verify-spatial-touch.mjs` and spatial geo tests hold this contract.
 
 ## Pointer ownership
 
-The stage follows the contract #22 established for the projected 2D map, for the
-same reason: a tap on a small target must not be retargeted by the gesture
-layer.
+- no single-pointer capture on initial `pointerdown`;
+- capture/rotation begins only after the drag threshold;
+- multi-pointer pinch captures immediately as required;
+- crossing the drag threshold is sticky and cannot later resolve as a tap;
+- a tap resolves from the **pointerdown** position, preventing finger jitter from moving a tiny target away before pick;
+- `touch-action: none` is scoped to the stage;
+- the platform edge gutter remains available to browser/OS Back gestures.
 
-- no pointer capture on an initial single `pointerdown`; capture only once
-  movement crosses the drag threshold, and immediately for a multi-pointer
-  pinch;
-- the globe does not move below the threshold, so a resting finger cannot rotate
-  the geography out from under itself;
-- crossing the threshold is sticky: a drag never later resolves as a tap;
-- a tap reports the **pointerdown** position, where the learner aimed, not the
-  release position a finger roll has moved.
+## Motion and accessibility
 
-`touch-action: none` is scoped to the stage element, never the document, and a
-drag starting in the platform edge gutter is left entirely to the browser so
-system back gestures keep working.
+Camera motion should preserve spatial orientation, be interruptible and respect `prefers-reduced-motion`. Focus/announcements belong to the real DOM control hierarchy rather than the WebGL canvas. State cannot rely on colour alone.
 
-## Payload
+## Payload and PWA
 
-The whole spatial stack sits behind a dynamic import. `stage-controller` and the
-world LOD are precached with the app shell; continent detail stays lazy and
-runtime-cached, exactly as the projected 2D continent assets already do.
-`scripts/verify-spatial-atlas.mjs` holds the measured budgets.
+The spatial stack is lazy-loaded. Core bootstrap/world assets follow the accepted shell cache budget while continent detail remains lazy/runtime-cached. Adaptive rendering and idle restraint protect mobile performance. WebGL/context failure is recoverable to the conventional fallback.
 
 ## History
 
-- #119 — exploration, renderer selection, the accepted candidate and the
-  deployed `/spatial/` preview. Its interaction and geography contracts are
-  [`issue-119-spatial-interaction-contract.md`](../open/issue-119-spatial-interaction-contract.md)
-  and [`issue-119-spherical-geography-contract.md`](../open/issue-119-spherical-geography-contract.md);
-  the deployed-preview contract is closed at
-  [`issue-119-deployed-preview.md`](../closed/issue-119-deployed-preview.md).
-- #166 — production cutover: the command surface, the removal of the
-  conventional launcher from under the globe, the tiny-country touch fix, and
-  the retirement of the preview path. Record:
-  [`issue-166-spatial-production-cutover.md`](../open/issue-166-spatial-production-cutover.md).
+- #104 — historical map-first launcher exploration: [`../closed/issue-104-map-first-launcher.md`](../closed/issue-104-map-first-launcher.md).
+- #119 — Spatial exploration, renderer decision, spherical geography, interaction contracts and accepted candidate. Key records include [`../closed/issue-119-spatial-atlas-moonshot.md`](../closed/issue-119-spatial-atlas-moonshot.md), [`../closed/issue-119-spatial-interaction-contract.md`](../closed/issue-119-spatial-interaction-contract.md), [`../closed/issue-119-spherical-geography-contract.md`](../closed/issue-119-spherical-geography-contract.md) and [`../closed/issue-119-renderer-decision.md`](../closed/issue-119-renderer-decision.md).
+- #166 — production cutover and tiny-geography picking hardening: [`../closed/issue-166-spatial-production-cutover.md`](../closed/issue-166-spatial-production-cutover.md).
+
+See [`../history.md`](../history.md) for the broader project lineage.
