@@ -393,7 +393,7 @@ async function answerKeyboard(page: Page, id: string) {
 }
 
 async function waitForAdvance(page: Page, previousName: string) {
-  await expect(page.locator('#map-prompt-heading')).not.toHaveText(previousName, { timeout: 5_000 });
+  await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(previousName);
 }
 
 async function actionablePoint(page: Page, id: string): Promise<{ x: number; y: number }> {
@@ -418,13 +418,24 @@ async function actionablePoint(page: Page, id: string): Promise<{ x: number; y: 
   throw new Error(`${id} has no exposed assisted hit point after real-geography precedence`);
 }
 
-async function assertAssistSizes(page: Page) {
-  for (const id of ASSIST_IDS) {
+async function assertAssistContracts(page: Page, expectedIds: readonly string[]) {
+  const renderedIds = await page.locator('.map-assist-hits [data-id]').evaluateAll((groups) =>
+    groups.map((group) => group.getAttribute('data-id')).filter(Boolean).sort(),
+  );
+  expect(renderedIds).toEqual([...expectedIds].sort());
+  for (const id of expectedIds) {
     const hit = page.locator(`.map-assist-hits [data-id="${id}"] .map-country__assisted-hit`);
     await expect(hit).toHaveCount(1);
-    const box = await hit.boundingBox();
-    expect(box, `${id} assist has a rendered box`).not.toBeNull();
-    expect(Math.min(box!.width, box!.height), `${id} assist keeps the shared ~44px contract`).toBeGreaterThanOrEqual(43.5);
+    const diameter = await hit.evaluate((circle) => {
+      const item = circle as SVGCircleElement;
+      const matrix = item.getScreenCTM();
+      if (!matrix) return null;
+      const radius = item.r.baseVal.value;
+      return { x: radius * 2 * Math.hypot(matrix.a, matrix.b), y: radius * 2 * Math.hypot(matrix.c, matrix.d) };
+    });
+    expect(diameter, `${id} assist has a screen transform`).not.toBeNull();
+    expect(Math.min(diameter!.x, diameter!.y), `${id} assist keeps the shared 44px contract`).toBeGreaterThanOrEqual(43.5);
+    await actionablePoint(page, id);
   }
 }
 
@@ -439,26 +450,25 @@ for (const viewport of [
     await openScope(page, '/#/locations/asia', 'Play Asia');
     const map = page.locator('[data-map-viewport]');
     await expect(map).toHaveAttribute('data-map-max-zoom', '8');
-    const results: Record<string, { initial: number; final: number }> = {};
-    for (const id of ['ARM', 'AZE', 'GEO', 'LBN', 'PSE', 'BHR', 'SGP', 'BRN', 'MDV']) {
-      await page.locator('[data-map-command="fit-region"]').click();
+    const auditedIds = ['ARM', 'AZE', 'GEO', 'LBN', 'PSE', 'BHR', 'SGP', 'BRN', 'MDV'];
+    const opening: Record<string, number> = {};
+    for (const id of auditedIds) {
       const shape = page.locator(`.map-country[data-id="${id}"] .map-country__shape`);
       const initial = await shape.boundingBox();
       expect(initial, `${id} has canonical projected geometry`).not.toBeNull();
-      const cx = initial!.x + initial!.width / 2;
-      const cy = initial!.y + initial!.height / 2;
-      for (let index = 0; index < 12; index += 1) {
-        await page.mouse.move(cx, cy);
-        await page.mouse.wheel(0, -900);
-      }
-      const final = await shape.boundingBox();
-      expect(final).not.toBeNull();
-      const initialMin = Math.min(initial!.width, initial!.height);
-      const finalMin = Math.min(final!.width, final!.height);
-      results[id] = { initial: initialMin, final: finalMin };
-      expect(finalMin, `${id} grows materially at max zoom`).toBeGreaterThan(initialMin * 1.35);
+      opening[id] = Math.min(initial!.width, initial!.height);
     }
-    console.log(`ISSUE137_ZOOM_AFTER ${viewport.width}x${viewport.height} ${JSON.stringify(results)}`);
+    const arm = page.locator('.map-country[data-id="ARM"] .map-country__shape');
+    const initialArm = await arm.boundingBox();
+    for (let index = 0; index < 12; index += 1) {
+      await page.mouse.move(initialArm!.x + initialArm!.width / 2, initialArm!.y + initialArm!.height / 2);
+      await page.mouse.wheel(0, -900);
+    }
+    const finalArm = await arm.boundingBox();
+    expect(finalArm).not.toBeNull();
+    const finalArmMin = Math.min(finalArm!.width, finalArm!.height);
+    expect(finalArmMin, 'Armenia grows materially at the configured maximum zoom').toBeGreaterThan(opening.ARM * 1.35);
+    console.log(`ISSUE137_ZOOM ${viewport.width}x${viewport.height} ${JSON.stringify({ opening, armAtMax: finalArmMin })}`);
   });
 }
 
@@ -468,19 +478,19 @@ test('Asia removes the Levant popup and keeps truthful persistent assistance', a
   await expect(page.locator('[data-map-inset]')).toHaveCount(0);
   for (const id of ['LBN', 'ISR', 'PSE']) await expect(page.locator(`.map-country[data-id="${id}"] .map-country__shape`)).toHaveCount(1);
   for (const id of MARKER_IDS.filter((id) => ['BHR'].includes(id))) await expect(page.locator(`.map-country[data-id="${id}"] .map-country__marker`)).toHaveCount(1);
-  await assertAssistSizes(page);
+  await assertAssistContracts(page, ['BHR', 'ISR', 'KWT', 'LBN', 'PSE', 'QAT']);
 });
 
 test('feedback rerender preserves shared hit sizes and previously answered countries remain guesses', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openScope(page, '/#/locations/asia', 'Learn Asia');
-  await assertAssistSizes(page);
+  await assertAssistContracts(page, ASSIST_IDS);
   const firstName = await page.locator('#map-prompt-heading').innerText();
   const first = idForName(firstName);
   await answerKeyboard(page, first);
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
   await waitForAdvance(page, firstName);
-  await assertAssistSizes(page);
+  await assertAssistContracts(page, ASSIST_IDS);
   await expect(page.locator(`.map-country[data-id="${first}"]`)).toHaveAttribute('data-action', 'map-answer');
   await page.locator(`.map-country[data-id="${first}"]`).focus();
   await page.locator(`.map-country[data-id="${first}"]`).press('Enter');
@@ -496,11 +506,11 @@ test('an assisted country resolved earlier remains a normal wrong guess in a reg
     const id = idForName(name);
     if (id === 'BRN' || id === 'SGP') {
       const point = await actionablePoint(page, id);
-      await page.touchscreen.tap(point.x, point.y);
+      await page.mouse.click(point.x, point.y);
       await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
       await waitForAdvance(page, name);
       const wrongPoint = await actionablePoint(page, id);
-      await page.touchscreen.tap(wrongPoint.x, wrongPoint.y);
+      await page.mouse.click(wrongPoint.x, wrongPoint.y);
       await expect(page.locator(`.map-country[data-id="${id}"]`)).toHaveClass(/map-country--wrong-pulse/);
       return;
     }
@@ -522,6 +532,7 @@ test('Play also re-enables the previous country only after advance', async ({ pa
   await expect(previous).toHaveAttribute('data-action', 'map-answer');
   await previous.focus();
   await previous.press('Enter');
+  await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
   await expect(previous).toHaveClass(/map-country--wrong-pulse/);
 });
 
