@@ -22,6 +22,18 @@ jobs:
           java-version: '21'
       - name: Apply focused implementation
         run: python3 scripts/issue-137-post-spatial-apply.py
+      - name: Reconcile resolved-country verifier
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path('scripts/verify-map.mjs')
+          s = p.read_text()
+          old = "assert.ok(!interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries are no longer clickable later in the round.');"
+          new = "assert.ok(interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries remain clickable later in the round.');\nconst previousCountryGuess = applyMapGuess(twoTarget, firstAnswer.progress, resolvedId, 550);\nassert.equal(previousCountryGuess.outcome.correct, false, 'A previously answered country is treated as an ordinary wrong guess for the current target.');\nassert.equal(previousCountryGuess.outcome.misses, 1, 'The previous-country wrong guess increments the current target miss count once.');\nassert.equal(previousCountryGuess.outcome.resolved, false, 'A first Learn miss against a previous country does not resolve the current target.');"
+          if s.count(old) != 1:
+              raise SystemExit('obsolete verifier assertion not found exactly once')
+          p.write_text(s.replace(old, new, 1))
+          PY
       - run: npm ci
       - name: Regenerate canonical projected and spherical geography
         run: |
