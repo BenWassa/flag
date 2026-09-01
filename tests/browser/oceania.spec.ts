@@ -167,7 +167,7 @@ async function assertCurrentAssistance(page: Page, targetId: string) {
   }
   await expect(hit).toHaveCount(1);
   await expect(hit).toHaveAttribute('data-id', targetId);
-  const diameter = await hit.evaluate((element) => {
+  const measure = () => hit.evaluate((element) => {
     const circle = element as SVGCircleElement;
     const matrix = circle.getScreenCTM();
     if (!matrix) return null;
@@ -177,6 +177,11 @@ async function assertCurrentAssistance(page: Page, targetId: string) {
       y: radius * 2 * Math.hypot(matrix.c, matrix.d),
     };
   });
+  await expect.poll(async () => {
+    const current = await measure();
+    return current ? Math.min(current.x, current.y) : 0;
+  }).toBeGreaterThanOrEqual(43.5);
+  const diameter = await measure();
   expect(diameter).not.toBeNull();
   expect(Math.min(diameter!.x, diameter!.y)).toBeGreaterThanOrEqual(43.5);
   await assistOnlyPoint(page, targetId);
