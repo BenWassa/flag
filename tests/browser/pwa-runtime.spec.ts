@@ -131,7 +131,9 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
     await page.close();
     page = await context.newPage();
     await page.goto(`${server.origin}/#/`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+    await expect(page.locator('meta[name="atlas-pwa-runtime-build"]')).toHaveAttribute('content', 'runtime-a');
+    await waitForServiceWorkerControl(page);
+    await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible({ timeout: 40_000 });
     await openAfricaMap(page, server.origin);
 
     // First-time lazy geography is deliberately not promised offline. A new
