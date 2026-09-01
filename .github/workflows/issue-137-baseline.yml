@@ -22,17 +22,30 @@ jobs:
           java-version: '21'
       - name: Apply focused implementation
         run: python3 scripts/issue-137-post-spatial-apply.py
-      - name: Reconcile resolved-country verifier
+      - name: Reconcile durable #137 verifiers
         run: |
           python3 - <<'PY'
           from pathlib import Path
+
           p = Path('scripts/verify-map.mjs')
           s = p.read_text()
           old = "assert.ok(!interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries are no longer clickable later in the round.');"
           new = "assert.ok(interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries remain clickable later in the round.');\nconst previousCountryGuess = applyMapGuess(twoTarget, firstAnswer.progress, resolvedId, 550);\nassert.equal(previousCountryGuess.outcome.correct, false, 'A previously answered country is treated as an ordinary wrong guess for the current target.');\nassert.equal(previousCountryGuess.outcome.misses, 1, 'The previous-country wrong guess increments the current target miss count once.');\nassert.equal(previousCountryGuess.outcome.resolved, false, 'A first Learn miss against a previous country does not resolve the current target.');"
           if s.count(old) != 1:
-              raise SystemExit('obsolete verifier assertion not found exactly once')
+              raise SystemExit('obsolete resolved-country verifier assertion not found exactly once')
           p.write_text(s.replace(old, new, 1))
+
+          p = Path('scripts/verify-map-insets.mjs')
+          s = p.read_text()
+          start = s.index('/* --- The shipped Levant prototype --- */')
+          end = s.index('/* --- Presentation is generated, and the frame is a shape not a colour --- */')
+          replacement = '''/* --- Asia no longer ships the question-triggered Levant prototype --- */\n\nassert.equal(ASIA_INSETS.length, 0, 'Asia ships no question-triggered inset after #137.');\nconst asset = await loadMapAsset('middle-east');\nassert.ok(asset, 'The Middle East scope loads.');\nassert.equal(asset.insets?.length ?? 0, 0, 'The Middle East keeps Lebanon, Israel and Palestine in canonical geography without popup chrome.');\nconst southAsia = await loadMapAsset('south-asia');\nassert.equal(southAsia.insets?.length ?? 0, 0, 'South Asia remains inset-free.');\nconst near = buildMapSession(asset, 'learn', 'inset-near', ['PSE']);\nconst nearHtml = renderMapSvg(asset, near);\nassert.ok(!nearHtml.includes('data-map-inset'), 'Palestine no longer triggers a question-specific inset.');\nassert.ok(!nearHtml.includes('map-inset-source'), 'No Levant source-window outline is rendered.');\nfor (const id of ['LBN', 'ISR', 'PSE']) {\n  assert.ok(nearHtml.includes(`data-id=\"${id}\"`), `${id} remains represented at its canonical map location.`);\n}\n\n'''
+          s = s[:start] + replacement + s[end:]
+          s = s.replace(
+              "console.log('Map inset verification passed: contract-derived panel size, non-overlapping 44 px surfaces, curriculum-safe refusals, non-leaking labels, target-triggered display and one keyboard stop per country.');",
+              "console.log('Map inset verification passed: generic inset geometry remains guarded while Asia ships no question-triggered Levant inset.');",
+          )
+          p.write_text(s)
           PY
       - run: npm ci
       - name: Regenerate canonical projected and spherical geography
