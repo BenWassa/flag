@@ -173,7 +173,7 @@ async function assertCurrentHitAssist(page: Page, targetId: string) {
   }
   await expect(hit).toHaveCount(1);
   await expect(hit).toHaveAttribute('data-id', targetId);
-  const contract = await hit.evaluate((element, id) => {
+  const measure = () => hit.evaluate((element, id) => {
     const circle = element as SVGCircleElement;
     const matrix = circle.getScreenCTM();
     if (!matrix) return null;
@@ -196,6 +196,15 @@ async function assertCurrentHitAssist(page: Page, targetId: string) {
       ownsTarget: actionableOwners.has(id),
     };
   }, targetId);
+  // Prompt advancement and React's attribute reconciliation complete before
+  // the MutationObserver can re-normalise the reused circle. Wait for that
+  // deterministic viewport lifecycle boundary instead of sampling the stale
+  // map-unit radius in the same task.
+  await expect.poll(async () => {
+    const current = await measure();
+    return current ? Math.min(current.diameterX, current.diameterY) : 0;
+  }).toBeGreaterThanOrEqual(43.5);
+  const contract = await measure();
   expect(contract).not.toBeNull();
   expect(Math.min(contract!.diameterX, contract!.diameterY)).toBeGreaterThanOrEqual(43.5);
   expect(contract!.ownsTarget, `${targetId} retains an exposed actionable point after precedence clipping`).toBe(true);
