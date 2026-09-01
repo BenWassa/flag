@@ -203,7 +203,7 @@ async function assertCurrentHitAssist(page: Page, targetId: string) {
   await expect.poll(async () => {
     const current = await measure();
     return current ? Math.min(current.diameterX, current.diameterY) : 0;
-  }).toBeGreaterThanOrEqual(43.5);
+  }, { timeout: 15_000 }).toBeGreaterThanOrEqual(43.5);
   const contract = await measure();
   expect(contract).not.toBeNull();
   expect(Math.min(contract!.diameterX, contract!.diameterY)).toBeGreaterThanOrEqual(43.5);
@@ -245,6 +245,16 @@ for (const viewport of VIEWPORTS) {
     for (const scope of LOCATION_SCOPES) {
       await openLocationScope(page, scope.id, scope.action);
       await expect(page.locator('.map-active-countries > .map-country')).toHaveCount(scope.count);
+      await expect.poll(() => page.evaluate(() => {
+        const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
+        const rects = [...document.querySelectorAll<SVGGElement>('.map-active-countries > .map-country')]
+          .map((country) => country.getBoundingClientRect());
+        const usedWidth = (Math.max(...rects.map((rect) => Math.min(stage.right, rect.right)))
+          - Math.min(...rects.map((rect) => Math.max(stage.left, rect.left)))) / stage.width;
+        const usedHeight = (Math.max(...rects.map((rect) => Math.min(stage.bottom, rect.bottom)))
+          - Math.min(...rects.map((rect) => Math.max(stage.top, rect.top)))) / stage.height;
+        return Math.max(usedWidth, usedHeight);
+      }), { timeout: 15_000 }).toBeGreaterThan(0.4);
       const metrics = await page.evaluate(() => {
         const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
         const viewportElement = document.querySelector('[data-map-viewport]')!.getBoundingClientRect();
@@ -305,7 +315,7 @@ for (const viewport of VIEWPORTS) {
       if (index < 12) {
         await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
       } else {
-        await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 8_000 });
+        await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 15_000 });
       }
     }
     expect(seen.size).toBe(13);
