@@ -117,6 +117,7 @@
 .map-country:not([data-action="map-answer"]) { cursor: default; }
 .map-country__shape,
 .map-country__locator,
+.map-country__marker,
 .map-country__callout-target {
   fill: var(--map-active-land);
   stroke-width: .78;
@@ -136,16 +137,19 @@
   pointer-events: none;
   transition: stroke 90ms ease-out, opacity 90ms ease-out;
 }
+.map-country__assisted-hit,
 .map-country__locator-hit,
 .map-country__callout-hit,
 .map-current-target-hit {
   fill: transparent;
   stroke: transparent;
 }
+.map-country__assisted-hit,
 .map-country__locator-hit,
 .map-country__callout-hit { pointer-events: none; }
 .map-country[data-action="map-answer"] .map-country__locator-hit,
-.map-country[data-action="map-answer"] .map-country__callout-hit { pointer-events: all; }
+.map-country[data-action="map-answer"] .map-country__callout-hit,
+.map-assist-hits [data-action="map-answer"] .map-country__assisted-hit { pointer-events: all; }
 .map-current-target-hit { pointer-events: all; }
 
 /* SVG groups otherwise inherit the global tabindex focus rectangle. Focus is
@@ -156,6 +160,7 @@
 }
 .map-country:focus-visible .map-country__shape,
 .map-country:focus-visible .map-country__locator,
+.map-country:focus-visible .map-country__marker,
 .map-country:focus-visible .map-country__callout-target {
   stroke: var(--action);
   stroke-width: 2.4;
@@ -165,6 +170,7 @@
 /* Immediate physical press acknowledgment. Neutral because it precedes scoring. */
 .map-country:active .map-country__shape,
 .map-country:active .map-country__locator,
+.map-country:active .map-country__marker,
 .map-country:active .map-country__callout-target {
   fill: var(--action-soft);
   stroke: var(--action);
@@ -177,6 +183,7 @@
    first-try off-white reads as completed rather than disappearing. */
 .map-country--first .map-country__shape,
 .map-country--first .map-country__locator,
+.map-country--first .map-country__marker,
 .map-country--first .map-country__callout-target {
   fill: var(--surface);
   stroke: var(--line-strong);
@@ -185,6 +192,7 @@
 .map-country--first .map-country__callout-line { stroke: var(--line-strong); }
 .map-country--one-miss .map-country__shape,
 .map-country--one-miss .map-country__locator,
+.map-country--one-miss .map-country__marker,
 .map-country--one-miss .map-country__callout-target {
   fill: color-mix(in srgb, var(--learning) 25%, var(--surface));
   stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong));
@@ -193,6 +201,7 @@
 .map-country--one-miss .map-country__callout-line { stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong)); }
 .map-country--two-miss .map-country__shape,
 .map-country--two-miss .map-country__locator,
+.map-country--two-miss .map-country__marker,
 .map-country--two-miss .map-country__callout-target {
   fill: color-mix(in srgb, var(--learning) 52%, var(--surface));
   stroke: var(--learning);
@@ -201,6 +210,7 @@
 .map-country--two-miss .map-country__callout-line { stroke: var(--learning); }
 .map-country--revealed .map-country__shape,
 .map-country--revealed .map-country__locator,
+.map-country--revealed .map-country__marker,
 .map-country--revealed .map-country__callout-target {
   fill: var(--wrong-soft);
   stroke: var(--wrong);
@@ -213,9 +223,11 @@
    semantic red with a dashed stroke so the distinction survives without colour. */
 .map-country--current-correct .map-country__shape,
 .map-country--current-correct .map-country__locator,
+.map-country--current-correct .map-country__marker,
 .map-country--current-correct .map-country__callout-target,
 .map-country.map-country--current-correct:focus-visible .map-country__shape,
 .map-country.map-country--current-correct:focus-visible .map-country__locator,
+.map-country.map-country--current-correct:focus-visible .map-country__marker,
 .map-country.map-country--current-correct:focus-visible .map-country__callout-target {
   fill: var(--mastered);
   stroke: var(--mastered);
@@ -226,9 +238,11 @@
 .map-country--current-correct .map-country__callout-line { stroke: var(--mastered); stroke-width: 2.5; }
 .map-country--current-wrong .map-country__shape,
 .map-country--current-wrong .map-country__locator,
+.map-country--current-wrong .map-country__marker,
 .map-country--current-wrong .map-country__callout-target,
 .map-country.map-country--current-wrong:focus-visible .map-country__shape,
 .map-country.map-country--current-wrong:focus-visible .map-country__locator,
+.map-country.map-country--current-wrong:focus-visible .map-country__marker,
 .map-country.map-country--current-wrong:focus-visible .map-country__callout-target {
   fill: var(--wrong-soft);
   stroke: var(--wrong);
@@ -243,9 +257,11 @@
 }
 .map-country--wrong-pulse .map-country__shape,
 .map-country--wrong-pulse .map-country__locator,
+.map-country--wrong-pulse .map-country__marker,
 .map-country--wrong-pulse .map-country__callout-target,
 .map-country.map-country--wrong-pulse:focus-visible .map-country__shape,
 .map-country.map-country--wrong-pulse:focus-visible .map-country__locator,
+.map-country.map-country--wrong-pulse:focus-visible .map-country__marker,
 .map-country.map-country--wrong-pulse:focus-visible .map-country__callout-target {
   fill: var(--wrong-soft);
   stroke: var(--wrong);
@@ -308,6 +324,7 @@
 @media (hover: hover) and (pointer: fine) {
   .map-country[data-action="map-answer"]:hover .map-country__shape,
   .map-country[data-action="map-answer"]:hover .map-country__locator,
+  .map-country[data-action="map-answer"]:hover .map-country__marker,
   .map-country[data-action="map-answer"]:hover .map-country__callout-target { stroke: var(--action); stroke-width: 2; }
   .map-country[data-action="map-answer"]:hover .map-country__callout-line { stroke: var(--action); }
 }
@@ -361,9 +378,11 @@
 @media (prefers-reduced-motion: reduce) {
   .map-country--wrong-pulse .map-country__shape,
   .map-country--wrong-pulse .map-country__locator,
+  .map-country--wrong-pulse .map-country__marker,
   .map-country--wrong-pulse .map-country__callout-target,
   .map-country--current-correct .map-country__shape,
   .map-country--current-correct .map-country__locator,
+  .map-country--current-correct .map-country__marker,
   .map-country--current-correct .map-country__callout-target,
   .map-country--wrong-pulse .map-country__callout-line { animation: none; }
 }
@@ -373,20 +392,25 @@
   .map-context-locator,
   .map-country__shape,
   .map-country__locator,
+  .map-country__marker,
   .map-country__callout-target { fill: Canvas; stroke: CanvasText; }
   .map-context-country,
   .map-context-locator { opacity: .65; }
   .map-country__callout-line { stroke: CanvasText; }
   .map-country--wrong-pulse .map-country__shape,
   .map-country--wrong-pulse .map-country__locator,
+  .map-country--wrong-pulse .map-country__marker,
   .map-country--wrong-pulse .map-country__callout-target,
   .map-country--revealed .map-country__shape,
   .map-country--revealed .map-country__locator,
+  .map-country--revealed .map-country__marker,
   .map-country--revealed .map-country__callout-target,
   .map-country--current-correct .map-country__shape,
   .map-country--current-correct .map-country__locator,
+  .map-country--current-correct .map-country__marker,
   .map-country--current-correct .map-country__callout-target,
   .map-country--current-wrong .map-country__shape,
   .map-country--current-wrong .map-country__locator,
+  .map-country--current-wrong .map-country__marker,
   .map-country--current-wrong .map-country__callout-target { stroke: Highlight; stroke-width: 3; }
 }

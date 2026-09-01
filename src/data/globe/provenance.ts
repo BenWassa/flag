@@ -21,6 +21,20 @@ export const GLOBE_PROVENANCE = {
     "SU_A3",
     "GU_A3"
   ],
+  "canonicalSourceGeometryMerges": {
+    "CYP": [
+      {
+        "pattern": "^Northern Cyprus$",
+        "flags": "i",
+        "required": true
+      },
+      {
+        "pattern": "^Cyprus No Mans Area$",
+        "flags": "i",
+        "required": true
+      }
+    ]
+  },
   "encoding": "delta-varint",
   "framingPolicySource": "scripts/map-continent-configs.mjs",
   "framingExclusions": {
@@ -44,12 +58,12 @@ export const GLOBE_PROVENANCE = {
       "retained": 0.08,
       "precision": 32,
       "countries": 195,
-      "withGeometry": 158,
-      "locators": 37,
-      "rings": 265,
-      "points": 36163,
-      "moduleBytes": 88420,
-      "moduleGzipBytes": 53527
+      "withGeometry": 159,
+      "locators": 36,
+      "rings": 266,
+      "points": 36180,
+      "moduleBytes": 88443,
+      "moduleGzipBytes": 53553
     },
     "africa": {
       "retained": 0.42,
@@ -58,9 +72,9 @@ export const GLOBE_PROVENANCE = {
       "withGeometry": 54,
       "locators": 0,
       "rings": 86,
-      "points": 22114,
-      "moduleBytes": 50616,
-      "moduleGzipBytes": 31807
+      "points": 22109,
+      "moduleBytes": 50607,
+      "moduleGzipBytes": 31798
     },
     "asia": {
       "retained": 0.42,
@@ -68,10 +82,10 @@ export const GLOBE_PROVENANCE = {
       "countries": 48,
       "withGeometry": 47,
       "locators": 1,
-      "rings": 323,
-      "points": 44072,
-      "moduleBytes": 96010,
-      "moduleGzipBytes": 59531
+      "rings": 322,
+      "points": 44092,
+      "moduleBytes": 96020,
+      "moduleGzipBytes": 59547
     },
     "europe": {
       "retained": 0.42,
@@ -80,9 +94,9 @@ export const GLOBE_PROVENANCE = {
       "withGeometry": 41,
       "locators": 3,
       "rings": 406,
-      "points": 50229,
-      "moduleBytes": 110466,
-      "moduleGzipBytes": 68972
+      "points": 50225,
+      "moduleBytes": 110459,
+      "moduleGzipBytes": 68967
     },
     "north-america": {
       "retained": 0.42,
@@ -91,9 +105,9 @@ export const GLOBE_PROVENANCE = {
       "withGeometry": 23,
       "locators": 0,
       "rings": 410,
-      "points": 51106,
-      "moduleBytes": 111212,
-      "moduleGzipBytes": 69353
+      "points": 51103,
+      "moduleBytes": 111206,
+      "moduleGzipBytes": 69350
     },
     "oceania": {
       "retained": 0.42,
@@ -113,9 +127,9 @@ export const GLOBE_PROVENANCE = {
       "withGeometry": 12,
       "locators": 0,
       "rings": 179,
-      "points": 19765,
-      "moduleBytes": 42747,
-      "moduleGzipBytes": 26616
+      "points": 19762,
+      "moduleBytes": 42742,
+      "moduleGzipBytes": 26614
     }
   }
 } as const;

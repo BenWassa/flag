@@ -386,7 +386,14 @@ let resizeObserver: ResizeObserver | null = null;
 
 function discoverViewports(): void {
   const viewports = root ? [...root.querySelectorAll<HTMLElement>('[data-map-viewport]')] : [];
-  for (const viewport of viewports) positionViewport(viewport);
+  for (const viewport of viewports) {
+    if (viewport.dataset.mapPositioned === 'true') {
+      const box = currentBox(viewport);
+      if (box) applyBox(viewport, box, false);
+    } else {
+      positionViewport(viewport);
+    }
+  }
   if (typeof ResizeObserver !== 'undefined') {
     resizeObserver?.disconnect();
     resizeObserver = new ResizeObserver((entries) => {
@@ -411,6 +418,14 @@ document.addEventListener('click', suppressDraggedClick, true);
 document.addEventListener('click', handleCommand);
 
 if (root) {
-  new MutationObserver(discoverViewports).observe(root, { childList: true, subtree: true });
+  // React reuses the question-specific assist circle between prompts and
+  // updates its data-id/radius in place. Observe that identity change as well
+  // as inserted nodes so every new target is normalised back to 44 CSS px.
+  new MutationObserver(discoverViewports).observe(root, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: ['data-id', 'cx', 'cy'],
+  });
   discoverViewports();
 }

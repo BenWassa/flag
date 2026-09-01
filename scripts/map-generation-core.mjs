@@ -4,7 +4,7 @@ import { geoIdentity, geoNaturalEarth1, geoPath } from 'd3-geo';
 import { feature, merge, mesh, neighbors } from 'topojson-client';
 import { topology } from 'topojson-server';
 import { presimplify, quantile, simplify } from 'topojson-simplify';
-import { MAP_CANVAS } from './map-continent-configs.mjs';
+import { CANONICAL_SOURCE_GEOMETRY_MERGES, MAP_CANVAS } from './map-continent-configs.mjs';
 
 const MANIFEST_PATH = new URL('./map-sources/natural-earth.json', import.meta.url);
 const COUNTRY_SOURCE_PATH = new URL('../src/data/countries.ts', import.meta.url);
@@ -398,6 +398,24 @@ function normalizeStandardContinent(countriesSource, catalog, scoredCatalog, con
     grouped.set(id, values);
   }
 
+  const consumedMergeFeatures = new Set();
+  for (const [countryId, specs] of Object.entries(CANONICAL_SOURCE_GEOMETRY_MERGES)) {
+    const parts = grouped.get(countryId) ?? [];
+    if (!parts.length) throw new Error(`Natural Earth is missing canonical source geometry for ${countryId}.`);
+    for (const spec of specs) {
+      const matcher = new RegExp(spec.pattern, spec.flags ?? 'i');
+      const matches = countriesSource.features.filter((sourceFeature) => matcher.test(sourceName(sourceFeature)));
+      if (spec.required && matches.length !== 1) {
+        throw new Error(`${countryId} source reconciliation ${spec.pattern} expected exactly one feature, found ${matches.length}.`);
+      }
+      for (const sourceFeature of matches) {
+        if (!parts.includes(sourceFeature)) parts.push(sourceFeature);
+        consumedMergeFeatures.add(sourceFeature);
+      }
+    }
+    grouped.set(countryId, parts);
+  }
+
   const normalized = [];
   for (const row of scoredCatalog) {
     const parts = grouped.get(row.id) ?? [];
@@ -439,6 +457,7 @@ function normalizeStandardContinent(countriesSource, catalog, scoredCatalog, con
   );
   const unexpected = [];
   for (const sourceFeature of countriesSource.features) {
+    if (consumedMergeFeatures.has(sourceFeature)) continue;
     if (String(sourceFeature.properties?.CONTINENT ?? '').toLowerCase() !== config.sourceContinent.toLowerCase()) continue;
     const id = sourceCountryId(sourceFeature, allIds);
     if (id && (scoredIds.has(id) || localContextIds.has(id))) continue;
@@ -831,10 +850,15 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
 
   const islandLocators = new Set(config.islandLocatorIds ?? []);
   const hitAssistIds = new Set(config.hitAssistIds ?? []);
+  const visibleMarkerIds = new Set(config.visibleMarkerIds ?? []);
   for (const id of hitAssistIds) {
     if (islandLocators.has(id)) {
       throw new Error(`${config.displayName} ${id} cannot use both a visible locator and invisible hit assistance.`);
     }
+  }
+  for (const id of visibleMarkerIds) {
+    if (!hitAssistIds.has(id)) throw new Error(`${config.displayName} ${id} visible marker requires invisible hit assistance.`);
+    if (islandLocators.has(id)) throw new Error(`${config.displayName} ${id} cannot use both a locator and a canonical-position marker.`);
   }
   // A country carries role 'country' even when this continent only renders it as
   // context, so scoring membership — not the feature role — decides whether its
@@ -874,6 +898,13 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
         cy: Number(anchor.y.toFixed(2)),
         r: 7,
       };
+      if (visibleMarkerIds.has(id)) {
+        countryGeometry.marker = {
+          cx: Number(anchor.x.toFixed(2)),
+          cy: Number(anchor.y.toFixed(2)),
+          r: 3.2,
+        };
+      }
     }
     if (item.properties?.role === 'country') {
       const callout = calloutFor(config, id, planarPath.centroid(item));
@@ -1019,6 +1050,7 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
       globalSourceFeatureCount: globalGraph.sourceFeatureCount,
     },
     ...(Object.keys(geographicAudit).length ? { geographicAudit } : {}),
+    canonicalSourceGeometryMerges: CANONICAL_SOURCE_GEOMETRY_MERGES,
     boundaryPolicy: {
       ...config.boundaryPolicy,
       scoredCountries: scoredCatalog.length,

@@ -70,6 +70,7 @@
 
 .map-country__shape,
 .map-country__locator,
+.map-country__marker,
 .map-country__callout-target {
   stroke: none;
 }
@@ -80,6 +81,7 @@
    callout target and its leader line sit above whatever country they cross:
    Liechtenstein's mark reaches well into eastern Germany. */
 .map-country__locator,
+.map-country__marker,
 .map-country__callout-target,
 .map-country__callout-line {
   pointer-events: none;
@@ -101,30 +103,39 @@
 
 .map-country:focus-visible .map-country__shape,
 .map-country:focus-visible .map-country__locator,
+.map-country:focus-visible .map-country__marker,
 .map-country:focus-visible .map-country__callout-target,
 .map-country:active .map-country__shape,
 .map-country:active .map-country__locator,
+.map-country:active .map-country__marker,
 .map-country:active .map-country__callout-target,
 .map-country--first .map-country__shape,
 .map-country--first .map-country__locator,
+.map-country--first .map-country__marker,
 .map-country--first .map-country__callout-target,
 .map-country--one-miss .map-country__shape,
 .map-country--one-miss .map-country__locator,
+.map-country--one-miss .map-country__marker,
 .map-country--one-miss .map-country__callout-target,
 .map-country--two-miss .map-country__shape,
 .map-country--two-miss .map-country__locator,
+.map-country--two-miss .map-country__marker,
 .map-country--two-miss .map-country__callout-target,
 .map-country--revealed .map-country__shape,
 .map-country--revealed .map-country__locator,
+.map-country--revealed .map-country__marker,
 .map-country--revealed .map-country__callout-target,
 .map-country--current-correct .map-country__shape,
 .map-country--current-correct .map-country__locator,
+.map-country--current-correct .map-country__marker,
 .map-country--current-correct .map-country__callout-target,
 .map-country--recorded .map-country__shape,
 .map-country--recorded .map-country__locator,
+.map-country--recorded .map-country__marker,
 .map-country--recorded .map-country__callout-target,
 .map-country--wrong-pulse .map-country__shape,
 .map-country--wrong-pulse .map-country__locator,
+.map-country--wrong-pulse .map-country__marker,
 .map-country--wrong-pulse .map-country__callout-target {
   paint-order: stroke fill;
 }

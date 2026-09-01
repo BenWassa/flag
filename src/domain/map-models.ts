@@ -57,6 +57,8 @@ export interface MapCountryGeometry {
   outlinePath?: string;
   locator?: MapPoint;
   hitAssist?: MapPoint;
+  /** Persistent perceptual marker at the canonical location; never the practical touch surface. */
+  marker?: MapPoint;
   /** Explicit cartographic callout for mainland countries too small/narrow for honest phone tapping. */
   callout?: MapCountryCallout;
 }
@@ -118,6 +120,8 @@ export interface MapRegionAsset {
   coastlinePaths?: string[];
   /** Source-derived physical context on the same projection/canvas. */
   water?: MapWaterLayers;
+  /** Evidence-based maximum zoom multiplier owned by the continent configuration. */
+  maxZoom?: number;
   /** Preferred first viewport within the full continent canvas. */
   initialFocus?: MapViewportFocus;
   /** Framed magnified windows for distant or fragmented scoring geography. */

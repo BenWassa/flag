@@ -52,13 +52,27 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.004763548300226357,
-    "coordinateCountBefore": 125770,
-    "coordinateCountAfter": 90578
+    "weightThreshold": 0.0047635483002264655,
+    "coordinateCountBefore": 125778,
+    "coordinateCountAfter": 90565
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
+  },
+  "canonicalSourceGeometryMerges": {
+    "CYP": [
+      {
+        "pattern": "^Northern Cyprus$",
+        "flags": "i",
+        "required": true
+      },
+      {
+        "pattern": "^Cyprus No Mans Area$",
+        "flags": "i",
+        "required": true
+      }
+    ]
   },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",

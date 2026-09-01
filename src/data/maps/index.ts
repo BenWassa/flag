@@ -138,6 +138,7 @@ function cloneGeometry(data: ContinentMapData, countryId: string, continentId: C
     ...geometry,
     locator: geometry.locator ? { ...geometry.locator } : undefined,
     hitAssist: geometry.hitAssist ? { ...geometry.hitAssist } : undefined,
+    marker: geometry.marker ? { ...geometry.marker } : undefined,
     callout: geometry.callout
       ? {
           anchor: { ...geometry.callout.anchor },
@@ -179,6 +180,7 @@ export async function loadMapAsset(scopeId: string): Promise<MapRegionAsset | nu
       oceanPath: data.water.oceanPath,
       lakes: (data.water.lakes ?? []).map(cloneNamedPath),
     },
+    maxZoom: continent.maxZoom,
     initialFocus: data.scopeFocus[scopeId],
     // A panel only belongs to a scope that scores every one of its members;
     // otherwise it would offer an answer the round cannot accept.

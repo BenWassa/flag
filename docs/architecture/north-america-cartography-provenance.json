@@ -60,6 +60,20 @@
     "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
+  "canonicalSourceGeometryMerges": {
+    "CYP": [
+      {
+        "pattern": "^Northern Cyprus$",
+        "flags": "i",
+        "required": true
+      },
+      {
+        "pattern": "^Cyprus No Mans Area$",
+        "flags": "i",
+        "required": true
+      }
+    ]
+  },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
     "scoredCountries": 23,

@@ -7,6 +7,16 @@ export const MAP_CANVAS = Object.freeze({
   pathDigits: 2,
 });
 
+// Source reconciliation is global because canonical country geometry must not
+// diverge between projected Locations/Outlines and the Spatial globe. Every
+// extra piece is still sourced from the same pinned Natural Earth 1:10m file.
+export const CANONICAL_SOURCE_GEOMETRY_MERGES = Object.freeze({
+  CYP: Object.freeze([
+    Object.freeze({ pattern: '^Northern Cyprus$', flags: 'i', required: true }),
+    Object.freeze({ pattern: '^Cyprus No Mans Area$', flags: 'i', required: true }),
+  ]),
+});
+
 export const AFRICA_MAP_GENERATION_CONFIG = Object.freeze({
   id: 'africa',
   displayName: 'Africa',
@@ -180,25 +190,14 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     Object.freeze({ id: 'middle-east', countryIds: Object.freeze(['BHR', 'CYP', 'EGY', 'IRN', 'IRQ', 'ISR', 'JOR', 'KWT', 'LBN', 'OMN', 'PSE', 'QAT', 'SAU', 'SYR', 'TUR', 'ARE', 'YEM']) }),
     Object.freeze({ id: 'caucasus', countryIds: Object.freeze(['ARM', 'AZE', 'GEO']) }),
   ]),
-  islandLocatorIds: Object.freeze(['BHR', 'MDV', 'SGP']),
+  // Issue #137: keep every small country in canonical geography. Practical
+  // touch assistance is invisible and persistent; the four island/split-island
+  // markers below are perceptual hints only and never become the hit surface.
+  islandLocatorIds: Object.freeze([]),
+  hitAssistIds: Object.freeze(['BHR', 'BRN', 'ISR', 'KWT', 'LBN', 'MDV', 'PSE', 'QAT', 'SGP']),
+  visibleMarkerIds: Object.freeze(['BHR', 'BRN', 'MDV', 'SGP']),
   callouts: Object.freeze({}),
-  // Issue 113 prototype. Lebanon, Israel and Palestine sit within four canvas
-  // units of each other, so no leader line can be placed without its own touch
-  // surface covering a neighbour that is also an answer. Measured at the Middle
-  // East opening view on a 320-wide phone, Palestine's tappable disc is 2.5 CSS
-  // px. The panel gives all three the full 44 px.
-  //
-  // The Gulf cluster (BHR/QAT/KWT/ARE) fails the same clearance test but needs a
-  // 369x325 px panel to stay true-scale, so it needs a schematic arrangement and
-  // is deliberately left to follow-up work rather than forced in here.
-  insets: Object.freeze([
-    Object.freeze({
-      id: 'eastern-mediterranean',
-      label: 'Eastern Mediterranean',
-      countryIds: Object.freeze(['LBN', 'ISR', 'PSE']),
-      anchor: 'bottom-right',
-    }),
-  ]),
+  insets: Object.freeze([]),
   lakes: Object.freeze([
     Object.freeze({ name: 'Caspian Sea', pattern: 'caspian', flags: 'i', required: false }),
     Object.freeze({ name: 'Lake Baikal', pattern: 'baikal', flags: 'i', required: true }),
@@ -252,14 +251,16 @@ export const ASIA_MAP_GENERATION_CONFIG = Object.freeze({
     naturalEarthView: 'default de-facto',
     egypt: 'canonical Africa-owned EGY; scored only through the overlapping Middle East learning scope',
     turkey: 'canonical Asia-owned TUR with whole-country geometry and complete cross-Europe adjacency',
-    cyprus: 'canonical Asia-owned CYP',
+    cyprus: 'canonical Asia-owned CYP dissolved from pinned source CYP, Northern Cyprus and Cyprus No Mans Area geometry; Akrotiri and Dhekelia remain British sovereign-base context',
     kazakhstan: 'canonical Asia-owned KAZ with whole-country geometry',
     russia: 'canonical Europe-owned RUS rendered as non-scoring Asia context; excluded from the Asia viewport fit only, so trans-antimeridian geometry cannot scale down the canvas every Asian country is measured against; complete adjacency remains global',
     caucasus: 'ARM, AZE and GEO are learner-facing Caucasus and are excluded from Middle East',
     taiwan: 'non-scoring source context under the current 195-country Atlas catalogue',
     palestineIsrael: 'PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view',
-    northernCyprus: 'non-scoring source context; no separate Atlas country identity',
-    cyprusNoMansArea: 'non-scoring Natural Earth context inside Cyprus; no separate Atlas country identity',
+    northernCyprus: 'source-derived geometry reconciled into canonical CYP; no separate Atlas country identity',
+    cyprusNoMansArea: 'source-derived UN buffer geometry reconciled into canonical CYP; no separate Atlas country identity',
+    sovereignBaseAreas: 'Akrotiri and Dhekelia remain non-scoring British source context and are not absorbed into CYP',
+    assistance: 'max zoom 8; invisible hit assistance for BHR/BRN/ISR/KWT/LBN/MDV/PSE/QAT/SGP; restrained persistent visual markers only for BHR/BRN/MDV/SGP; no Asia question-triggered inset',
     indianOceanTerritories: 'non-scoring Natural Earth territory context; no separate Atlas country identity',
     scarboroughReef: 'non-scoring Natural Earth disputed-feature context; no separate Atlas country identity',
     kashmir: 'pinned Natural Earth default de-facto boundary view; no handwritten override or additional scoring identity',

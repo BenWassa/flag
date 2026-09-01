@@ -78,6 +78,20 @@
       "duplicateComponentCount": 0
     }
   },
+  "canonicalSourceGeometryMerges": {
+    "CYP": [
+      {
+        "pattern": "^Northern Cyprus$",
+        "flags": "i",
+        "required": true
+      },
+      {
+        "pattern": "^Cyprus No Mans Area$",
+        "flags": "i",
+        "required": true
+      }
+    ]
+  },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
     "scoredCountries": 14,
