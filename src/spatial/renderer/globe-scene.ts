@@ -2,7 +2,7 @@
  * Issue #119 — persistent globe scene (F2 implementation).
  *
  * ARCHITECTURE DECISION: plain Three.js behind a narrow imperative handle,
- * hosted by one React component. See docs/open/issue-119-renderer-decision.md
+ * hosted by one React component. See docs/closed/issue-119-renderer-decision.md
  * for the evidence. In short: this scene is built once from generated data and
  * has no per-frame React state, so a reconciler would add delivered bytes and a
  * StrictMode failure mode for a tree that never reconciles. The handle below is

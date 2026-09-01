@@ -45,7 +45,7 @@ The Playwright run records:
 
 The browser harness is **not** physical-device evidence and cannot decide H1.
 
-Ben runs the fixed comparison script in `docs/open/issue-119-plan.md` on a physical phone, production first and the Stage 1 probe second. In particular, repetition and one-handed use are human product evidence and are not simulated here.
+Ben runs the fixed comparison script in `docs/closed/issue-119-plan.md` on a physical phone, production first and the Stage 1 probe second. In particular, repetition and one-handed use are human product evidence and are not simulated here.
 
 ## Stage 1 boundary
 

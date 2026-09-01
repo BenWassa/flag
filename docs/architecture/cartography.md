@@ -7,25 +7,26 @@
 **Source manifest:** `scripts/map-sources/natural-earth.json`  
 **Generated provenance:** `docs/architecture/cartography-provenance.json`
 
-## Spherical geography (Issue #119, exploration line)
+## Spherical geography (production Spatial Atlas)
 
-The Spatial Atlas candidate adds a **second output** of this same pipeline, not a
-second pipeline: `scripts/generate-globe-assets.mjs` reads the same pinned source
-through the same `fetchPinnedSource` digest check, resolves identity with the same
-ISO3 candidate order, and reuses the framing policy declared in
-`scripts/map-continent-configs.mjs`. It emits lat/lon only — no projection, no
-renderer assumption — into `src/data/globe/`.
+Spatial Atlas is a **production second output** of the same pinned cartography
+pipeline, not a second geography system. `scripts/generate-globe-assets.mjs`
+reads the same pinned Natural Earth source through the same digest checks,
+resolves canonical ISO3 identity under the same policy and emits geographic
+lat/lon geometry into `src/data/globe/`. The projected learning maps and
+spherical world/continent LODs therefore share source identity and geopolitical
+policy.
 
 ```text
 pinned source geodata
-  ├── projected 2D continent assets   (npm run maps:generate)
+  ├── projected 2D continent assets     (npm run maps:generate)
   └── spherical world + continent LODs (npm run globe:generate)
 ```
 
-The contract is recorded in
-[`../open/issue-119-spherical-geography-contract.md`](../open/issue-119-spherical-geography-contract.md)
-and asserted by `scripts/verify-spatial-atlas.mjs`. It is exploration-line work:
-`main` is unaffected.
+The accepted spherical contract is preserved in
+[`../closed/issue-119-spherical-geography-contract.md`](../closed/issue-119-spherical-geography-contract.md)
+and asserted by the Spatial verifier chain. #119 established this architecture;
+#166 promoted it into the default production presentation.
 
 ## Production decision
 

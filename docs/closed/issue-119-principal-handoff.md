@@ -1,8 +1,8 @@
 # Issue #119 — Principal-model handoff
 
-> **Superseded by [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+> **Superseded by [`../closed/issue-119-plan.md`](../closed/issue-119-plan.md).**
 >
-> Its entry gate is superseded: the renderer comparison it marked GREEN has been downgraded to AMBER, and two repair tasks now precede the principal session. See [`../open/issue-119-renderer-comparison.md`](../open/issue-119-renderer-comparison.md).
+> Its entry gate is superseded: the renderer comparison it marked GREEN has been downgraded to AMBER, and two repair tasks now precede the principal session. See [`../closed/issue-119-renderer-comparison.md`](../closed/issue-119-renderer-comparison.md).
 
 
 **Audience:** Claude Opus / GPT Sol high-effort principal session  
@@ -139,13 +139,13 @@ Read in this order:
 2. `CLAUDE.md`;
 3. `DESIGN.md`;
 4. `.impeccable/design.json`;
-5. `docs/open/issue-119-spatial-atlas-moonshot.md`;
-6. `docs/open/issue-119-llm-execution-plan.md`;
+5. `docs/closed/issue-119-spatial-atlas-moonshot.md`;
+6. `docs/closed/issue-119-llm-execution-plan.md`;
 7. **this file**;
-8. `docs/open/issue-119-r3f-spike-results.md`;
-9. `docs/open/issue-119-maplibre-spike-results.md`;
-10. `docs/open/issue-119-geometry-lod-experiment.md`;
-11. `docs/open/issue-119-prototype-verification-plan.md`;
+8. `docs/closed/issue-119-r3f-spike-results.md`;
+9. `docs/closed/issue-119-maplibre-spike-results.md`;
+10. `docs/closed/issue-119-geometry-lod-experiment.md`;
+11. `docs/closed/issue-119-prototype-verification-plan.md`;
 12. only then inspect implementation files required to challenge/complete the architecture.
 
 The larger `issue-119-pre-opus-handoff.md` and `issue-119-support-evidence.md` are reference material if a fact needs tracing; they should not need to be reread linearly unless the principal finds contradictions.
@@ -239,7 +239,7 @@ Then implement against that decision.
 
 Use the following as the session opener once the entry gate is green:
 
-> You are the principal product/interaction architect for Atlas Issue #119. This is a protected frontier-model task. The support work is complete; do not spend context redoing mechanical repository archaeology or package comparison unless evidence is contradictory. Read the specified files in `docs/open/issue-119-principal-handoff.md` in order, then independently challenge the moonshot. Own F1 and F2: decide the spatial interaction contract, renderer, persistent scene architecture, semantic camera system, DOM/3D composition, gesture ownership, spherical LOD contract and failure strategy. Preserve Atlas's documented routing, learning, persistence, cartography and accessibility invariants. Record the architecture decision before broad implementation, then build the Africa World → Africa → West Africa vertical slice deeply enough to test whether the product hypothesis deserves to continue. Do not accept a technically functioning spinning globe as success; the prototype must be materially better than the current launcher on a phone-sized experience.
+> You are the principal product/interaction architect for Atlas Issue #119. This is a protected frontier-model task. The support work is complete; do not spend context redoing mechanical repository archaeology or package comparison unless evidence is contradictory. Read the specified files in `docs/closed/issue-119-principal-handoff.md` in order, then independently challenge the moonshot. Own F1 and F2: decide the spatial interaction contract, renderer, persistent scene architecture, semantic camera system, DOM/3D composition, gesture ownership, spherical LOD contract and failure strategy. Preserve Atlas's documented routing, learning, persistence, cartography and accessibility invariants. Record the architecture decision before broad implementation, then build the Africa World → Africa → West Africa vertical slice deeply enough to test whether the product hypothesis deserves to continue. Do not accept a technically functioning spinning globe as success; the prototype must be materially better than the current launcher on a phone-sized experience.
 
 ## 10. Principal stop conditions
 

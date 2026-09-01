@@ -2,7 +2,7 @@
 
 > **Archived. The spikes it specifies are complete (#122, #123).**
 >
-> Results are in [`../open/issue-119-r3f-spike-results.md`](../open/issue-119-r3f-spike-results.md) and [`../open/issue-119-maplibre-spike-results.md`](../open/issue-119-maplibre-spike-results.md); reconciliation in [`../open/issue-119-renderer-comparison.md`](../open/issue-119-renderer-comparison.md). Note that the comparison gate has since been downgraded to AMBER and both spikes require a repair run.
+> Results are in [`../closed/issue-119-r3f-spike-results.md`](../closed/issue-119-r3f-spike-results.md) and [`../closed/issue-119-maplibre-spike-results.md`](../closed/issue-119-maplibre-spike-results.md); reconciliation in [`../closed/issue-119-renderer-comparison.md`](../closed/issue-119-renderer-comparison.md). Note that the comparison gate has since been downgraded to AMBER and both spikes require a repair run.
 
 
 **Status:** support-tier research complete; package-dependent runtime executions remain  
@@ -172,7 +172,7 @@ This keeps the spike about runtime architecture rather than visual quality.
 
 Create:
 
-`docs/open/issue-119-r3f-spike-results.md`
+`docs/closed/issue-119-r3f-spike-results.md`
 
 Use PASS / FAIL / UNCLEAR per measurement, exact commands, exact package versions, raw/gzip output and observed console/browser behaviour.
 
@@ -231,7 +231,7 @@ Record, do not editorialise:
 
 Create:
 
-`docs/open/issue-119-maplibre-spike-results.md`
+`docs/closed/issue-119-maplibre-spike-results.md`
 
 Again: evidence, not final architecture selection.
 

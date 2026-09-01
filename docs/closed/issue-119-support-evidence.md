@@ -1,6 +1,6 @@
 # Issue #119 — Support Evidence Dossier
 
-> **Archived reference. Active plan: [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+> **Archived reference. Active plan: [`../closed/issue-119-plan.md`](../closed/issue-119-plan.md).**
 >
 > Support-tier evidence dossier gathered before the runtime spikes. Superseded as a reading target by the spike reports and the comparison gate; retained for tracing individual measurements.
 

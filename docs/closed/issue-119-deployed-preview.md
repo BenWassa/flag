@@ -6,7 +6,7 @@ The sibling `./spatial/` deployment, its pinned-source assembly, its isolated
 cache namespace and its in-app entry point are all retired. The candidate this
 document deployed for evaluation is now the default Atlas presentation; see
 [`../architecture/spatial-atlas.md`](../architecture/spatial-atlas.md) and
-[`../open/issue-166-spatial-production-cutover.md`](../open/issue-166-spatial-production-cutover.md).
+[`../closed/issue-166-spatial-production-cutover.md`](../closed/issue-166-spatial-production-cutover.md).
 The rest of this file is preserved as the record of how the preview worked.
 
 ---

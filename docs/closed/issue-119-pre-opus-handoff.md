@@ -1,6 +1,6 @@
 # Issue #119 — Pre-Opus / Frontier Handoff
 
-> **Superseded by [`../open/issue-119-plan.md`](../open/issue-119-plan.md).**
+> **Superseded by [`../closed/issue-119-plan.md`](../closed/issue-119-plan.md).**
 >
 > This was the long-form frontier handoff. Its durable facts are condensed into the principal entry packet in §8 of the plan of record. Retained for tracing a specific repository fact only; it should not be read linearly.
 
