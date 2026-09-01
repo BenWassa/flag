@@ -1,0 +1,63 @@
+name: Issue 147 acceptance
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-147-outlines-feedback-parity-post-137
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - name: Apply focused implementation
+        run: python3 scripts/issue-147-post-137-apply.py
+      - run: npm ci
+      - name: Static checks
+        run: npm run check
+      - name: Complete repository gate
+        run: npm test
+      - run: npx playwright install --with-deps chromium
+      - name: Exact-production Outlines feedback acceptance
+        run: >-
+          npx playwright test
+          tests/browser/outlines-feedback-parity.spec.ts
+          tests/browser/atlas.spec.ts
+          --project=chromium --workers=1
+      - name: Inspect exact production artifact
+        shell: bash
+        run: |
+          npm run build
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          test -f dist/sw.js
+          grep -R "round-score" dist/app.js >/dev/null
+          grep -R "playFeedbackDwellMs" dist/app.js >/dev/null
+          ! grep -R "issue-147-post-137-apply" dist >/dev/null
+      - name: Candidate diff guard
+        shell: bash
+        run: |
+          rm -f tests/firebase/firestore-debug.log firestore-debug.log tests/firebase/package-lock.json
+          git diff --check
+      - name: Commit accepted candidate
+        shell: bash
+        run: |
+          rm -f .github/workflows/issue-147-acceptance.yml
+          rm -f scripts/issue-147-post-137-apply.py
+          rm -f tests/firebase/firestore-debug.log firestore-debug.log tests/firebase/package-lock.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(#147): align Outlines Play feedback parity"
+          git push origin HEAD:issue-147-outlines-feedback-parity-post-137
