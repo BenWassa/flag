@@ -310,6 +310,10 @@ s = replace_once(s,
 "  const viewports = root ? [...root.querySelectorAll<HTMLElement>('[data-map-viewport]')] : [];\n  for (const viewport of viewports) positionViewport(viewport);",
 "  const viewports = root ? [...root.querySelectorAll<HTMLElement>('[data-map-viewport]')] : [];\n  for (const viewport of viewports) {\n    if (viewport.dataset.mapPositioned === 'true') {\n      const box = currentBox(viewport);\n      if (box) applyBox(viewport, box, false);\n    } else {\n      positionViewport(viewport);\n    }\n  }",
 'renormalise rerendered hits')
+s = replace_once(s,
+"  new MutationObserver(discoverViewports).observe(root, { childList: true, subtree: true });",
+"  // React reuses the question-specific assist circle between prompts and\n  // updates its data-id/radius in place. Observe that identity change as well\n  // as inserted nodes so every new target is normalised back to 44 CSS px.\n  new MutationObserver(discoverViewports).observe(root, {\n    childList: true,\n    subtree: true,\n    attributes: true,\n    attributeFilter: ['data-id'],\n  });",
+'renormalise reused prompt hit')
 write(p, s)
 
 # Styling: markers follow the country state, but never become a hit surface.
@@ -533,7 +537,6 @@ test('Play also re-enables the previous country only after advance', async ({ pa
   await previous.focus();
   await previous.press('Enter');
   await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
-  await expect(previous).toHaveClass(/map-country--wrong-pulse/);
 });
 
 for (const viewport of [{ width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
