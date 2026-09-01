@@ -1,16 +1,18 @@
-name: Issue 137 post-Spatial baseline
+name: Issue 137 post-Spatial acceptance
 
 on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  baseline:
+  acceptance:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: issue-137-asia-location-hardening-post-spatial
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -18,50 +20,69 @@ jobs:
         with:
           distribution: temurin
           java-version: '21'
-      - run: npm install
-      - run: npx playwright install --with-deps chromium
-      - run: npm run build
-      - name: Audit pinned Cyprus source features
+      - name: Apply focused implementation
+        run: python3 scripts/issue-137-post-spatial-apply.py
+      - run: npm ci
+      - name: Regenerate canonical projected and spherical geography
         run: |
-          node --input-type=module <<'NODE'
-          import { fetchPinnedSource } from './scripts/lib/pinned-natural-earth.mjs';
-          const pinned = await fetchPinnedSource('countries');
-          const source = pinned.json();
-          const rows = source.features
-            .filter((feature) => /cyprus|akrotiri|dhekelia/i.test(String(feature.properties?.NAME_LONG ?? feature.properties?.NAME ?? feature.properties?.ADMIN ?? '')))
-            .map((feature) => {
-              const p = feature.properties ?? {};
-              const coordinates = feature.geometry?.coordinates ?? [];
-              const countPoints = (value) => Array.isArray(value)
-                ? (typeof value[0] === 'number' ? 1 : value.reduce((sum, part) => sum + countPoints(part), 0))
-                : 0;
-              return {
-                name: p.NAME,
-                nameLong: p.NAME_LONG,
-                admin: p.ADMIN,
-                sovereign: p.SOVEREIGNT,
-                type: p.TYPE,
-                continent: p.CONTINENT,
-                isoA3Eh: p.ISO_A3_EH,
-                adm0A3: p.ADM0_A3,
-                isoA3: p.ISO_A3,
-                sovA3: p.SOV_A3,
-                suA3: p.SU_A3,
-                guA3: p.GU_A3,
-                geometryType: feature.geometry?.type,
-                pointCount: countPoints(coordinates),
-              };
-            });
-          console.log(`ISSUE137_CYPRUS_SOURCE ${JSON.stringify({
-            upstream: pinned.manifest.upstream,
-            upstreamCommit: pinned.manifest.upstreamCommit,
-            sourcePath: pinned.source.path,
-            sha256: pinned.source.sha256,
-            rows,
-          })}`);
-          NODE
-      - name: Run exact-production baseline browser measurements
+          npm run maps:generate
+          npm run globe:generate
+      - name: Prove deterministic regeneration
         shell: bash
         run: |
-          set -o pipefail
-          npx playwright test tests/browser/issue-137-baseline.spec.ts --project=chromium --workers=1
+          set -euo pipefail
+          find src/data/maps src/data/neighbors src/data/globe docs/architecture -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/issue137-before.sha
+          npm run maps:generate
+          npm run globe:generate
+          find src/data/maps src/data/neighbors src/data/globe docs/architecture -type f -print0 | sort -z | xargs -0 sha256sum > /tmp/issue137-after.sha
+          diff -u /tmp/issue137-before.sha /tmp/issue137-after.sha
+      - name: Static checks
+        run: npm run check
+      - name: Complete repository gate
+        run: npm test
+      - run: npx playwright install --with-deps chromium
+      - name: Exact-production projected-map acceptance
+        run: >-
+          npx playwright test
+          tests/browser/asia-hardening.spec.ts
+          tests/browser/atlas.spec.ts
+          tests/browser/map-hit-precedence.spec.ts
+          tests/browser/map-insets.spec.ts
+          tests/browser/map-pointer-capture.spec.ts
+          tests/browser/north-america.spec.ts
+          tests/browser/oceania.spec.ts
+          tests/browser/production-matrix.spec.ts
+          tests/browser/pwa-runtime.spec.ts
+          --project=chromium --workers=1
+      - name: Spatial Atlas regression after shared canonical geography change
+        run: npm run test:spatial
+      - name: Inspect exact production artifact
+        shell: bash
+        run: |
+          npm run build
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          test -f dist/sw.js
+          test "$(find dist/assets -maxdepth 1 -type f -name 'asia-*.js' | wc -l)" -eq 1
+          ! grep -R "eastern-mediterranean" dist/app.js dist/assets/asia-*.js
+          grep -R 'data-map-max-zoom' dist/app.js >/dev/null
+          ! grep -R "issue-137-post-spatial-apply" dist >/dev/null
+          grep -q 'Northern Cyprus' docs/architecture/asia-cartography-provenance.json
+          grep -q 'Cyprus No Mans Area' src/data/globe/provenance.json
+      - name: Candidate diff guard
+        run: |
+          rm -f tests/firebase/firestore-debug.log firestore-debug.log tests/firebase/package-lock.json
+          git diff --check
+          git status --short
+      - name: Commit accepted candidate
+        run: |
+          rm -f .github/workflows/issue-137-baseline.yml
+          rm -f scripts/issue-137-post-spatial-apply.py
+          rm -f tests/browser/issue-137-baseline.spec.ts
+          rm -f tests/firebase/firestore-debug.log firestore-debug.log tests/firebase/package-lock.json
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add -A
+          git diff --cached --check
+          git commit -m "fix(#137): harden Asia Locations after Spatial cutover"
+          git push origin HEAD:issue-137-asia-location-hardening-post-spatial
