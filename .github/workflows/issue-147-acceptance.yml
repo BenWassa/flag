@@ -21,7 +21,9 @@ jobs:
           distribution: temurin
           java-version: '21'
       - name: Apply focused implementation
-        run: python3 scripts/issue-147-post-137-apply.py
+        run: |
+          python3 scripts/issue-147-post-137-apply.py
+          python3 scripts/issue-147-fix-actions.py
       - run: npm ci
       - name: Static checks
         run: npm run check
@@ -54,6 +56,7 @@ jobs:
         run: |
           rm -f .github/workflows/issue-147-acceptance.yml
           rm -f scripts/issue-147-post-137-apply.py
+          rm -f scripts/issue-147-fix-actions.py
           rm -f tests/firebase/firestore-debug.log firestore-debug.log tests/firebase/package-lock.json
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
