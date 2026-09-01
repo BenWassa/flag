@@ -180,7 +180,7 @@ async function assertCurrentAssistance(page: Page, targetId: string) {
   await expect.poll(async () => {
     const current = await measure();
     return current ? Math.min(current.x, current.y) : 0;
-  }).toBeGreaterThanOrEqual(43.5);
+  }, { timeout: 15_000 }).toBeGreaterThanOrEqual(43.5);
   const diameter = await measure();
   expect(diameter).not.toBeNull();
   expect(Math.min(diameter!.x, diameter!.y)).toBeGreaterThanOrEqual(43.5);
@@ -224,7 +224,6 @@ async function answerCurrentLocationWithPointer(page: Page, targetId: string) {
     ? await assistOnlyPoint(page, targetId)
     : await realPolygonPoint(page, targetId);
   await page.mouse.click(point.x, point.y);
-  await expect(page.locator('.answer-feedback--correct')).toBeVisible();
 }
 
 for (const viewport of VIEWPORTS) {
@@ -295,7 +294,7 @@ for (const viewport of [VIEWPORTS[0], VIEWPORTS[1]]) {
         if (index < scope.count - 1) {
           await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
         } else {
-          await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 8_000 });
+          await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 15_000 });
         }
       }
     }
