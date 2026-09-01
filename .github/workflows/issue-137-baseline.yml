@@ -1,0 +1,80 @@
+name: Issue 137 post-Spatial baseline
+
+on:
+  push:
+    branches: [issue-137-asia-location-hardening-post-spatial]
+
+permissions:
+  contents: write
+
+jobs:
+  baseline:
+    if: ${{ !contains(github.event.head_commit.message, 'record temporary baseline evidence') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Audit pinned Cyprus source features
+        run: |
+          node --input-type=module <<'NODE' > issue-137-source-audit.json
+          import { fetchPinnedSource } from './scripts/lib/pinned-natural-earth.mjs';
+          const pinned = await fetchPinnedSource('countries');
+          const source = pinned.json();
+          const rows = source.features
+            .filter((feature) => /cyprus|akrotiri|dhekelia/i.test(String(feature.properties?.NAME_LONG ?? feature.properties?.NAME ?? feature.properties?.ADMIN ?? '')))
+            .map((feature) => {
+              const p = feature.properties ?? {};
+              const coordinates = feature.geometry?.coordinates ?? [];
+              const countPoints = (value) => Array.isArray(value)
+                ? (typeof value[0] === 'number' ? 1 : value.reduce((sum, part) => sum + countPoints(part), 0))
+                : 0;
+              return {
+                name: p.NAME,
+                nameLong: p.NAME_LONG,
+                admin: p.ADMIN,
+                sovereign: p.SOVEREIGNT,
+                type: p.TYPE,
+                continent: p.CONTINENT,
+                isoA3Eh: p.ISO_A3_EH,
+                adm0A3: p.ADM0_A3,
+                isoA3: p.ISO_A3,
+                sovA3: p.SOV_A3,
+                suA3: p.SU_A3,
+                guA3: p.GU_A3,
+                geometryType: feature.geometry?.type,
+                pointCount: countPoints(coordinates),
+              };
+            });
+          console.log(JSON.stringify({
+            upstream: pinned.manifest.upstream,
+            upstreamCommit: pinned.manifest.upstreamCommit,
+            sourcePath: pinned.source.path,
+            sha256: pinned.source.sha256,
+            rows,
+          }, null, 2));
+          NODE
+          cat issue-137-source-audit.json
+      - name: Run exact-production baseline browser measurements
+        shell: bash
+        run: |
+          set -o pipefail
+          npx playwright test tests/browser/issue-137-baseline.spec.ts --project=chromium --workers=1 | tee issue-137-browser-baseline.log
+      - name: Record temporary evidence on branch
+        run: |
+          mkdir -p docs/open
+          mv issue-137-source-audit.json docs/open/issue-137-source-audit.tmp.json
+          mv issue-137-browser-baseline.log docs/open/issue-137-browser-baseline.tmp.log
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add docs/open/issue-137-source-audit.tmp.json docs/open/issue-137-browser-baseline.tmp.log
+          git commit -m "chore(#137): record temporary baseline evidence"
+          git push
