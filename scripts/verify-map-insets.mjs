@@ -119,75 +119,21 @@ assert.throws(
   'A cluster needing an oversized panel is refused, pointing at a schematic instead.',
 );
 
-/* --- The shipped Levant prototype --- */
+/* --- Asia no longer ships the question-triggered Levant prototype --- */
 
-const [levant] = ASIA_INSETS;
-assert.equal(ASIA_INSETS.length, 1, 'Asia ships exactly the one prototype cluster.');
-assert.deepEqual([...levant.countryIds].sort(), ['ISR', 'LBN', 'PSE']);
-// The panel's SVG scales by the smaller axis, so the honest scale is the min.
-const levantPxPerUnit = Math.min(
-  levant.size.width / levant.source.width,
-  levant.size.height / levant.source.height,
-);
-const levantTouchPx = levant.hitRadius * 2 * levantPxPerUnit;
-assert.ok(
-  levantTouchPx >= 43.99,
-  `Every Levant member reaches the 44 CSS px touch contract inside the panel (got ${levantTouchPx.toFixed(2)}).`,
-);
-assert.deepEqual(
-  levant.marks.map((mark) => mark.countryId).sort(),
-  ['ISR', 'LBN', 'PSE'],
-  'Every member has its own tap anchor.',
-);
-
-/* --- Rendering: shown only for its own question --- */
-
+assert.equal(ASIA_INSETS.length, 0, 'Asia ships no question-triggered inset after #137.');
 const asset = await loadMapAsset('middle-east');
 assert.ok(asset, 'The Middle East scope loads.');
-assert.equal(asset.insets?.length, 1, 'The Middle East scope carries the panel, because it scores every member.');
-
+assert.equal(asset.insets?.length ?? 0, 0, 'The Middle East keeps Lebanon, Israel and Palestine in canonical geography without popup chrome.');
 const southAsia = await loadMapAsset('south-asia');
-assert.equal(southAsia.insets?.length ?? 0, 0, 'A scope that scores none of the members gets no panel.');
-
-const away = buildMapSession(asset, 'learn', 'inset-away', ['SAU']);
-const awayHtml = renderMapSvg(asset, away);
-assert.ok(!awayHtml.includes('data-map-inset'), 'No panel while the question is somewhere else — it is not standing chrome.');
-assert.ok(!awayHtml.includes('map-inset-source'), 'The source outline appears only with its panel.');
-
+assert.equal(southAsia.insets?.length ?? 0, 0, 'South Asia remains inset-free.');
 const near = buildMapSession(asset, 'learn', 'inset-near', ['PSE']);
 const nearHtml = renderMapSvg(asset, near);
-assert.ok(nearHtml.includes('data-map-inset="eastern-mediterranean"'), 'The panel opens when its own member is asked.');
-assert.ok(nearHtml.includes('map-inset-source'), 'The magnified window is outlined in place on the map.');
-assert.ok(nearHtml.includes('aria-label="Eastern Mediterranean, closer view"'), 'The panel is named by its place for assistive technology.');
-
-// The panel must sit outside the gesture surface, or dragging it would pan the map.
-assert.ok(
-  nearHtml.indexOf('data-map-inset') > nearHtml.indexOf('</svg>'),
-  'The panel is a sibling of the gesture surface, so panning and pinching stay on the map.',
-);
-
-// Interaction parity, and no answer leak.
+assert.ok(!nearHtml.includes('data-map-inset'), 'Palestine no longer triggers a question-specific inset.');
+assert.ok(!nearHtml.includes('map-inset-source'), 'No Levant source-window outline is rendered.');
 for (const id of ['LBN', 'ISR', 'PSE']) {
-  assert.ok(
-    new RegExp(`class="map-inset__hit"[^>]*data-id="${id}"[^>]*tabindex="0"`, 's').test(nearHtml)
-    || new RegExp(`<circle\\s+class="map-inset__hit"[\\s\\S]{0,200}?data-id="${id}"[\\s\\S]{0,80}?tabindex="0"`).test(nearHtml),
-    `${id} is keyboard-operable inside the panel.`,
-  );
+  assert.ok(nearHtml.includes(`data-id="${id}"`), `${id} remains represented at its canonical map location.`);
 }
-const insetLabels = [...nearHtml.matchAll(/class="map-inset__hit"[\s\S]{0,240}?aria-label="([^"]+)"/g)].map((match) => match[1]);
-assert.equal(new Set(insetLabels).size, 3, 'Inset keyboard stops have distinct non-answer labels.');
-assert.ok(insetLabels.every((label) => /Selectable inset area \d of 3/.test(label)), 'Inset labels identify position without naming the answer.');
-assert.ok(!nearHtml.includes('aria-label="Palestine"'), 'No surface names an unresolved country.');
-assert.ok(!nearHtml.includes('>Palestine<'), 'The panel label never leaks a member country name.');
-
-// One keyboard stop per country: the open panel owns it, the true location stays tappable.
-for (const id of ['LBN', 'ISR', 'PSE']) {
-  const stops = (nearHtml.match(new RegExp(`data-id="${id}"[^>]*tabindex="0"`, 'g')) ?? []).length;
-  assert.equal(stops, 1, `${id} has exactly one keyboard stop while the panel is open.`);
-  assert.ok((nearHtml.match(new RegExp(`data-id="${id}"`, 'g')) ?? []).length >= 2, `${id} is still answerable in its true place.`);
-}
-// With the panel shut, the mainland copy takes its keyboard stop back.
-assert.equal((awayHtml.match(/data-id="PSE"[^>]*tabindex="0"/g) ?? []).length, 1, 'With no panel, the map keeps the keyboard stop.');
 
 /* --- Presentation is generated, and the frame is a shape not a colour --- */
 
@@ -206,4 +152,4 @@ assert.ok(
   'Windows, anchors and sizes stay derived from generated geometry rather than hand-authored.',
 );
 
-console.log('Map inset verification passed: contract-derived panel size, non-overlapping 44 px surfaces, curriculum-safe refusals, non-leaking labels, target-triggered display and one keyboard stop per country.');
+console.log('Map inset verification passed: generic inset geometry remains guarded while Asia ships no question-triggered Levant inset.');

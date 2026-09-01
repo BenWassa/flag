@@ -52,26 +52,42 @@
     "quantization": 100000,
     "simplificationMethod": "topojson presimplify + planar triangle-area quantile",
     "simplificationQuantile": 0.72,
-    "weightThreshold": 0.001899343520426115,
-    "coordinateCountBefore": 157545,
-    "coordinateCountAfter": 114766
+    "weightThreshold": 0.0018993435204265048,
+    "coordinateCountBefore": 157129,
+    "coordinateCountAfter": 114490
   },
   "adjacency": {
     "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
+  "canonicalSourceGeometryMerges": {
+    "CYP": [
+      {
+        "pattern": "^Northern Cyprus$",
+        "flags": "i",
+        "required": true
+      },
+      {
+        "pattern": "^Cyprus No Mans Area$",
+        "flags": "i",
+        "required": true
+      }
+    ]
+  },
   "boundaryPolicy": {
     "naturalEarthView": "default de-facto",
     "egypt": "canonical Africa-owned EGY; scored only through the overlapping Middle East learning scope",
     "turkey": "canonical Asia-owned TUR with whole-country geometry and complete cross-Europe adjacency",
-    "cyprus": "canonical Asia-owned CYP",
+    "cyprus": "canonical Asia-owned CYP dissolved from pinned source CYP, Northern Cyprus and Cyprus No Mans Area geometry; Akrotiri and Dhekelia remain British sovereign-base context",
     "kazakhstan": "canonical Asia-owned KAZ with whole-country geometry",
     "russia": "canonical Europe-owned RUS rendered as non-scoring Asia context; excluded from the Asia viewport fit only, so trans-antimeridian geometry cannot scale down the canvas every Asian country is measured against; complete adjacency remains global",
     "caucasus": "ARM, AZE and GEO are learner-facing Caucasus and are excluded from Middle East",
     "taiwan": "non-scoring source context under the current 195-country Atlas catalogue",
     "palestineIsrael": "PSE and ISR remain separate canonical scoring identities under the pinned Natural Earth source view",
-    "northernCyprus": "non-scoring source context; no separate Atlas country identity",
-    "cyprusNoMansArea": "non-scoring Natural Earth context inside Cyprus; no separate Atlas country identity",
+    "northernCyprus": "source-derived geometry reconciled into canonical CYP; no separate Atlas country identity",
+    "cyprusNoMansArea": "source-derived UN buffer geometry reconciled into canonical CYP; no separate Atlas country identity",
+    "sovereignBaseAreas": "Akrotiri and Dhekelia remain non-scoring British source context and are not absorbed into CYP",
+    "assistance": "max zoom 8; invisible hit assistance for BHR/BRN/ISR/KWT/LBN/MDV/PSE/QAT/SGP; restrained persistent visual markers only for BHR/BRN/MDV/SGP; no Asia question-triggered inset",
     "indianOceanTerritories": "non-scoring Natural Earth territory context; no separate Atlas country identity",
     "scarboroughReef": "non-scoring Natural Earth disputed-feature context; no separate Atlas country identity",
     "kashmir": "pinned Natural Earth default de-facto boundary view; no handwritten override or additional scoring identity",

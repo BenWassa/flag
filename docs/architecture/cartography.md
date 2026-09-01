@@ -338,3 +338,10 @@ Automated Issue #9 verification covers:
 Artifact visual QA additionally checks portrait and short-landscape full-continent/regional renders for extent, seam quality, retained water restraint, border clarity, islands/callouts, and unobstructed geography.
 
 Before merge recommendation the branch must still be compared/integrated with the then-current `main`, the complete standard CI path rerun, and the exact final CI artifact inspected. Static/browser-emulated or raster artifact review is **not** claimed as physical iPhone/Android device testing.
+
+
+## Canonical Cyprus reconciliation
+
+Atlas still uses one pinned Natural Earth 1:10m country source and one ISO3 identity, `CYP`. Natural Earth's default view splits Northern Cyprus and the Cyprus No Mans Area from the canonical Cyprus feature. The generator therefore dissolves those two pinned source-derived pieces back into canonical `CYP` before either projected-map or spherical-globe simplification. Northern Cyprus does not become a scoring country.
+
+Akrotiri and Dhekelia remain non-scoring British Sovereign Base Area source context; they are not silently assigned to `CYP`. The reconciliation policy lives in `scripts/map-continent-configs.mjs` and is consumed by both canonical generators so Locations, Outlines and Spatial Atlas cannot drift to different Cyprus silhouettes.

@@ -89,3 +89,8 @@ Delete after capture/merge:
 - superseded duplicates.
 
 Issue #160 tracks the mechanical branch cleanup.
+
+
+### Issue #137 — Asia Locations hardening after Spatial cutover
+
+Reimplemented the surviving Asia Locations work from the post-Spatial production baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remains authoritative and unchanged.

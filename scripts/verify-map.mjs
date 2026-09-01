@@ -225,7 +225,11 @@ const firstAnswer = applyMapGuess(twoTarget, createInitialLocationProgress(AFRIC
 twoTarget = advanceMapSession(firstAnswer.session);
 const afterAdvanceHtml = renderMapQuiz(westAsset, twoTarget, null);
 const interactiveAfterAdvance = [...afterAdvanceHtml.matchAll(/data-action="map-answer" data-id="([^"]+)"/g)].map((match) => match[1]);
-assert.ok(!interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries are no longer clickable later in the round.');
+assert.ok(interactiveAfterAdvance.includes(resolvedId), 'Already resolved countries remain clickable later in the round.');
+const previousCountryGuess = applyMapGuess(twoTarget, firstAnswer.progress, resolvedId, 550);
+assert.equal(previousCountryGuess.outcome.correct, false, 'A previously answered country is treated as an ordinary wrong guess for the current target.');
+assert.equal(previousCountryGuess.outcome.misses, 1, 'The previous-country wrong guess increments the current target miss count once.');
+assert.equal(previousCountryGuess.outcome.resolved, false, 'A first Learn miss against a previous country does not resolve the current target.');
 
 let resultSession = buildMapSession(westAsset, 'learn', 'result-round', ['GHA']);
 const answered = applyMapGuess(resultSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'GHA', 600);

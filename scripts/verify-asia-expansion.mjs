@@ -120,6 +120,8 @@ assert.ok(asiaAsset, 'Full Asia map asset loads.');
 assert.ok(asiaAsset.contextCountries?.some((country) => country.countryId === 'EGY'), 'Egypt is context on the full Asia map.');
 assert.ok(asiaAsset.contextCountries?.some((country) => country.countryId === 'RUS'), 'Russia is context on the full Asia map.');
 assert.equal('rivers' in (asiaAsset.water ?? {}), false, 'Asia inherits the global no-rivers policy.');
+assert.equal(asiaAsset.maxZoom, 8, 'Asia exposes its evidence-based zoom ceiling through generic map metadata.');
+assert.deepEqual(middleEastAsset.insets, [], 'Middle East has no question-triggered Levant popup.');
 
 const lakeNames = new Set(ASIA_WATER.lakes?.map((lake) => lake.name));
 assert.ok(lakeNames.has('Lake Baikal'), 'Lake Baikal is retained as useful Asia orientation context.');
@@ -133,7 +135,17 @@ const locatorIds = Object.values(ASIA_GEOMETRY)
   .filter((geometry) => geometry.locator)
   .map((geometry) => geometry.countryId)
   .sort();
-assert.deepEqual(locatorIds, ['BHR', 'MDV', 'SGP'], 'Initial visible locator policy is limited to Bahrain, Maldives and Singapore.');
+assert.deepEqual(locatorIds, [], 'Asia keeps canonical small-country polygons instead of substituting visible locators.');
+const hitAssistIds = Object.values(ASIA_GEOMETRY)
+  .filter((geometry) => geometry.hitAssist)
+  .map((geometry) => geometry.countryId)
+  .sort();
+assert.deepEqual(hitAssistIds, ['BHR', 'BRN', 'ISR', 'KWT', 'LBN', 'MDV', 'PSE', 'QAT', 'SGP']);
+const markerIds = Object.values(ASIA_GEOMETRY)
+  .filter((geometry) => geometry.marker)
+  .map((geometry) => geometry.countryId)
+  .sort();
+assert.deepEqual(markerIds, ['BHR', 'BRN', 'MDV', 'SGP'], 'Only the audited island/split-island set receives a restrained perceptual marker.');
 const calloutIds = Object.values(ASIA_GEOMETRY)
   .filter((geometry) => geometry.callout)
   .map((geometry) => geometry.countryId)
@@ -201,8 +213,19 @@ assert.match(provenance.boundaryPolicy.russia, /Europe-owned RUS/);
 assert.match(provenance.boundaryPolicy.caucasus, /excluded from Middle East/);
 assert.match(provenance.boundaryPolicy.taiwan, /non-scoring source context/);
 assert.match(provenance.boundaryPolicy.kashmir, /no handwritten override/);
+assert.deepEqual(provenance.canonicalSourceGeometryMerges.CYP.map((item) => item.pattern), ['^Northern Cyprus$', '^Cyprus No Mans Area$']);
+assert.match(provenance.boundaryPolicy.cyprus, /Northern Cyprus and Cyprus No Mans Area/);
+assert.match(provenance.boundaryPolicy.sovereignBaseAreas, /Akrotiri and Dhekelia/);
+assert.match(provenance.boundaryPolicy.assistance, /no Asia question-triggered inset/);
 assert.match(provenance.boundaryPolicy.physicalWater, /Caspian requested only if present/);
 
+const globeProvenance = JSON.parse(await readFile('src/data/globe/provenance.json', 'utf8'));
+assert.deepEqual(globeProvenance.canonicalSourceGeometryMerges, provenance.canonicalSourceGeometryMerges, 'Projected and spherical generators publish the same canonical Cyprus source-reconciliation policy.');
+const outlineSource = await readFile('src/data/outlines.ts', 'utf8');
+assert.match(outlineSource, /loadMapAsset/, 'Outlines continue to consume canonical generated map geometry, including corrected CYP.');
+const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
+assert.doesNotMatch(mapRendererSource, /!session\.targets\[countryId\]\?\.resolved/, 'A country resolved earlier in the round remains selectable against a later target.');
+assert.match(mapRendererSource, /data-map-max-zoom=\"\$\{asset\.maxZoom \?\? 5\.5\}\"/, 'The renderer consumes generic asset maxZoom metadata.');
 const loaderSource = await readFile('src/data/maps/index.ts', 'utf8');
 assert.ok(loaderSource.includes("import('./asia.js')"), 'Asia runtime geography is lazy-loaded by continent.');
 const generatorConfig = await readFile('scripts/map-continent-configs.mjs', 'utf8');

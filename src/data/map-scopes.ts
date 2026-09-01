@@ -17,6 +17,8 @@ export interface MapContinentConfig {
   regions: readonly MapScopeConfig[];
   /** Keyed canonical countries rendered as non-scoring context in the parent asset. */
   contextCountryIds?: readonly string[];
+  /** Optional evidence-based zoom ceiling consumed generically by the map runtime. */
+  maxZoom?: number;
 }
 
 export const NORTH_AFRICA_MAP_COUNTRY_IDS = [
@@ -333,6 +335,7 @@ export const ASIA_MAP_CONTINENT_CONFIG: MapContinentConfig = {
   continentId: 'asia',
   scope: ASIA_MAP_SCOPE,
   countryIds: ASIA_MAP_COUNTRY_IDS,
+  maxZoom: 8,
   regions: ASIA_MAP_REGION_CONFIGS,
   // EGY is scored only when Middle East is active; RUS is orientation and
   // complete-neighbour context. Neither changes canonical continent ownership.

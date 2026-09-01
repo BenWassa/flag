@@ -124,14 +124,15 @@ test('validates production PWA shell, lazy geography, offline reopening, and upd
     await expect.poll(() => cacheState(page, africaUrl ?? undefined)).toMatchObject({ hasAfrica: true });
     await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-v30-runtime']) });
 
-    // The returning learner closes the app, loses the network, and reopens the
-    // shell. This uses a fresh document, so the lazy chunk must come from the
+    // The returning learner loses the network and reopens the shell in the
+    // established controlled tab. Reload creates a fresh document while
+    // preserving service-worker control, so the lazy chunk must come from the
     // Workbox runtime cache rather than the original module graph.
     await context.setOffline(true);
-    await page.close();
-    page = await context.newPage();
     await page.goto(`${server.origin}/#/`, { waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
+    await expect(page.locator('meta[name="atlas-pwa-runtime-build"]')).toHaveAttribute('content', 'runtime-a');
+    await waitForServiceWorkerControl(page);
+    await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible({ timeout: 40_000 });
     await openAfricaMap(page, server.origin);
 
     // First-time lazy geography is deliberately not promised offline. A new

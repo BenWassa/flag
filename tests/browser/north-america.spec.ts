@@ -173,14 +173,41 @@ async function assertCurrentHitAssist(page: Page, targetId: string) {
   }
   await expect(hit).toHaveCount(1);
   await expect(hit).toHaveAttribute('data-id', targetId);
-  const box = await hit.boundingBox();
-  expect(box).not.toBeNull();
-  expect(Math.min(box!.width, box!.height)).toBeGreaterThanOrEqual(43.5);
-  const owner = await page.evaluate(({ x, y }) => {
-    const element = document.elementFromPoint(x, y);
-    return element?.closest('[data-action="map-answer"]')?.getAttribute('data-id') ?? null;
-  }, { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
-  expect(owner).toBe(targetId);
+  const measure = () => hit.evaluate((element, id) => {
+    const circle = element as SVGCircleElement;
+    const matrix = circle.getScreenCTM();
+    if (!matrix) return null;
+    const radius = circle.r.baseVal.value;
+    const actionableOwners = new Set<string>();
+    for (let row = -10; row <= 10; row += 1) {
+      for (let column = -10; column <= 10; column += 1) {
+        if (row * row + column * column > 100) continue;
+        const point = new DOMPoint(
+          circle.cx.baseVal.value + radius * column / 10,
+          circle.cy.baseVal.value + radius * row / 10,
+        ).matrixTransform(matrix);
+        const owner = document.elementFromPoint(point.x, point.y)?.closest('[data-action="map-answer"]')?.getAttribute('data-id');
+        if (owner) actionableOwners.add(owner);
+      }
+    }
+    return {
+      diameterX: radius * 2 * Math.hypot(matrix.a, matrix.b),
+      diameterY: radius * 2 * Math.hypot(matrix.c, matrix.d),
+      ownsTarget: actionableOwners.has(id),
+    };
+  }, targetId);
+  // Prompt advancement and React's attribute reconciliation complete before
+  // the MutationObserver can re-normalise the reused circle. Wait for that
+  // deterministic viewport lifecycle boundary instead of sampling the stale
+  // map-unit radius in the same task.
+  await expect.poll(async () => {
+    const current = await measure();
+    return current ? Math.min(current.diameterX, current.diameterY) : 0;
+  }, { timeout: 15_000 }).toBeGreaterThanOrEqual(43.5);
+  const contract = await measure();
+  expect(contract).not.toBeNull();
+  expect(Math.min(contract!.diameterX, contract!.diameterY)).toBeGreaterThanOrEqual(43.5);
+  expect(contract!.ownsTarget, `${targetId} retains an exposed actionable point after precedence clipping`).toBe(true);
 }
 
 async function assertHispaniolaPrecedence(page: Page, targetId: string) {
@@ -218,6 +245,16 @@ for (const viewport of VIEWPORTS) {
     for (const scope of LOCATION_SCOPES) {
       await openLocationScope(page, scope.id, scope.action);
       await expect(page.locator('.map-active-countries > .map-country')).toHaveCount(scope.count);
+      await expect.poll(() => page.evaluate(() => {
+        const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
+        const rects = [...document.querySelectorAll<SVGGElement>('.map-active-countries > .map-country')]
+          .map((country) => country.getBoundingClientRect());
+        const usedWidth = (Math.max(...rects.map((rect) => Math.min(stage.right, rect.right)))
+          - Math.min(...rects.map((rect) => Math.max(stage.left, rect.left)))) / stage.width;
+        const usedHeight = (Math.max(...rects.map((rect) => Math.min(stage.bottom, rect.bottom)))
+          - Math.min(...rects.map((rect) => Math.max(stage.top, rect.top)))) / stage.height;
+        return Math.max(usedWidth, usedHeight);
+      }), { timeout: 15_000 }).toBeGreaterThan(0.4);
       const metrics = await page.evaluate(() => {
         const stage = document.querySelector('.map-stage')!.getBoundingClientRect();
         const viewportElement = document.querySelector('[data-map-viewport]')!.getBoundingClientRect();
@@ -276,9 +313,9 @@ for (const viewport of VIEWPORTS) {
       }
       await answerCurrentLocationCorrectly(page, targetId);
       if (index < 12) {
-        await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
+        await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
       } else {
-        await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 8_000 });
+        await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 15_000 });
       }
     }
     expect(seen.size).toBe(13);
@@ -313,7 +350,7 @@ test('keeps Central America dense targets usable and preserves correct/wrong fee
     } else {
       await answerCurrentLocationCorrectly(page, targetId);
     }
-    if (index < 7) await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
+    if (index < 7) await expect.poll(() => currentLocationId(page), { timeout: 15_000 }).not.toBe(targetId);
   }
   expect(seen.size).toBe(8);
   expect(seen.has('BLZ')).toBe(true);

@@ -203,8 +203,8 @@ export function renderMapSvg(
   const activeInset = interactive && currentTargetId
     ? (asset.insets ?? []).find((inset) => inset.countryIds.includes(currentTargetId)) ?? null
     : null;
-  const isSelectable = (countryId: string): boolean =>
-    interactive && !currentTargetResolved && !session.targets[countryId]?.resolved;
+  const isSelectable = (_countryId: string): boolean =>
+    interactive && !currentTargetResolved;
 
   // While a panel is open it owns the keyboard stop for its members, so a
   // learner tabs each country once. The true location stays tappable.
@@ -223,12 +223,13 @@ export function renderMapSvg(
     const learnWrong = wrongId === geometry.countryId;
     const playWrongClasses = playWrongSelection ? ' map-country--current-wrong map-country--wrong-pulse' : '';
     const classes = `map-country${resolutionClass(state, showFeedback)}${strongCorrect ? ' map-country--current-correct' : ''}${playWrongClasses}${learnWrong ? ' map-country--wrong-pulse' : ''}`;
-    const selectable = interactive && !currentTargetResolved && !state?.resolved;
+    const selectable = interactive && !currentTargetResolved;
     const keyboard = focusable ? ' tabindex="0" role="button" aria-label="Selectable country area"' : '';
     const action = selectable ? ` data-action="map-answer" data-id="${geometry.countryId}"${keyboard}` : '';
     return `
       <g class="${classes}"${action}>
         ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
+        ${geometry.marker ? `<circle class="map-country__marker" cx="${geometry.marker.cx}" cy="${geometry.marker.cy}" r="${geometry.marker.r}" aria-hidden="true" />` : ''}
         ${geometry.locator ? `
           <circle class="map-country__locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />
           ${selectable && withAssistHits ? `<circle class="map-country__locator-hit" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${Math.max(geometry.locator.r, 22)}" data-map-hit data-map-hit-min="${geometry.locator.r}" />` : ''}
@@ -265,6 +266,12 @@ export function renderMapSvg(
       // is a closer view, not a relocation, so the true location stays tappable.
       if (!isSelectable(geometry.countryId)) return [];
       const marks: { r: number; markup: string }[] = [];
+      if (geometry.hitAssist) {
+        marks.push({
+          r: geometry.hitAssist.r,
+          markup: `<circle class="map-country__assisted-hit" cx="${geometry.hitAssist.cx}" cy="${geometry.hitAssist.cy}" r="${Math.max(geometry.hitAssist.r, 22)}" data-map-hit data-map-hit-min="${geometry.hitAssist.r}" />`,
+        });
+      }
       if (geometry.locator) {
         marks.push({
           r: geometry.locator.r,
@@ -295,7 +302,7 @@ export function renderMapSvg(
         data-map-viewport
         data-map-session="${session.id}"
         data-map-viewbox="${asset.viewBox}"
-        data-map-max-zoom="5.5"
+        data-map-max-zoom="${asset.maxZoom ?? 5.5}"
         ${focus ? `data-map-focus="${focusData}"` : ''}
       >
         <svg class="map-svg" style="--map-canvas-width: ${canvasWidth}px" viewBox="${asset.viewBox}" role="group" aria-labelledby="${labelledBy}" preserveAspectRatio="none">

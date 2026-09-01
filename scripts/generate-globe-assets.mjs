@@ -39,10 +39,10 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { gzipSync } from 'node:zlib';
 import { presimplify, quantile, simplify } from 'topojson-simplify';
 import { topology } from 'topojson-server';
-import { feature } from 'topojson-client';
+import { feature, merge } from 'topojson-client';
 import { fetchPinnedSource } from './lib/pinned-natural-earth.mjs';
 import { encodePolygons } from './lib/globe-encoding.mjs';
-import { MAP_GENERATION_CONFIGS } from './map-continent-configs.mjs';
+import { CANONICAL_SOURCE_GEOMETRY_MERGES, MAP_GENERATION_CONFIGS } from './map-continent-configs.mjs';
 
 const OUT_DIR = new URL('../src/data/globe/', import.meta.url);
 
@@ -78,6 +78,49 @@ function resolveCountryId(properties, allowedIds) {
     if (allowedIds.has(id)) return id;
   }
   return null;
+}
+
+
+function sourceFeatureName(sourceFeature) {
+  const properties = sourceFeature?.properties ?? {};
+  return String(
+    properties.ADMIN ?? properties.NAME ?? properties.NAME_EN
+    ?? properties.SOVEREIGNT ?? properties.GEOUNIT ?? properties.SUBUNIT ?? '',
+  ).trim();
+}
+
+function reconcileCanonicalSourceFeatures(features, allowedIds) {
+  const kept = features.filter((item) => resolveCountryId(item.properties, allowedIds));
+  const byId = new Map();
+  for (const sourceFeature of kept) {
+    const id = resolveCountryId(sourceFeature.properties, allowedIds);
+    const parts = byId.get(id) ?? [];
+    parts.push(sourceFeature);
+    byId.set(id, parts);
+  }
+
+  for (const [countryId, specs] of Object.entries(CANONICAL_SOURCE_GEOMETRY_MERGES)) {
+    const canonicalParts = byId.get(countryId) ?? [];
+    if (!canonicalParts.length) throw new Error(`Natural Earth is missing canonical globe geometry for ${countryId}.`);
+    const parts = [...canonicalParts];
+    for (const spec of specs) {
+      const matcher = new RegExp(spec.pattern, spec.flags ?? 'i');
+      const matches = features.filter((sourceFeature) => matcher.test(sourceFeatureName(sourceFeature)));
+      if (spec.required && matches.length !== 1) {
+        throw new Error(`${countryId} globe source reconciliation ${spec.pattern} expected exactly one feature, found ${matches.length}.`);
+      }
+      for (const match of matches) if (!parts.includes(match)) parts.push(match);
+    }
+    const rawTopology = topology({ parts: { type: 'FeatureCollection', features: parts } });
+    const reconciledGeometry = merge(rawTopology, rawTopology.objects.parts.geometries);
+    const primary = canonicalParts[0];
+    const replacement = { ...primary, geometry: reconciledGeometry };
+    for (let index = kept.length - 1; index >= 0; index -= 1) {
+      if (resolveCountryId(kept[index].properties, allowedIds) === countryId) kept.splice(index, 1);
+    }
+    kept.push(replacement);
+  }
+  return kept;
 }
 
 async function readCanonicalCountries() {
@@ -378,7 +421,7 @@ async function main() {
   console.log(`  sha256 ${pinned.source.sha256} (${pinned.bytes.length} bytes)`);
   const source = pinned.json();
 
-  const kept = source.features.filter((item) => resolveCountryId(item.properties, allowedIds));
+  const kept = reconcileCanonicalSourceFeatures(source.features, allowedIds);
   console.log(`Source features: ${source.features.length}, resolved to canonical ids: ${kept.length}`);
 
   const provenance = {
@@ -389,6 +432,7 @@ async function main() {
     sourceSha256: pinned.source.sha256,
     sourceVersion: pinned.source.version,
     identityPolicy: ID_CANDIDATES,
+    canonicalSourceGeometryMerges: CANONICAL_SOURCE_GEOMETRY_MERGES,
     encoding: 'delta-varint',
     framingPolicySource: 'scripts/map-continent-configs.mjs',
     framingExclusions: Object.fromEntries(
