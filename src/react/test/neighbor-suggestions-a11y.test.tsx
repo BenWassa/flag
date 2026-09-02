@@ -62,7 +62,7 @@ describe('Neighbours suggestion accessibility', () => {
     const atlasActions = renderSuggestions();
     const user = userEvent.setup();
     const input = screen.getByLabelText('Country');
-    const submit = screen.getByRole('button', { name: 'Submit', exact: true });
+    const submit = screen.getByRole('button', { name: 'Submit' });
     const kenya = within(screen.getByRole('group', { name: 'Country suggestions' })).getByRole('button', { name: 'Kenya' });
 
     input.focus();
