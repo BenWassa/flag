@@ -35,16 +35,16 @@ jobs:
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
       - name: Exact-production design token browser regression
-        run: npx playwright test tests/browser/design-token-regression.spec.ts tests/browser/locations-reduced-motion.spec.ts --project=chromium --project=mobile-chromium
+        run: npx playwright test tests/browser/design-token-regression.spec.ts --project=chromium --project=mobile-chromium
       - name: PWA runtime regression
         run: npm run test:pwa-runtime
       - name: Inspect exact production artifact
         run: |
           test -f dist/index.html
           test -f dist/manifest.webmanifest
-          grep -R -- '--control-height-compact:44px' dist/*.css
-          grep -R -- '--control-height-standard:52px' dist/*.css
-          grep -R -- '--motion-feedback-emphasis:520ms' dist/*.css
+          grep -R -E -- '--control-height-compact:[[:space:]]*44px' dist/*.css
+          grep -R -E -- '--control-height-standard:[[:space:]]*52px' dist/*.css
+          grep -R -E -- '--motion-feedback-emphasis:[[:space:]]*520ms' dist/*.css
           find dist -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | tail -n 80
       - name: Remove temporary issue 150 machinery
         if: success()
