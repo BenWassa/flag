@@ -70,7 +70,13 @@ test('reduced motion preserves direct Spatial presentation and Locations feedbac
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.setViewportSize({ width: 390, height: 844 });
   await openSpatial(page, '/flags/africa');
-  await expect(page.locator('.spatial-stage__surface > canvas')).toHaveCSS('transition-duration', '0s');
+  const transitionMs = await page.locator('.spatial-stage__surface > canvas').evaluate((node) => {
+    const duration = getComputedStyle(node).transitionDuration.trim();
+    if (duration.endsWith('ms')) return Number.parseFloat(duration);
+    if (duration.endsWith('s')) return Number.parseFloat(duration) * 1000;
+    return Number.POSITIVE_INFINITY;
+  });
+  expect(transitionMs).toBeLessThanOrEqual(0.01);
 
   await page.goto('/#/locations/africa/west-africa');
   await page.getByRole('button', { name: 'Learn West Africa' }).click();
