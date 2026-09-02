@@ -1,0 +1,48 @@
+name: Issue 151 audit
+
+on:
+  push:
+    branches: [issue-151-retired-css-cleanup]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Confirm baseline and source selector evidence
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "HEAD=$(git rev-parse HEAD)"
+          echo "PARENT=$(git rev-parse HEAD^)"
+          echo "--- production TS/TSX hits ---"
+          git grep -nE 'progress-achievement-|mastery-list|ledger-|mini-ledger|filter-tab|status-chip--mastered|status-text--mastered|map-viewport-control|test-advance|text-icon-button|launcher-header__badge' -- 'src/**/*.ts' 'src/**/*.tsx' || true
+          echo "--- stylesheet hits ---"
+          git grep -nE 'progress-achievement-|mastery-list|ledger-|mini-ledger|filter-tab|status-chip--mastered|status-text--mastered|map-viewport-control|test-advance|text-icon-button|launcher-header__badge' -- 'src/styles/*.css' || true
+      - name: Build exact production artifact
+        run: npm run build
+      - name: Inspect non-CSS production artifact selector references
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "--- dist non-CSS hits ---"
+          find dist -type f ! -name '*.css' -print0 | xargs -0 grep -nE 'progress-achievement-|mastery-list|ledger-|mini-ledger|filter-tab|status-chip--mastered|status-text--mastered|map-viewport-control|test-advance|text-icon-button|launcher-header__badge' || true
+          echo "--- emitted CSS hits ---"
+          find dist -type f -name '*.css' -print0 | xargs -0 grep -oE 'progress-achievement-[A-Za-z0-9_-]*|mastery-list|ledger-[A-Za-z0-9_-]*|mini-ledger[A-Za-z0-9_-]*|filter-tab[A-Za-z0-9_-]*|status-chip--mastered|status-text--mastered|map-viewport-control[A-Za-z0-9_-]*|test-advance|text-icon-button|launcher-header__badge' | sort | uniq -c || true
+      - name: Record relevant source blocks
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "--- Launcher badge context ---"
+          grep -n -C 4 'launcher-header__badge' src/react/components/Launcher.tsx || true
+          echo "--- styles.css candidate context ---"
+          grep -n -C 4 -E 'mini-ledger|status-text--mastered|status-chip--mastered|map-viewport-control|test-advance|text-icon-button' src/styles/styles.css || true
+          echo "--- atlas-theme.css candidate context ---"
+          grep -n -C 6 -E 'progress-achievement-|mastery-list|ledger-|mini-ledger|filter-tab|status-chip--mastered|status-text--mastered|map-viewport-control|test-advance|text-icon-button|launcher-header__badge' src/styles/atlas-theme.css || true
