@@ -56,8 +56,11 @@ export function LocationQuizScreen({ asset, session, lastWrongCountryId }: { ass
   if (!targetId || !target) return <main className="page"><h1 tabIndex={-1} data-autofocus>Map round unavailable</h1><button className="button" onClick={actions.exitRound}>Back</button></main>;
   const state = session.targets[targetId];
   const continent = session.scope.id ? getMapContinentConfigForScope(session.scope.id)?.scope.label ?? session.scope.label : session.scope.label;
-  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, continent, lastWrongCountryId ? COUNTRY_BY_ID.get(lastWrongCountryId)?.name : undefined);
   const lastAttempt = session.attempts.at(-1);
+  const lastLearnWrong = session.mode === 'learn' && lastAttempt?.targetCountryId === targetId && !lastAttempt.correct
+    ? COUNTRY_BY_ID.get(lastAttempt.selectedCountryId)?.name
+    : undefined;
+  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, continent, lastLearnWrong);
   const currentPlayAttempt = session.mode === 'test' && state?.resolved && lastAttempt?.targetCountryId === targetId && lastAttempt.resolved ? lastAttempt : undefined;
   const mapLabel = session.scope.kind === 'continent' ? `${continent} country map` : `${continent} map with ${session.scope.label} active`;
   return <main className="page page--map-quiz">

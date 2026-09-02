@@ -448,6 +448,17 @@ export class AppStore {
     return result.outcome;
   }
 
+  /**
+   * Clears only the transient Learn wrong-answer highlight. The guarded id
+   * prevents an older feedback timer from clearing a newer wrong guess; the
+   * attempt, target misses, evidence ledger and last outcome remain intact.
+   */
+  clearMapWrongFeedback(countryId: string): boolean {
+    if (this.mapLastWrongCountryId !== countryId) return false;
+    this.mapLastWrongCountryId = null;
+    return true;
+  }
+
   advanceMap(): MapSessionResult | null {
     if (!this.mapSession) return null;
     const completed = mapSessionIsComplete(this.mapSession);
