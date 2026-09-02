@@ -261,8 +261,8 @@ for (const config of AFRICA_MAP_REGION_CONFIGS) {
 }
 const westHomeHtml = renderMapHome(emptyAfricaProgress, westAsset.scope, mapAchievements, true);
 assert.ok(westHomeHtml.includes('16 countries'), 'West Africa map home remains independently drillable.');
-assert.ok(westHomeHtml.includes('aria-label="Play West Africa"'), 'West Africa plays straight from its row.');
-assert.ok(westHomeHtml.includes('aria-label="Play All Africa"'), 'The whole continent keeps its own row on a region route.');
+assert.ok(westHomeHtml.includes('aria-labelledby="scope-locations-west-africa-action scope-locations-west-africa-label scope-locations-west-africa-count scope-locations-west-africa-progress"'), 'West Africa plays straight from its content-named row.');
+assert.ok(westHomeHtml.includes('aria-labelledby="scope-locations-africa-action scope-locations-africa-label scope-locations-africa-count scope-locations-africa-progress"'), 'The whole continent keeps its own content-named row on a region route.');
 assert.equal(westHomeHtml.includes('Selected'), false, 'The launcher no longer models a selected region.');
 for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
   assert.equal(westHomeHtml.includes(deletedSurface), false, `The pre-round launcher does not restore deleted ${deletedSurface} UI.`);

@@ -22,7 +22,14 @@ function ScopeRow({ domain, scope, stats, unitLabel, variant, domainMastered, co
   const actions = useAtlasActions();
   const id = scope.id ?? '';
   const label = variant === 'continent' ? `All ${scope.label}` : scope.label;
-  const rowClass = ['region-row', variant === 'continent' ? 'region-row--continent' : '', complete ? 'region-row--complete' : ''].filter(Boolean).join(' ');
+  const stateLabel = complete ? 'Complete' : domainMastered ? 'Mastered' : null;
+  const nameId = `scope-${domain}-${id}`;
+  const rowClass = [
+    'region-row',
+    variant === 'continent' ? 'region-row--continent' : '',
+    domainMastered ? 'region-row--mastered' : '',
+    complete ? 'region-row--complete' : '',
+  ].filter(Boolean).join(' ');
   return (
     <div className={rowClass}>
       <button
@@ -32,15 +39,24 @@ function ScopeRow({ domain, scope, stats, unitLabel, variant, domainMastered, co
         data-domain={domain}
         data-id={id}
         data-scope-id={id}
-        aria-label={`Play ${label}`}
+        aria-labelledby={[
+          `${nameId}-action`,
+          `${nameId}-label`,
+          stateLabel ? `${nameId}-state` : '',
+          `${nameId}-count`,
+          stats.due > 0 ? `${nameId}-due` : '',
+          `${nameId}-progress`,
+        ].filter(Boolean).join(' ')}
         onClick={(event) => id && actions.playScope(domain, id, event.currentTarget)}
       >
+        <span className="visually-hidden" id={`${nameId}-action`}>Play</span>
         <span className="region-row__identity">
-          <strong>{label}{domainMastered ? <span className="visually-hidden">, Mastered</span> : null}</strong>
+          <strong id={`${nameId}-label`}>{label}</strong>
+          {stateLabel ? <span className="region-row__state" id={`${nameId}-state`}>{stateLabel}</span> : null}
         </span>
-        <span className="region-row__count">{stats.total} {unitLabel}</span>
-        {stats.due > 0 ? <span className="region-row__evidence">{stats.due} due</span> : null}
-        <span className="region-row__progress"><ProgressStrip stats={stats} /></span>
+        <span className="region-row__count" id={`${nameId}-count`}>{stats.total} {unitLabel}</span>
+        {stats.due > 0 ? <span className="region-row__evidence" id={`${nameId}-due`}>{stats.due} due</span> : null}
+        <span className="region-row__progress"><ProgressStrip stats={stats} id={`${nameId}-progress`} /></span>
       </button>
     </div>
   );

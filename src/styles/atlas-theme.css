@@ -383,6 +383,14 @@ body { letter-spacing: -.006em; }
 
 .region-row--continent .region-row__identity strong { font-size: 17px; }
 
+/* Region × domain Mastery is durable purple prestige, but remains quieter than
+   complete-region gold. The word is the non-colour cue; the row needs no
+   decorative star, Crown or badge to repeat the same state. */
+.region-row--mastered:not(.region-row--complete) {
+  border-color: color-mix(in srgb, var(--mastery) 52%, var(--line));
+  box-shadow: inset 3px 0 0 var(--mastery), var(--depth-tile);
+}
+
 /* Every supported domain in this region has earned its perfect-run mastery —
    the region itself is complete. Restrained gold border only, never a fill,
    per the gold-usage rule (reserved for completeness, not ordinary state). */
@@ -409,6 +417,10 @@ body { letter-spacing: -.006em; }
 .region-row__identity {
   grid-column: 1;
   grid-row: 1;
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 8px;
 }
 
 .region-row__count {
@@ -421,9 +433,22 @@ body { letter-spacing: -.006em; }
 }
 
 .region-row__identity strong {
+  min-width: 0;
   font-size: 16px;
   font-weight: 780;
   letter-spacing: -.02em;
+}
+
+.region-row__state {
+  flex: 0 0 auto;
+  color: var(--mastery);
+  font-size: 11px;
+  font-weight: 760;
+  letter-spacing: .01em;
+}
+
+.region-row--complete .region-row__state {
+  color: color-mix(in srgb, var(--prestige) 72%, var(--text));
 }
 
 .region-row__evidence {

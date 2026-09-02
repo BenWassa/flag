@@ -198,13 +198,13 @@ assert.ok(
 
 const outlineAchievements = createInitialAchievementState();
 const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, outlineAchievements, true);
-assert.ok(homeHtml.includes('aria-label="Play All Africa"') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
+assert.ok(homeHtml.includes('aria-labelledby="scope-outlines-africa-action scope-outlines-africa-label scope-outlines-africa-count scope-outlines-africa-progress"') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
 assert.equal(/\b\d+ regions\b/.test(homeHtml), false, 'Africa outline launcher omits its redundant region summary.');
 assert.ok(homeHtml.includes('data-id="west-africa"'), 'Africa outline launcher lists all regional drills without a separate section heading.');
 assert.ok(homeHtml.includes('data-domain="outlines"'), 'Outline regions must route through the shared domain router.');
 const westHomeHtml = renderOutlineHome(outlineProgress, westScope, outlineAchievements, true);
-assert.ok(westHomeHtml.includes('aria-label="Play West Africa"'), 'Each outline region plays straight from its row.');
-assert.ok(westHomeHtml.includes('aria-label="Play All Africa"'), 'The whole outline continent keeps its own row.');
+assert.ok(westHomeHtml.includes('aria-labelledby="scope-outlines-west-africa-action scope-outlines-west-africa-label scope-outlines-west-africa-count scope-outlines-west-africa-progress"'), 'Each outline region plays straight from its content-named row.');
+assert.ok(westHomeHtml.includes('aria-labelledby="scope-outlines-africa-action scope-outlines-africa-label scope-outlines-africa-count scope-outlines-africa-progress"'), 'The whole outline continent keeps its own content-named row.');
 assert.equal(westHomeHtml.includes('Selected'), false, 'The outline launcher models no separate selection step.');
 for (const deletedSurface of ['mini-ledger', 'stat-legend', 'map-guide', 'map-legend']) {
   assert.equal(westHomeHtml.includes(deletedSurface), false, `Outline launchers do not restore deleted ${deletedSurface} UI.`);
