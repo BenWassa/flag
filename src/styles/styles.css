@@ -577,10 +577,7 @@ button:focus-visible,
   .text-icon-button span { display: none; }
   .text-icon-button {
     width: 44px;
-    padding: 0; }
-  .text-icon-button:active {
-    transform: translateY(1px);
-    background: var(--surface-subtle);
+    padding: 0;
   }
 }
 
