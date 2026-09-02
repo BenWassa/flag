@@ -3,6 +3,8 @@ name: Issue 151 audit
 on:
   push:
     branches: [issue-151-retired-css-cleanup]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
