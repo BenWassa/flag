@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   cleanup:
-    if: github.event.head_commit.message == 'Start #151 post-merge branch cleanup'
+    if: github.event.head_commit.message == 'Start issue 151 post-merge branch cleanup'
     runs-on: ubuntu-latest
     env:
       GH_TOKEN: ${{ github.token }}
