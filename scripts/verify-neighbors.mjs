@@ -140,7 +140,10 @@ assert.ok(html.includes('id="neighbor-country-input"'));
 assert.ok(html.includes('data-autofocus="true"'));
 assert.ok(html.includes('enterKeyHint="go"'));
 assert.ok(html.includes('autoComplete="off"'));
-assert.ok(html.includes('aria-autocomplete="list"'));
+assert.ok(!html.includes('aria-autocomplete='), 'The labelled input does not claim an incomplete ARIA combobox contract.');
+assert.ok(!html.includes('aria-controls="neighbor-suggestions"'), 'The input does not claim ownership of a listbox it does not manage.');
+assert.ok(html.includes('role="group" aria-label="Country suggestions"'), 'Suggestions are exposed as a labelled group of ordinary controls.');
+assert.ok(!html.includes('role="listbox"') && !html.includes('role="option"'), 'No partial listbox/option semantics remain.');
 assert.ok(html.includes('<strong>0</strong> neighbours found'), 'Initial UI shows zero completed neighbours.');
 assert.ok(
   !html.includes('of 3'),
@@ -181,4 +184,4 @@ assert.equal(regeneration.status, 0, regeneration.stderr || 'Neighbor fixture re
 const fixtureAfter = await readFile('src/data/neighbors/africa.ts', 'utf8');
 assert.equal(fixtureAfter, fixtureBefore, 'Regenerating from unchanged Issue #9 topology is byte-stable.');
 
-console.log('Neighbours verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, mobile autocomplete, storage, routes, and byte-stable regeneration.');
+console.log('Neighbours verification passed: topology fixture, difficult cases, aliases, attempt accounting, mastery isolation, accessible mobile suggestions, storage, routes, and byte-stable regeneration.');
