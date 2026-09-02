@@ -169,6 +169,11 @@ assert.equal(
   false,
   'Home no longer selects geography directly.',
 );
+assert.equal(
+  screens.home.includes('<small>World</small>'),
+  false,
+  'Worldwide support is the baseline, so Home mode choices carry progress rather than four redundant World labels.',
+);
 // The domain index is the continent list for exactly one domain.
 assert.equal(
   (screens.flagsIndex.match(/<button class="continent-row__open"/g) ?? []).length,

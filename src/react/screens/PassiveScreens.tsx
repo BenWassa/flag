@@ -63,7 +63,7 @@ export function HomeScreen({ ledgers, achievements, persisting }: { ledgers: Pro
           const summary = buildDomainProgressSummary(ledgers, domain);
           return <button className="atlas-card" type="button" onClick={() => actions.openDomain(domain)} key={domain}>
             <span className="atlas-card__mark" aria-hidden="true"><DomainIcon domain={domain} /></span>
-            <span className="atlas-card__body"><span className="atlas-card__identity"><strong>{summary.label}</strong><small>{domainCoverageLabel(summary)}</small></span><ProgressStrip stats={statsFor(summary)} /></span>
+            <span className="atlas-card__body"><span className="atlas-card__identity"><strong>{summary.label}</strong></span><ProgressStrip stats={statsFor(summary)} /></span>
             <span className="atlas-card__chevron" aria-hidden="true"><Icon name="chevron" /></span>
           </button>;
         })}
