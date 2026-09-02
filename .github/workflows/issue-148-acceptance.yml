@@ -1,0 +1,42 @@
+name: Issue 148 exact-production acceptance
+
+on:
+  push:
+    branches:
+      - issue-148-locations-reduced-motion-feedback
+
+permissions:
+  contents: write
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Full repository test gate
+        run: npm test
+      - name: Install exact browser
+        run: npx playwright install --with-deps chromium
+      - name: Locations feedback browser matrix
+        run: npx playwright test tests/browser/locations-reduced-motion.spec.ts --project=chromium --project=mobile-chromium
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime
+      - name: Inspect exact production artifact
+        run: |
+          node scripts/verify-vite-build.mjs
+          find dist -maxdepth 2 -type f -print | sort
+          du -sh dist
+      - name: Remove temporary acceptance workflow
+        if: success()
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git rm .github/workflows/issue-148-acceptance.yml
+          git commit -m "Remove issue 148 acceptance workflow"
+          git push
