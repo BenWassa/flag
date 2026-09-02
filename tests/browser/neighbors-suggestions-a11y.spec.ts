@@ -10,9 +10,9 @@ async function openNeighbours(page: Page) {
 }
 
 async function showKenyaSuggestion(page: Page) {
-  const input = page.getByLabel('Country');
+  const input = page.getByRole('searchbox', { name: 'Country', exact: true });
   await input.fill('Ken');
-  const suggestion = page.getByRole('group', { name: 'Country suggestions' }).getByRole('button', { name: 'Kenya', exact: true });
+  const suggestion = page.getByRole('group', { name: 'Country suggestions', exact: true }).getByRole('button', { name: 'Kenya', exact: true });
   await expect(suggestion).toBeVisible();
   return { input, suggestion };
 }
