@@ -125,15 +125,13 @@ body { letter-spacing: -.006em; }
   .world-crown p { text-align: left; }
 }
 
-.icon-button,
-.text-icon-button {
+.icon-button {
   background: var(--surface);
   border-color: var(--line);
   box-shadow: 0 1px 2px rgba(16, 19, 24, .035);
 }
 
-.icon-button:active,
-.text-icon-button:active {
+.icon-button:active {
   transform: translateY(1px);
   background: var(--surface-subtle);
 }
@@ -192,9 +190,6 @@ body { letter-spacing: -.006em; }
 
 .continent-list,
 .region-list,
-.mini-ledger,
-.ledger-list,
-.mastery-list,
 .mistake-list { border-top: 0; }
 
 .page--tile-index .continent-list {
@@ -466,22 +461,6 @@ body { letter-spacing: -.006em; }
 
 .launcher-header__icon .ui-icon { width: 22px; height: 22px; }
 
-.screen-title__row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-/* Placeholder slot only — reserves size/position for the future continent
-   crest badge (greyscale until earned, full colour on completion). No art yet. */
-.launcher-header__badge {
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-  border: 1px dashed var(--line-strong);
-  border-radius: var(--radius-sm);
-}
-
 .launcher__learn {
   min-height: 50px;
   margin-top: 12px;
@@ -499,7 +478,6 @@ body { letter-spacing: -.006em; }
 /* Ordinary progress is always Atlas Blue — purple/gold are reserved for
    earned region/domain Mastery and region/continent/world completion. */
 .status-strip__cleared { background: var(--action); }
-.status-text--mastered { color: var(--action); }
 
 .quiz-shell { width: min(100%, 860px); }
 .quiz-header { min-height: 54px; }
@@ -653,16 +631,13 @@ body { letter-spacing: -.006em; }
 
 .result-statline span { padding: 13px 14px; }
 
-.mastery-list,
-.mistake-list,
-.ledger-list {
+.mistake-list {
   display: grid;
   gap: 7px;
 }
 
 .mastery-row,
-.mistake-row,
-.ledger-row {
+.mistake-row {
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -677,7 +652,6 @@ body { letter-spacing: -.006em; }
    the .mastery-row/.mistake-row card treatment above — bring it in line so
    the same "mastered/missed this round" content doesn't look like two
    different products depending on which domain produced it. */
-.mini-ledger__row,
 .outline-mistake-row {
   margin-bottom: 7px;
   padding: 9px 12px;
@@ -688,19 +662,7 @@ body { letter-spacing: -.006em; }
   box-shadow: 0 1px 2px rgba(16, 19, 24, .025);
 }
 
-.mini-ledger__row:last-child,
 .outline-mistake-row:last-child { margin-bottom: 0; }
-
-.filter-tab:active { transform: translateY(1px); }
-
-.progress-achievement-list { margin-top: 10px; }
-.progress-achievement-row { align-items: center; }
-.progress-achievement-row--complete { border-color: color-mix(in srgb, var(--prestige) 58%, var(--line)); }
-.progress-achievement-domains { display: flex; gap: 5px; color: var(--text-muted); }
-.progress-achievement-domain { display: inline-flex; color: var(--text-muted); }
-.progress-achievement-domain--earned { color: var(--mastery); }
-.progress-achievement-status { color: var(--text-muted); font-size: 12px; font-weight: 700; }
-.progress-achievement-row--complete .progress-achievement-status { color: var(--prestige); }
 
 /* Neighbours' round-complete summary used a bare heading instead of the
    scored-hero card every other domain's results screen gives its headline
@@ -761,7 +723,6 @@ body { letter-spacing: -.006em; }
   .answer-button:not(:disabled):active,
   .page--tile-index .continent-row:active,
   .icon-button:active,
-  .text-icon-button:active,
   .region-row__open:active,
   .page--tile-index .continent-row__open:active {
     transform: none;

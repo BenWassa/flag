@@ -142,33 +142,6 @@
 
 /* Controls occupy their own toolbar row. They never overlay or intercept
    country geography, including Madagascar/Mauritius at full-continent fit. */
-.map-viewport-controls {
-  min-height: 50px;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 6px;
-  padding: 3px 6px;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-}
-
-.map-viewport-control {
-  min-width: 48px;
-  height: 44px;
-  display: inline-grid;
-  place-items: center;
-  padding: 0 8px;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.map-viewport-control:hover { background: var(--track); }
-.map-viewport-control:focus-visible { outline: 2px solid var(--action); outline-offset: 2px; }
-.map-viewport-control--label { min-width: 56px; font-size: 11px; font-weight: 750; }
 
 /* Issue 113 — cluster inset panel.
 
@@ -266,10 +239,4 @@
 
   .map-coastline,
   .map-shared-boundary { stroke: CanvasText; }
-
-  .map-viewport-control {
-    border-color: ButtonText;
-    background: ButtonFace;
-    color: ButtonText;
-  }
 }
