@@ -1,0 +1,292 @@
+name: Issue 150 implementation and acceptance
+
+on:
+  push:
+    branches:
+      - issue-150-motion-control-tokens
+
+permissions:
+  contents: write
+
+jobs:
+  acceptance:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-150-motion-control-tokens
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Apply focused issue 150 changes
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import json
+
+          def replace(path, old, new):
+              p = Path(path)
+              text = p.read_text()
+              if old not in text:
+                  raise SystemExit(f'missing expected text in {path}: {old[:80]!r}')
+              p.write_text(text.replace(old, new))
+
+          theme = Path('src/styles/atlas-theme.css')
+          text = theme.read_text()
+          marker = '  --radius-hero: 24px;\n'
+          tokens = '''  --radius-hero: 24px;\n  /* Small semantic geometry/motion scale. Camera travel and reading dwells stay\n     in their owning state modules rather than becoming generic CSS motion. */\n  --control-height-compact: 44px;\n  --control-height-standard: 52px;\n  --motion-press: 100ms;\n  --motion-ui: 160ms;\n  --motion-feedback-emphasis: 520ms;\n  --ease-press: ease-out;\n  --ease-ui: ease-out;\n  --ease-feedback: ease-out;\n'''
+          if marker not in text:
+              raise SystemExit('atlas-theme token insertion point missing')
+          text = text.replace(marker, tokens, 1)
+          text = text.replace('  min-height: 52px;\n  border-radius: var(--radius-md);', '  min-height: var(--control-height-standard);\n  border-radius: var(--radius-md);', 1)
+          text = text.replace('transition: background-color 120ms ease, border-color 120ms ease, box-shadow 100ms ease, transform 100ms ease;', 'transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), box-shadow var(--motion-press) var(--ease-press), transform var(--motion-press) var(--ease-press);')
+          text = text.replace('transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease, box-shadow 90ms ease, transform 90ms ease;', 'transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui), box-shadow var(--motion-press) var(--ease-press), transform var(--motion-press) var(--ease-press);')
+          text = text.replace('.round-score__value { transition: color 120ms ease; }', '.round-score__value { transition: color var(--motion-ui) var(--ease-ui); }')
+          text = text.replace('transition: background-color 140ms ease, color 140ms ease;', 'transition: background-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);')
+          theme.write_text(text)
+
+          styles = Path('src/styles/styles.css')
+          text = styles.read_text()
+          text = text.replace('min-width: 44px;\n  min-height: 44px;', 'min-width: var(--control-height-compact);\n  min-height: var(--control-height-compact);')
+          text = text.replace('width: 44px;\n  height: 44px;', 'width: var(--control-height-compact);\n  height: var(--control-height-compact);')
+          text = text.replace('transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;', 'transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui), transform var(--motion-press) var(--ease-press);')
+          text = text.replace('transition: background-color 160ms ease, color 160ms ease;', 'transition: background-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);')
+          text = text.replace('transition: border-color 160ms ease, background-color 160ms ease;', 'transition: border-color var(--motion-ui) var(--ease-ui), background-color var(--motion-ui) var(--ease-ui);')
+          styles.write_text(text)
+
+          spatial = Path('src/styles/spatial.css')
+          text = spatial.read_text()
+          text = text.replace('transition: opacity 160ms ease;', 'transition: opacity var(--motion-ui) var(--ease-ui);')
+          text = text.replace('  min-height: 34px;\n  padding: 6px 12px;', '  min-height: var(--control-height-compact);\n  padding: 6px 12px;')
+          text = text.replace('  cursor: pointer;\n}\n\n.spatial-chip:disabled', '  cursor: pointer;\n  transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);\n}\n\n.spatial-chip:disabled', 1)
+          text = text.replace('  min-height: 46px;\n  padding: 8px var(--space-3);', '  min-height: var(--control-height-standard);\n  padding: 8px var(--space-3);')
+          text = text.replace('  text-align: start;\n  cursor: pointer;\n}\n\n.spatial-mode__mark', '  text-align: start;\n  cursor: pointer;\n  transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);\n}\n\n.spatial-mode__mark', 1)
+          spatial.write_text(text)
+
+          neighbors = Path('src/styles/neighbors.css')
+          text = neighbors.read_text()
+          text = text.replace('.neighbor-none { min-height: 44px;', '.neighbor-none { min-height: var(--control-height-compact);')
+          text = text.replace('  min-height: 50px;\n  border: 1px solid var(--line-strong);', '  min-height: var(--control-height-standard);\n  border: 1px solid var(--line-strong);', 1)
+          text = text.replace('  min-height: 50px;\n  padding: 9px var(--space-3);', '  min-height: var(--control-height-standard);\n  padding: 9px var(--space-3);', 1)
+          text = text.replace('.neighbor-input-row .button { min-height: 50px;', '.neighbor-input-row .button { min-height: var(--control-height-standard);')
+          neighbors.write_text(text)
+
+          map_css = Path('src/styles/map.css')
+          text = map_css.read_text()
+          text = text.replace('animation: map-wrong 520ms ease-out both;', 'animation: map-wrong var(--motion-feedback-emphasis) var(--ease-feedback) both;')
+          text = text.replace('animation: map-wrong-line 520ms ease-out both;', 'animation: map-wrong-line var(--motion-feedback-emphasis) var(--ease-feedback) both;')
+          map_css.write_text(text)
+
+          design = Path('DESIGN.md')
+          text = design.read_text()
+          anchor = 'Reduced motion must preserve semantic correctness and usability; animation may decorate state but may never be the mechanism that restores or determines state.\n'
+          section = '''Reduced motion must preserve semantic correctness and usability; animation may decorate state but may never be the mechanism that restores or determines state.\n\n## Motion and control geometry\n\nKeep this scale deliberately small:\n\n- compact controls use a `44px` minimum height for icon buttons and quiet lateral choices;\n- standard controls use a `52px` minimum height for primary actions, answer controls and text-entry actions;\n- press response uses `--motion-press: 100ms` with `--ease-press: ease-out`;\n- ordinary colour, border and opacity changes use `--motion-ui: 160ms` with `--ease-ui: ease-out`;\n- `--motion-feedback-emphasis: 520ms` / `--ease-feedback: ease-out` is the accepted Locations transient wrong-answer emphasis from #148, not a universal feedback duration.\n\nThe shared Play reading dwells remain `620ms` correct / `1500ms` wrong in `src/state/play-feedback-timing.ts`; they are application-state timing rather than CSS motion. Globe/camera travel remains owned by the spatial camera director. Do not force either onto the generic UI tokens.\n'''
+          if anchor not in text:
+              raise SystemExit('DESIGN motion insertion point missing')
+          design.write_text(text.replace(anchor, section, 1))
+
+          data_path = Path('.impeccable/design.json')
+          data = json.loads(data_path.read_text())
+          data['tokens']['controlHeight'] = {'compact': '44px', 'standard': '52px'}
+          data['tokens']['motion'] = {
+              'press': '100ms ease-out',
+              'ui': '160ms ease-out',
+              'feedbackEmphasis': '520ms ease-out (Locations transient wrong-answer emphasis only)'
+          }
+          data_path.write_text(json.dumps(data, indent=2) + '\n')
+
+          package = Path('package.json')
+          text = package.read_text()
+          old = '&& node scripts/verify-action-feedback.mjs && node scripts/verify-spatial-atlas.mjs'
+          new = '&& node scripts/verify-action-feedback.mjs && node scripts/verify-design-tokens.mjs && node scripts/verify-spatial-atlas.mjs'
+          if old not in text:
+              raise SystemExit('package verify insertion point missing')
+          package.write_text(text.replace(old, new, 1))
+
+          Path('scripts/verify-design-tokens.mjs').write_text(r'''import assert from 'node:assert/strict';
+          import { readFileSync } from 'node:fs';
+
+          const theme = readFileSync('src/styles/atlas-theme.css', 'utf8');
+          const base = readFileSync('src/styles/styles.css', 'utf8');
+          const spatial = readFileSync('src/styles/spatial.css', 'utf8');
+          const neighbors = readFileSync('src/styles/neighbors.css', 'utf8');
+          const map = readFileSync('src/styles/map.css', 'utf8');
+          const locationsTiming = readFileSync('src/state/locations-round.ts', 'utf8');
+          const playTiming = readFileSync('src/state/play-feedback-timing.ts', 'utf8');
+          const camera = readFileSync('src/spatial/camera-director.ts', 'utf8');
+          const design = readFileSync('DESIGN.md', 'utf8');
+          const impeccable = JSON.parse(readFileSync('.impeccable/design.json', 'utf8'));
+
+          function token(name) {
+            const match = new RegExp(`--${name}:\\s*([^;]+);`).exec(theme);
+            assert.ok(match, `Missing --${name} design token`);
+            return match[1].trim();
+          }
+
+          assert.equal(token('control-height-compact'), '44px');
+          assert.equal(token('control-height-standard'), '52px');
+          assert.equal(token('motion-press'), '100ms');
+          assert.equal(token('motion-ui'), '160ms');
+          assert.equal(token('motion-feedback-emphasis'), '520ms');
+          assert.equal(token('ease-press'), 'ease-out');
+          assert.equal(token('ease-ui'), 'ease-out');
+          assert.equal(token('ease-feedback'), 'ease-out');
+
+          assert.ok(base.includes('min-height: var(--control-height-compact)'), 'Shared compact controls consume the compact height token.');
+          assert.ok(theme.includes('min-height: var(--control-height-standard)'), 'Shared primary controls consume the standard height token.');
+          assert.ok(base.includes('var(--motion-press) var(--ease-press)'), 'Shared controls consume semantic press timing.');
+          assert.ok(base.includes('var(--motion-ui) var(--ease-ui)'), 'Shared controls consume ordinary UI timing.');
+          assert.ok(spatial.includes('min-height: var(--control-height-compact)'), 'Spatial lateral controls use the compact height token.');
+          assert.ok(spatial.includes('min-height: var(--control-height-standard)'), 'Spatial domain controls use the standard height token.');
+          assert.ok(spatial.includes('var(--motion-ui) var(--ease-ui)'), 'Spatial DOM controls use ordinary UI timing.');
+          assert.ok(neighbors.includes('min-height: var(--control-height-standard)'), 'Neighbours text-entry controls use the standard height token.');
+          assert.ok(neighbors.includes('min-height: var(--control-height-compact)'), 'Neighbours quiet controls use the compact height token.');
+
+          assert.ok(map.includes('map-wrong var(--motion-feedback-emphasis) var(--ease-feedback)'), 'Locations wrong pulse consumes the accepted feedback token.');
+          assert.ok(!map.includes('map-wrong 520ms'), 'Locations feedback duration is no longer duplicated as a literal.');
+          const cssFeedback = Number(token('motion-feedback-emphasis').replace('ms', ''));
+          const stateFeedback = Number(/LOCATION_WRONG_FEEDBACK_MS = (\d+)/.exec(locationsTiming)?.[1]);
+          assert.equal(stateFeedback, cssFeedback, 'Locations semantic reset and decorative wrong pulse remain aligned.');
+
+          assert.ok(playTiming.includes('PLAY_FEEDBACK_DWELL_CORRECT_MS = 620'), 'Accepted correct Play reading dwell remains unchanged.');
+          assert.ok(playTiming.includes('PLAY_FEEDBACK_DWELL_WRONG_MS = 1500'), 'Accepted wrong Play reading dwell remains unchanged.');
+          assert.ok(!camera.includes('--motion-'), 'Camera motion remains independently owned and is not coupled to CSS UI tokens.');
+
+          assert.ok(design.includes('## Motion and control geometry'), 'DESIGN.md documents the small motion/control scale.');
+          assert.equal(impeccable.tokens.controlHeight.compact, '44px');
+          assert.equal(impeccable.tokens.controlHeight.standard, '52px');
+          assert.equal(impeccable.tokens.motion.press, '100ms ease-out');
+          assert.equal(impeccable.tokens.motion.ui, '160ms ease-out');
+
+          console.log('Design motion/control token verification passed.');
+          '''.replace(/^          /gm, ''))
+
+          Path('tests/browser/design-token-regression.spec.ts').write_text(r'''import { expect, test, type Locator, type Page } from '@playwright/test';
+
+          const STAGE = '.spatial-stage[data-ready="true"] canvas';
+          test.setTimeout(120_000);
+
+          async function openSpatial(page: Page, path: string) {
+            await page.goto(`/#${path}`);
+            await page.waitForSelector(STAGE, { timeout: 40_000 });
+          }
+
+          async function expectMinHeight(locator: Locator, minimum: number) {
+            await expect(locator).toBeVisible();
+            const box = await locator.boundingBox();
+            expect(box?.height ?? 0).toBeGreaterThanOrEqual(minimum);
+          }
+
+          test('token scale is applied to Spatial controls in portrait and short landscape', async ({ page }) => {
+            await page.setViewportSize({ width: 390, height: 844 });
+            await openSpatial(page, '/flags/africa');
+
+            const vars = await page.evaluate(() => {
+              const style = getComputedStyle(document.documentElement);
+              return {
+                compact: style.getPropertyValue('--control-height-compact').trim(),
+                standard: style.getPropertyValue('--control-height-standard').trim(),
+                press: style.getPropertyValue('--motion-press').trim(),
+                ui: style.getPropertyValue('--motion-ui').trim(),
+                feedback: style.getPropertyValue('--motion-feedback-emphasis').trim(),
+              };
+            });
+            expect(vars).toEqual({ compact: '44px', standard: '52px', press: '100ms', ui: '160ms', feedback: '520ms' });
+
+            await expectMinHeight(page.locator('.spatial-chip', { hasText: 'West Africa' }), 44);
+            await expectMinHeight(page.getByRole('button', { name: 'Play Africa' }), 52);
+            expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+
+            await page.setViewportSize({ width: 844, height: 390 });
+            await openSpatial(page, '/flags/africa');
+            await expectMinHeight(page.locator('.spatial-chip', { hasText: 'West Africa' }), 44);
+            await expectMinHeight(page.getByRole('button', { name: 'Play Africa' }), 52);
+            await expect(page.locator('.spatial-command')).toBeVisible();
+            expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
+          });
+
+          test('representative domain and Profile controls use the shared geometry', async ({ page }) => {
+            await page.setViewportSize({ width: 390, height: 844 });
+
+            await openSpatial(page, '/flags/africa/southern-africa');
+            await page.getByRole('button', { name: 'Play Southern Africa' }).click();
+            await expectMinHeight(page.locator('.answer-button').first(), 52);
+
+            await openSpatial(page, '/outlines/africa/southern-africa');
+            await page.getByRole('button', { name: 'Play Southern Africa' }).click();
+            await expectMinHeight(page.locator('.answer-button').first(), 52);
+
+            await openSpatial(page, '/locations/africa/southern-africa');
+            await page.getByRole('button', { name: 'Play Southern Africa' }).click();
+            await expectMinHeight(page.locator('.map-quiz-topbar .icon-button').first(), 44);
+
+            await openSpatial(page, '/neighbors/africa/southern-africa');
+            await page.getByRole('button', { name: 'Play Southern Africa' }).click();
+            await expectMinHeight(page.locator('.neighbor-input-row input'), 52);
+            await expectMinHeight(page.locator('.neighbor-input-row .button'), 52);
+
+            await page.goto('/#/profile');
+            await expectMinHeight(page.locator('.profile-card .button').first(), 52);
+          });
+
+          test('reduced motion preserves direct Spatial presentation and Locations feedback semantics', async ({ page }) => {
+            await page.emulateMedia({ reducedMotion: 'reduce' });
+            await page.setViewportSize({ width: 390, height: 844 });
+            await openSpatial(page, '/flags/africa');
+            await expect(page.locator('.spatial-stage__surface > canvas')).toHaveCSS('transition-duration', '0s');
+
+            await page.goto('/#/locations/africa/west-africa');
+            await page.getByRole('button', { name: 'Learn West Africa' }).click();
+            await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
+            const targetName = await page.locator('#map-prompt-heading').innerText();
+            const targetId = await page.locator('.map-country[data-action="map-answer"]').evaluateAll((nodes, name) => {
+              const target = nodes.find((node) => node.getAttribute('aria-label') === name);
+              return target?.getAttribute('data-id') ?? null;
+            }, targetName);
+            const wrong = page.locator(`.map-country[data-action="map-answer"]:not([data-id="${targetId}"])`).first();
+            await wrong.focus();
+            await wrong.press('Enter');
+            await expect(wrong).toHaveClass(/map-country--wrong-pulse/);
+            await expect(wrong.locator('.map-country__shape, .map-country__locator, .map-country__marker, .map-country__callout-target').first()).toHaveCSS('animation-name', 'none');
+          });
+          '''.replace(/^          /gm, ''))
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add DESIGN.md .impeccable/design.json package.json src/styles scripts/verify-design-tokens.mjs tests/browser/design-token-regression.spec.ts
+          git commit -m 'Introduce motion and control-height tokens'
+          git push origin HEAD:issue-150-motion-control-tokens
+
+      - name: Install dependencies
+        run: npm ci
+      - name: Full repository gate
+        run: npm test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exact-production design token browser regression
+        run: npx playwright test tests/browser/design-token-regression.spec.ts tests/browser/locations-reduced-motion.spec.ts --project=chromium --project=mobile-chromium
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime
+      - name: Inspect exact production artifact
+        run: |
+          test -f dist/index.html
+          test -f dist/manifest.webmanifest
+          grep -R -- '--control-height-compact:44px' dist/assets/*.css
+          grep -R -- '--control-height-standard:52px' dist/assets/*.css
+          grep -R -- '--motion-feedback-emphasis:520ms' dist/assets/*.css
+          test "$(grep -R -l -- 'map-wrong var(--motion-feedback-emphasis)' src/styles/map.css | wc -l)" -eq 1
+          find dist -maxdepth 2 -type f -printf '%P %s bytes\n' | sort | tail -n 80
+      - name: Remove temporary acceptance workflow
+        if: success()
+        run: |
+          rm .github/workflows/issue-150-acceptance.yml
+          git add .github/workflows/issue-150-acceptance.yml
+          git commit -m 'Remove issue 150 acceptance workflow'
+          git push origin HEAD:issue-150-motion-control-tokens
