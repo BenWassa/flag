@@ -140,9 +140,6 @@
   paint-order: stroke fill;
 }
 
-/* Controls occupy their own toolbar row. They never overlay or intercept
-   country geography, including Madagascar/Mauritius at full-continent fit. */
-
 /* Issue 113 — cluster inset panel.
 
    Screen-space on purpose. A box drawn on the canvas competes with the map for

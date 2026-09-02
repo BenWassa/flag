@@ -648,7 +648,7 @@ body { letter-spacing: -.006em; }
    row the reserved purple earned-Mastery signal before #29/#34 lands. */
 .mastery-row > span:not(.flag-frame) { color: var(--action); }
 
-/* Outline results used its own flat, border-bottom mini-ledger row instead of
+/* Outline results used its own flat, border-bottom result row instead of
    the .mastery-row/.mistake-row card treatment above — bring it in line so
    the same "mastered/missed this round" content doesn't look like two
    different products depending on which domain produced it. */
