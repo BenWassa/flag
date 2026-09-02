@@ -203,9 +203,21 @@ assert.ok(
   screens.flagsIndex.includes('>Play world</button>'),
   'The Flags index keeps its world round.',
 );
-assert.ok(screens.scope.includes('aria-label="Play All Africa"') && screens.scope.includes('Learn Africa'), 'The continent launcher plays the whole continent from its own row and keeps Learn below.');
-assert.ok(screens.scope.includes('aria-label="Play West Africa"'), 'Every region plays straight from its row.');
-assert.ok(screens.region.includes('aria-label="Play West Africa"') && screens.region.includes('aria-label="Play All Africa"'), 'A region route offers the same one-tap rows.');
+assert.ok(
+  screens.scope.includes('aria-labelledby="scope-flags-africa-action scope-flags-africa-label scope-flags-africa-count scope-flags-africa-progress"')
+    && screens.scope.includes('Learn Africa'),
+  'The continent launcher plays the whole continent from its content-named row and keeps Learn below.',
+);
+assert.ok(
+  screens.scope.includes('aria-labelledby="scope-flags-west-africa-action scope-flags-west-africa-label scope-flags-west-africa-count scope-flags-west-africa-progress"'),
+  'Every region plays straight from a row whose accessible name retains its progress.',
+);
+assert.ok(
+  screens.region.includes('aria-labelledby="scope-flags-west-africa-action scope-flags-west-africa-label scope-flags-west-africa-count scope-flags-west-africa-progress"')
+    && screens.region.includes('aria-labelledby="scope-flags-africa-action scope-flags-africa-label scope-flags-africa-count scope-flags-africa-progress"'),
+  'A region route offers the same content-named one-tap rows.',
+);
+assert.ok(!screens.scope.includes('aria-label="Play All Africa"') && !screens.scope.includes('aria-label="Play West Africa"'), 'A blanket action label cannot suppress fallback row progress or earned state.');
 assert.ok(!screens.scope.includes('Selected') && !screens.region.includes('Selected'), 'The launcher has one selection method, so nothing is merely selected.');
 for (const [name, html] of Object.entries({ scope: screens.scope, region: screens.region })) {
   assert.ok(!html.includes('mini-ledger') && !html.includes('stat-legend'), `${name} launcher stays free of the deleted pre-round ledger and legend.`);

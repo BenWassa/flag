@@ -164,10 +164,11 @@ assert.ok(spatialOutlinesScopeHtml.includes('Play Africa'));
 assert.ok(spatialNeighborsScopeHtml.includes('Play West Africa'));
 assert.ok(spatialNeighborsScopeHtml.includes('Neighbours'));
 assert.ok(spatialHomeHtml.includes('Neighbours'));
-assert.ok(flagsLauncherHtml.includes('Play All Africa'));
-assert.ok(locationsLauncherHtml.includes('Play All Africa'));
-assert.ok(outlinesLauncherHtml.includes('Play All Africa'));
-assert.ok(neighborsLauncherHtml.includes('Play West Africa'));
+const visibleText = (html) => html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ');
+assert.match(visibleText(flagsLauncherHtml), /Play All Africa/);
+assert.match(visibleText(locationsLauncherHtml), /Play All Africa/);
+assert.match(visibleText(outlinesLauncherHtml), /Play All Africa/);
+assert.match(visibleText(neighborsLauncherHtml), /Play West Africa/);
 for (const [name, html] of [
   ['Flags', flagPlayHtml],
   ['Locations', mapPlayHtml],

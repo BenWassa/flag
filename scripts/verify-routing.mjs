@@ -246,7 +246,14 @@ assert.ok(homeSource.includes('openScope(domain, continent.id)'), 'The domain in
 assert.ok(homeSource.includes('continent-row--shell'), 'Unshipped continents render as inert shells, not launchers.');
 assert.ok(launcherSource.includes('region-row__progress'), 'Every launcher scope row exposes its shared progress strip.');
 assert.equal(launcherSource.includes('aria-pressed'), false, 'Launcher rows are one-tap actions rather than selection toggles.');
-assert.ok(launcherSource.includes('aria-label={`Play ${label}`}'), 'Every launcher row announces that it starts Play for the scope it names.');
+assert.ok(
+  launcherSource.includes('aria-labelledby={[')
+    && launcherSource.includes('`${nameId}-action`')
+    && launcherSource.includes('`${nameId}-progress`')
+    && launcherSource.includes('>Play</span>'),
+  'Every launcher row composes its Play name from the action, scope, progress and earned-state content.',
+);
+assert.equal(launcherSource.includes('aria-label={`Play ${label}`}'), false, 'A blanket action label cannot suppress useful launcher row content.');
 assert.ok(launcherSource.includes('>Learn {model.continentScope.label}</button>'), 'Launcher Learn names the whole continent it acts on.');
 assert.equal(launcherSource.includes('stat-legend'), false, 'Shared launcher must not restore the deleted learning-state legend.');
 assert.equal(launcherSource.includes('mini-ledger'), false, 'Shared launcher must not restore the deleted country ledger.');
