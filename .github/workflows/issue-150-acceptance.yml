@@ -24,17 +24,12 @@ jobs:
         with:
           node-version: '22'
 
-      - name: Apply focused issue 150 changes
-        run: |
-          python scripts/issue-150-apply.py
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add DESIGN.md .impeccable/design.json package.json src/styles scripts/verify-design-tokens.mjs tests/browser/design-token-regression.spec.ts
-          git commit -m 'Introduce motion and control-height tokens'
-          git push origin HEAD:issue-150-motion-control-tokens
-
       - name: Install dependencies
         run: npm ci
+      - name: TypeScript check
+        run: npm run check
+      - name: Static design-token drift verification
+        run: node scripts/verify-design-tokens.mjs
       - name: Full repository gate
         run: npm test
       - name: Install Chromium
@@ -55,6 +50,8 @@ jobs:
         if: success()
         run: |
           rm .github/workflows/issue-150-acceptance.yml scripts/issue-150-apply.py
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add .github/workflows/issue-150-acceptance.yml scripts/issue-150-apply.py
           git commit -m 'Remove issue 150 acceptance machinery'
           git push origin HEAD:issue-150-motion-control-tokens
