@@ -54,7 +54,8 @@ const active = rule('.text-icon-button:active', [
   ['transform', 'translateY(1px)'],
   ['background', 'var(--surface-subtle)'],
 ]);
-iconButton.after(canonical, active);
+iconButton.after(active);
+iconButton.after(canonical);
 
 let mobileOverride = false;
 let reducedTransition = false;
