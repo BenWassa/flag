@@ -1,32 +1,13 @@
-name: Issue 151 execution
+name: Issue 151 verification
 
 on:
-  push:
-    branches: [issue-151-retired-css-cleanup]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  execute:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: issue-151-retired-css-cleanup
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: npm install
-      - run: npm run build
-      - run: node scripts/issue-151-cleanup.mjs
-      - name: Commit production cleanup
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/react/components/Launcher.tsx src/styles docs/open/issue-151-selector-audit.txt
-          git commit -m 'refactor(#151): remove retired CSS ownership'
-          git push origin HEAD:issue-151-retired-css-cleanup
+      - run: echo 'Temporary #151 verification workflow; intentionally manual while the PR diff is reviewed.'
