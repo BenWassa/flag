@@ -1,32 +1,13 @@
-name: Issue 151 final control repair
+name: Issue 151 verification
 
 on:
-  push:
-    branches: [issue-151-retired-css-cleanup]
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  repair:
+  verify:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: issue-151-retired-css-cleanup
-          fetch-depth: 0
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - run: node scripts/issue-151-cleanup.mjs
-      - name: Commit final control dedupe
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add src/styles/styles.css
-          git commit -m 'fix(#151): remove duplicate mobile control state'
-          git fetch origin issue-151-retired-css-cleanup
-          git rebase origin/issue-151-retired-css-cleanup
-          git push origin HEAD:issue-151-retired-css-cleanup
+      - run: echo 'Temporary #151 workflow is frozen between controlled verification runs.'
