@@ -37,6 +37,10 @@ async function answer(page: Page, id: string) {
   await country.press('Enter');
 }
 
+function visualCountryMark(page: Page, id: string) {
+  return page.locator(`.map-country[data-id="${id}"] .map-country__shape, .map-country[data-id="${id}"] .map-country__locator, .map-country[data-id="${id}"] .map-country__marker, .map-country[data-id="${id}"] .map-country__callout-target`).first();
+}
+
 for (const reducedMotion of [false, true]) {
   test(`Learn wrong feedback settles semantically with ${reducedMotion ? 'reduced' : 'normal'} motion`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
@@ -44,17 +48,24 @@ for (const reducedMotion of [false, true]) {
     const target = await currentTarget(page);
     const wrong = await wrongChoice(page, target);
     const wrongCountry = page.locator(`.map-country[data-id="${wrong}"]`);
+    const wrongVisual = visualCountryMark(page, wrong);
 
     await answer(page, wrong);
     await expect(wrongCountry).toHaveClass(/map-country--wrong-pulse/);
+    // Observe motion while the transient semantic state is still active. The
+    // application clears that state after exactly LOCATION_WRONG_FEEDBACK_MS,
+    // so waiting on unrelated text before sampling animation creates a race at
+    // the same boundary the test is intended to verify.
+    await expect.poll(
+      () => wrongVisual.evaluate((node) => getComputedStyle(node).animationName),
+      { timeout: Math.max(250, LOCATION_WRONG_FEEDBACK_MS - 40) },
+    ).toBe(reducedMotion ? 'none' : 'map-wrong');
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
-    expect(await wrongCountry.locator('.map-country__shape, .map-country__locator, .map-country__marker, .map-country__callout-target').first().evaluate((node) => getComputedStyle(node).animationName))
-      .toBe(reducedMotion ? 'none' : 'map-wrong');
 
     await page.waitForTimeout(LOCATION_WRONG_FEEDBACK_MS + 180);
     await expect(wrongCountry).not.toHaveClass(/map-country--wrong-pulse/);
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
-    const settled = await page.locator(`.map-country[data-id="${wrong}"] .map-country__shape, .map-country[data-id="${wrong}"] .map-country__locator, .map-country[data-id="${wrong}"] .map-country__marker, .map-country[data-id="${wrong}"] .map-country__callout-target`).first().evaluate((node) => {
+    const settled = await visualCountryMark(page, wrong).evaluate((node) => {
       const style = getComputedStyle(node);
       return { fill: style.fill, stroke: style.stroke, width: style.strokeWidth };
     });
@@ -65,8 +76,12 @@ for (const reducedMotion of [false, true]) {
     expect(settled).toEqual(neutral);
 
     await answer(page, target);
-    await expect(page.locator(`.map-country[data-id="${target}"]`)).toHaveClass(/map-country--one-miss/);
-    await expect(page.locator('.map-prompt__status--correct')).toHaveText('Correct · after 1 miss');
+    // Resolved map countries intentionally stop being answer controls and shed
+    // data-action/data-id. Assert the durable resolution class rather than an
+    // obsolete answer-control locator, and sample the transient status before
+    // the existing Learn advance dwell expires.
+    await expect(page.locator('.map-prompt__status--correct')).toHaveText('Correct · after 1 miss', { timeout: 500 });
+    await expect(page.locator('.map-country--one-miss')).toHaveCount(1);
   });
 }
 
@@ -75,15 +90,19 @@ test('Play current-wrong remains distinct from transient Learn feedback', async 
   await openRound(page, 'Play');
   const target = await currentTarget(page);
   const wrong = await wrongChoice(page, target);
-  const selection = page.locator(`.map-country[data-id="${wrong}"]`);
 
   await answer(page, wrong);
-  await expect(selection).toHaveClass(/map-country--current-wrong/);
+  // Play resolves in one answer, so the selected country is no longer an answer
+  // control. Its semantic feedback classes remain on the rendered geography.
+  const selection = page.locator('.map-country--current-wrong');
+  await expect(selection).toHaveCount(1);
   await expect(selection).toHaveClass(/map-country--wrong-pulse/);
+  await expect(page.locator('.map-country--current-correct')).toHaveCount(1);
   await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
   await expect(page.locator('.map-country--one-miss, .map-country--two-miss, .map-country--revealed')).toHaveCount(0);
 
   await page.waitForTimeout(LOCATION_WRONG_FEEDBACK_MS + 180);
-  await expect(selection).toHaveClass(/map-country--current-wrong/);
+  await expect(selection).toHaveCount(1);
+  await expect(selection).toHaveClass(/map-country--wrong-pulse/);
   await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
 });
