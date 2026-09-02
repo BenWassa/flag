@@ -81,24 +81,19 @@ button:focus-visible,
 
 .brand-block { display: inline-flex; align-items: center; gap: 10px; min-width: 0; }
 .ui-icon { display: block; }
-.icon-button,
-.text-icon-button {
+.icon-button {
   min-width: 44px;
   min-height: 44px;
   border: 1px solid var(--line);
   cursor: pointer;
   transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
 }
-.icon-button {
-  width: 44px;
-  height: 44px;
-  flex: 0 0 auto;
-  border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
-  padding: 0;
-}
 .text-icon-button {
+  min-width: 44px;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  cursor: pointer;
+  transition: background-color 160ms ease, border-color 160ms ease, color 160ms ease, transform 120ms ease;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -108,6 +103,21 @@ button:focus-visible,
   color: var(--text-muted);
   font-size: 14px;
   font-weight: 650;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .035);
+}
+.text-icon-button:active {
+  transform: translateY(1px);
+  background: var(--surface-subtle);
+}
+.icon-button {
+  width: 44px;
+  height: 44px;
+  flex: 0 0 auto;
+  border-radius: var(--radius-md);
+  display: grid;
+  place-items: center;
+  padding: 0;
 }
 
 .screen-title { min-width: 0; display: grid; gap: 2px; }
@@ -231,20 +241,6 @@ button:focus-visible,
   border-color: var(--line);
   background: transparent;
 }
-
-.mini-ledger__row {
-  min-height: 54px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-/* Flex items refuse to shrink past their content by default, so the longest
-   country names used to push the status out of the row. */
-.mini-ledger__row > span:first-child { min-width: 0; overflow-wrap: anywhere; }
-.status-text { flex: 0 0 auto; font-size: 12px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.status-text--unseen { color: var(--unseen); }
-.status-text--learning { color: var(--learning); }
 .quiz-shell {
   min-height: 100svh;
   margin: 0 auto;
@@ -449,7 +445,6 @@ button:focus-visible,
 .feedback-copy strong { font-size: 15px; }
 .feedback-copy span { color: var(--text-muted); font-size: 12px; }
 .answer-feedback .button { min-height: 44px; padding: 9px 18px; flex: 0 0 auto; }
-.test-advance { min-height: 34px; display: grid; place-items: center; color: var(--text-muted); font-size: 12px; }
 
 /* Keyboard accelerators only exist for real keyboards, so only advertise them there. */
 .quiz-hint { display: none; margin: 0; }
@@ -506,65 +501,6 @@ button:focus-visible,
 .clean-round { margin: var(--space-8) 0 0; color: var(--text-muted); }
 .clean-round strong { color: var(--mastered); }
 
-.filter-tabs {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  margin: 4px 0 var(--space-6);
-  border-bottom: 1px solid var(--line);
-}
-.filter-tab {
-  position: relative;
-  min-height: 48px;
-  border: 0;
-  background: transparent;
-  color: var(--text-muted);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 0 6px;
-  font-size: 13px;
-  font-weight: 650;
-  cursor: pointer;
-}
-.filter-tab small { font-size: 11px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.filter-tab--active { color: var(--text); }
-.filter-tab--active::after { content: ""; position: absolute; left: 6px; right: 6px; bottom: -1px; height: 2px; background: var(--action); }
-.ledger-row {
-  min-height: 68px;
-  display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto;
-  gap: 12px;
-  align-items: center;
-  border-bottom: 1px solid var(--line);
-  padding: 7px 0;
-}
-.flag-frame--ledger { width: 44px; min-height: 30px; }
-.flag-frame--ledger .flag-image { width: 44px; max-height: 30px; box-shadow: none; }
-.flag-frame--ledger .flag-fallback { padding: 3px; }
-.ledger-row__country { display: grid; gap: 2px; min-width: 0; }
-.ledger-row__country strong { overflow-wrap: anywhere; }
-.ledger-row__country small { color: var(--text-muted); font-size: 11px; overflow-wrap: anywhere; }
-.status-chip {
-  padding: 4px 7px;
-  border-radius: var(--radius-sm);
-  border: 1px solid currentColor;
-  background: transparent;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-}
-.status-chip--unseen { color: var(--unseen); }
-.status-chip--learning { color: var(--learning); background: var(--learning-soft); }
-.status-chip--mastered { color: var(--mastered); background: var(--mastered-soft); }
-
-.ledger-note {
-  margin: 0 0 var(--space-5);
-  color: var(--text-muted);
-  font-size: 13px;
-  max-width: 62ch;
-}
-
 /* Shown only when the browser refuses to persist. A rule and honest copy, not
    an alert box: the app still works, it just cannot remember. */
 .storage-notice {
@@ -601,7 +537,6 @@ button:focus-visible,
   .button--secondary:hover,
   .answer-button:not(:disabled):hover { border-color: var(--line-strong); background: var(--surface-subtle); }
   .button--tertiary:hover { color: var(--text); background: var(--surface-subtle); }
-  .filter-tab:hover { color: var(--text); }
 }
 
 @media (pointer: fine) {
@@ -620,7 +555,6 @@ button:focus-visible,
 
 @media (min-width: 700px) {
   .answer-panel { grid-template-columns: 1fr 1fr; }
-  .test-advance,
   .quiz-hint { grid-column: 1 / -1; }
 }
 
@@ -641,11 +575,10 @@ button:focus-visible,
   .region-row { grid-template-columns: minmax(0, 1fr); }
   .region-row__open { grid-template-columns: minmax(0, 1fr) auto; gap: 4px 10px; }
   .text-icon-button span { display: none; }
-  .text-icon-button { width: 44px; padding: 0; }
-  .filter-tab { font-size: 12px; }
-  .filter-tab small { display: none; }
-  .ledger-row { grid-template-columns: 44px minmax(0, 1fr) auto; gap: 10px; }
-  .status-chip { padding: 4px 5px; }
+  .text-icon-button {
+    width: 44px;
+    padding: 0;
+  }
 }
 
 @media (max-height: 720px) {
@@ -683,7 +616,6 @@ button:focus-visible,
   .quiz-header { grid-column: 1 / -1; }
   .question-stage { grid-column: 1; grid-row: 2; }
   .answer-panel { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; align-content: center; }
-  .test-advance,
   .quiz-hint { grid-column: 1; }
   .flag-stage { --flag-stage-height: 60svh; }
   /* Still above the 44px minimum target, but four choices plus feedback have to
@@ -693,19 +625,19 @@ button:focus-visible,
 
 @media (prefers-reduced-motion: reduce) {
   .icon-button,
-  .text-icon-button,
   .button,
   .continent-row__open,
   .region-row__open,
   .answer-button,
-  .quiz-progress i { transition-duration: 0.01ms; }
+  .quiz-progress i,
+  .text-icon-button { transition-duration: 0.01ms; }
   .answer-button:active,
-  .button:active { transform: none; }
+  .button:active,
+  .text-icon-button:active { transform: none; }
 }
 
 @media (forced-colors: active) {
   .status-strip,
-  .status-chip,
   .answer-button,
   .button { forced-color-adjust: auto; }
   .status-strip__cleared { background: CanvasText; }

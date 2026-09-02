@@ -59,7 +59,7 @@ export function Launcher({ model }: { model: LauncherModel }) {
         <button className="icon-button" type="button" onClick={actions.goBack} aria-label={`Back to ${domainTitle}`}><Icon name="back" /></button>
         <span className="launcher-header__icon" aria-hidden="true"><DomainIcon domain={model.domain} /></span>
         <div className="screen-title">
-          <span className="screen-title__row"><h1 tabIndex={-1} data-autofocus aria-label={`${activeScope.label} ${domainName} launcher`}>{activeScope.label}</h1><span className="launcher-header__badge" aria-hidden="true" /></span>
+          <h1 tabIndex={-1} data-autofocus aria-label={`${activeScope.label} ${domainName} launcher`}>{activeScope.label}</h1>
           <span>{domainTitle}</span>
         </div>
       </header>
