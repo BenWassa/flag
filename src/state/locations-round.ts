@@ -10,6 +10,8 @@ import { beginRoundLaunch, isCurrentRoundLaunch } from './round-launch-guard.js'
 import { playFeedbackDwellMs } from './play-feedback-timing.js';
 import type { RoundContext } from './round-context.js';
 
+export const LOCATION_WRONG_FEEDBACK_MS = 520;
+
 export interface LocationsRound {
   currentScope(): StudyScope;
   begin(
@@ -31,11 +33,25 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
   const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
   let pendingMapAdvance: number | null = null;
+  let pendingWrongReset: number | null = null;
+
+  function cancelMapAdvance(): void {
+    if (pendingMapAdvance !== null) {
+      window.clearTimeout(pendingMapAdvance);
+      pendingMapAdvance = null;
+    }
+  }
+
+  function cancelWrongReset(): void {
+    if (pendingWrongReset !== null) {
+      window.clearTimeout(pendingWrongReset);
+      pendingWrongReset = null;
+    }
+  }
 
   function cancelPending(): void {
-    if (pendingMapAdvance === null) return;
-    window.clearTimeout(pendingMapAdvance);
-    pendingMapAdvance = null;
+    cancelMapAdvance();
+    cancelWrongReset();
   }
 
   function currentScope(): StudyScope {
@@ -113,6 +129,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     const currentId = store.mapSession.countryIds[store.mapSession.currentIndex];
     if (!currentId || store.mapSession.targets[currentId]?.resolved) return;
 
+    cancelWrongReset();
     const outcome = store.answerMap(countryId);
     const advanceDelay = store.mapSession.mode === 'test'
       ? playFeedbackDwellMs(outcome.correct)
@@ -126,8 +143,16 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     announce(answerAnnouncement());
     finishInteraction(selector);
 
+    if (store.mapSession.mode === 'learn' && !outcome.correct) {
+      pendingWrongReset = window.setTimeout(() => {
+        pendingWrongReset = null;
+        if (store.view.name !== 'map-quiz') return;
+        if (store.clearMapWrongFeedback(countryId)) finishInteraction(selector);
+      }, LOCATION_WRONG_FEEDBACK_MS);
+    }
+
     if (!outcome.resolved) return;
-    cancelPending();
+    cancelMapAdvance();
     pendingMapAdvance = window.setTimeout(() => {
       pendingMapAdvance = null;
       if (store.view.name !== 'map-quiz') return;

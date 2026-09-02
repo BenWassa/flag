@@ -278,11 +278,11 @@
 @keyframes map-wrong {
   0% { opacity: .55; stroke-width: 4; }
   45% { opacity: 1; stroke-width: 3; }
-  100% { fill: var(--map-active-land); stroke: var(--map-active-border); stroke-width: .78; opacity: 1; }
+  100% { opacity: 1; stroke-width: 3; }
 }
 @keyframes map-wrong-line {
   0%, 45% { stroke: var(--wrong); stroke-width: 2.5; }
-  100% { stroke: color-mix(in srgb, var(--unseen) 72%, var(--line-strong)); stroke-width: 1.1; }
+  100% { stroke: var(--wrong); stroke-width: 2.5; }
 }
 
 /* Results favour error structure over a generic percentage score. */

@@ -163,6 +163,9 @@ const oneMissHtml = renderMapQuiz(westAsset, oneMiss.session, 'MLI');
 assert.ok(oneMissHtml.includes('Not Mali.'), 'A wrong map tap names the selected country instead of only showing a countdown.');
 assert.ok(oneMissHtml.includes('map-prompt__status--wrong'), 'Wrong feedback has a text-visible semantic state.');
 assert.ok(oneMissHtml.includes('map-country--wrong-pulse'), 'Wrong Learn taps receive a visible transient map state.');
+const settledOneMissHtml = renderMapQuiz(westAsset, oneMiss.session, null);
+assert.ok(settledOneMissHtml.includes('Not Mali.'), 'Settled Learn feedback remains explicit after the transient map highlight clears.');
+assert.equal(settledOneMissHtml.includes('map-country--wrong-pulse'), false, 'Learn wrong feedback has an ordinary neutral resting state.');
 
 // Correct after one miss must go straight to amber, never flash green first.
 const corrected = applyMapGuess(oneMiss.session, oneMiss.progress, 'GHA', 700);
@@ -282,6 +285,8 @@ assert.deepEqual(repaired.confusionCounts, { MLI: 2 });
 const mapCss = await readFile('src/styles/map.css', 'utf8');
 const mapCartographyCss = await readFile('src/styles/map-cartography.css', 'utf8');
 const styles = await readFile('src/styles/styles.css', 'utf8');
+const locationsRoundSource = await readFile('src/state/locations-round.ts', 'utf8');
+const storeSource = await readFile('src/state/store.ts', 'utf8');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(mapCss), 'Map CSS uses shared tokens instead of literal color drift.');
 assert.ok(!mapCss.includes('backdrop-filter'), 'Map mode does not reintroduce glass/blur chrome.');
 // The map viewport contract is owned by map-cartography.css, which loads after
@@ -297,6 +302,10 @@ assert.ok(mapCss.includes('.map-country__locator-hit'), 'Island dots receive exp
 assert.ok(mapCss.includes('.map-country[tabindex]:focus'), 'SVG focus overrides the rectangular tabindex outline.');
 assert.ok(mapCss.includes('.map-country--current-correct'), 'Correct taps keep high-salience semantic feedback.');
 assert.ok(mapCss.includes('.map-country--wrong-pulse'), 'Wrong taps keep high-salience semantic feedback.');
+const wrongKeyframes = mapCss.match(/@keyframes map-wrong\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+assert.equal(wrongKeyframes.includes('--map-active-land'), false, 'Animation no longer owns the neutral wrong-answer reset.');
+assert.ok(locationsRoundSource.includes('clearMapWrongFeedback(countryId)'), 'Locations clears transient wrong feedback from application state.');
+assert.ok(storeSource.includes('if (this.mapLastWrongCountryId !== countryId) return false'), 'Stale feedback timers cannot clear a newer wrong answer.');
 assert.ok(mapCss.includes('(hover: hover) and (pointer: fine)'), 'Hover feedback is limited to devices that actually hover.');
 assert.ok(mapCss.includes('forced-colors: active'), 'Map interaction has a forced-colors fallback.');
 assert.ok(mapCartographyCss.includes('touch-action: none'), 'The custom map controller owns pan and pinch gestures.');
