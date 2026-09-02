@@ -1,0 +1,45 @@
+name: Issue 149 acceptance
+
+on:
+  pull_request:
+    paths:
+      - 'src/react/screens/NeighborScreens.tsx'
+      - 'src/react/test/neighbor-suggestions-a11y.test.tsx'
+      - 'tests/browser/neighbors-suggestions-a11y.spec.ts'
+      - '.github/workflows/issue-149-acceptance.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  exact-production-chromium:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npm run check
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test tests/browser/neighbors-suggestions-a11y.spec.ts --project=chromium
+      - name: Inspect exact production bundle
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, statSync } from 'node:fs';
+          const app = readFileSync('dist/app.js', 'utf8');
+          const marker = app.indexOf('Country suggestions');
+          if (marker < 0) throw new Error('Country suggestions marker missing from dist/app.js');
+          const neighborhood = app.slice(Math.max(0, marker - 3500), marker + 3500);
+          for (const misleading of ['aria-autocomplete', 'aria-controls', 'listbox', 'role:"option"']) {
+            if (neighborhood.includes(misleading)) throw new Error(`Misleading Neighbours suggestion semantic survived production build: ${misleading}`);
+          }
+          if (!neighborhood.includes('group')) throw new Error('Labelled suggestion group is missing from the production bundle.');
+          console.log(`Exact dist/app.js inspected: ${statSync('dist/app.js').size} bytes; Neighbours suggestion bundle has labelled group semantics and no partial combobox/listbox contract.`);
+          NODE
+      - uses: actions/upload-artifact@v4
+        with:
+          name: issue-149-dist
+          path: dist
+          if-no-files-found: error
