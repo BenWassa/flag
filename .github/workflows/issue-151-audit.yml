@@ -1,15 +1,14 @@
 name: Issue 151 execution
 
 on:
-  pull_request:
-    branches: [main]
+  push:
+    branches: [issue-151-retired-css-cleanup]
 
 permissions:
   contents: write
 
 jobs:
   execute:
-    if: github.event.pull_request.head.ref == 'issue-151-retired-css-cleanup'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
