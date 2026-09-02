@@ -1,13 +1,27 @@
-name: Issue 151 verification
+name: Issue 151 sync main
 
 on:
-  workflow_dispatch:
+  push:
+    branches: [issue-151-retired-css-cleanup]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  verify:
+  sync:
     runs-on: ubuntu-latest
     steps:
-      - run: echo 'Temporary #151 workflow is frozen between controlled verification runs.'
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-151-retired-css-cleanup
+          fetch-depth: 0
+      - name: Merge current main into issue branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin main issue-151-retired-css-cleanup
+          test "$(git rev-parse origin/main)" = "7949a71c0235cb0f69746b1fe636bd5fd13d4832"
+          git merge --no-edit origin/main
+          git push origin HEAD:issue-151-retired-css-cleanup
