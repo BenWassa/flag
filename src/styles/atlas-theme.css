@@ -850,14 +850,6 @@ body { letter-spacing: -.006em; }
   line-height: 1;
 }
 
-.atlas-card__identity small {
-  font-size: 11px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .09em;
-  color: var(--text-muted);
-}
-
 .atlas-card__chevron {
   flex: 0 0 auto;
   display: grid;

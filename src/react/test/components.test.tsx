@@ -49,6 +49,16 @@ describe('React screen actions', () => {
     expect(screen.getByRole('heading', { name: 'Atlas' })).toBeTruthy();
   });
 
+  it('keeps fallback Home mode names and progress without redundant World metadata', () => {
+    render(<AtlasActionsContext value={actions()}><HomeScreen ledgers={ledgers()} achievements={createInitialAchievementState()} persisting /></AtlasActionsContext>);
+
+    for (const [label, total] of [['Flags', 195], ['Locations', 195], ['Outlines', 195], ['Neighbours', 193]] as const) {
+      const mode = screen.getByRole('button', { name: new RegExp(`${label}.*0 of ${total} cleared`, 'i') });
+      expect(mode.textContent).not.toContain('World');
+      expect(mode.querySelector('small')).toBeNull();
+    }
+  });
+
   it('shows the World Crown only when the persisted achievement is earned', () => {
     const earned = { ...createInitialAchievementState(), worldCrown: true };
     render(<AtlasActionsContext value={actions()}><HomeScreen ledgers={ledgers()} achievements={earned} persisting /></AtlasActionsContext>);
