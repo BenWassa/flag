@@ -1,0 +1,142 @@
+name: Issue 151 acceptance
+
+on:
+  push:
+    branches: [issue-151-retired-css-cleanup]
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    runs-on: ubuntu-latest
+    env:
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: issue-151-retired-css-cleanup
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - run: npm install
+      - name: Confirm synced baseline and selector ownership
+        shell: bash
+        run: |
+          set -euo pipefail
+          git merge-base --is-ancestor 7949a71c0235cb0f69746b1fe636bd5fd13d4832 HEAD
+          node --input-type=module <<'NODE'
+          import fs from 'node:fs';
+          import postcss from 'postcss';
+
+          const styleDir = 'src/styles';
+          const retired = [
+            /\.progress-achievement(?:[-_][A-Za-z0-9_-]*)?/,
+            /\.mastery-list\b/,
+            /\.ledger-[A-Za-z0-9_-]+\b/,
+            /\.flag-frame--ledger\b/,
+            /\.mini-ledger[A-Za-z0-9_-]*\b/,
+            /\.filter-tab[A-Za-z0-9_-]*\b/,
+            /\.status-chip[A-Za-z0-9_-]*\b/,
+            /\.status-text[A-Za-z0-9_-]*\b/,
+            /\.map-viewport-control[A-Za-z0-9_-]*\b/,
+            /\.test-advance\b/,
+            /\.launcher-header__badge\b/,
+            /\.screen-title__row\b/,
+          ];
+          const remaining = [];
+          for (const name of fs.readdirSync(styleDir).filter((file) => file.endsWith('.css'))) {
+            const file = `${styleDir}/${name}`;
+            const root = postcss.parse(fs.readFileSync(file, 'utf8'), { from: file });
+            root.walkRules((rule) => {
+              for (const selector of rule.selectors ?? []) {
+                if (retired.some((pattern) => pattern.test(selector))) remaining.push(`${file}: ${selector}`);
+                if (name !== 'styles.css' && selector.includes('.text-icon-button')) remaining.push(`${file}: duplicate ${selector}`);
+              }
+            });
+          }
+          if (remaining.length) throw new Error(`Retired/duplicate selectors remain:\n${remaining.join('\n')}`);
+
+          const styles = postcss.parse(fs.readFileSync('src/styles/styles.css', 'utf8'));
+          let base = 0;
+          let active = 0;
+          let mobile = false;
+          let hover = false;
+          let reducedBase = false;
+          let reducedActive = false;
+          styles.each((node) => {
+            if (node.type !== 'rule') return;
+            if (node.selector?.trim() === '.text-icon-button') base += 1;
+            if (node.selector?.trim() === '.text-icon-button:active') active += 1;
+          });
+          styles.walkAtRules('media', (media) => {
+            media.walkRules((rule) => {
+              if (media.params.includes('max-width') && rule.selector?.trim() === '.text-icon-button') {
+                const values = Object.fromEntries((rule.nodes ?? []).filter((n) => n.type === 'decl').map((n) => [n.prop, n.value]));
+                mobile ||= values.width === '44px' && values.padding === '0';
+              }
+              if (rule.selectors?.includes('.text-icon-button:hover')) hover = true;
+              if (media.params === '(prefers-reduced-motion: reduce)') {
+                reducedBase ||= rule.selectors?.includes('.text-icon-button') ?? false;
+                reducedActive ||= rule.selectors?.includes('.text-icon-button:active') ?? false;
+              }
+            });
+          });
+          if (base !== 1 || active !== 1 || !mobile || !hover || !reducedBase || !reducedActive) {
+            throw new Error(`text-icon-button ownership mismatch base=${base} active=${active} mobile=${mobile} hover=${hover} reducedBase=${reducedBase} reducedActive=${reducedActive}`);
+          }
+          NODE
+          if git grep -nE 'launcher-header__badge|screen-title__row|mini-ledger|filter-tab|map-viewport-control|test-advance' -- 'src/**/*.ts' 'src/**/*.tsx'; then
+            echo 'Retired markup hook remains in production TS/TSX.' >&2
+            exit 1
+          fi
+          git grep -nE 'page--launcher|launcher-header__icon|launcher__scope-list|launcher__learn' -- src/react/components/Launcher.tsx src/styles/*.css
+      - name: TypeScript check
+        run: npm run check
+      - name: Full repository gate
+        run: npm test
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Add temporary Profile browser regression
+        shell: bash
+        run: |
+          cat > tests/browser/issue-151-profile.spec.ts <<'EOF'
+          import { expect, test } from '@playwright/test';
+
+          test('Profile remains visually and semantically intact after CSS cleanup', async ({ page }) => {
+            await page.goto('/#/profile');
+            await expect(page.locator('.page--profile')).toBeVisible();
+            await expect(page.getByRole('heading', { name: 'Profile', level: 1 })).toBeVisible();
+            await expect(page.getByRole('button', { name: 'Back' })).toBeVisible();
+            await expect(page.locator('.profile-card')).toBeVisible();
+          });
+          EOF
+      - name: Representative exact-production browser regressions
+        run: npx playwright test tests/browser/spatial-atlas.spec.ts tests/browser/atlas.spec.ts tests/browser/issue-151-profile.spec.ts --project=chromium --project=mobile-chromium
+      - name: Inspect exact dist artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo '--- dist artifact inventory ---'
+          find dist -type f -printf '%P %s bytes\n' | sort
+          echo '--- retired CSS selector scan ---'
+          if grep -REn --include='*.css' '\.(progress-achievement[A-Za-z0-9_-]*|mastery-list|ledger-[A-Za-z0-9_-]+|flag-frame--ledger|mini-ledger[A-Za-z0-9_-]*|filter-tab[A-Za-z0-9_-]*|status-chip[A-Za-z0-9_-]*|status-text[A-Za-z0-9_-]*|map-viewport-control[A-Za-z0-9_-]*|test-advance|launcher-header__badge|screen-title__row)([^A-Za-z0-9_-]|$)' dist; then
+            echo 'Retired selector emitted into dist.' >&2
+            exit 1
+          fi
+          echo '--- retired markup hook scan ---'
+          if grep -REn --exclude='*.css' 'launcher-header__badge|screen-title__row|mini-ledger|filter-tab|map-viewport-control|test-advance' dist; then
+            echo 'Retired markup hook emitted into non-CSS dist.' >&2
+            exit 1
+          fi
+          echo '--- fallback ownership in exact artifact ---'
+          grep -REn --exclude='*.map' 'page--launcher|launcher__scope-list|launcher__learn' dist
+          grep -REn --include='*.css' '\.launcher-header__icon' dist
+          echo '--- consolidated text control ownership in exact artifact ---'
+          test "$(grep -RIl --include='*.css' '\.text-icon-button' dist | wc -l)" -eq 1
+          grep -REn --include='*.css' '\.text-icon-button' dist
