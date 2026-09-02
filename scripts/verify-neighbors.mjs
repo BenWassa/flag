@@ -171,7 +171,10 @@ assert.ok(
 const reactScreenSource = await readFile('src/react/screens/NeighborScreens.tsx', 'utf8');
 assert.ok(reactScreenSource.includes('onSubmit={(event) =>'), 'Enter-to-submit uses the native React form path.');
 const css = await readFile('src/styles/neighbors.css', 'utf8');
-assert.ok(css.includes('min-height: 50px'), 'Mobile entry and suggestion rows exceed the 44px touch minimum.');
+assert.ok(
+  css.includes('min-height: var(--control-height-standard)'),
+  'Mobile entry and suggestion rows use the shared standard control height, which exceeds the 44px touch minimum.',
+);
 assert.ok(css.includes('max-height: min(28dvh, 230px)'), 'Autocomplete is bounded so the virtual keyboard does not bury the task status.');
 assert.ok(!/#[0-9a-f]{3,8}\b/i.test(css), 'Neighbor CSS uses shared design tokens only.');
 const generationSource = await readFile('scripts/generate-neighbor-fixture.mjs', 'utf8');
