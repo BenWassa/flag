@@ -132,11 +132,11 @@
 .neighbor-entry > label { font-size: 13px; font-weight: 700; }
 /* Deliberately quiet: this answer must be available for every target without
    drawing attention to the island nations it happens to be correct for. */
-.neighbor-none { min-height: 44px; justify-self: start; font-size: 14px; }
+.neighbor-none { min-height: var(--control-height-compact); justify-self: start; font-size: 14px; }
 .neighbor-input-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: var(--space-2); }
 .neighbor-input-row input {
   width: 100%;
-  min-height: 50px;
+  min-height: var(--control-height-standard);
   border: 1px solid var(--line-strong);
   border-radius: var(--radius-md);
   background: var(--surface);
@@ -162,7 +162,7 @@
 .neighbor-suggestions:empty { display: none; }
 .neighbor-suggestion {
   width: 100%;
-  min-height: 50px;
+  min-height: var(--control-height-standard);
   padding: 9px var(--space-3);
   border: 0;
   border-bottom: 1px solid var(--line);
@@ -210,7 +210,7 @@
   .neighbor-status-line { align-items: start; }
   .neighbor-status-line h2 { max-width: 250px; }
   .neighbor-input-row { grid-template-columns: minmax(0, 1fr) 92px; }
-  .neighbor-input-row .button { min-height: 50px; padding-inline: var(--space-2); }
+  .neighbor-input-row .button { min-height: var(--control-height-standard); padding-inline: var(--space-2); }
 }
 
 /* Phone portrait enters one compact coordinate system as soon as the answer
@@ -298,7 +298,7 @@
   .neighbor-feedback { grid-area: feedback; }
   .neighbor-suggestions { max-height: min(34dvh, 180px); }
   .neighbor-input-row { grid-template-columns: minmax(0, 1fr) 92px; }
-  .neighbor-input-row .button { min-height: 50px; padding-inline: var(--space-2); }
+  .neighbor-input-row .button { min-height: var(--control-height-standard); padding-inline: var(--space-2); }
 }
 
 @media (prefers-reduced-motion: reduce) {

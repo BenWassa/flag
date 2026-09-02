@@ -100,7 +100,7 @@
 
 /* Until the first sized frame the canvas has no meaningful contents; fading in
    avoids a one-frame flash of an unsized viewport. Not a decorative animation. */
-.spatial-stage__surface > canvas { opacity: 0; transition: opacity 160ms ease; }
+.spatial-stage__surface > canvas { opacity: 0; transition: opacity var(--motion-ui) var(--ease-ui); }
 .spatial-stage[data-ready='true'] .spatial-stage__surface > canvas { opacity: 1; }
 
 /* ---------------------------------------------------------------------------
@@ -194,7 +194,7 @@
 
 /* Lateral choices. Quiet by default, and never louder than the primary action. */
 .spatial-chip {
-  min-height: 34px;
+  min-height: var(--control-height-compact);
   padding: 6px 12px;
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -203,6 +203,7 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);
 }
 
 .spatial-chip:disabled { cursor: default; opacity: 0.45; }
@@ -231,7 +232,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: var(--space-3);
-  min-height: 46px;
+  min-height: var(--control-height-standard);
   padding: 8px var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-md);
@@ -239,6 +240,7 @@
   color: var(--text);
   text-align: start;
   cursor: pointer;
+  transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);
 }
 
 .spatial-mode__mark { display: inline-flex; width: 20px; height: 20px; color: var(--text-muted); }

@@ -61,6 +61,18 @@ Primary Atlas Blue controls use the established restrained tactile depth and col
 
 Reduced motion must preserve semantic correctness and usability; animation may decorate state but may never be the mechanism that restores or determines state.
 
+## Motion and control geometry
+
+Keep this scale deliberately small:
+
+- compact controls use a `44px` minimum height for icon buttons and quiet lateral choices;
+- standard controls use a `52px` minimum height for primary actions, answer controls and text-entry actions;
+- press response uses `--motion-press: 100ms` with `--ease-press: ease-out`;
+- ordinary colour, border and opacity changes use `--motion-ui: 160ms` with `--ease-ui: ease-out`;
+- `--motion-feedback-emphasis: 520ms` / `--ease-feedback: ease-out` is the accepted Locations transient wrong-answer emphasis from #148, not a universal feedback duration.
+
+The shared Play reading dwells remain `620ms` correct / `1500ms` wrong in `src/state/play-feedback-timing.ts`; they are application-state timing rather than CSS motion. Globe/camera travel remains owned by the spatial camera director. Do not force either onto the generic UI tokens.
+
 ## Spatial navigation composition
 
 Current production hierarchy:

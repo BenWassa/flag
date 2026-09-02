@@ -31,6 +31,15 @@
       "compact": "639px",
       "answersTwoColumn": "700px",
       "shortLandscape": "700px width / 600px height"
+    },
+    "controlHeight": {
+      "compact": "44px",
+      "standard": "52px"
+    },
+    "motion": {
+      "press": "100ms ease-out",
+      "ui": "160ms ease-out",
+      "feedbackEmphasis": "520ms ease-out (Locations transient wrong-answer emphasis only)"
     }
   },
   "principles": [
