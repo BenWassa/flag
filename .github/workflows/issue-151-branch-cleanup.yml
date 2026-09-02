@@ -1,0 +1,42 @@
+name: Issue 151 post-merge branch cleanup
+
+on:
+  push:
+    branches: [issue-151-retired-css-cleanup]
+
+permissions:
+  contents: write
+  pull-requests: read
+
+jobs:
+  cleanup:
+    if: github.event.head_commit.message == 'Start #151 post-merge branch cleanup'
+    runs-on: ubuntu-latest
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Wait for verified replacement PR merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          merged=false
+          for _ in $(seq 1 180); do
+            merged="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/180" --jq '.merged')"
+            if [[ "$merged" == "true" ]]; then
+              break
+            fi
+            sleep 5
+          done
+          [[ "$merged" == "true" ]]
+      - name: Delete only spent execution branches
+        shell: bash
+        run: |
+          set -euo pipefail
+          for branch in \
+            issue-147-outlines-feedback-parity \
+            issue-147-outlines-feedback-parity-post-137 \
+            issue-149-neighbours-suggestion-accessibility \
+            issue-151-retired-css-cleanup
+          do
+            gh api --method DELETE "repos/${GITHUB_REPOSITORY}/git/refs/heads/${branch}"
+          done
