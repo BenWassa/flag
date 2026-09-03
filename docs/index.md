@@ -13,6 +13,7 @@ Atlas documentation is organised by **authority and purpose** so current product
 - [`architecture/overview.md`](architecture/overview.md) — system/layer boundaries.
 - [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md) — production Spatial Atlas composition, touch/picking and fallback contracts.
 - [`architecture/routing.md`](architecture/routing.md) — typed URL, history and durable-scope contract.
+- [`architecture/pwa-update-lifecycle.md`](architecture/pwa-update-lifecycle.md) — automatic service-worker discovery, safe application-version adoption, cache ownership and offline consistency.
 - [`architecture/cartography.md`](architecture/cartography.md) — canonical Natural Earth source/provenance/boundary policy for projected and spherical outputs.
 - [`architecture/earned-achievements.md`](architecture/earned-achievements.md) — persistent achievement schema and qualification seam.
 
@@ -34,6 +35,8 @@ Atlas ships React/Vite, all six continents across the intended four-domain curri
 The conventional launcher remains only as the WebGL/renderer-failure fallback. The typed router, learning engines, persistence, achievement semantics and canonical geography remain authoritative beneath both presentations.
 
 The World Crown is reachable and #138 already shipped its earned-only learner-facing Home surface.
+
+Issue #191 now owns the planned automatic PWA update lifecycle. Until it is implemented and deployed, #71 remains paused rather than spending final installed-PWA evidence against a service-worker lifecycle that is about to change.
 
 ## Documentation rules
 
