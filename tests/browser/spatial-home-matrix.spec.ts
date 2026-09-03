@@ -25,7 +25,7 @@ for (const viewport of [
 
     expect(stage.width).toBeGreaterThanOrEqual(viewport.width - 1);
     expect(stage.height).toBeGreaterThanOrEqual(viewport.height - 1);
-    expect(chooserBox.left ?? chooserBox.x).toBeGreaterThanOrEqual(0);
+    expect(chooserBox.x).toBeGreaterThanOrEqual(0);
     expect(chooserBox.x + chooserBox.width).toBeLessThanOrEqual(viewport.width + 1);
     expect(chooserBox.y).toBeGreaterThanOrEqual(0);
     expect(chooserBox.y + chooserBox.height).toBeLessThanOrEqual(viewport.height + 1);
@@ -59,7 +59,7 @@ test('#187 Home accessibility tree exposes one navigation group with four progre
   await expect(modes).toBeVisible();
   const snapshot = await modes.ariaSnapshot();
   for (const mode of MODES) {
-    expect(snapshot).toMatch(new RegExp(`button \\"${mode}, \\d+ of \\d+ cleared\\"`));
+    expect(snapshot).toMatch(new RegExp(`button "${mode}, \\d+ of \\d+ cleared"`));
   }
   expect(snapshot).not.toContain('dialog');
 });
