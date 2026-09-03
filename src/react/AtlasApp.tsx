@@ -12,6 +12,7 @@ import { flushNeighborAttempts } from '../infrastructure/neighbor-storage.js';
 import { flushOutlineAttempts } from '../infrastructure/outline-storage.js';
 import { flushAttempts } from '../infrastructure/storage.js';
 import { dismissInstallPrompt, isInstallPromptDismissed } from '../infrastructure/install-prompt-storage.js';
+import { installPwaUpdateLifecycle, signalPwaUpdateSafetyChange } from '../infrastructure/pwa-update.js';
 import { installNavigationGestures } from '../navigation-gestures.js';
 import { createHashRouter } from '../routing/router.js';
 import { isLearningDomain, normalizeAvailableRoute, parentRoute, routeForScope, routeForScopeId, routeTitle, routesEqual, serializeRoutePath, stableRoute, type AppRoute, type LearningRoute } from '../routing/routes.js';
@@ -182,6 +183,7 @@ export function AtlasApp() {
     if (active.domain === 'neighbors') store.abandonNeighborSession();
     setActiveRoundRoute(null);
     rounds.neighbors.resetQuery();
+    signalPwaUpdateSafetyChange();
   }, [rounds, store]);
 
   const navigateStable = useCallback((route: AppRoute) => {
@@ -193,7 +195,10 @@ export function AtlasApp() {
   const launchFeedback = useCallback(async (element: HTMLElement | null | undefined, launch: () => Promise<void>) => {
     element?.setAttribute('aria-busy', 'true');
     element?.classList.add('is-launching');
-    try { await launch(); } finally { if (element?.isConnected) { element.removeAttribute('aria-busy'); element.classList.remove('is-launching'); } }
+    try { await launch(); } finally {
+      if (element?.isConnected) { element.removeAttribute('aria-busy'); element.classList.remove('is-launching'); }
+      signalPwaUpdateSafetyChange();
+    }
   }, []);
 
   const actions = useMemo<AtlasActions>(() => ({
@@ -387,10 +392,13 @@ function useGlobalLifecycle(currentRoute: React.MutableRefObject<AppRoute>, acti
       if (event.key === 'Enter' && store.view.name === 'outline-quiz' && store.outlineAnsweredCountryId !== null && store.outlineSession?.mode === 'test') { event.preventDefault(); actions.advance('outlines'); }
     };
     window.addEventListener('keydown', keyboard);
-    const register = () => { if ('serviceWorker' in navigator) void navigator.serviceWorker.register('./sw.js').catch(() => undefined); };
-    window.addEventListener('load', register);
-    if (document.readyState === 'complete') register();
-    return () => { window.removeEventListener('pagehide', flush); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('keydown', keyboard); window.removeEventListener('load', register); removeGestures(); };
+    const pwaUpdates = installPwaUpdateLifecycle({
+      // active-round.ts is the process-wide authority across all four learning
+      // domains. Pending geometry launch and IME/editing safety are layered in
+      // the coordinator itself.
+      isApplicationSafe: () => getActiveRoundRoute() === null,
+    });
+    return () => { window.removeEventListener('pagehide', flush); document.removeEventListener('visibilitychange', visibility); window.removeEventListener('keydown', keyboard); pwaUpdates.dispose(); removeGestures(); };
   }, [actions, currentRoute, store]);
 }
 
