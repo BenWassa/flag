@@ -27,6 +27,12 @@ interface PwaUpdateLifecycleOptions {
   isApplicationSafe(): boolean;
 }
 
+let activeSafetySignal: (() => void) | null = null;
+
+export function signalPwaUpdateSafetyChange(): void {
+  activeSafetySignal?.();
+}
+
 function currentBuildIdentity(): string {
   return document.querySelector<HTMLMetaElement>('meta[name="atlas-build"]')?.content ?? 'development';
 }
@@ -65,6 +71,7 @@ export function installPwaUpdateLifecycle({ isApplicationSafe }: PwaUpdateLifecy
     if (disposed || !registration?.waiting || !safeNow()) return;
     registration.waiting.postMessage({ type: 'ATLAS_UPDATE_ATTEMPT' });
   };
+  activeSafetySignal = attemptAdoption;
 
   const watchInstallingWorker = (worker: ServiceWorker | null) => {
     if (!worker) return;
@@ -178,6 +185,7 @@ export function installPwaUpdateLifecycle({ isApplicationSafe }: PwaUpdateLifecy
     signalSafetyChange: attemptAdoption,
     dispose() {
       disposed = true;
+      if (activeSafetySignal === attemptAdoption) activeSafetySignal = null;
       if (launchTimer !== null) window.clearTimeout(launchTimer);
       window.clearInterval(longSessionTimer);
       window.removeEventListener('load', load);
