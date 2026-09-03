@@ -23,7 +23,7 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 7. State never relies on colour alone.
 8. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
 9. Use spacing, alignment, rules and proximity before adding cards/containers.
-10. Modest radii and controlled depth; no glassmorphism, bento dashboards, decorative gradients or excessive elevation.
+10. Modest radii and controlled depth; no glassmorphism, bento dashboards, decorative gradients or excessive elevation. Home's mode chooser (#187) carries one narrow translucent/frosted exception, recorded below; it does not spread to any other surface.
 11. Tactile press physics communicate activation without springy/toy-like bounce.
 12. Progressive disclosure beats explanatory text in routine flows.
 13. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
@@ -104,6 +104,20 @@ At continent/region focus:
 The command surface is label, proximity, rules and a small control group — not a dashboard/card stack and never glass.
 
 The conventional `Launcher` is renderer-failure fallback only. Do not restore it beneath the globe or document its old full-width rows as the normal product experience.
+
+### Home mode chooser (#187 translucency exception)
+
+Home has no place framed yet, so the full globe is the Home canvas and mode selection is one centred chooser layered over it, not a docked band beneath a reduced stage.
+
+This chooser (`.spatial-home`) is the single named exception to "no glassmorphism" in this document:
+
+- one neutral translucent/frosted surface, never a stack of nested glass cards;
+- restrained opacity with high text/icon contrast; a solid, more opaque tint is the base and the only requirement — `backdrop-filter` blur is an optional sharpening layer, applied only under `@supports` and dropped automatically wherever it is unsupported, expensive or in forced-colours mode;
+- a thin structural edge, not heavy elevation;
+- the existing hero radius tier, not a bespoke shape;
+- no colourful gradients, glowing borders or decorative blur for its own sake.
+
+It is Home's ordinary page content, not a dialog opened over another task: no `aria-modal`, no focus trap, no open/close state. The four mode choices are ordinary DOM buttons, materially larger and icon-led, in a 2×2 grid on ordinary phone portrait and a compact four-across arrangement in short landscape; tablet/desktop keep the same bounded, centred panel rather than expanding into a bento layout. The exception is scoped to this one Home surface; it must not spread to the continent/region command surface, activities or Results.
 
 ## Spatial motion and gesture ownership
 
@@ -186,7 +200,7 @@ Learner-facing copy uses modern British English: **Neighbours, colour, centre, b
 
 ## Intentionally excluded aesthetics
 
-No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion.
+No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The Home mode chooser (#187) is the one narrow, explicitly recorded translucency exception above; it does not license glass elsewhere.
 
 ## Historical design work
 

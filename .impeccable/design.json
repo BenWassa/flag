@@ -42,6 +42,13 @@
       "feedbackEmphasis": "520ms ease-out (Locations transient wrong-answer emphasis only)"
     }
   },
+  "exceptions": {
+    "homeModeChooser": {
+      "issue": 187,
+      "surface": ".spatial-home",
+      "note": "The one narrow translucent/frosted exception to the default no-glassmorphism rule. Home has no place framed yet, so the full globe is the canvas and this single centred chooser panel is layered over it. Restrained opacity, high text/icon contrast, a thin structural edge, the existing hero radius, no nested glass cards, no gradients or glowing borders. backdrop-filter is an optional @supports-gated sharpening layer over an opaque base tint, not a requirement, and is dropped in forced-colours mode. Scoped to Home only; does not spread to the continent/region command surface, activities or Results."
+    }
+  },
   "principles": [
     "Geography is the content; interface is the instrument",
     "Spatial Atlas is the default production navigation presentation, not a preview",
@@ -60,6 +67,6 @@
     "Tiny geography uses truthful display geometry and source-derived invisible interaction envelopes when necessary",
     "Mobile edge gestures, reduced motion and answer-safe accessibility remain first-class",
     "No continent, region or hemisphere colour taxonomy",
-    "No glassmorphism, bento dashboards, decorative UI overload or reward economy"
+    "No glassmorphism, bento dashboards, decorative UI overload or reward economy, except the one recorded Home mode chooser exception (see exceptions.homeModeChooser)"
   ]
 }

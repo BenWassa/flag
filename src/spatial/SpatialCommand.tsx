@@ -90,30 +90,38 @@ function Chip({ label, detail, status, notes, current, onClick, disabled }: {
   );
 }
 
-/** Choose what to learn. The globe has nothing to select yet, so it is context. */
+/**
+ * Choose what to learn. Issue #187 — the full globe is the Home canvas and
+ * this is the one centred chooser layered over it, not a docked band beneath
+ * a reduced stage. The globe has nothing to select yet, so it stays context:
+ * `spatial-state.ts` already sets `picking: 'none'` for this surface, and a
+ * tap that misses the panel falls through to the globe (`.spatial-command`
+ * carries `pointer-events: none`; only `.spatial-home` re-enables it), so
+ * uncovered geography stays draggable without competing with the chooser.
+ *
+ * It is Home's page content, not a dialog opened over another task — no
+ * `aria-modal`, no focus trap. Home's information — the brand heading, the
+ * earned World Crown and the Modes heading — is preserved verbatim; #187
+ * recomposes the surface, not what it says.
+ */
 function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievements: EarnedAchievementState }) {
   const actions = useAtlasActions();
   const crown = getWorldAchievementReadModel(achievements).crownEarned;
   return (
-    <>
-      {/* The heading names where the learner is, exactly as it does for a
-          framed place. Home's own semantics — the brand heading, the World
-          Crown block and the Modes heading — are preserved verbatim: #166
-          redesigns the navigation surface, not Home's information, and the
-          Crown's learner-facing presentation belongs to #138. */}
-      <div className="spatial-command__head">
-        <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>Atlas</h1>
-        <button className="icon-button spatial-command__aside" type="button" onClick={actions.openProfile} aria-label="Profile"><Icon name="profile" /></button>
+    <div className="spatial-home">
+      <div className="spatial-home__head">
+        <h1 className="spatial-home__place" tabIndex={-1} data-autofocus>Atlas</h1>
+        <button className="icon-button spatial-home__aside" type="button" onClick={actions.openProfile} aria-label="Profile"><Icon name="profile" /></button>
       </div>
-      {crown ? <section className="world-crown" aria-labelledby="world-crown-title" data-world-crown-earned>
+      {crown ? <section className="world-crown spatial-home__crown" aria-labelledby="world-crown-title" data-world-crown-earned>
         <div className="world-crown__identity"><h2 id="world-crown-title">World Crown</h2><p>Earned · all six continents complete</p></div>
       </section> : null}
-      <h2 className="atlas-eyebrow">Modes</h2>
-      <nav className="spatial-command__choices" aria-label="Learning modes">
+      <h2 className="atlas-eyebrow spatial-home__eyebrow">Modes</h2>
+      <nav className="spatial-home__grid" aria-label="Learning modes">
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
           return (
-            <button className="spatial-mode" type="button" key={domain}
+            <button className="spatial-mode spatial-mode--home" type="button" key={domain}
               aria-label={`${summary.label}, ${summary.cleared} of ${summary.total} cleared`}
               onClick={() => actions.openDomain(domain)}
             >
@@ -124,7 +132,7 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
           );
         })}
       </nav>
-    </>
+    </div>
   );
 }
 

@@ -1,11 +1,12 @@
 /*
- * Spatial Atlas — the production navigation surface (#119, #166).
+ * Spatial Atlas — the production navigation surface (#119, #166, #187).
  *
  * Tokens only: every colour and radius here already exists in atlas-theme.css.
  * Geography is the dominant object and the command surface sits directly under
  * the place it names, on the same ground, separated by space rather than by a
- * card edge. No glass, no gradient furniture, no floating dashboard, and no
- * motion beyond the camera itself.
+ * card edge. No gradient furniture, no floating dashboard, and no motion
+ * beyond the camera itself. The one narrow exception is `.spatial-home`
+ * (#187): a translucent Home-only chooser panel, recorded in DESIGN.md.
  */
 
 .spatial-shell {
@@ -21,7 +22,18 @@
  * need — place, then Play, then the lateral choices — so if anything has to
  * scroll on a 320x480 screen it is the chips, never the primary action.
  */
-.spatial-shell[data-surface] { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
+.spatial-shell[data-surface]:not([data-surface='domains']) { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
+
+/*
+ * Issue #187 — Home is the one exception to "stage above a docked command
+ * band". There is no place framed yet, so the globe owns the whole canvas at
+ * every viewport and the chooser is a single centred layer over it rather
+ * than a second row claiming a fixed share underneath.
+ */
+.spatial-shell[data-surface='domains'] { grid-template-rows: 1fr; }
+.spatial-shell[data-surface='domains'] > .spatial-stage,
+.spatial-shell[data-surface='domains'] > .spatial-command { grid-row: 1; grid-column: 1; }
+.spatial-shell[data-surface='domains'] > .spatial-stage { border-block-end: 0; }
 
 /*
  * An activity or results screen occupies the second row instead. There the
@@ -171,7 +183,6 @@
 }
 
 .spatial-command__back { grid-column: 1; grid-row: 1 / span 3; }
-.spatial-command__aside { grid-column: 3; grid-row: 1 / span 3; }
 
 /* The mark is a shape as well as a colour, beside a visually-hidden word. */
 .spatial-command__mark { margin-inline-start: 8px; font-size: 15px; vertical-align: 2px; }
@@ -250,20 +261,131 @@
 
 .spatial-command .storage-notice { margin: 0; }
 
+/* ---------------------------------------------------------------------------
+ * Home mode chooser (#187)
+ *
+ * Home has no place framed yet, so the whole stage is the globe and the
+ * chooser is one centred panel layered over it. `.spatial-command` becomes
+ * the full-bleed host and hands the pointer straight through to the globe
+ * everywhere except the panel itself, so an uncovered globe stays draggable
+ * without a second selection surface competing with the chooser.
+ * ------------------------------------------------------------------------- */
+
+.spatial-command[data-surface='domains'] {
+  display: grid;
+  place-items: center;
+  max-height: none;
+  overflow: visible;
+  padding:
+    max(var(--space-4), env(safe-area-inset-top))
+    max(var(--space-4), env(safe-area-inset-right))
+    max(var(--space-4), env(safe-area-inset-bottom))
+    max(var(--space-4), env(safe-area-inset-left));
+  background: transparent;
+  /* Only the panel below takes taps; the rest of this layer lets them fall
+     through to the globe underneath. */
+  pointer-events: none;
+}
+
+/*
+ * The one narrow translucency exception DESIGN.md's "no glassmorphism" rule
+ * carves out for #187: a quiet brushed instrument panel, not decorative
+ * glass. The opaque tint alone (no nested rule needed) already reads
+ * correctly without `backdrop-filter`; blur only sharpens it where supported
+ * and cheap, and legibility never depends on it.
+ */
+.spatial-home {
+  pointer-events: auto;
+  /* `min(100%, …)` rather than a viewport unit: `100%` already resolves against
+     this panel's padded, pointer-events-none host, so it can never overflow
+     that host the way a raw `vw` figure — measured against the full viewport,
+     blind to the host's own padding — intermittently did. */
+  width: min(100%, 360px);
+  display: grid;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  border-radius: var(--radius-hero);
+  border: 1px solid color-mix(in srgb, var(--line-strong) 65%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  box-shadow: 0 1px 2px rgba(16, 19, 24, .06), 0 18px 40px rgba(16, 19, 24, .14);
+}
+
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .spatial-home {
+    background: color-mix(in srgb, var(--surface) 64%, transparent);
+    backdrop-filter: blur(18px) saturate(1.1);
+    -webkit-backdrop-filter: blur(18px) saturate(1.1);
+  }
+}
+
+.spatial-home__head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.spatial-home__place {
+  margin: 0;
+  color: var(--text);
+  font-size: 25px;
+  font-weight: 800;
+  line-height: 1.15;
+  letter-spacing: -0.015em;
+}
+
+/* No focus ring on the heading: it is a focus target for navigation, not a
+   control, and the rest of Atlas does not ring its autofocus headings either. */
+
+.spatial-home__crown { margin: 0; }
+.spatial-home__eyebrow { margin: 0; }
+
+.spatial-home__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+}
+
+.spatial-mode--home {
+  grid-template-columns: none;
+  grid-template-rows: auto auto auto;
+  justify-items: center;
+  align-content: center;
+  text-align: center;
+  gap: 8px;
+  min-height: 132px;
+  padding: var(--space-3);
+}
+
+.spatial-mode--home .spatial-mode__mark { width: 40px; height: 40px; color: var(--action); }
+.spatial-mode--home .spatial-mode__name { font-size: 16px; }
+.spatial-mode--home .spatial-mode__meta { font-size: 12px; }
+
+/* Short landscape has no room for two tall rows: keep every mode on screen by
+   going wider and shallower rather than reusing the portrait block verbatim. */
+@media (orientation: landscape) and (max-height: 540px) {
+  .spatial-home { width: min(100%, 620px); padding: var(--space-3); gap: 8px; }
+  .spatial-home__grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .spatial-mode--home { min-height: 88px; padding: 8px 6px; gap: 4px; }
+  .spatial-mode--home .spatial-mode__mark { width: 28px; height: 28px; }
+  .spatial-mode--home .spatial-mode__name { font-size: 13px; }
+}
+
 /* Wide and short viewports both want geography beside the controls rather than
    above them: a 390px-tall landscape phone has no room for a stacked band. */
 @media (min-width: 860px), (orientation: landscape) and (max-height: 540px) {
-  /* Matching specificity, so these actually replace the stacked templates. */
-  .spatial-shell[data-surface],
+  /* Home keeps its full-bleed overlay grid at every size (below); everything
+     else here is the docked side-by-side layout for a framed place. */
+  .spatial-shell[data-surface]:not([data-surface='domains']),
   .spatial-shell:not([data-surface]) {
     grid-template-rows: none;
     grid-template-columns: minmax(0, 1fr) minmax(320px, 38%);
   }
-  .spatial-stage {
+  .spatial-shell:not([data-surface='domains']) .spatial-stage {
     border-block-end: 0;
     border-inline-end: 1px solid var(--line);
   }
-  .spatial-command { align-content: start; max-height: none; }
+  .spatial-command:not([data-surface='domains']) { align-content: start; max-height: none; }
 }
 
 @media (min-width: 860px) {
@@ -299,4 +421,7 @@
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
   .spatial-chip, .spatial-mode { border: 1px solid ButtonText; }
+  /* The frosted treatment is a translucency exception, not a forced-colours
+     one: here the panel falls back to a plain solid bordered surface. */
+  .spatial-home { border: 1px solid ButtonText; backdrop-filter: none; -webkit-backdrop-filter: none; }
 }

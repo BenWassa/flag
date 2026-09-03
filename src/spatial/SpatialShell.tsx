@@ -6,13 +6,20 @@ import { SpatialStage } from './SpatialStage.js';
 import type { SpatialState } from './spatial-state.js';
 
 /**
- * Issue #166 — layout for the production Spatial Atlas.
+ * Issue #166, #187 — layout for the production Spatial Atlas.
  *
  * For ordinary navigation the stage and its command surface ARE the screen:
  * geography takes the viewport and a compact band of real controls sits beneath
  * the place it names. No conventional launcher page renders underneath, which
  * is what the #119 preview did and what made it read as a globe stacked on top
  * of the old application.
+ *
+ * Home (`navigation === 'domains'`) is the one exception to the docked band:
+ * there is no place framed yet, so `SpatialCommand` renders its chooser as a
+ * layer over the full-canvas globe instead of a second row beneath it —
+ * `spatial.css` stacks both in the same grid cell for that one surface. The
+ * `AtlasApp → deriveSpatialState → SpatialShell` seam is unchanged; this is a
+ * composition change, not a second navigation state machine.
  *
  * The panel returns whenever an activity or a results screen owns the content,
  * so the existing domain-native screens are untouched, and in `yielded` mode the

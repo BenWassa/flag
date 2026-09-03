@@ -48,7 +48,7 @@ function renderCommand(route, view) {
 
 {
   const domains = renderCommand({ name: 'home' }, 'home');
-  assert.equal((domains.match(/class="spatial-mode"/g) ?? []).length, LEARNING_DOMAIN_IDS.length,
+  assert.equal((domains.match(/class="spatial-mode spatial-mode--home"/g) ?? []).length, LEARNING_DOMAIN_IDS.length,
     'Home offers one control per learning domain.');
   for (const label of ['Flags', 'Locations', 'Outlines', 'Neighbours']) {
     assert.ok(visibleText(domains).includes(label), `Home names ${label} visibly.`);
