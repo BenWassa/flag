@@ -13,7 +13,7 @@ import {
   parentContinentIdForLearningScope,
 } from '../data/learning-scopes.js';
 import type { ContinentId, StudyScope } from '../domain/models.js';
-import { distanceForSpan, framingFor, type Framing } from './geo.js';
+import { DEG, distanceForSpan, framingFor, type Framing } from './geo.js';
 import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
 
 const CONTINENT_IDS = new Set(CONTINENTS.map((continent) => continent.id));
@@ -72,7 +72,7 @@ export function framingBoxes(asset: GlobeAsset, countryIds: readonly string[]): 
 
 export interface Pose { lon: number; lat: number; distance: number }
 
-/** Whole-Earth frame. Mode choice and world selection share it. */
+/** Whole-Earth frame used by ordinary world-level domain selection. */
 export const WORLD_FRAMING: Framing = { lon: 12, lat: 12, spanLon: 150, spanLat: 150 };
 
 export function poseForFraming(framing: Framing, fovDeg: number, aspect: number): Pose {
@@ -80,6 +80,34 @@ export function poseForFraming(framing: Framing, fovDeg: number, aspect: number)
     lon: framing.lon,
     lat: framing.lat,
     distance: distanceForSpan(framing.spanLat, framing.spanLon, fovDeg, aspect),
+  };
+}
+
+/**
+ * Issue #187 — Home promises the whole globe, not merely a world-level frame.
+ *
+ * Scope framing is intentionally based on geographic spans and is allowed to
+ * crop the far edge of the sphere. Home is different: the sphere itself is the
+ * first impression, so its projected silhouette must fit the limiting viewport
+ * dimension on portrait phones as well as landscape/desktop.
+ *
+ * The renderer's Earth is a unit sphere. From camera distance d its apparent
+ * angular radius is asin(1 / d). Solve that against the smaller horizontal or
+ * vertical half-FOV and leave 6% breathing room so rasterisation never clips the
+ * limb. This changes only Home composition; domain/continent/scope framing keeps
+ * the canonical span-derived policy above.
+ */
+const HOME_GLOBE_VIEWPORT_FILL = 0.94;
+
+export function poseForWholeGlobe(fovDeg: number, aspect: number): Pose {
+  const verticalHalfFov = (fovDeg * DEG) / 2;
+  const horizontalHalfFov = Math.atan(Math.tan(verticalHalfFov) * Math.max(aspect, 0.01));
+  const limitingHalfFov = Math.min(verticalHalfFov, horizontalHalfFov);
+  const globeHalfAngle = Math.atan(Math.tan(limitingHalfFov) * HOME_GLOBE_VIEWPORT_FILL);
+  return {
+    lon: WORLD_FRAMING.lon,
+    lat: WORLD_FRAMING.lat,
+    distance: 1 / Math.sin(globeHalfAngle),
   };
 }
 
