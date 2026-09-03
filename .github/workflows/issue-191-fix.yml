@@ -23,9 +23,10 @@ jobs:
           source = path.read_text()
           old = "    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-runtime-v1']) });\n\n    await context.setOffline(true);"
           new = "    expect((await cacheState(page)).names.some((name) => name.startsWith('workbox-precache-v2-'))).toBe(true);\n\n    await context.setOffline(true);"
-          if source.count(old) != 1:
-              raise SystemExit(f'expected one failure-cache assertion, found {source.count(old)}')
-          path.write_text(source.replace(old, new))
+          before, matched, after = source.rpartition(old)
+          if not matched:
+              raise SystemExit('missing final failure-cache assertion')
+          path.write_text(before + new + after)
           PY
           git rm .github/workflows/issue-191-fix.yml
           git config user.name github-actions[bot]
