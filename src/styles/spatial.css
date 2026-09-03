@@ -1,11 +1,11 @@
 /*
- * Spatial Atlas — the production navigation surface (#119, #166).
+ * Spatial Atlas — the production navigation surface (#119, #166, #187).
  *
- * Tokens only: every colour and radius here already exists in atlas-theme.css.
- * Geography is the dominant object and the command surface sits directly under
- * the place it names, on the same ground, separated by space rather than by a
- * card edge. No glass, no gradient furniture, no floating dashboard, and no
- * motion beyond the camera itself.
+ * Geography is the dominant object. Ordinary domain/scope navigation keeps its
+ * compact command band, while Home is the one composition exception: the whole
+ * Earth owns the viewport and a single neutral translucent chooser is layered
+ * over it. That surface deliberately uses no backdrop blur, so the exception
+ * does not create a continuous compositing/rendering cost on phone GPUs.
  */
 
 .spatial-shell {
@@ -22,6 +22,27 @@
  * scroll on a 320x480 screen it is the chips, never the primary action.
  */
 .spatial-shell[data-surface] { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
+
+/* Issue #187 — Home is globe-first rather than globe-plus-command-band. The
+   stage and chooser occupy the same grid cell; only the chooser itself receives
+   pointer events, so uncovered globe remains available for deliberate drag while
+   country picking stays disabled by the authoritative Home spatial state. */
+.spatial-shell[data-surface='domains'] {
+  position: relative;
+  grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.spatial-shell[data-surface='domains'] > .spatial-stage,
+.spatial-shell[data-surface='domains'] > .spatial-command {
+  grid-area: 1 / 1;
+}
+
+.spatial-shell[data-surface='domains'] > .spatial-stage {
+  min-width: 0;
+  min-height: 100%;
+  border: 0;
+}
 
 /*
  * An activity or results screen occupies the second row instead. There the
@@ -125,12 +146,44 @@
   overscroll-behavior-y: contain;
 }
 
+/* Home-only translucent chooser. This is one surface over the Earth, not a
+   stack of glass cards. The 92% neutral fill keeps text stable over coastlines,
+   while the absence of backdrop-filter avoids decorative blur/compositing cost. */
+.spatial-command[data-surface='domains'] {
+  z-index: 1;
+  place-self: center;
+  width: min(560px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  max-height: calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  padding: clamp(16px, 4vw, 24px);
+  border: 1px solid color-mix(in srgb, var(--line-strong) 76%, transparent);
+  border-radius: var(--radius-tile);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: var(--depth-tile);
+  overflow-y: auto;
+}
+
 .spatial-command__head {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   column-gap: var(--space-2);
   row-gap: 2px;
+}
+
+.spatial-command[data-surface='domains'] .spatial-command__head {
+  grid-template-columns: minmax(0, 1fr) auto;
+  min-height: var(--control-height-compact);
+}
+
+.spatial-command[data-surface='domains'] .spatial-command__place {
+  grid-column: 1;
+  grid-row: 1;
+  font-size: clamp(26px, 7vw, 32px);
+}
+
+.spatial-command[data-surface='domains'] .spatial-command__aside {
+  grid-column: 2;
+  grid-row: 1;
 }
 
 /* Domain is present but secondary: it sits above the place, quiet and small. */
@@ -159,9 +212,6 @@
   line-height: 1.15;
   letter-spacing: -0.015em;
 }
-
-/* No focus ring on the heading: it is a focus target for navigation, not a
-   control, and the rest of Atlas does not ring its autofocus headings either. */
 
 .spatial-command__meta {
   grid-column: 2;
@@ -225,8 +275,8 @@
   outline-offset: 2px;
 }
 
-/* Choosing a domain. A row rather than a chip, because the name and its figure
-   both matter here and there is no place label competing with them. */
+/* Choosing a domain. Ordinary domain routes keep the row treatment; Home
+   overrides the same real buttons into the icon-led 2×2 chooser below. */
 .spatial-mode {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto;
@@ -248,6 +298,65 @@
 .spatial-mode__name { font-size: 15px; font-weight: 700; }
 .spatial-mode__meta { color: var(--text-muted); font-size: 12px; font-weight: 700; }
 
+.spatial-command[data-surface='domains'] > .atlas-eyebrow {
+  margin: 0;
+  color: var(--text-muted);
+}
+
+.spatial-command[data-surface='domains'] .spatial-command__choices {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto auto auto;
+  place-items: center;
+  align-content: center;
+  gap: 6px;
+  min-height: 112px;
+  padding: 14px 10px;
+  background: transparent;
+  text-align: center;
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode:hover {
+  background: color-mix(in srgb, var(--surface) 68%, var(--action-soft));
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode__mark {
+  width: 42px;
+  height: 42px;
+  color: var(--text);
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode__name {
+  font-size: 16px;
+  font-weight: 800;
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode__meta {
+  font-size: 12px;
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode:focus-visible {
+  outline-color: var(--focus-ring);
+}
+
+/* The earned Crown stays inside the one chooser surface as a quiet rule/text
+   row; it does not become a second floating panel. */
+.spatial-command[data-surface='domains'] .world-crown {
+  margin: 0;
+  padding: 9px 0 10px;
+}
+
+.spatial-command[data-surface='domains'] .world-crown__identity {
+  gap: 8px;
+}
+
+.spatial-command[data-surface='domains'] .world-crown h2 { font-size: 14px; }
+.spatial-command[data-surface='domains'] .world-crown p { font-size: 11px; }
+
 .spatial-command .storage-notice { margin: 0; }
 
 /* Wide and short viewports both want geography beside the controls rather than
@@ -264,10 +373,21 @@
     border-inline-end: 1px solid var(--line);
   }
   .spatial-command { align-content: start; max-height: none; }
+
+  /* Home is the deliberate exception: full globe remains behind one centred
+     chooser rather than becoming a left/right split. */
+  .spatial-shell[data-surface='domains'] {
+    grid-template: minmax(0, 1fr) / minmax(0, 1fr);
+  }
+
+  .spatial-shell[data-surface='domains'] > .spatial-stage {
+    border-inline-end: 0;
+  }
 }
 
 @media (min-width: 860px) {
   .spatial-command__place { font-size: 29px; }
+  .spatial-command[data-surface='domains'] .spatial-command__place { font-size: 32px; }
 }
 
 /* A short landscape phone has no room to share. Splitting 844x390 between a
@@ -282,6 +402,62 @@
   }
   .spatial-shell[data-mode='context'] .spatial-stage { display: none; }
   .spatial-shell[data-mode='context'] .spatial-shell__panel { overflow: visible; }
+
+  .spatial-command[data-surface='domains'] {
+    width: min(720px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+    max-height: calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    padding: 12px 16px;
+    gap: 8px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-command__head {
+    min-height: var(--control-height-compact);
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-command__choices {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode {
+    min-height: 94px;
+    padding: 10px 8px;
+    gap: 4px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode__mark {
+    width: 32px;
+    height: 32px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode__name { font-size: 14px; }
+  .spatial-command[data-surface='domains'] .world-crown { padding-block: 6px; }
+}
+
+/* At 200% browser zoom a phone can expose an effective CSS width below 280px.
+   Reflow to one compact column rather than forcing a clipped 2×2 grid. Ordinary
+   unzoomed phone portrait remains the intended 2×2 composition. */
+@media (max-width: 280px) {
+  .spatial-command[data-surface='domains'] .spatial-command__choices {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-rows: auto;
+    justify-items: start;
+    min-height: var(--control-height-standard);
+    padding: 8px 10px;
+    text-align: start;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode__mark {
+    width: 28px;
+    height: 28px;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode__meta { justify-self: end; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -299,4 +475,25 @@
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
   .spatial-chip, .spatial-mode { border: 1px solid ButtonText; }
+
+  .spatial-shell[data-surface='domains'] {
+    min-height: 100svh;
+    overflow: visible;
+  }
+
+  .spatial-command[data-surface='domains'] {
+    width: auto;
+    max-height: none;
+    margin: 0;
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    overflow: visible;
+  }
+
+  .spatial-command[data-surface='domains'] .spatial-mode {
+    background: ButtonFace;
+    color: ButtonText;
+  }
 }

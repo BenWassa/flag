@@ -1,0 +1,42 @@
+name: Issue 187 acceptance
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    if: github.head_ref == 'issue-187-home-globe-overlay'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Spatial Home exact-production browser matrix
+        run: >-
+          npx playwright test
+          tests/browser/spatial-home-overlay.spec.ts
+          tests/browser/spatial-home-matrix.spec.ts
+          tests/browser/world-crown.spec.ts
+          tests/browser/spatial-atlas.spec.ts
+          --project=chromium
+      - name: Upload rendered Home evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-187-rendered-home
+          path: test-results/**/home-*.png
+          if-no-files-found: error
+      - name: Spatial Home mobile-Chromium regression
+        run: >-
+          npx playwright test
+          tests/browser/spatial-home-overlay.spec.ts
+          tests/browser/world-crown.spec.ts
+          --project=mobile-chromium
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime

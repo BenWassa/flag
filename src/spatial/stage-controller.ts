@@ -19,6 +19,7 @@ import {
   framingBoxes,
   countryIdsForScope,
   poseForFraming,
+  poseForWholeGlobe,
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
@@ -77,8 +78,13 @@ export async function createStageController(
    * Framing always reads the WORLD asset, never the detail asset. Otherwise the
    * camera would visibly re-aim the moment a continent's higher-detail geometry
    * arrived, which reads as a bug rather than as detail.
+   *
+   * Home is the one #187 composition exception: there the globe silhouette
+   * itself must fit the viewport, so it uses the unit-sphere fit rather than the
+   * ordinary world geographic span. No route/application state is mutated.
    */
   function poseFor(next: SpatialState): Pose {
+    if (next.navigation === 'domains') return poseForWholeGlobe(GLOBE_FOV, scene.aspect);
     const boxes = next.framedScope ? framingBoxes(world, countryIdsForScope(next.framedScope)) : [];
     const framing = framingFor(boxes) ?? WORLD_FRAMING;
     return poseForFraming(framing, GLOBE_FOV, scene.aspect);
@@ -156,7 +162,14 @@ export async function createStageController(
     },
     onDolly: (factor) => {
       const { lon, lat, distance } = director.pose;
-      director.nudge({ lon, lat, distance: Math.max(MIN_DISTANCE, Math.min(MAX_DISTANCE, distance * factor)) });
+      // Ordinary spatial navigation retains the accepted 4.2 maximum. Home may
+      // start farther back solely so the whole sphere fits a narrow portrait
+      // viewport; letting the learner zoom back out to that fit avoids a sudden
+      // jump inward after the first pinch without creating a new global limit.
+      const maximumDistance = state?.navigation === 'domains'
+        ? Math.max(MAX_DISTANCE, poseFor(state).distance)
+        : MAX_DISTANCE;
+      director.nudge({ lon, lat, distance: Math.max(MIN_DISTANCE, Math.min(maximumDistance, distance * factor)) });
     },
   });
 
