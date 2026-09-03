@@ -46,26 +46,33 @@ jobs:
       url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     needs: build
+    env:
+      ATLAS_BUILD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
-      - name: Record deployed Pages cache behaviour
+      - name: Verify identity and record deployed Pages cache behaviour
         env:
           ATLAS_DEPLOY_URL: ${{ steps.deployment.outputs.page_url }}
         run: |
           set -euo pipefail
           base="${ATLAS_DEPLOY_URL%/}/"
+          index_body="$(curl -fsSL "$base")"
+          printf '%s' "$index_body" | grep -Fq "name=\"atlas-build\" content=\"${ATLAS_BUILD_SHA}\""
+          echo "Pages live build identity: ${ATLAS_BUILD_SHA}"
           app_body="$(curl -fsSL "${base}app.js")"
           hashed="$(printf '%s' "$app_body" | grep -oE 'assets/[A-Za-z0-9_-]+-[A-Za-z0-9_-]+\.js' | head -n 1 || true)"
           test -n "$hashed"
           record() {
             label="$1"
             url="$2"
+            observed="$(curl -fsSL -D - -o /dev/null "$url" | tr -d '\r')"
+            printf '\n### %s\n%s\n' "$label" "$observed"
             {
               echo "### ${label}"
               echo '```text'
-              curl -fsSL -D - -o /dev/null "$url" | tr -d '\r'
+              printf '%s\n' "$observed"
               echo '```'
             } >> "$GITHUB_STEP_SUMMARY"
           }
