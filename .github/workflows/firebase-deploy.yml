@@ -20,15 +20,19 @@ jobs:
       group: firebase-deploy
       cancel-in-progress: true
     runs-on: ubuntu-latest
+    env:
+      ATLAS_BUILD_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.workflow_run.head_sha || github.sha }}
+          ref: ${{ env.ATLAS_BUILD_SHA }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - run: npm install
       - run: npm run build
+      - name: Record exact production identity
+        run: echo "Built Atlas ${ATLAS_BUILD_SHA}" >> "$GITHUB_STEP_SUMMARY"
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0
         with:
@@ -60,3 +64,40 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+      - name: Verify and record Firebase cache policy
+        env:
+          ATLAS_FIREBASE_ORIGIN: https://atlas-3c48a.web.app
+        run: |
+          set -euo pipefail
+          base="${ATLAS_FIREBASE_ORIGIN%/}/"
+          app_body="$(curl -fsSL "${base}app.js")"
+          hashed="$(printf '%s' "$app_body" | grep -oE 'assets/[A-Za-z0-9_-]+-[A-Za-z0-9_-]+\.js' | head -n 1 || true)"
+          test -n "$hashed"
+          headers() {
+            curl -fsSL -D - -o /dev/null "$1" | tr -d '\r'
+          }
+          require_revalidation() {
+            label="$1"
+            url="$2"
+            observed="$(headers "$url")"
+            printf '%s\n' "$observed" | grep -Eiq '^cache-control:.*(no-cache|max-age=0|must-revalidate)'
+            {
+              echo "### ${label}"
+              echo '```text'
+              printf '%s\n' "$observed"
+              echo '```'
+            } >> "$GITHUB_STEP_SUMMARY"
+          }
+          require_revalidation 'Firebase root/navigation' "$base"
+          require_revalidation 'Firebase index.html' "${base}index.html"
+          require_revalidation 'Firebase sw.js' "${base}sw.js"
+          require_revalidation 'Firebase app.js' "${base}app.js"
+          require_revalidation 'Firebase stable CSS' "${base}styles.css"
+          hashed_headers="$(headers "${base}${hashed}")"
+          printf '%s\n' "$hashed_headers" | grep -Eiq '^cache-control:.*immutable'
+          {
+            echo '### Firebase representative hashed chunk'
+            echo '```text'
+            printf '%s\n' "$hashed_headers"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
