@@ -28,3 +28,16 @@ jobs:
           name: flag-atlas-dist
           path: dist
           if-no-files-found: error
+
+  pwa-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Exact-production A to B PWA lifecycle
+        run: npm run test:pwa-runtime
