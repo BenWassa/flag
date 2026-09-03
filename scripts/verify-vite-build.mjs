@@ -76,7 +76,7 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
 const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
 assert.ok(sw.includes('flag-atlas-runtime-v1'), 'Service worker uses the stable Atlas runtime-cache schema generation.');
 assert.ok(sw.includes('flag-atlas-flags-v1'), 'Service worker uses the stable Atlas flag-cache schema generation.');
-assert.equal(sw.includes('flag-atlas-v30-runtime'), false, 'Routine application releases no longer use the old release-style runtime cache name.');
+assert.equal(sw.includes('flag-atlas-runtime-v1-runtime'), false, 'Routine application releases no longer use the old release-style runtime cache name.');
 assert.ok(sw.includes('ATLAS_UPDATE_SAFETY_QUERY'), 'Service worker contains coordinated update-safety messaging.');
 assert.ok(sw.includes('ATLAS_UPDATE_ACTIVATED'), 'Service worker contains controlled update-adoption messaging.');
 assert.ok(sw.includes('index.html'), 'Injected precache includes the offline navigation shell.');

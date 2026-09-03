@@ -323,7 +323,7 @@ assert.ok(atlasTheme.includes('prefers-reduced-motion: reduce'), 'The built Atla
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite integration owns the v29 PWA cache.');
+assert.ok(serviceWorker.includes('flag-atlas-runtime-v1'), 'React/Vite integration owns the stable PWA runtime-cache schema.');
 assert.ok(serviceWorker.includes('atlas-theme.css'), 'The Tactile Atlas stylesheet is part of the offline shell.');
 assert.ok(serviceWorker.includes('map-viewport.js'), 'The viewport helper remains part of the offline shell.');
 
