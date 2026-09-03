@@ -23,7 +23,7 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 7. State never relies on colour alone.
 8. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
 9. Use spacing, alignment, rules and proximity before adding cards/containers.
-10. Modest radii and controlled depth; no glassmorphism, bento dashboards, decorative gradients or excessive elevation.
+10. Modest radii and controlled depth; no default glassmorphism, bento dashboards, decorative gradients or excessive elevation. The Spatial Home chooser is the one documented neutral translucent exception.
 11. Tactile press physics communicate activation without springy/toy-like bounce.
 12. Progressive disclosure beats explanatory text in routine flows.
 13. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
@@ -89,6 +89,19 @@ Home / domain
 
 The persistent Earth is the dominant navigation object. A compact real-DOM command surface is anchored to the geography it names.
 
+At Home:
+
+- the whole Earth owns the Spatial viewport rather than yielding a permanent command band;
+- one bounded, centred chooser contains `Atlas`, Profile, an earned World Crown when present and all four learning modes;
+- ordinary phone portrait uses an icon-led 2 × 2 mode grid; short landscape adapts compactly so all four modes remain visible in one viewport;
+- each mode carries its short learner-facing name and quiet `cleared / total` progress;
+- the chooser may use one neutral translucent surface with a thin structural edge and modest depth so the globe remains recognisable around it;
+- do not nest translucent cards, add colourful gradients/glow or depend on decorative blur; a sufficiently opaque treatment without `backdrop-filter` is preferred when it is clearer or cheaper;
+- forced-colours mode uses a solid real-DOM presentation;
+- the globe is geographic context until a domain exists: it may be rotated deliberately, but country selection cannot navigate from Home.
+
+This is the sole translucency exception in the navigation system. It is page content, not a modal dialog: no `aria-modal`, focus trap or parallel open/close state is introduced.
+
 At continent/region focus:
 
 - selected geography is the one dominant label;
@@ -101,7 +114,7 @@ At continent/region focus:
 - region Play follows deliberate region focus;
 - primary choices wrap rather than requiring horizontal scrolling.
 
-The command surface is label, proximity, rules and a small control group — not a dashboard/card stack and never glass.
+Outside the documented Home exception, the command surface is label, proximity, rules and a small control group — not a dashboard/card stack or translucent panel.
 
 The conventional `Launcher` is renderer-failure fallback only. Do not restore it beneath the globe or document its old full-width rows as the normal product experience.
 
@@ -186,7 +199,7 @@ Learner-facing copy uses modern British English: **Neighbours, colour, centre, b
 
 ## Intentionally excluded aesthetics
 
-No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion.
+No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The only translucent navigation surface is the single neutral Spatial Home chooser documented above; that exception must not propagate into nested glass cards or other screens.
 
 ## Historical design work
 
