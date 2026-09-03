@@ -48,9 +48,21 @@ assert.ok(playTiming.includes('PLAY_FEEDBACK_DWELL_WRONG_MS = 1500'), 'Accepted 
 assert.ok(!camera.includes('--motion-'), 'Camera motion remains independently owned and is not coupled to CSS UI tokens.');
 
 assert.ok(design.includes('## Motion and control geometry'), 'DESIGN.md documents the small motion/control scale.');
+assert.ok(design.includes('sole translucency exception'), 'DESIGN.md explicitly records the narrow Spatial Home translucency exception.');
 assert.equal(impeccable.tokens.controlHeight.compact, '44px');
 assert.equal(impeccable.tokens.controlHeight.standard, '52px');
 assert.equal(impeccable.tokens.motion.press, '100ms ease-out');
 assert.equal(impeccable.tokens.motion.ui, '160ms ease-out');
+assert.equal(impeccable.tokens.homeChooser.blur, 'none by default; backdrop-filter is not required');
+assert.ok(
+  impeccable.principles.some((principle) => principle.includes('sole neutral translucency exception')),
+  '.impeccable/design.json explicitly limits translucency to the Spatial Home chooser.',
+);
+assert.match(spatial, /\.spatial-shell\[data-surface='domains'\][\s\S]*\.spatial-command\[data-surface='domains'\]/,
+  'Spatial Home has an explicit composition state rather than inheriting the ordinary command band.');
+assert.equal(spatial.includes('backdrop-filter'), true,
+  'Spatial Home documents that backdrop-filter is deliberately not required.');
+assert.equal(/backdrop-filter\s*:/.test(spatial), false,
+  'Spatial Home does not pay a decorative backdrop-filter compositing cost.');
 
 console.log('Design motion/control token verification passed.');
