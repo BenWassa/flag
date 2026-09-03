@@ -6,13 +6,14 @@ import { SpatialStage } from './SpatialStage.js';
 import type { SpatialState } from './spatial-state.js';
 
 /**
- * Issue #166 — layout for the production Spatial Atlas.
+ * Issues #166 and #187 — layout for the production Spatial Atlas.
  *
- * For ordinary navigation the stage and its command surface ARE the screen:
- * geography takes the viewport and a compact band of real controls sits beneath
- * the place it names. No conventional launcher page renders underneath, which
- * is what the #119 preview did and what made it read as a globe stacked on top
- * of the old application.
+ * For ordinary navigation the stage and its command surface ARE the screen. At
+ * domain/continent/scope states geography takes the viewport and a compact band
+ * of real controls sits beside/beneath the place it names. Home is the one
+ * composition exception: the whole Earth owns the canvas and the same real-DOM
+ * command surface is centred over it as the mode chooser. No conventional
+ * launcher page renders underneath either composition.
  *
  * The panel returns whenever an activity or a results screen owns the content,
  * so the existing domain-native screens are untouched, and in `yielded` mode the
