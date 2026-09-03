@@ -23,6 +23,7 @@ import { createOutlinesRound } from '../state/outlines-round.js';
 import { invalidatePendingRoundLaunch } from '../state/round-launch-guard.js';
 import type { RoundContext } from '../state/round-context.js';
 import { AppStore } from '../state/store.js';
+import { renderFocusIntent } from '../ui/focus.js';
 import { SpatialShell } from '../spatial/SpatialShell.js';
 import { deriveSpatialState, resolveTapTarget, type SpatialState } from '../spatial/spatial-state.js';
 import { AtlasActionsContext, type AtlasActions } from './actions.js';
@@ -55,6 +56,7 @@ export function AtlasApp() {
   const controllers = useRef<ReturnType<typeof createControllers> | null>(null);
   const focusSelector = useRef<string | null>(null);
   const lastRouteKey = useRef<string | null>(null);
+  const hasCompletedInitialRouteRender = useRef(false);
   const preserveScroll = useRef(false);
   const announcementTimer = useRef<number | null>(null);
   const noticeTimer = useRef<number | null>(null);
@@ -262,15 +264,24 @@ export function AtlasApp() {
   useEffect(() => {
     document.title = documentTitle(currentRoute.current, store);
     const changed = routeKey !== lastRouteKey.current;
+    const focusIntent = renderFocusIntent(hasCompletedInitialRouteRender.current);
     if (changed && !preserveScroll.current) window.scrollTo({ top: 0, behavior: 'instant' });
     preserveScroll.current = false;
     lastRouteKey.current = routeKey;
-    if (changed) window.requestAnimationFrame(() => {
+    if (changed && focusIntent === 'restore-or-autofocus') window.requestAnimationFrame(() => {
       const previous = focusSelector.current ? document.querySelector<HTMLElement>(focusSelector.current) : null;
       if (previous && !(previous instanceof HTMLButtonElement && previous.disabled)) previous.focus();
       else document.querySelector<HTMLElement>('[data-autofocus]')?.focus();
       focusSelector.current = null;
     });
+
+    // React mounts before the hash router has synchronised a cold deep link into
+    // the mutable store. Keep the whole document bootstrap focus-neutral until
+    // this rendered route is the route the application has actually settled on.
+    if (!hasCompletedInitialRouteRender.current
+      && routeKey === currentRouteKey(currentRoute.current, store)) {
+      hasCompletedInitialRouteRender.current = true;
+    }
   }, [routeKey, store]);
 
   useEffect(() => {
