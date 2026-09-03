@@ -64,12 +64,15 @@ jobs:
             echo '```'
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
-      - name: Verify and record Firebase cache policy
+      - name: Verify identity and record Firebase cache policy
         env:
           ATLAS_FIREBASE_ORIGIN: https://atlas-3c48a.web.app
         run: |
           set -euo pipefail
           base="${ATLAS_FIREBASE_ORIGIN%/}/"
+          index_body="$(curl -fsSL "$base")"
+          printf '%s' "$index_body" | grep -Fq "name=\"atlas-build\" content=\"${ATLAS_BUILD_SHA}\""
+          echo "Firebase live build identity: ${ATLAS_BUILD_SHA}"
           app_body="$(curl -fsSL "${base}app.js")"
           hashed="$(printf '%s' "$app_body" | grep -oE 'assets/[A-Za-z0-9_-]+-[A-Za-z0-9_-]+\.js' | head -n 1 || true)"
           test -n "$hashed"
@@ -81,6 +84,7 @@ jobs:
             url="$2"
             observed="$(headers "$url")"
             printf '%s\n' "$observed" | grep -Eiq '^cache-control:.*(no-cache|max-age=0|must-revalidate)'
+            printf '\n### %s\n%s\n' "$label" "$observed"
             {
               echo "### ${label}"
               echo '```text'
@@ -95,6 +99,7 @@ jobs:
           require_revalidation 'Firebase stable CSS' "${base}styles.css"
           hashed_headers="$(headers "${base}${hashed}")"
           printf '%s\n' "$hashed_headers" | grep -Eiq '^cache-control:.*immutable'
+          printf '\n### Firebase representative hashed chunk\n%s\n' "$hashed_headers"
           {
             echo '### Firebase representative hashed chunk'
             echo '```text'
