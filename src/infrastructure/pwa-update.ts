@@ -3,6 +3,7 @@ export const PWA_UPDATE_FOREGROUND_ABSENCE_MS = 5 * 60 * 1000;
 export const PWA_UPDATE_VISIBLE_INTERVAL_MS = 60 * 60 * 1000;
 
 const PWA_UPDATE_LAUNCH_DELAY_MS = 750;
+const PWA_UPDATE_WAITING_RETRY_MS = 10_000;
 const ADOPTED_BUILD_SESSION_KEY = 'flag-atlas-adopted-build';
 
 interface UpdateSafetyQuery {
@@ -160,6 +161,10 @@ export function installPwaUpdateLifecycle({ isApplicationSafe }: PwaUpdateLifecy
   const longSessionTimer = window.setInterval(() => {
     if (document.visibilityState === 'visible' && navigator.onLine) void requestUpdate();
   }, PWA_UPDATE_VISIBLE_INTERVAL_MS);
+  // This is not network polling: it only asks an already-waiting Atlas worker
+  // to retry the fail-closed client handshake. It covers a blocking tab that
+  // disappears without emitting a safety-boundary signal in another client.
+  const waitingRetryTimer = window.setInterval(attemptAdoption, PWA_UPDATE_WAITING_RETRY_MS);
 
   const register = async () => {
     if (disposed) return;
@@ -188,6 +193,7 @@ export function installPwaUpdateLifecycle({ isApplicationSafe }: PwaUpdateLifecy
       if (activeSafetySignal === attemptAdoption) activeSafetySignal = null;
       if (launchTimer !== null) window.clearTimeout(launchTimer);
       window.clearInterval(longSessionTimer);
+      window.clearInterval(waitingRetryTimer);
       window.removeEventListener('load', load);
       window.removeEventListener('online', online);
       document.removeEventListener('visibilitychange', visibilityChange);
