@@ -48,6 +48,8 @@ for (const viewport of [
     }));
     expect(overflow.x).toBeLessThanOrEqual(1);
     expect(overflow.y).toBeLessThanOrEqual(1);
+
+    await page.screenshot({ path: test.info().outputPath(`home-${viewport.width}x${viewport.height}.png`) });
   });
 }
 
