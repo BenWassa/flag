@@ -27,16 +27,19 @@ test('cold Home boot and Home reload leave focus under browser control', async (
 
 test('cold deep link does not manufacture heading focus', async ({ page }) => {
   await page.goto('/#/flags/africa');
-  const africa = page.getByRole('heading', { name: 'Africa', exact: true }).first();
-  await expect(africa).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Africa', exact: true }).first()).toBeVisible();
+  // BODY owning focus is the contract. Do not retain the heading locator here:
+  // a renderer-unavailable transition may replace the Spatial heading with the
+  // equivalent conventional launcher after the assertion has already passed.
   await expectBrowserOwnedFocus(page);
-  await expect(africa).not.toBeFocused();
 });
 
 test('pointer navigation deliberately focuses the destination heading', async ({ page }) => {
   await page.goto('/');
   await expectBrowserOwnedFocus(page);
-  await page.getByRole('button', { name: /^Flags,/ }).click();
+  // The Spatial command and conventional renderer fallback expose different
+  // accessible detail after the domain name; both represent the same action.
+  await page.getByRole('button', { name: /^Flags/ }).click();
   const heading = page.getByRole('heading', { name: 'Flags', exact: true }).first();
   await expect(heading).toBeVisible();
   await expectFocused(heading);
@@ -45,7 +48,7 @@ test('pointer navigation deliberately focuses the destination heading', async ({
 test('keyboard navigation deliberately focuses the destination heading', async ({ page }) => {
   await page.goto('/');
   await expectBrowserOwnedFocus(page);
-  const neighbours = page.getByRole('button', { name: /^Neighbours,/ });
+  const neighbours = page.getByRole('button', { name: /^Neighbours/ });
   await neighbours.focus();
   await neighbours.press('Enter');
   const heading = page.getByRole('heading', { name: 'Neighbours', exact: true }).first();
@@ -68,7 +71,9 @@ test('same-route Neighbours feedback restores the entry field', async ({ page })
 
 test('same-route quiz advance restores an actionable answer control', async ({ page }) => {
   await page.goto('/#/flags/africa');
-  await page.getByRole('button', { name: 'Play Africa' }).click();
+  // This semantic selector survives the Spatial -> conventional renderer
+  // fallback transition instead of binding to one presentation's aria-label.
+  await page.locator('button[data-action="start-test"][data-domain="flags"][data-scope-id="africa"]').click();
   const firstAnswer = page.getByRole('button', { name: /^1\./ });
   await expect(firstAnswer).toBeVisible();
   await firstAnswer.click();
