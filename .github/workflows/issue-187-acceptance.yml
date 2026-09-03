@@ -26,6 +26,12 @@ jobs:
           tests/browser/world-crown.spec.ts
           tests/browser/spatial-atlas.spec.ts
           --project=chromium
+      - name: Upload rendered Home evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: issue-187-rendered-home
+          path: test-results/**/home-*.png
+          if-no-files-found: error
       - name: Spatial Home mobile-Chromium regression
         run: >-
           npx playwright test
@@ -34,9 +40,3 @@ jobs:
           --project=mobile-chromium
       - name: PWA runtime regression
         run: npm run test:pwa-runtime
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: issue-187-browser-evidence
-          path: test-results
-          if-no-files-found: warn
