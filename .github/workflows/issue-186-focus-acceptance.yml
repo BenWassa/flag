@@ -1,0 +1,153 @@
+name: Issue 186 focus acceptance
+
+on:
+  push:
+    branches: [issue-186-spatial-focus-boot]
+
+permissions:
+  contents: write
+
+jobs:
+  focus-acceptance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Apply focused issue 186 implementation and regression
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync, existsSync } from 'node:fs';
+
+          const appPath = 'src/react/AtlasApp.tsx';
+          let app = readFileSync(appPath, 'utf8');
+
+          const storeImport = "import { AppStore } from '../state/store.js';\n";
+          const focusImport = "import { renderFocusIntent } from '../ui/focus.js';\n";
+          if (!app.includes(focusImport)) {
+            if (!app.includes(storeImport)) throw new Error('Missing expected AppStore import anchor');
+            app = app.replace(storeImport, `${storeImport}${focusImport}`);
+          }
+
+          const routeRef = "  const lastRouteKey = useRef<string | null>(null);\n";
+          const bootRef = "  const hasCompletedInitialRouteRender = useRef(false);\n";
+          if (!app.includes(bootRef)) {
+            if (!app.includes(routeRef)) throw new Error('Missing expected route-key ref anchor');
+            app = app.replace(routeRef, `${routeRef}${bootRef}`);
+          }
+
+          const oldEffect = `  useEffect(() => {\n    document.title = documentTitle(currentRoute.current, store);\n    const changed = routeKey !== lastRouteKey.current;\n    if (changed && !preserveScroll.current) window.scrollTo({ top: 0, behavior: 'instant' });\n    preserveScroll.current = false;\n    lastRouteKey.current = routeKey;\n    if (changed) window.requestAnimationFrame(() => {\n      const previous = focusSelector.current ? document.querySelector<HTMLElement>(focusSelector.current) : null;\n      if (previous && !(previous instanceof HTMLButtonElement && previous.disabled)) previous.focus();\n      else document.querySelector<HTMLElement>('[data-autofocus]')?.focus();\n      focusSelector.current = null;\n    });\n  }, [routeKey, store]);`;
+
+          const newEffect = `  useEffect(() => {\n    document.title = documentTitle(currentRoute.current, store);\n    const changed = routeKey !== lastRouteKey.current;\n    const focusIntent = renderFocusIntent(hasCompletedInitialRouteRender.current);\n    if (changed && !preserveScroll.current) window.scrollTo({ top: 0, behavior: 'instant' });\n    preserveScroll.current = false;\n    lastRouteKey.current = routeKey;\n    if (changed && focusIntent === 'restore-or-autofocus') window.requestAnimationFrame(() => {\n      const previous = focusSelector.current ? document.querySelector<HTMLElement>(focusSelector.current) : null;\n      if (previous && !(previous instanceof HTMLButtonElement && previous.disabled)) previous.focus();\n      else document.querySelector<HTMLElement>('[data-autofocus]')?.focus();\n      focusSelector.current = null;\n    });\n\n    // React mounts before the hash router has synchronised a cold deep link into\n    // the mutable store. Keep the whole document bootstrap focus-neutral until\n    // this rendered route is the route the application has actually settled on.\n    if (!hasCompletedInitialRouteRender.current\n      && routeKey === currentRouteKey(currentRoute.current, store)) {\n      hasCompletedInitialRouteRender.current = true;\n    }\n  }, [routeKey, store]);`;
+
+          if (!app.includes(newEffect)) {
+            if (!app.includes(oldEffect)) throw new Error('Missing expected React focus effect');
+            app = app.replace(oldEffect, newEffect);
+          }
+          writeFileSync(appPath, app);
+
+          const testPath = 'tests/browser/focus-lifecycle.spec.ts';
+          if (!existsSync(testPath)) {
+            writeFileSync(testPath, `import { expect, test, type Locator, type Page } from '@playwright/test';\n\nasync function settleFocusFrame(page: Page) {\n  await page.evaluate(() => new Promise<void>((resolve) => {\n    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));\n  }));\n}\n\nasync function expectBrowserOwnedFocus(page: Page) {\n  await settleFocusFrame(page);\n  await expect.poll(() => page.evaluate(() => document.activeElement?.tagName ?? null)).toBe('BODY');\n}\n\nasync function expectFocused(locator: Locator) {\n  await expect.poll(() => locator.evaluate((element) => element === document.activeElement)).toBe(true);\n}\n\ntest('cold Home boot and Home reload leave focus under browser control', async ({ page }) => {\n  await page.goto('/');\n  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();\n  await expectBrowserOwnedFocus(page);\n\n  await page.reload();\n  await expect(page.getByRole('heading', { name: 'Atlas', exact: true })).toBeVisible();\n  await expectBrowserOwnedFocus(page);\n});\n\ntest('cold deep link does not manufacture heading focus', async ({ page }) => {\n  await page.goto('/#/flags/africa');\n  const africa = page.getByRole('heading', { name: 'Africa', exact: true }).first();\n  await expect(africa).toBeVisible();\n  await expectBrowserOwnedFocus(page);\n  await expect(africa).not.toBeFocused();\n});\n\ntest('pointer navigation deliberately focuses the destination heading', async ({ page }) => {\n  await page.goto('/');\n  await expectBrowserOwnedFocus(page);\n  await page.getByRole('button', { name: /^Flags,/ }).click();\n  const heading = page.getByRole('heading', { name: 'Flags', exact: true }).first();\n  await expect(heading).toBeVisible();\n  await expectFocused(heading);\n});\n\ntest('keyboard navigation deliberately focuses the destination heading', async ({ page }) => {\n  await page.goto('/');\n  await expectBrowserOwnedFocus(page);\n  const neighbours = page.getByRole('button', { name: /^Neighbours,/ });\n  await neighbours.focus();\n  await neighbours.press('Enter');\n  const heading = page.getByRole('heading', { name: 'Neighbours', exact: true }).first();\n  await expect(heading).toBeVisible();\n  await expectFocused(heading);\n});\n\ntest('same-route Neighbours feedback restores the entry field', async ({ page }) => {\n  await page.goto('/#/neighbors/africa/north-africa');\n  await page.getByRole('button', { name: 'Play North Africa' }).click();\n  const input = page.locator('#neighbor-country-input');\n  await expect(input).toBeVisible({ timeout: 30_000 });\n  await input.fill('Canada');\n  const canada = page.getByRole('button', { name: /^Canada/ });\n  await expect(canada).toBeVisible();\n  await canada.click();\n  await expect(page.getByText('Canada is not in this neighbour set.')).toBeVisible();\n  await expectFocused(input);\n});\n\ntest('same-route quiz advance restores an actionable answer control', async ({ page }) => {\n  await page.goto('/#/flags/africa');\n  await page.getByRole('button', { name: 'Play Africa' }).click();\n  const firstAnswer = page.getByRole('button', { name: /^1\\./ });\n  await expect(firstAnswer).toBeVisible();\n  await firstAnswer.click();\n  await expect.poll(async () => page.locator('.quiz-count').innerText(), { timeout: 3_000 }).toContain('2');\n  const nextFirstAnswer = page.getByRole('button', { name: /^1\\./ });\n  await expect(nextFirstAnswer).toBeEnabled();\n  await expectFocused(nextFirstAnswer);\n});\n\ntest('real Tab focus on an actionable control retains the visible focus ring', async ({ page, browserName }) => {\n  test.skip(browserName === 'webkit', 'WebKit follows the platform default that does not Tab to buttons without Full Keyboard Access.');\n  await page.goto('/');\n  await expectBrowserOwnedFocus(page);\n  await page.keyboard.press('Tab');\n  const focus = await page.evaluate(() => {\n    const element = document.activeElement as HTMLElement | null;\n    if (!element) return null;\n    const style = getComputedStyle(element);\n    return {\n      tagName: element.tagName,\n      outlineStyle: style.outlineStyle,\n      outlineWidth: style.outlineWidth,\n      outlineColor: style.outlineColor,\n    };\n  });\n  expect(focus).toEqual({\n    tagName: 'BUTTON',\n    outlineStyle: 'solid',\n    outlineWidth: '3px',\n    outlineColor: 'rgb(23, 73, 184)',\n  });\n});\n`);
+          }
+          NODE
+
+      - name: Commit implementation when needed
+        id: commit
+        shell: bash
+        run: |
+          if git diff --quiet -- src/react/AtlasApp.tsx tests/browser/focus-lifecycle.spec.ts; then
+            echo 'patched=false' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add src/react/AtlasApp.tsx tests/browser/focus-lifecycle.spec.ts
+          git commit -m 'Fix initial Spatial Atlas focus lifecycle (#186)'
+          git push origin HEAD:issue-186-spatial-focus-boot
+          echo 'patched=true' >> "$GITHUB_OUTPUT"
+
+      - name: Stop bootstrap run after publishing implementation
+        if: steps.commit.outputs.patched == 'true'
+        run: echo 'Implementation published; the pushed head will run the authoritative acceptance.'
+
+      - name: Install dependencies
+        if: steps.commit.outputs.patched != 'true'
+        run: npm install
+
+      - name: Typecheck
+        if: steps.commit.outputs.patched != 'true'
+        run: npm run check
+
+      - name: Full repository gate
+        if: steps.commit.outputs.patched != 'true'
+        run: npm test
+
+      - name: Install Playwright engines
+        if: steps.commit.outputs.patched != 'true'
+        run: npx playwright install --with-deps chromium firefox webkit
+
+      - name: Configure exact-production cross-engine focus matrix
+        if: steps.commit.outputs.patched != 'true'
+        run: |
+          cat > playwright.issue-186.config.ts <<'EOF'
+          import { defineConfig, devices } from '@playwright/test';
+
+          export default defineConfig({
+            testDir: './tests/browser',
+            fullyParallel: false,
+            retries: 0,
+            reporter: 'line',
+            use: {
+              baseURL: 'http://127.0.0.1:4173',
+              trace: 'retain-on-failure',
+            },
+            projects: [
+              {
+                name: 'chromium',
+                use: {
+                  ...devices['Desktop Chrome'],
+                  launchOptions: {
+                    args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+                  },
+                },
+              },
+              { name: 'firefox', use: { ...devices['Desktop Firefox'] } },
+              { name: 'webkit', use: { ...devices['Desktop Safari'] } },
+            ],
+            webServer: {
+              command: 'npm run preview -- --host 127.0.0.1',
+              url: 'http://127.0.0.1:4173',
+              reuseExistingServer: false,
+            },
+          });
+          EOF
+
+      - name: Exact-production Chromium Firefox WebKit focus acceptance
+        if: steps.commit.outputs.patched != 'true'
+        run: npx playwright test tests/browser/focus-lifecycle.spec.ts --config=playwright.issue-186.config.ts
+
+      - name: Inspect exact production artifact
+        if: steps.commit.outputs.patched != 'true'
+        run: |
+          echo '--- dist files ---'
+          find dist -type f -print | sort
+          echo '--- dist sha256 ---'
+          find dist -type f -print0 | sort -z | xargs -0 sha256sum
+          echo '--- built focus policy marker ---'
+          grep -R --binary-files=without-match -n "restore-or-autofocus" dist/assets || true
+
+      - uses: actions/upload-artifact@v4
+        if: steps.commit.outputs.patched != 'true'
+        with:
+          name: issue-186-dist
+          path: dist
+          if-no-files-found: error
