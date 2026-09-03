@@ -385,7 +385,7 @@ test('failed B update leaves A usable and preserves its offline shell', async ({
     await page.waitForTimeout(500);
     await expectBuild(page, 'runtime-a');
     await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
-    await expect.poll(() => cacheState(page)).toMatchObject({ names: expect.arrayContaining(['flag-atlas-runtime-v1']) });
+    expect((await cacheState(page)).names.some((name) => name.startsWith('workbox-precache-v2-'))).toBe(true);
 
     await context.setOffline(true);
     await page.goto(`${server.origin}/#/`, { waitUntil: 'domcontentloaded' });
