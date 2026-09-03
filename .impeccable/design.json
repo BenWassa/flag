@@ -40,12 +40,20 @@
       "press": "100ms ease-out",
       "ui": "160ms ease-out",
       "feedbackEmphasis": "520ms ease-out (Locations transient wrong-answer emphasis only)"
+    },
+    "homeChooser": {
+      "composition": "one bounded centred surface over the full world globe; 2x2 modes on ordinary phone portrait and compact adaptation in short landscape",
+      "surface": "neutral translucent surface with a thin structural edge and modest depth",
+      "blur": "none by default; backdrop-filter is not required",
+      "fallback": "solid real-DOM surface in forced colours or wherever translucency is unsuitable"
     }
   },
   "principles": [
     "Geography is the content; interface is the instrument",
     "Spatial Atlas is the default production navigation presentation, not a preview",
     "Navigation stays mode-first: choose domain, select continent or region on the Earth, then deliberately choose Play or Learn",
+    "Spatial Home lets the full world globe own the canvas and layers one centred icon-led mode chooser over it",
+    "The Spatial Home chooser is the sole neutral translucency exception; no nested glass, decorative blur, glow or gradients, and other Spatial command surfaces remain non-translucent",
     "The typed route is authoritative; camera and globe state interpret navigation rather than owning a second stack",
     "The conventional launcher is renderer-failure fallback only and must remain semantically equivalent",
     "Atlas is mobile-first, low-friction, information-first and minimally gamified",
@@ -60,6 +68,6 @@
     "Tiny geography uses truthful display geometry and source-derived invisible interaction envelopes when necessary",
     "Mobile edge gestures, reduced motion and answer-safe accessibility remain first-class",
     "No continent, region or hemisphere colour taxonomy",
-    "No glassmorphism, bento dashboards, decorative UI overload or reward economy"
+    "No default glassmorphism, bento dashboards, decorative UI overload or reward economy"
   ]
 }
