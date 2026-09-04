@@ -46,14 +46,55 @@
   --learning: #8b6214;
   --learning-soft: #fff4da;
   --unseen: #667085;
-  /* Functional cartography neutrals, shared by every map surface. */
-  --map-ocean: #dceaf5;
-  --map-inland-water: #c7deef;
-  --map-context-land: #d2dae5;
-  --map-context-border: #7b899b;
-  --map-active-land: #f8fafc;
-  --map-active-border: #5f6f82;
-  --map-label-halo: #f8fafc;
+  /*
+   * Cartographic colour. Land is green, water is blue, space is night.
+   *
+   * This is the deliberate break from the neutral-cartography direction: the
+   * geography is the object the product is about, so it is the one surface that
+   * carries saturated colour. Chrome stays quiet around it, which is what keeps
+   * the composition from becoming a colourful dashboard.
+   *
+   * Figure/ground inside the green: geography a learner can act on is a light
+   * khaki-green; geography that is only context is a deeper sage. Ocean sits
+   * roughly 3:1 against context land so a coastline reads without relying on
+   * its stroke.
+   */
+  --map-ocean: #1f5c80;
+  --map-inland-water: #35789c;
+  --map-context-land: #9fbf98;
+  --map-context-border: #4a6b4f;
+  --map-active-land: #e8f0c8;
+  --map-active-border: #5c6e3a;
+  --map-label-halo: #f4f8e6;
+  /* The globe alone: a deeper ocean reads as a body of water seen from orbit,
+     and the planet needs a night ground to have a silhouette at all. */
+  --map-ocean-deep: #164964;
+  --map-space: #0a1725;
+  --map-atmosphere: #4fa3d1;
+  /* Achievement colour has to survive being painted onto green land, where the
+     soft chrome tints disappear. These are the same two meanings, deepened. */
+  --map-mastery: #a98ce0;
+  --map-prestige: #e3be64;
+
+  /*
+   * Mode identity. Four learning domains, four accents, used only on a domain's
+   * own icon and its progress meter. This is mode identity, not the geography
+   * colour taxonomy the design system still refuses: no continent, region or
+   * hemisphere ever takes an identity colour.
+   */
+  --domain-flags: #1d4ed8;
+  --domain-locations: #0e7490;
+  --domain-outlines: #b45309;
+  --domain-neighbors: #be123c;
+
+  /*
+   * Streak tiers. Warm, then hot, then ember: a brightening-to-burning ramp that
+   * never borrows prestige gold, correctness green or wrong red. Each tier also
+   * carries its own count of chevrons, so the tier is never colour alone.
+   */
+  --streak-warm: #b45309;
+  --streak-hot: #c2410c;
+  --streak-blazing: #7c2d12;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-tile: 18px;
@@ -1181,4 +1222,196 @@ body { letter-spacing: -.006em; }
   border-color: var(--wrong);
   color: var(--wrong);
   background: var(--wrong-soft);
+}
+
+/* =========================================================================
+ * Game feel
+ *
+ * Everything below decorates feedback the interface already carries in words
+ * and in shape. None of it is the mechanism for any state: strip the whole
+ * section out and the round still reads correctly, which is what keeps it
+ * compatible with reduced motion and forced colours.
+ * ====================================================================== */
+
+/* Ordinary progress, in two segments. Cleared takes the mode's own accent, and
+   what has been seen but not yet cleared takes the learning amber, so a scope
+   half-met stops drawing the same empty track as one never opened. */
+.status-strip__seen { background: color-mix(in srgb, var(--learning) 34%, var(--track)); }
+.status-strip[data-domain='flags'] .status-strip__cleared { background: var(--domain-flags); }
+.status-strip[data-domain='locations'] .status-strip__cleared { background: var(--domain-locations); }
+.status-strip[data-domain='outlines'] .status-strip__cleared { background: var(--domain-outlines); }
+.status-strip[data-domain='neighbors'] .status-strip__cleared { background: var(--domain-neighbors); }
+
+/* Mode identity. The accent reaches a domain's own icon and its own meter, and
+   stops there: no continent, region or hemisphere ever takes one. */
+.atlas-card[data-domain='flags'] .atlas-card__mark,
+.spatial-mode[data-domain='flags'] .spatial-mode__mark { color: var(--domain-flags); }
+.atlas-card[data-domain='locations'] .atlas-card__mark,
+.spatial-mode[data-domain='locations'] .spatial-mode__mark { color: var(--domain-locations); }
+.atlas-card[data-domain='outlines'] .atlas-card__mark,
+.spatial-mode[data-domain='outlines'] .spatial-mode__mark { color: var(--domain-outlines); }
+.atlas-card[data-domain='neighbors'] .atlas-card__mark,
+.spatial-mode[data-domain='neighbors'] .spatial-mode__mark { color: var(--domain-neighbors); }
+
+/*
+ * The live streak.
+ *
+ * A number alone does not read as momentum, so the streak becomes a pill that
+ * escalates: amber, then orange, then ember. Each tier also carries its own
+ * count of marks, so nobody has to tell amber from orange to read the tier, and
+ * the number itself never leaves the score group beside `correct` and `left`.
+ */
+.round-score__item--streak.round-streak {
+  align-items: center;
+  gap: 5px;
+  padding: 2px 9px 3px 7px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  animation: streak-pop 240ms cubic-bezier(.2, .9, .3, 1.35);
+}
+
+.round-streak__marks {
+  font-size: 9px;
+  line-height: 1;
+  letter-spacing: .5px;
+  color: var(--text-muted);
+}
+
+.round-streak .round-score__value { font-size: 14px; }
+
+/* Matching the base pill's specificity: it sets the neutral fill at (0,2,0),
+   so a tier written at (0,1,0) would lose and leave white text on white. */
+.round-score__item--streak.round-streak--warm { border-color: var(--streak-warm); background: var(--streak-warm); }
+.round-score__item--streak.round-streak--hot { border-color: var(--streak-hot); background: var(--streak-hot); }
+.round-score__item--streak.round-streak--blazing { border-color: var(--streak-blazing); background: var(--streak-blazing); }
+
+.round-streak--warm .round-streak__marks,
+.round-streak--hot .round-streak__marks,
+.round-streak--blazing .round-streak__marks,
+.round-streak--warm .round-score__label,
+.round-streak--hot .round-score__label,
+.round-streak--blazing .round-score__label { color: var(--on-action-muted); }
+
+.round-streak--warm .round-score__value,
+.round-streak--hot .round-score__value,
+.round-streak--blazing .round-score__value { color: var(--on-action); }
+
+@keyframes streak-pop {
+  0% { transform: scale(.86); opacity: .4; }
+  60% { transform: scale(1.06); opacity: 1; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+/*
+ * Answering.
+ *
+ * The right option lifts and the chosen wrong one refuses. Both are one short
+ * gesture on `transform` only, and both are already stated by the option's
+ * colour, its key mark and the feedback panel underneath.
+ */
+.answer-button--correct { animation: answer-pop 260ms cubic-bezier(.2, .9, .3, 1.3); }
+.answer-button--wrong { animation: answer-refuse 260ms ease-out; }
+
+@keyframes answer-pop {
+  0% { transform: translateY(0) scale(1); }
+  42% { transform: translateY(-2px) scale(1.018); }
+  100% { transform: translateY(0) scale(1); }
+}
+
+@keyframes answer-refuse {
+  0%, 100% { transform: translateX(0); }
+  22% { transform: translateX(-5px); }
+  48% { transform: translateX(4px); }
+  74% { transform: translateX(-2px); }
+}
+
+/*
+ * How the round went, in one word.
+ *
+ * Transient result feedback in the same family as the Perfect round badge: it
+ * describes the round that just ended, is never stored and is never a rank the
+ * learner holds. Durable standing stays Mastery and above.
+ */
+/* The score line now carries a word as well as a percentage, and on a 320px
+   screen the Perfect round badge beside them has nowhere left to go. Letting the
+   row wrap keeps the badge on one line of its own instead of breaking it in
+   half; nothing reflows on wider screens, where all three still fit. */
+.result-score { flex-wrap: wrap; row-gap: 10px; }
+.result-score p { flex: 1 1 140px; }
+.result-score__badge { margin-inline-start: auto; white-space: nowrap; }
+
+.result-rank { font-weight: 800; }
+.result-score[data-rank='flawless'] .result-rank { color: color-mix(in srgb, var(--prestige) 72%, var(--text)); }
+.result-score[data-rank='strong'] .result-rank { color: var(--correct); }
+.result-score[data-rank='solid'] .result-rank { color: var(--action); }
+.result-score[data-rank='building'] .result-rank { color: var(--text); }
+
+.result-rank-detail {
+  margin: 12px 2px 0;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.result-rank-line { margin: 8px 0 0; color: var(--text-muted); font-size: 13px; font-weight: 650; }
+.result-rank-line[data-rank='flawless'] .result-rank { color: color-mix(in srgb, var(--prestige) 72%, var(--text)); }
+.result-rank-line[data-rank='strong'] .result-rank { color: var(--correct); }
+.result-rank-line[data-rank='solid'] .result-rank { color: var(--action); }
+
+/* The one authored moment in the product: a single sheen across the earned
+   badge, once, on arrival. It is the accepted brushed-metal gold treatment
+   moving rather than a repeating celebration. */
+.result-score--perfect .result-score__badge {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+.result-score--perfect .result-score__badge::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 38%,
+    color-mix(in srgb, var(--prestige-highlight) 88%, transparent) 50%,
+    transparent 62%
+  );
+  transform: translateX(-130%);
+  animation: prestige-sweep 900ms 180ms ease-out both;
+  pointer-events: none;
+}
+
+@keyframes prestige-sweep {
+  to { transform: translateX(130%); }
+}
+
+/*
+ * Reduced motion.
+ *
+ * Every rule above decorates a state the DOM already states, so the honest
+ * answer here is to remove the movement rather than shorten it. Nothing is lost
+ * but the gesture.
+ */
+@media (prefers-reduced-motion: reduce) {
+  .round-score__item--streak.round-streak,
+  .answer-button--correct,
+  .answer-button--wrong { animation: none; }
+  .result-score--perfect .result-score__badge::after { display: none; }
+}
+
+@media (forced-colors: active) {
+  .status-strip__seen { background: GrayText; }
+  .round-score__item--streak.round-streak { border: 1px solid CanvasText; background: Canvas; }
+  .round-streak--warm .round-score__value,
+  .round-streak--hot .round-score__value,
+  .round-streak--blazing .round-score__value,
+  .round-streak--warm .round-score__label,
+  .round-streak--hot .round-score__label,
+  .round-streak--blazing .round-score__label,
+  .round-streak__marks { color: CanvasText; }
+  .result-score--perfect .result-score__badge::after { display: none; }
+  .atlas-card__mark,
+  .spatial-mode__mark { color: ButtonText; }
 }

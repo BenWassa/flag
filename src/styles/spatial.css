@@ -80,7 +80,11 @@
 .spatial-stage {
   position: relative;
   min-height: 0;
-  background: var(--canvas);
+  /* Night, matching the renderer's own clear colour exactly, so the canvas
+     fading in over it has nothing to flash against. The planet needs a ground
+     darker than its own oceans to read as an object at all, which is the whole
+     reason the Spatial screen is now two-tone: geography above, controls below. */
+  background: var(--map-space);
   /* A hairline, not a card edge: it exists only so what follows the geography
      reads as ground rather than as something floating over it. One rule, so it
      holds for the command surface and for an activity panel alike. */
@@ -152,13 +156,24 @@
 .spatial-command[data-surface='domains'] {
   z-index: 1;
   place-self: center;
-  width: min(560px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
+  /* Narrow enough that the planet is still the first thing on the screen. The
+     chooser is one surface over the Earth, not a page laid on top of it, so it
+     takes the width its four modes need and leaves the rest to the geography. */
+  width: min(432px, calc(100% - 56px - env(safe-area-inset-left) - env(safe-area-inset-right)));
   max-height: calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  padding: clamp(16px, 4vw, 24px);
+  padding: clamp(14px, 3.4vw, 20px);
   border: 1px solid color-mix(in srgb, var(--line-strong) 76%, transparent);
   border-radius: var(--radius-tile);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
-  box-shadow: var(--depth-tile);
+  /* 82% rather than the old 92%. Against the near-white space the chooser used
+     to sit on, opacity was only a texture choice; against a planet it decides
+     whether there is a planet behind the chooser at all. Text stays far clear of
+     4.5:1 at this value even over the deepest ocean, and the surface is still one
+     flat fill with no blur and nothing nested inside it. */
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  /* Over night geography a soft page shadow disappears. The ring is what gives
+     the one translucent surface an edge against the planet behind it; it is
+     still one surface, with no blur and nothing nested inside it. */
+  box-shadow: 0 0 0 1px rgba(10, 23, 37, .5), 0 18px 44px rgba(10, 23, 37, .45);
   overflow-y: auto;
 }
 
@@ -310,12 +325,14 @@
 
 .spatial-command[data-surface='domains'] .spatial-mode {
   grid-template-columns: 1fr;
-  grid-template-rows: auto auto auto;
+  grid-auto-rows: auto;
+  grid-template-rows: none;
   place-items: center;
   align-content: center;
   gap: 6px;
-  min-height: 112px;
-  padding: 14px 10px;
+  min-height: 104px;
+  padding: 12px 10px;
+  border-color: transparent;
   background: transparent;
   text-align: center;
 }
@@ -324,16 +341,46 @@
   background: color-mix(in srgb, var(--surface) 68%, var(--action-soft));
 }
 
+/*
+ * Mode identity.
+ *
+ * Each domain's own icon carries its own accent, on the Home chooser and in the
+ * band that names it afterwards. It reaches a mode's icon and a mode's meter and
+ * stops there: no continent, region or hemisphere ever takes an identity colour,
+ * and no state anywhere is carried by one.
+ *
+ * These live beside the chooser rules rather than in the theme because the
+ * chooser sets `.spatial-mode__mark`'s colour itself, at this specificity.
+ */
 .spatial-command[data-surface='domains'] .spatial-mode__mark {
   width: 42px;
   height: 42px;
   color: var(--text);
 }
 
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='flags'] .spatial-mode__mark,
+.spatial-command[data-domain='flags'] .spatial-command__domain-mark { color: var(--domain-flags); }
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='locations'] .spatial-mode__mark,
+.spatial-command[data-domain='locations'] .spatial-command__domain-mark { color: var(--domain-locations); }
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='outlines'] .spatial-mode__mark,
+.spatial-command[data-domain='outlines'] .spatial-command__domain-mark { color: var(--domain-outlines); }
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='neighbors'] .spatial-mode__mark,
+.spatial-command[data-domain='neighbors'] .spatial-command__domain-mark { color: var(--domain-neighbors); }
+
 .spatial-command[data-surface='domains'] .spatial-mode__name {
   font-size: 16px;
   font-weight: 800;
 }
+
+/* The tile's own progress, in the mode's own accent. The button already carries
+   the same figure in its accessible name, so this is decoration on a number
+   that is stated, not a second source of it. */
+.spatial-command[data-surface='domains'] .spatial-mode__meter {
+  width: min(100%, 92px);
+  display: block;
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode__meter .status-strip { height: 5px; }
 
 .spatial-command[data-surface='domains'] .spatial-mode__meta {
   font-size: 12px;
@@ -431,6 +478,7 @@
   }
 
   .spatial-command[data-surface='domains'] .spatial-mode__name { font-size: 14px; }
+  .spatial-command[data-surface='domains'] .spatial-mode__meter { width: min(100%, 76px); }
   .spatial-command[data-surface='domains'] .world-crown { padding-block: 6px; }
 }
 
@@ -458,6 +506,8 @@
   }
 
   .spatial-command[data-surface='domains'] .spatial-mode__meta { justify-self: end; }
+
+  .spatial-command[data-surface='domains'] .spatial-mode__meter { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -496,4 +546,7 @@
     background: ButtonFace;
     color: ButtonText;
   }
+
+  .spatial-command[data-surface='domains'] .spatial-mode .spatial-mode__mark,
+  .spatial-command .spatial-command__domain-mark { color: ButtonText; }
 }

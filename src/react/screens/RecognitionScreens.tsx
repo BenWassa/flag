@@ -2,7 +2,7 @@ import { COUNTRY_BY_ID } from '../../data/countries.js';
 import type { ProgressState, QuizSession, SessionResult, LearningDomain } from '../../domain/models.js';
 import type { OutlineAsset } from '../../domain/outline.js';
 import { getRecord } from '../../domain/progress.js';
-import { answerFeedback, roundScore } from '../../domain/round-feedback.js';
+import { answerFeedback, roundRank, roundScore } from '../../domain/round-feedback.js';
 import { exitRoundLabel, repeatRoundLabel, statusLabel } from '../../ui/format.js';
 import { useAtlasActions } from '../actions.js';
 import { FlagImage } from '../components/FlagImage.js';
@@ -68,7 +68,11 @@ export function OutlineQuizScreen(props: { asset: OutlineAsset; session: QuizSes
 export function RecognitionResultsScreen({ result, domain }: { result: SessionResult; domain: 'flags' | 'outlines' }) {
   const actions = useAtlasActions();
   const accuracy = result.total ? Math.round((result.correct / result.total) * 100) : 0;
-  const perfect = result.session.mode === 'test' && result.missed.length === 0;
+  const play = result.session.mode === 'test';
+  const perfect = play && result.missed.length === 0;
+  // One word for how the round went, in Play only. Learn is not scored against
+  // a bar, so ranking it would invent a judgement the mode does not make.
+  const rank = play ? roundRank(result.correct, result.total) : null;
   const missed = result.missed.flatMap((attempt) => {
     const correct = COUNTRY_BY_ID.get(attempt.countryId);
     return correct ? [{ correct, selected: COUNTRY_BY_ID.get(attempt.selectedCountryId) }] : [];
@@ -76,7 +80,8 @@ export function RecognitionResultsScreen({ result, domain }: { result: SessionRe
   const label = domain === 'flags' ? 'Flags' : 'Outlines';
   return <main className="page results-page">
     <header className="topbar topbar--detail results-header"><button className="icon-button" onClick={actions.exitRound} aria-label={exitRoundLabel(domain)}><Icon name="close" /></button><div className="screen-title"><h1 tabIndex={-1} data-autofocus>{result.session.scope.label}</h1><span>{label} · Round complete · {result.session.mode === 'learn' ? 'Learn' : 'Play'}</span></div></header>
-    <section className={`result-score${perfect ? ' result-score--perfect' : ''}`} aria-label={`${result.correct} of ${result.total} correct, ${accuracy} percent`}><strong>{result.correct}<span>/{result.total}</span></strong><p>{accuracy}% correct</p>{perfect ? <span className="result-score__badge">Perfect round</span> : null}</section>
+    <section className={`result-score${perfect ? ' result-score--perfect' : ''}`} data-rank={rank?.id} aria-label={`${result.correct} of ${result.total} correct, ${accuracy} percent${rank ? `, ${rank.label}` : ''}`}><strong>{result.correct}<span>/{result.total}</span></strong><p>{rank ? <><strong className="result-rank">{rank.label}</strong> · </> : null}{accuracy}% correct</p>{perfect ? <span className="result-score__badge">Perfect round</span> : null}</section>
+    {rank && !perfect ? <p className="result-rank-detail">{rank.detail}</p> : null}
     {missed.length ? <section className="result-section" aria-labelledby={`${domain}-review-heading`}><div className="list-heading"><h2 id={`${domain}-review-heading`}>Review</h2></div><div className="mistake-list">{missed.map(({ correct, selected }) => domain === 'flags' ? <div className="mistake-row" key={correct.id}><FlagImage country={correct} revealed frameClass="flag-frame--tiny" /><span><strong>{correct.name}</strong><small>{selected ? `You chose ${selected.name}` : 'Answered incorrectly'}</small></span></div> : <div className="outline-mistake-row" key={correct.id}><strong>{correct.name}</strong><small>{selected ? `You chose ${selected.name}` : 'Answered incorrectly'}</small></div>)}</div></section> : perfect ? null : <p className="clean-round"><strong>Clean round.</strong> No missed {domain === 'flags' ? 'flags' : 'outlines'}.</p>}
     <div className="result-actions">{missed.length ? <button className="button button--primary" onClick={() => actions.review(domain)}>Review mistakes</button> : null}<button className="button button--secondary" onClick={() => actions.repeat(domain)}>{repeatRoundLabel(result.session.mode)}</button><button className="button button--tertiary" onClick={actions.exitRound}>{exitRoundLabel(domain)}</button></div>
   </main>;

@@ -69,20 +69,25 @@
   vector-effect: non-scaling-stroke;
   transition: fill 150ms ease, stroke 150ms ease, opacity 150ms ease;
 }
+/* Atlas Blue on a blue sea needs an edge: the anchor country and the ocean sit
+   about 1.4:1 apart, so the pale cartographic outline is what keeps the target
+   an object rather than a patch of water. */
 .neighbor-map-country--target .neighbor-map-country__shape {
   fill: var(--action);
-  stroke: var(--action-hover);
-  stroke-width: 2;
+  stroke: var(--map-label-halo);
+  stroke-width: 2.4;
 }
 .neighbor-map-country--unresolved .neighbor-map-country__shape {
   fill: var(--map-active-land);
   stroke: var(--map-active-border);
   stroke-width: 1.35;
 }
+/* A solved neighbour fills in, the same way a cleared Locations country does:
+   the soft chrome tint disappeared against pale in-scope land. */
 .neighbor-map-country--solved .neighbor-map-country__shape {
-  fill: var(--mastered-soft);
-  stroke: var(--mastered);
-  stroke-width: 1.8;
+  fill: color-mix(in srgb, var(--correct) 76%, var(--map-label-halo));
+  stroke: var(--correct);
+  stroke-width: 2;
 }
 .neighbor-map-country--revealed .neighbor-map-country__shape {
   fill: var(--wrong-soft);

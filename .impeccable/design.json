@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "surface": "Atlas web app",
   "visitorMode": "operate",
-  "status": "spatial-tactile-atlas-production",
+  "status": "cartographic-atlas-production",
   "tokens": {
     "colors": {
       "canvas": "#F6F8FB",
@@ -13,7 +13,19 @@
       "correct": "#137A55",
       "wrong": "#B42318",
       "mastery": "#6D3FC0",
-      "prestige": "#E0AF2F"
+      "prestige": "#E0AF2F",
+      "mapOcean": "#1F5C80",
+      "mapOceanDeep": "#164964",
+      "mapInlandWater": "#35789C",
+      "mapContextLand": "#9FBF98",
+      "mapContextBorder": "#4A6B4F",
+      "mapActiveLand": "#E8F0C8",
+      "mapActiveBorder": "#5C6E3A",
+      "mapLabelHalo": "#F4F8E6",
+      "mapSpace": "#0A1725",
+      "mapAtmosphere": "#4FA3D1",
+      "mapMastery": "#A98CE0",
+      "mapPrestige": "#E3BE64"
     },
     "radius": {
       "compact": "8px",
@@ -42,32 +54,47 @@
       "feedbackEmphasis": "520ms ease-out (Locations transient wrong-answer emphasis only)"
     },
     "homeChooser": {
-      "composition": "one bounded centred surface over the full world globe; 2x2 modes on ordinary phone portrait and compact adaptation in short landscape",
-      "surface": "neutral translucent surface with a thin structural edge and modest depth",
+      "composition": "one bounded centred surface over the full world globe, no wider than its four modes need; 2x2 modes on ordinary phone portrait and compact adaptation in short landscape",
+      "surface": "neutral translucent surface at roughly 82% with a thin structural edge and modest depth, so the planet reads through it",
       "blur": "none by default; backdrop-filter is not required",
       "fallback": "solid real-DOM surface in forced colours or wherever translucency is unsuitable"
+    },
+    "domainAccents": {
+      "flags": "#1D4ED8",
+      "locations": "#0E7490",
+      "outlines": "#B45309",
+      "neighbors": "#BE123C"
+    },
+    "streakTiers": {
+      "warm": "#B45309 from 3 correct",
+      "hot": "#C2410C from 6 correct",
+      "blazing": "#7C2D12 from 10 correct"
     }
   },
   "principles": [
     "Geography is the content; interface is the instrument",
+    "Cartography carries the colour and chrome stays neutral: land green, water blue, space night, panels and backgrounds unchanged",
+    "One central cartography token family serves the globe, Locations and Neighbours; no consumer sheet forks it",
+    "Evidence fills geography in, and immediate answer feedback still outranks every stored state",
+    "Game feel decorates states the DOM already carries in words and shape, so removing the whole layer leaves the round correct",
     "Spatial Atlas is the default production navigation presentation, not a preview",
     "Navigation stays mode-first: choose domain, select continent or region on the Earth, then deliberately choose Play or Learn",
     "Spatial Home lets the full world globe own the canvas and layers one centred icon-led mode chooser over it",
     "The Spatial Home chooser is the sole neutral translucency exception; no nested glass, decorative blur, glow or gradients, and other Spatial command surfaces remain non-translucent",
     "The typed route is authoritative; camera and globe state interpret navigation rather than owning a second stack",
     "The conventional launcher is renderer-failure fallback only and must remain semantically equivalent",
-    "Atlas is mobile-first, low-friction, information-first and minimally gamified",
-    "Atlas Blue drives ordinary action and progress while green and red stay correctness feedback",
+    "Atlas is mobile-first, low-friction and information-first, and gamified only inside a round",
+    "Atlas Blue drives ordinary action and progress while green and red stay correctness feedback, deeper and more saturated than any land green",
     "Region-by-domain Mastery is purple; gold is deliberately scarce completion/prestige",
     "Country records are live learning evidence, not learner-facing prestige objects",
-    "Ordinary progress is a quiet blue successful-retrieval strip rather than a mastery dashboard",
+    "Ordinary progress is a quiet two-segment successful-retrieval strip in the mode's own accent rather than a mastery dashboard",
     "Complete regions use restrained gold; complete continents use persisted crest/trophy state; genuine world completion alone earns the Crown",
     "A single Perfect round is transient result feedback and is not persistent Mastery",
     "The dedicated Progress screen is retired; progress is disclosed in the learning/navigation flow rather than a dashboard",
     "Real DOM controls remain equivalent to spatial selection; no colour-only or 3D-only state",
     "Tiny geography uses truthful display geometry and source-derived invisible interaction envelopes when necessary",
     "Mobile edge gestures, reduced motion and answer-safe accessibility remain first-class",
-    "No continent, region or hemisphere colour taxonomy",
-    "No default glassmorphism, bento dashboards, decorative UI overload or reward economy"
+    "No continent, region or hemisphere colour taxonomy; a domain accent is mode identity and reaches only its own icon and meter",
+    "No default glassmorphism, bento dashboards, decorative UI overload, currencies, levels, daily-streak obligations or any reward economy"
   ]
 }

@@ -13,7 +13,7 @@ Atlas teaches world geography through direct retrieval and geographic context ac
 - **Outlines** — identify countries by silhouette;
 - **Neighbours** — identify complete direct land-border neighbour sets.
 
-Atlas is fast, low-friction, information-first and minimally gamified. Geography should usually be the dominant visual object. Engagement comes from learning, tactile interaction and meaningful completion rather than XP, currency, lives, reward shops, leaderboards or constant celebration.
+Atlas is fast, low-friction and information-first, and gamified only inside a round. Geography should usually be the dominant visual object, and it is the surface that carries the product's colour: land green, water blue, space night, with the chrome around it neutral. Engagement comes from learning, tactile interaction, felt momentum within a round and meaningful completion rather than XP, currency, lives, levels, daily-streak obligations, reward shops, leaderboards or constant celebration.
 
 ## Production navigation: Spatial Atlas
 
