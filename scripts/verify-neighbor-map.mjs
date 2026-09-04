@@ -236,7 +236,7 @@ assert.ok(!renderer.includes('data-action="map-answer"'), 'Neighbor geography st
 const index = await readFile('dist/index.html', 'utf8');
 assert.ok(index.includes('./neighbor-map-runtime.js'), 'Production shell loads the lightweight neighbor-map runtime.');
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
-assert.ok(serviceWorker.includes('flag-atlas-v29'), 'React/Vite integration owns the v29 PWA cache.');
+assert.ok(serviceWorker.includes('flag-atlas-runtime-v1'), 'React/Vite integration owns the stable PWA runtime-cache schema.');
 assert.ok(serviceWorker.includes('atlas-theme.css'), 'Tactile Atlas remains cached with the neighbour map shell.');
 assert.ok(serviceWorker.includes('neighbor-map-runtime.js'), 'Neighbor map runtime is cached in the app shell.');
 const css = await readFile('dist/neighbors.css', 'utf8');

@@ -39,6 +39,8 @@ for (const file of required) assert.ok(relativeFiles.includes(file), `Production
 const index = await readFile(join(DIST, 'index.html'), 'utf8');
 assert.match(index, /app\.js/, 'Built HTML points at stable app.js.');
 assert.match(index, /styles\.css/, 'Built HTML points at generated styles.css.');
+assert.match(index, /<meta name="atlas-build" content="(?:[0-9a-f]{40}|development)">/, 'Built HTML exposes one mechanically generated Atlas build identity.');
+assert.equal(index.includes('atlas-pwa-runtime-build'), false, 'Production artifact has no parallel PWA test-only build identity.');
 assert.equal(index.includes('/src/'), false, 'Built HTML contains no source-tree module/style references.');
 assert.equal(index.includes('legacy.js'), false, 'Built HTML does not load the retired legacy bundle.');
 assert.equal(index.includes('data-legacy-ui'), false, 'Built HTML contains no legacy UI marker.');
@@ -72,7 +74,11 @@ for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
 }
 
 const sw = await readFile(join(DIST, 'sw.js'), 'utf8');
-assert.ok(sw.includes('flag-atlas-v30'), 'Build-aware service worker uses the current React/Vite cache generation.');
+assert.ok(sw.includes('flag-atlas-runtime-v1'), 'Service worker uses the stable Atlas runtime-cache schema generation.');
+assert.ok(sw.includes('flag-atlas-flags-v1'), 'Service worker uses the stable Atlas flag-cache schema generation.');
+assert.equal(sw.includes('flag-atlas-runtime-v1-runtime'), false, 'Routine application releases no longer use the old release-style runtime cache name.');
+assert.ok(sw.includes('ATLAS_UPDATE_SAFETY_QUERY'), 'Service worker contains coordinated update-safety messaging.');
+assert.ok(sw.includes('ATLAS_UPDATE_ACTIVATED'), 'Service worker contains controlled update-adoption messaging.');
 assert.ok(sw.includes('index.html'), 'Injected precache includes the offline navigation shell.');
 for (const continent of ['africa', 'south-america', 'europe', 'asia']) {
   assert.equal(new RegExp(`${continent}-[A-Za-z0-9_-]+\\.js`).test(sw), false, `${continent} geography remains runtime-cached rather than precached.`);

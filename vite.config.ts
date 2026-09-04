@@ -1,3 +1,4 @@
+import { execFileSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import react from '@vitejs/plugin-react';
@@ -6,20 +7,29 @@ import { VitePWA } from 'vite-plugin-pwa';
 
 const root = process.cwd();
 
-/**
- * The PWA runtime harness builds two otherwise identical production artifacts
- * and uses this inert marker to make the deployment transition observable.
- * Normal builds never set the variable, so this hook has no production output.
- */
-function pwaRuntimeValidationMarker(): Plugin {
-  const marker = process.env.ATLAS_PWA_RUNTIME_BUILD_MARKER;
-  if (!marker) return { name: 'atlas-pwa-runtime-validation-marker' };
-  if (!/^[a-z0-9-]+$/i.test(marker)) throw new Error('ATLAS_PWA_RUNTIME_BUILD_MARKER must be a simple build label.');
+function resolveAtlasBuildIdentity(): string {
+  for (const candidate of [process.env.ATLAS_BUILD_SHA, process.env.GITHUB_SHA]) {
+    if (!candidate) continue;
+    if (!/^[0-9a-f]{40}$/i.test(candidate)) throw new Error('Atlas build identity must be a full 40-character Git commit SHA.');
+    return candidate.toLowerCase();
+  }
 
+  try {
+    const candidate = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim();
+    if (/^[0-9a-f]{40}$/i.test(candidate)) return candidate.toLowerCase();
+  } catch {
+    // Source archives without Git metadata remain buildable for development.
+  }
+  return 'development';
+}
+
+const atlasBuildIdentity = resolveAtlasBuildIdentity();
+
+function atlasBuildIdentityMetadata(): Plugin {
   return {
-    name: 'atlas-pwa-runtime-validation-marker',
+    name: 'atlas-build-identity',
     transformIndexHtml(html) {
-      return html.replace('</head>', `  <meta name="atlas-pwa-runtime-build" content="${marker}">\n</head>`);
+      return html.replace('</head>', `  <meta name="atlas-build" content="${atlasBuildIdentity}">\n</head>`);
     },
   };
 }
@@ -62,10 +72,11 @@ export default defineConfig(({ command }) => ({
   publicDir: 'public',
   define: {
     __ATLAS_DEVELOPMENT_SANDBOX__: JSON.stringify(command === 'serve'),
+    __ATLAS_BUILD_IDENTITY__: JSON.stringify(atlasBuildIdentity),
   },
   plugins: [
     resolveTypeScriptForJsSpecifiers(),
-    pwaRuntimeValidationMarker(),
+    atlasBuildIdentityMetadata(),
     react(),
     VitePWA({
       strategies: 'injectManifest',
