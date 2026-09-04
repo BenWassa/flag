@@ -2,30 +2,21 @@
 
 This is the authoritative active checklist for Issue #71. Earlier #71 documents are retained as implementation/history evidence and must not be used as the current route or architecture specification.
 
-## Blocker — #191
+## Status
 
-**Do not execute the final physical-device/installed-PWA closure gate until Issue #191 is implemented, merged and deployed.**
+**ACTIVE — #191 is implemented, merged and deployed.**
 
-#191 changes the service-worker update lifecycle that the installed-PWA pass must validate. The final #71 evidence must therefore be gathered against one exact post-#191 production `main` SHA, not the pre-update-lifecycle baseline.
+The automatic PWA update lifecycle shipped in PR #193. Its runtime implementation baseline is:
 
-After #191 lands:
-
-1. repin this document and GitHub Issue #71 to the exact deployed `main` SHA;
-2. record the corresponding green CI, GitHub Pages and Firebase deployment evidence;
-3. execute the physical Android/iPhone/installed-PWA matrix below;
-4. include the automatic A → B update scenarios in section C.
-
-## Historical automated baseline
-
-Automated hardening through Issue #150 was previously complete, and #186/#187 have since landed. The older baseline below is retained only as history and **must not be used for final #71 closure**:
-
-- historical `main`: `4dce853225e5aa153e8ad3c68aac7cd86ae052e9`
-- merged-main CI: `33649413270` — success
-- GitHub Pages: `33649635266` — success
-- Firebase deploy/live-origin acceptance: `33649635294` — success
+- implementation merge: `39a7a07246540df5b8cdc80576700bb9a009f0dd`
+- merged-main verification: success
+- GitHub Pages deployment: success
+- Firebase deployment/live verification: success
 - production URL: https://benwassa.github.io/flag/
 
-Before a physical run, use the exact post-#191 production SHA recorded in GitHub Issue #71. Do not infer the tested SHA from an old screenshot or local checkout.
+The exact production SHA to use for the physical gate is recorded in GitHub Issue #71. That issue is intentionally the canonical SHA pin: embedding the final housekeeping SHA in this file would itself create another build SHA and make the value self-invalidating.
+
+Before a physical run, confirm the SHA recorded in #71 is still current `main` and has green CI, GitHub Pages and Firebase deployment evidence.
 
 ## Rules
 
@@ -33,7 +24,7 @@ Before a physical run, use the exact post-#191 production SHA recorded in GitHub
 - Record device model, OS version, browser/version or installed-PWA context, production SHA, orientation and result.
 - Do not reopen the old pre-Spatial Home → Continent → Region → Country model.
 - Spatial Atlas is the production navigation presentation; typed hash routing/browser history remain authoritative.
-- #191's update architecture is authoritative for service-worker discovery/adoption; do not substitute manual-refresh/cache-clear rituals during the update scenarios.
+- `docs/architecture/pwa-update-lifecycle.md` is authoritative for service-worker discovery/adoption; do not substitute manual-refresh/cache-clear rituals during update scenarios.
 - If a material defect appears, keep #71 as validation owner and split non-trivial implementation into a focused issue.
 
 ## A. Pixel-class Android / Chrome
@@ -70,7 +61,7 @@ Run in portrait and short landscape.
 
 ## C. Installed PWA — physical mobile
 
-Install the final post-#191 production build on at least one physical mobile platform; iOS is preferred.
+Install the production build pinned in #71 on at least one physical mobile platform; iOS is preferred.
 
 ### Normal standalone use
 
@@ -98,7 +89,7 @@ Record the exact A and B production SHAs/build identities used for this scenario
 - Begin a real learning round on A.
 - Allow B to become available while that round remains active.
 - Confirm update discovery/download does not destroy the round or current text entry.
-- Complete or deliberately exit to the #191-defined safe boundary.
+- Complete or deliberately exit to the documented safe boundary.
 - Confirm B then applies automatically without requiring a refresh gesture or update button.
 - Confirm durable progress is intact after adoption.
 
@@ -108,7 +99,7 @@ Record the exact A and B production SHAs/build identities used for this scenario
 - Confirm the supported cached Atlas experience remains usable.
 - Make B available while the client remains offline.
 - Restore connectivity without clearing/reinstalling/reloading manually.
-- Confirm Atlas automatically checks for B and safely adopts it according to #191.
+- Confirm Atlas automatically checks for B and safely adopts it according to the shipped update lifecycle.
 
 ## D. Renderer/WebGL fallback
 
@@ -139,8 +130,8 @@ Record one row per meaningful scenario or grouped scenario set.
 
 Close #71 only when:
 
-- #191 is implemented, merged, deployed and its exact final production SHA is recorded;
-- this checklist is repinned to that exact post-#191 production baseline;
+- GitHub Issue #71 records the exact current production SHA used for the physical run;
+- that SHA is green on merged-main CI, GitHub Pages and Firebase/live-origin deployment;
 - physical Android Chrome evidence is recorded;
 - physical iPhone Safari evidence is recorded;
 - installed-PWA physical evidence is recorded, including automatic A → B adoption, active-round deferral and offline → online discovery;
