@@ -2,7 +2,7 @@ import { CONTINENTS } from '../data/continents.js';
 import { COUNTRIES } from '../data/countries.js';
 import { countryEvidenceState, hasSuccessfulRetrieval, type EvidenceBackedRecord, type CountryEvidenceState } from './evidence.js';
 import type { LocationProgressState } from './map-models.js';
-import type { LearningDomain, ProgressState, StudyScope } from './models.js';
+import type { LearningDomain, ProgressState, ScopeStats, StudyScope } from './models.js';
 import type { NeighborProgressState } from './neighbor-models.js';
 import { countryIdsForSupportedScope, scopeSupportsDomain } from './scope-support.js';
 
@@ -192,4 +192,23 @@ export function buildDomainProgressSummary(
   }
 
   return summary;
+}
+
+/**
+ * The `ScopeStats` view of a summary, for the shared progress presentation.
+ *
+ * A summary and a `ScopeStats` carry the same six numbers under one different
+ * name (`strong` / `mastered`). Both the Home chooser and the Spatial command
+ * surface need the conversion, so it lives beside the summaries rather than
+ * being written out again in each screen.
+ */
+export function summaryStats(summary: ProgressSummary | DomainProgressSummary): ScopeStats {
+  return {
+    total: summary.total,
+    unseen: summary.unseen,
+    learning: summary.learning,
+    mastered: summary.strong,
+    due: summary.due,
+    cleared: summary.cleared,
+  };
 }

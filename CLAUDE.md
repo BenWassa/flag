@@ -105,7 +105,7 @@ Compatibility outranks cosmetic consistency unless a migration has explicit valu
 
 ## Visual work
 
-`DESIGN.md` is authoritative. The production direction is visually quiet, geography-first and tactile without becoming toy-like. Atlas Blue is ordinary action/progress; green/red are correctness; purple is Mastery; gold is scarce prestige. No colour-only state, continent/region identity palette, glassmorphism, bento dashboard treatment or reward economy.
+`DESIGN.md` is authoritative. The production direction is geography-first and tactile without becoming toy-like, and the geography is where the colour lives: land green, water blue, space night, defined once as the central cartography token family and consumed by the globe, Locations and Neighbours alike. The chrome around it stays quiet. Atlas Blue is ordinary action/progress; green/red are correctness and outrank land green wherever they meet; purple is Mastery; gold is scarce prestige; each learning domain has one accent on its own icon and meter. Game feel (streak tiers, answer gestures, round rank, the one Perfect round sheen) decorates states the DOM already carries in words and shape, so removing the layer leaves the round correct. No colour-only state, continent/region identity palette, saturated chrome, glassmorphism, bento dashboard treatment, or any accumulating reward economy.
 
 Do not revive pre-Spatial launcher layouts simply because old CSS/tests/issues mention them. Fallback UI is a compatibility/accessibility surface, not the normal visual direction.
 

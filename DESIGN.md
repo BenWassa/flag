@@ -10,25 +10,30 @@
 
 Atlas should feel tactile and game-like enough to make repeated retrieval satisfying while remaining visually quiet, information-first and credible as a learning tool. The Earth, map, flag or outline should normally carry more visual weight than surrounding chrome.
 
+**The geography carries the colour; the chrome stays quiet.** Land is green, water is blue and the space around the planet is night. This replaces the neutral-cartography direction that preceded it, in which ocean, land and page canvas were three near-identical light greys and the dominant object in the product had no colour at all. Saturated colour belongs to the thing the product is about; it does not spread into panels, cards or backgrounds.
+
 Spatial Atlas is the accepted production navigation presentation. It is not decorative 3D placed above a conventional app page.
 
 ## Locked principles
 
 1. Mobile portrait is the primary composition; short landscape must remain usable.
-2. System sans typography; cool near-white canvas and graphite text form the neutral base.
-3. Atlas Blue is ordinary action/selection/progress.
-4. Green/red are correctness feedback, not navigation identity.
-5. Purple is durable region × domain Mastery.
-6. Gold is scarce completion/prestige.
-7. State never relies on colour alone.
-8. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
-9. Use spacing, alignment, rules and proximity before adding cards/containers.
-10. Modest radii and controlled depth; no default glassmorphism, bento dashboards, decorative gradients or excessive elevation. The Spatial Home chooser is the one documented neutral translucent exception.
-11. Tactile press physics communicate activation without springy/toy-like bounce.
-12. Progressive disclosure beats explanatory text in routine flows.
-13. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
-14. Spatial motion must preserve orientation but remain interruptible and respect reduced motion.
-15. A 3D surface never replaces equivalent real DOM controls or answer-safe accessibility semantics.
+2. System sans typography; cool near-white canvas and graphite text form the neutral base for chrome.
+3. Cartography is the one saturated surface: land green, water blue, space night.
+4. Atlas Blue is ordinary action/selection/progress.
+5. Green/red are correctness feedback, not navigation identity. Correctness green is deeper and more saturated than any land green, and outranks it wherever the two meet.
+6. Purple is durable region × domain Mastery.
+7. Gold is scarce completion/prestige.
+8. State never relies on colour alone.
+9. Each learning domain has one accent, on its own icon and its own meter. Mode identity is not geography identity.
+10. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
+11. Use spacing, alignment, rules and proximity before adding cards/containers.
+12. Modest radii and controlled depth; no default glassmorphism, bento dashboards, decorative gradients or excessive elevation. The Spatial Home chooser is the one documented neutral translucent exception.
+13. Tactile press physics communicate activation without springy/toy-like bounce.
+14. Momentum and arrival may be felt, not only read. Every gesture that carries them decorates a state the DOM already states, and removing the whole layer must leave the round correct.
+15. Progressive disclosure beats explanatory text in routine flows.
+16. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
+17. Spatial motion must preserve orientation but remain interruptible and respect reduced motion.
+18. A 3D surface never replaces equivalent real DOM controls or answer-safe accessibility semantics.
 
 ## Core palette
 
@@ -44,7 +49,51 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 | Mastery | `#6D3FC0` | durable region × domain competency |
 | Prestige | `#E0AF2F` | scarce completion/prestige |
 
-Colour is semantic, not geographic branding.
+### Cartography
+
+Defined once in `atlas-theme.css` and consumed by the globe, Locations and Neighbours alike. No consumer sheet forks these.
+
+| Role | Value | Meaning |
+| --- | --- | --- |
+| Ocean | `#1F5C80` | sea on the projected maps |
+| Deep ocean | `#164964` | sea seen from orbit |
+| Inland water | `#35789C` | lakes, cut into land |
+| Context land | `#9FBF98` | land outside the current scope |
+| Context border | `#4A6B4F` | its coastlines and borders |
+| Active land | `#E8F0C8` | land the learner can act on |
+| Active border | `#5C6E3A` | its coastlines and borders |
+| Label halo | `#F4F8E6` | the plate a map label sits on |
+| Space | `#0A1725` | night behind the planet |
+| Atmosphere | `#4FA3D1` | the lit limb |
+| Map mastery | `#A98CE0` | Mastery, deepened to survive green land |
+| Map prestige | `#E3BE64` | completion, deepened to survive green land |
+
+Figure and ground inside the green: what can be acted on is light, what is only context is deeper, and ocean clears context land by roughly 3:1 so a coastline reads without depending on its stroke. On the globe the same two greens run one step more saturated, because they sit on deep ocean against night rather than on a light page.
+
+Evidence fills geography in. A cleared country takes a deep correctness green that clears both the pale in-scope land and the sage context land by value, so a board visibly fills as a round is played. Immediate answer feedback still outranks all stored evidence, by solid correctness green, a heavier stroke and the one arrival animation.
+
+### Mode identity
+
+| Domain | Value |
+| --- | --- |
+| Flags | `#1D4ED8` |
+| Locations | `#0E7490` |
+| Outlines | `#B45309` |
+| Neighbours | `#BE123C` |
+
+An accent reaches a domain's own icon and its own progress meter and stops there. No continent, region or hemisphere ever takes an identity colour, and no state anywhere is carried by one.
+
+### Streak tiers
+
+| Tier | Value | From |
+| --- | --- | --- |
+| Warm | `#B45309` | 3 correct |
+| Hot | `#C2410C` | 6 correct |
+| Ember | `#7C2D12` | 10 correct |
+
+Each tier also carries its own count of marks. The ramp deliberately borrows neither prestige gold nor correctness green nor wrong red.
+
+Colour is semantic or cartographic, never geographic branding.
 
 ## Shape and depth
 
@@ -75,6 +124,8 @@ The shared Play reading dwells remain `620ms` correct / `1500ms` wrong in `src/s
 
 ## Spatial navigation composition
 
+The Spatial screen is two-tone: night geography above, light real controls below. The stage's own background matches the renderer's clear colour exactly, so the canvas fading in has nothing to flash against, and the globe carries a single procedural atmosphere rim at the limb. That rim is the one lit element in the scene; there are still no textures, no terrain, no photographic Earth and no starfield.
+
 Current production hierarchy:
 
 ```text
@@ -96,6 +147,7 @@ At Home:
 - ordinary phone portrait uses an icon-led 2 × 2 mode grid; short landscape adapts compactly so all four modes remain visible in one viewport;
 - each mode carries its short learner-facing name and quiet `cleared / total` progress;
 - the chooser may use one neutral translucent surface with a thin structural edge and modest depth so the globe remains recognisable around it;
+- it is bounded to the width its four modes need, and its fill is roughly 82% rather than near-opaque: against the near-white space it used to sit on, opacity was a texture choice; against a planet it decides whether there is a planet behind the chooser at all. Text stays far clear of 4.5:1 at that value even over the deepest ocean;
 - do not nest translucent cards, add colourful gradients/glow or depend on decorative blur; a sufficiently opaque treatment without `backdrop-filter` is preferred when it is clearer or cheaper;
 - forced-colours mode uses a solid real-DOM presentation;
 - the globe is geographic context until a domain exists: it may be rotated deliberately, but country selection cannot navigate from Home.
@@ -148,9 +200,21 @@ The silhouette is dominant. Normalisation may remove absolute scale/location cue
 
 Target geography and complete land-neighbour context remain primary. Input/suggestions are retrieval instruments, not the visual centre. Spatial navigation yields during live questions.
 
+## Game feel
+
+Momentum and arrival are felt as well as read. Every rule in this layer decorates a state the DOM already states in words and in shape, so the whole layer can be removed and the round stays correct. That is what makes it compatible with reduced motion and forced colours rather than merely tolerated by them.
+
+- **Streak.** A running streak surfaces from two correct answers and escalates through three tiers at 3, 6 and 10. Each tier carries its own count of marks as well as its own colour. Nothing about it is stored, spent or accumulated, and a missed answer takes the tier with the streak.
+- **Answering.** The correct option lifts; a chosen wrong one refuses. One short gesture each, on `transform` only.
+- **Haptics.** A short pulse confirms a resolved Play answer where the platform supports it. `navigator.vibrate` is an Android/Chromium feature and is absent on iOS Safari, so this is a no-op on iPhone and nothing may be built on top of it. It is suppressed under reduced motion.
+- **Round rank.** One word for how a completed Play round went. Transient result feedback in the same family as the Perfect round badge: never stored, never accumulated, never a rank the learner holds. Learn takes no rank, because Learn is not scored against a bar.
+- **Arrival.** The earned Perfect round badge takes a single sheen, once. It is the accepted brushed-metal gold treatment moving, not a repeating celebration.
+
+Reduced motion removes the movement rather than shortening it. Nothing is lost but the gesture.
+
 ## Progress and achievement presentation
 
-Ordinary progress is low-prestige: the quiet Atlas Blue successful-retrieval strip. Individual countries remain learning evidence, not purple prestige objects.
+Ordinary progress is low-prestige: the quiet successful-retrieval strip, in the mode's own accent. It has two segments — cleared, then seen but not yet cleared — because a scope half-met and a scope never opened used to draw the same empty track. Its accessible name still reports cleared alone, the figure the rest of the product quotes. Individual countries remain learning evidence, not purple prestige objects.
 
 Hierarchy:
 
@@ -199,7 +263,11 @@ Learner-facing copy uses modern British English: **Neighbours, colour, centre, b
 
 ## Intentionally excluded aesthetics
 
-No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The only translucent navigation surface is the single neutral Spatial Home chooser documented above; that exception must not propagate into nested glass cards or other screens.
+No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, currencies, levels, daily-streak obligations, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The only translucent navigation surface is the single neutral Spatial Home chooser documented above; that exception must not propagate into nested glass cards or other screens.
+
+Saturated colour stays on the geography. Panels, cards, page backgrounds and chrome remain neutral: the break recorded here gives the Earth its colour back, it does not licence a colourful interface around it.
+
+Gamification stays inside the round. A streak that is only alive while a round is, and a word describing the round that just ended, are the whole of it. Anything a learner could accumulate, hold, lose overnight or be asked to protect is out of scope by construction.
 
 ## Historical design work
 

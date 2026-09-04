@@ -14,11 +14,11 @@
   border-radius: 3px;
 }
 .map-swatch--first {
-  background: var(--surface);
-  border-color: var(--line-strong);
+  background: color-mix(in srgb, var(--correct) 76%, var(--map-label-halo));
+  border-color: var(--correct);
 }
-.map-swatch--one { background: color-mix(in srgb, var(--learning) 25%, var(--surface)); }
-.map-swatch--two { background: color-mix(in srgb, var(--learning) 52%, var(--surface)); }
+.map-swatch--one { background: color-mix(in srgb, var(--learning) 42%, var(--map-label-halo)); }
+.map-swatch--two { background: color-mix(in srgb, var(--learning) 74%, var(--map-label-halo)); }
 .map-swatch--reveal { background: var(--wrong-soft); border-color: var(--wrong-line); }
 
 /* Quiz: compact command + a pannable continent canvas. */
@@ -179,33 +179,43 @@
 }
 .map-country:active .map-country__callout-line { stroke: var(--action); stroke-width: 2; }
 
-/* Persistent Learn round score. Unanswered countries are deliberately gray so
-   first-try off-white reads as completed rather than disappearing. */
+/*
+ * Persistent Learn round score, restated for green land.
+ *
+ * Unanswered land is now the pale in-scope khaki, so the old "completed is
+ * off-white" reading collapsed: white and khaki sit about 1.09:1 apart and the
+ * two states became one. Evidence instead FILLS a country as it is earned —
+ * first-try correct is a deep green, misses run through amber — so the board
+ * visibly fills in as a round is played, and the immediate answer feedback below
+ * still outranks all of it with solid correctness green, a heavier stroke and
+ * the one arrival animation. The mix runs deep enough to clear the sage context
+ * land by value as well as by hue; a lighter green read as the same weight.
+ */
 .map-country--first .map-country__shape,
 .map-country--first .map-country__locator,
 .map-country--first .map-country__marker,
 .map-country--first .map-country__callout-target {
-  fill: var(--surface);
-  stroke: var(--line-strong);
-  stroke-width: 1.05;
+  fill: color-mix(in srgb, var(--correct) 76%, var(--map-label-halo));
+  stroke: var(--correct);
+  stroke-width: 1.15;
 }
-.map-country--first .map-country__callout-line { stroke: var(--line-strong); }
+.map-country--first .map-country__callout-line { stroke: var(--correct); }
 .map-country--one-miss .map-country__shape,
 .map-country--one-miss .map-country__locator,
 .map-country--one-miss .map-country__marker,
 .map-country--one-miss .map-country__callout-target {
-  fill: color-mix(in srgb, var(--learning) 25%, var(--surface));
-  stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong));
-  stroke-width: 1.15;
+  fill: color-mix(in srgb, var(--learning) 42%, var(--map-label-halo));
+  stroke: color-mix(in srgb, var(--learning) 78%, var(--map-active-border));
+  stroke-width: 1.25;
 }
-.map-country--one-miss .map-country__callout-line { stroke: color-mix(in srgb, var(--learning) 62%, var(--line-strong)); }
+.map-country--one-miss .map-country__callout-line { stroke: color-mix(in srgb, var(--learning) 78%, var(--map-active-border)); }
 .map-country--two-miss .map-country__shape,
 .map-country--two-miss .map-country__locator,
 .map-country--two-miss .map-country__marker,
 .map-country--two-miss .map-country__callout-target {
-  fill: color-mix(in srgb, var(--learning) 52%, var(--surface));
+  fill: color-mix(in srgb, var(--learning) 74%, var(--map-label-halo));
   stroke: var(--learning);
-  stroke-width: 1.25;
+  stroke-width: 1.35;
 }
 .map-country--two-miss .map-country__callout-line { stroke: var(--learning); }
 .map-country--revealed .map-country__shape,

@@ -17,11 +17,17 @@
  *   - continent detail is mounted and disposed as the learner moves;
  *   - WebGL context loss is handled rather than left to blank the canvas.
  *
- * No textures, no terrain, no photographic Earth, no starfield. DESIGN.md
- * excludes that aesthetic and the issue restates it.
+ * No textures, no terrain, no photographic Earth, no starfield. The one lit
+ * element is a procedural atmosphere rim: a single back-face sphere whose
+ * fragment cost is confined to the annulus outside the planet's silhouette,
+ * because every fragment inside it fails the depth test against the opaque
+ * globe. It is what makes flat-shaded vector geography read as a planet rather
+ * than as a sticker, and it ships no bytes.
  */
 
 import {
+  AdditiveBlending,
+  BackSide,
   BufferAttribute,
   BufferGeometry,
   Color,
@@ -37,6 +43,7 @@ import {
   Raycaster,
   CanvasTexture,
   Scene,
+  ShaderMaterial,
   SphereGeometry,
   Vector2,
   WebGLRenderer,
@@ -61,6 +68,12 @@ const BORDER_RADIUS = 1.003;
 const DETAIL_BORDER_RADIUS = 1.0034;
 const LOCATOR_RADIUS = 1.006;
 const MARKER_RADIUS = 1.008;
+/**
+ * The atmosphere shell. Everything of it that falls inside the planet's own
+ * silhouette is discarded by the depth test against the opaque globe, so the
+ * visible result is the thin lit annulus at the limb and nothing else.
+ */
+const ATMOSPHERE_RADIUS = 1.075;
 
 /** Longest triangle edge, in degrees, before a face is split onto the sphere. */
 const MAX_EDGE_DEG = 6;
@@ -68,27 +81,41 @@ const MAX_EDGE_DEG = 6;
 export const GLOBE_FOV = 38;
 
 /**
- * Production cartography tokens, not invented ones. These are the values
- * `atlas-theme.css` gives the 2D maps, so the globe reads as the same product.
+ * Production cartography, not invented colour. Land is green and water is blue,
+ * exactly as `atlas-theme.css` paints the 2D maps, so the globe reads as the
+ * same product. The globe's greens run one step more saturated than the 2D
+ * tokens because they sit on a deep ocean against night rather than on a light
+ * page, and the same step keeps the two surfaces looking identically lit.
  *
- * `space` is the page canvas rather than the ocean colour, so the planet has a
- * silhouette and reads as an object. It is not a decorative starfield.
+ * `space` is night rather than the page canvas: a planet needs a ground darker
+ * than its own oceans to have a silhouette at all. It is still not a starfield.
  */
-const PALETTE: Record<'space' | 'ocean' | 'border' | 'marker', number> & Record<CountryState, number> = {
-  space: 0xf6f8fb,          // --canvas
-  ocean: 0xdceaf5,          // --map-ocean
-  border: 0x7b899b,         // --map-context-border
-  /* Scope emphasis is the one place Atlas Blue touches the geography, and only
-     for countries too small to read at the current frame. */
-  marker: 0x2563eb,         // --action
-  ordinary: 0xdfe6ef,
-  active: 0xf8fafc,         // --map-active-land
-  dimmed: 0xd2dae5,         // --map-context-land
+const PALETTE: Record<
+  'space' | 'ocean' | 'border' | 'marker' | 'markerHalo' | 'locator' | 'atmosphere',
+  number
+> & Record<CountryState, number> = {
+  space: 0x0a1725,          // --map-space
+  ocean: 0x164964,          // --map-ocean-deep
+  atmosphere: 0x4fa3d1,     // --map-atmosphere
+  /* Coastlines and borders are one merged buffer, so this single dark green
+     draws both. It has to separate land from land and land from ocean. */
+  border: 0x3f5b45,
+  /* Scope emphasis is still Atlas Blue, and still only for countries too small
+     to read at the current frame. The halo beneath it is what lets one dot stay
+     legible over deep ocean and over pale in-scope land alike. */
+  marker: 0x7ab4ff,
+  markerHalo: 0xf2f7ea,
+  /* The quiet "a country exists here" dot of the world view. */
+  locator: 0xdbe7d2,
+  ordinary: 0x7fb574,
+  active: 0xc7e5a8,
+  dimmed: 0x557a56,
   /* Unsupported geography is legible for orientation but visibly not a
-     surface you can play. It is never accompanied by a progress figure. */
-  unavailable: 0xe4e8ee,
-  mastered: 0xe6dcf8,       // --mastery-soft, deepened
-  complete: 0xf7ecc9,       // --prestige-soft, deepened
+     surface you can play: it is the one land that is grey rather than green,
+     and it is never accompanied by a progress figure. */
+  unavailable: 0x6f7e77,
+  mastered: 0xa98ce0,       // --map-mastery
+  complete: 0xd8a73c,       // --map-prestige
 };
 
 export type CountryPresentation = ReadonlyMap<string, CountryState>;
@@ -216,6 +243,11 @@ function buildLocatorGeometry(
  * A round point sprite, drawn once at startup. `PointsMaterial` renders square
  * quads by default, which reads as a programming artefact rather than as
  * cartography. Procedural, tiny and cached — not an asset download.
+ *
+ * The darker rim is not decoration. A point material multiplies this texture by
+ * its own colour, so a mid-grey ring resolves to a darkened edge of whichever
+ * colour the dot carries, and one dot stays separable over pale in-scope land
+ * and over deep ocean without needing a second colour per ground.
  */
 function createDiscTexture(): CanvasTexture | null {
   const canvas = document.createElement('canvas');
@@ -224,13 +256,44 @@ function createDiscTexture(): CanvasTexture | null {
   const context = canvas.getContext('2d');
   if (!context) return null;
   context.beginPath();
-  context.arc(16, 16, 14, 0, Math.PI * 2);
+  context.arc(16, 16, 13, 0, Math.PI * 2);
   context.fillStyle = '#ffffff';
   context.fill();
+  context.lineWidth = 3.5;
+  context.strokeStyle = '#585858';
+  context.stroke();
   const texture = new CanvasTexture(canvas);
   texture.needsUpdate = true;
   return texture;
 }
+
+/**
+ * Fresnel atmosphere. Rendered on the back faces of a slightly larger sphere,
+ * so the term is strongest exactly at the limb and the depth test throws away
+ * everything the planet already covers.
+ */
+const ATMOSPHERE_VERTEX_SHADER = `
+varying vec3 vNormalW;
+varying vec3 vViewDir;
+void main() {
+  vec4 worldPosition = modelMatrix * vec4(position, 1.0);
+  vNormalW = normalize(mat3(modelMatrix) * normal);
+  vViewDir = normalize(cameraPosition - worldPosition.xyz);
+  gl_Position = projectionMatrix * viewMatrix * worldPosition;
+}
+`;
+
+const ATMOSPHERE_FRAGMENT_SHADER = `
+uniform vec3 uColor;
+uniform float uStrength;
+varying vec3 vNormalW;
+varying vec3 vViewDir;
+void main() {
+  float rim = 1.0 - abs(dot(normalize(vNormalW), normalize(vViewDir)));
+  float intensity = pow(clamp(rim, 0.0, 1.0), 3.0) * uStrength;
+  gl_FragColor = vec4(uColor * intensity, intensity);
+}
+`;
 
 interface Layer {
   group: Group;
@@ -279,6 +342,24 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
   const ocean = new Mesh(oceanGeometry, oceanMaterial);
   scene.add(ocean);
 
+  // Additive and depth-write-free, so it lights the night around the limb
+  // without ever occluding geography or joining the picking surface.
+  const atmosphereGeometry = new SphereGeometry(ATMOSPHERE_RADIUS, 48, 32);
+  const atmosphereMaterial = new ShaderMaterial({
+    uniforms: {
+      uColor: { value: new Color(PALETTE.atmosphere) },
+      uStrength: { value: 0.9 },
+    },
+    vertexShader: ATMOSPHERE_VERTEX_SHADER,
+    fragmentShader: ATMOSPHERE_FRAGMENT_SHADER,
+    side: BackSide,
+    blending: AdditiveBlending,
+    transparent: true,
+    depthWrite: false,
+  });
+  const atmosphere = new Mesh(atmosphereGeometry, atmosphereMaterial);
+  scene.add(atmosphere);
+
   // One shared material per state for every country on the planet. A state
   // change swaps a reference; it never allocates.
   const materials = {
@@ -292,11 +373,11 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
 
   const borderMaterial = new LineBasicMaterial({ color: PALETTE.border, transparent: true, opacity: 0.85 });
   // A locator says "a country exists here". It is the least important thing on
-  // screen and must not out-shout the geography, so it takes the border tone
-  // rather than Atlas Blue, which is reserved for action and selection.
+  // screen and must not out-shout the geography, so it takes a pale cartographic
+  // tone rather than Atlas Blue, which is reserved for action and selection.
   const disc = createDiscTexture();
   const locatorMaterial = new PointsMaterial({
-    color: PALETTE.border,
+    color: PALETTE.locator,
     size: 4,
     sizeAttenuation: false,
     map: disc,
@@ -382,15 +463,32 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
     }
   }
 
+  /*
+   * A scope marker is two coincident dots: a pale halo and the Atlas Blue core
+   * over it. One dot cannot stay legible over both deep ocean and pale in-scope
+   * land, and giving the marker a second colour per ground would make the same
+   * mark mean two things. The halo skips the depth write so the core, drawn at
+   * exactly the same depth, is not rejected by it.
+   */
+  const markerHaloMaterial = new PointsMaterial({
+    color: PALETTE.markerHalo,
+    size: 12,
+    sizeAttenuation: false,
+    map: disc,
+    transparent: true,
+    alphaTest: 0.5,
+    depthWrite: false,
+  });
   const markerMaterial = new PointsMaterial({
     color: PALETTE.marker,
-    size: 7,
+    size: 6.5,
     sizeAttenuation: false,
     map: disc,
     transparent: true,
     alphaTest: 0.5,
   });
-  let markers: Points | null = null;
+  let markers: Group | null = null;
+  let markerGeometry: BufferGeometry | null = null;
   let markerKey = '';
 
   const raycaster = new Raycaster();
@@ -510,15 +608,22 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       markerKey = key;
       if (markers) {
         scene.remove(markers);
-        markers.geometry.dispose();
+        markers.clear();
+        markerGeometry?.dispose();
+        markerGeometry = null;
         markers = null;
       }
       if (points.length) {
         const positions: number[] = [];
         for (const [lon, lat] of points) positions.push(...toSphere(lon, lat, MARKER_RADIUS));
-        const geometry = new BufferGeometry();
-        geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
-        markers = new Points(geometry, markerMaterial);
+        markerGeometry = new BufferGeometry();
+        markerGeometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
+        const halo = new Points(markerGeometry, markerHaloMaterial);
+        halo.renderOrder = 1;
+        const core = new Points(markerGeometry, markerMaterial);
+        core.renderOrder = 2;
+        markers = new Group();
+        markers.add(halo, core);
         scene.add(markers);
       }
       requestRender();
@@ -539,7 +644,8 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       canvas.removeEventListener('webglcontextrestored', onContextRestored);
       if (detailLayer) disposeLayer(detailLayer);
       disposeLayer(baseLayer);
-      markers?.geometry.dispose();
+      markerGeometry?.dispose();
+      markerHaloMaterial.dispose();
       markerMaterial.dispose();
       disc?.dispose();
       for (const material of Object.values(materials)) material.dispose();
@@ -547,6 +653,8 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       locatorMaterial.dispose();
       oceanGeometry.dispose();
       oceanMaterial.dispose();
+      atmosphereGeometry.dispose();
+      atmosphereMaterial.dispose();
       renderer.dispose();
       canvas.remove();
     },

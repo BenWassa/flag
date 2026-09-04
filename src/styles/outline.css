@@ -23,8 +23,12 @@
   overflow: visible;
 }
 
+/* The silhouette stays the dominant, maximally legible object: recognising a
+   shape is the whole task, so it keeps a near-black fill against the canvas.
+   The near-black is warmed towards the cartography rather than left as pure
+   graphite, so Outlines belongs to the same map as the other three domains. */
 .outline-svg path {
-  fill: var(--text);
+  fill: color-mix(in srgb, var(--map-context-border) 46%, var(--text));
   fill-rule: evenodd;
   vector-effect: non-scaling-stroke;
 }

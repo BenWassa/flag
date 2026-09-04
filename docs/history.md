@@ -94,3 +94,12 @@ Issue #160 tracks the mechanical branch cleanup.
 ### Issue #137 — Asia Locations hardening after Spatial cutover
 
 Reimplemented the surviving Asia Locations work from the post-Spatial production baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remains authoritative and unchanged.
+
+
+### Cartographic colour and in-round game feel
+
+Superseded the neutral-cartography design direction. Under it the globe rendered ocean `#DCEAF5`, land `#DFE6EF` and space `#F6F8FB`, and the projected maps rendered context land `#D2DAE5` over answerable land `#F8FAFC`: the dominant object in the product was three near-identical light greys on a near-white page, and colour appeared on essentially one element per screen.
+
+The replacement gives the geography its colour back and leaves the chrome alone. One central cartography token family — land green, water blue, night space — now serves the globe, Locations and Neighbours; the globe gained a procedural atmosphere rim and a night ground so it reads as a planet; stored evidence fills a country in rather than bleaching it, which the old white-on-off-white treatment could no longer distinguish at 1.09:1. Alongside it, a deliberately bounded game-feel layer: streak tiers, an answer gesture, feature-detected haptics, a transient round rank and one sheen on the earned Perfect round badge.
+
+What did not change: Atlas Blue as action, green/red as correctness, purple as Mastery, gold as scarce prestige, no colour-only state, no continent/region colour taxonomy, and no accumulating reward economy. Domain accents are mode identity and reach only a mode's own icon and meter. `DESIGN.md`, `.impeccable/design.json`, `PRODUCT.md` and `CLAUDE.md` were updated together; the earlier neutral values in closed issues and `docs/closed/` remain accurate history rather than current direction.

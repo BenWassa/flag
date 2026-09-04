@@ -12,6 +12,7 @@ import {
 import {
   buildDomainProgressSummary,
   buildProgressSummary,
+  summaryStats,
   type DomainProgressSummary,
   type ProgressLedgers,
   type ProgressSummary,
@@ -36,10 +37,6 @@ export function domainCoverageLabel(summary: DomainProgressSummary): string {
   return coverageLabel(names, CONTINENTS.length);
 }
 
-function statsFor(summary: ProgressSummary | DomainProgressSummary): ScopeStats {
-  return { total: summary.total, unseen: summary.unseen, learning: summary.learning, mastered: summary.strong, due: summary.due, cleared: summary.cleared };
-}
-
 function StorageNotice() {
   return <p className="storage-notice">This browser is blocking storage, so today's progress will be lost when you close the tab.</p>;
 }
@@ -61,9 +58,9 @@ export function HomeScreen({ ledgers, achievements, persisting }: { ledgers: Pro
       <div className="atlas-card-list">
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
-          return <button className="atlas-card" type="button" onClick={() => actions.openDomain(domain)} key={domain}>
+          return <button className="atlas-card" type="button" data-domain={domain} onClick={() => actions.openDomain(domain)} key={domain}>
             <span className="atlas-card__mark" aria-hidden="true"><DomainIcon domain={domain} /></span>
-            <span className="atlas-card__body"><span className="atlas-card__identity"><strong>{summary.label}</strong></span><ProgressStrip stats={statsFor(summary)} /></span>
+            <span className="atlas-card__body"><span className="atlas-card__identity"><strong>{summary.label}</strong></span><ProgressStrip stats={summaryStats(summary)} domain={domain} /></span>
             <span className="atlas-card__chevron" aria-hidden="true"><Icon name="chevron" /></span>
           </button>;
         })}
@@ -195,7 +192,7 @@ function ContinentRow({ domain, continent, ledgers, achievements }: {
       <span className="continent-row__identity"><strong>{continent.name}</strong></span>
       <span className="continent-row__mark" aria-hidden="true">{complete ? <ContinentTrophy id={continent.id} /> : <ContinentIcon id={continent.id} />}</span>
       {summary.due > 0 ? <span className="continent-row__evidence">{summary.due} due</span> : null}
-      <span className="continent-row__progress"><ProgressStrip stats={statsFor(summary)} /></span>
+      <span className="continent-row__progress"><ProgressStrip stats={summaryStats(summary)} /></span>
       <Icon name="chevron" />
     </button>
   </div>;
@@ -220,7 +217,7 @@ export function DomainScreen({ domain, ledgers, achievements, persisting }: {
       {!persisting ? <StorageNotice /> : null}
       {world ? <section className="world-overview" aria-labelledby="world-heading">
         <div className="overview-heading"><div><h2 id="world-heading">World</h2><p>Every flag at once, or pick a continent below.</p></div><div className="mastery-total" aria-label={`${world.cleared} of ${world.total} flags cleared`}><strong>{world.cleared}</strong><span>/ {world.total}</span><small>cleared</small></div></div>
-        <ProgressStrip stats={statsFor(world)} />
+        <ProgressStrip stats={summaryStats(world)} />
         <div className="primary-actions"><button className="button button--primary" type="button" onClick={() => actions.startFlags('test')}>Play world</button><button className="button button--secondary" type="button" onClick={() => actions.startFlags('learn')}>Learn world</button></div>
       </section> : null}
       <section className="atlas-section" aria-labelledby="continents-heading"><div className="list-heading"><h2 id="continents-heading">Continents</h2></div><div className="continent-list">{CONTINENTS.map((continent) => <ContinentRow domain={domain} continent={continent} ledgers={ledgers} achievements={achievements} key={continent.id} />)}</div></section>

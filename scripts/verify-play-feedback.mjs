@@ -14,9 +14,13 @@ import { createInitialProgress } from '../.verify-dist/domain/progress.js';
 import { buildQuiz } from '../.verify-dist/domain/quiz.js';
 import {
   answerFeedback,
+  roundRank,
   roundScore,
   scoreAnnouncement,
+  streakTier,
   STREAK_DISPLAY_THRESHOLD,
+  STREAK_TIER_MARKS,
+  STREAK_TIER_THRESHOLDS,
 } from '../.verify-dist/domain/round-feedback.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
 
@@ -110,6 +114,49 @@ assert.ok(
   'A single correct answer is not yet a streak.',
 );
 assert.equal(STREAK_DISPLAY_THRESHOLD, 2, 'Streaks surface from two consecutive correct answers.');
+
+/* --- Streak tiers stay presentation-free momentum --- */
+
+assert.equal(streakTier(0), null, 'No streak has no tier.');
+assert.equal(streakTier(STREAK_DISPLAY_THRESHOLD), null, 'A visible streak is not yet a tier.');
+assert.equal(streakTier(STREAK_TIER_THRESHOLDS.warm), 'warm');
+assert.equal(streakTier(STREAK_TIER_THRESHOLDS.hot - 1), 'warm', 'A tier holds until the next threshold.');
+assert.equal(streakTier(STREAK_TIER_THRESHOLDS.hot), 'hot');
+assert.equal(streakTier(STREAK_TIER_THRESHOLDS.blazing), 'blazing');
+assert.equal(streakTier(999), 'blazing', 'The top tier is the top: streaks do not keep escalating.');
+assert.ok(
+  STREAK_TIER_THRESHOLDS.warm < STREAK_TIER_THRESHOLDS.hot
+    && STREAK_TIER_THRESHOLDS.hot < STREAK_TIER_THRESHOLDS.blazing,
+  'Streak tiers ascend.',
+);
+assert.deepEqual(
+  new Set(Object.values(STREAK_TIER_MARKS)).size,
+  3,
+  'Every tier carries its own count of marks, so a tier is never colour alone.',
+);
+assert.equal(
+  streakTier(roundScore([{ correct: true }, { correct: true }, { correct: false }], 8).streak),
+  null,
+  'A missed answer takes the tier with the streak: nothing about it is durable.',
+);
+
+/* --- The round rank is transient result feedback, not standing --- */
+
+assert.equal(roundRank(10, 10).id, 'flawless');
+assert.equal(roundRank(9, 10).id, 'strong');
+assert.equal(roundRank(7, 10).id, 'solid');
+assert.equal(roundRank(4, 10).id, 'building');
+assert.equal(roundRank(0, 0).id, 'building', 'An empty round scores nothing rather than scoring perfectly.');
+for (const [correct, total] of [[10, 10], [9, 10], [7, 10], [4, 10], [0, 0]]) {
+  const rank = roundRank(correct, total);
+  assert.ok(rank.label && rank.detail, `Rank ${rank.id} states itself in words.`);
+  assert.equal(rank.label.includes('Perfect round'), false, 'The rank never restates the Perfect round ceremony.');
+}
+assert.equal(
+  new Set([roundRank(10, 10).label, roundRank(9, 10).label, roundRank(7, 10).label, roundRank(4, 10).label]).size,
+  4,
+  'Ranks differ by wording, not only by identifier.',
+);
 
 /* --- Rendered Flags Play surface --- */
 

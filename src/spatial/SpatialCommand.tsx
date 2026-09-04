@@ -8,6 +8,7 @@ import { LEARNING_DOMAIN_IDS, type LearningDomain, type ScopeStats, type StudySc
 import {
   buildDomainProgressSummary,
   buildProgressSummary,
+  summaryStats,
   type ProgressLedgers,
 } from '../domain/progress-summary.js';
 import { scopeSupportsDomain } from '../domain/scope-support.js';
@@ -113,12 +114,15 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
           return (
-            <button className="spatial-mode" type="button" key={domain}
+            <button className="spatial-mode" type="button" key={domain} data-domain={domain}
               aria-label={`${summary.label}, ${summary.cleared} of ${summary.total} cleared`}
               onClick={() => actions.openDomain(domain)}
             >
               <span className="spatial-mode__mark" aria-hidden="true"><DomainIcon domain={domain} /></span>
               <span className="spatial-mode__name">{summary.label}</span>
+              {/* The button carries its own accessible name, so the strip inside
+                  it is decoration over a figure the name already states. */}
+              <span className="spatial-mode__meter" aria-hidden="true"><ProgressStrip stats={summaryStats(summary)} domain={domain} /></span>
               <span className="spatial-mode__meta" aria-hidden="true">{summary.cleared}/{summary.total}</span>
             </button>
           );
@@ -222,7 +226,7 @@ function Scope({ state, ledgers, achievements }: {
 
       {/* Ordinary progress stays the quiet blue retrieval strip the design
           system fixes it as, rather than being demoted to a figure in a line. */}
-      <ProgressStrip stats={model.stats} />
+      <ProgressStrip stats={model.stats} domain={domain} />
 
       <div className="spatial-command__actions">
         <button
@@ -274,7 +278,7 @@ export function SpatialCommand({ state, ledgers, achievements, persisting }: Spa
   if (!state.navigation) return null;
   const notice = !persisting && state.domain ? storageNoticeFor(state.domain) : null;
   return (
-    <section className="spatial-command" data-surface={state.navigation} aria-label="Atlas navigation">
+    <section className="spatial-command" data-surface={state.navigation} data-domain={state.domain ?? undefined} aria-label="Atlas navigation">
       {state.navigation === 'domains' ? <Domains ledgers={ledgers} achievements={achievements} /> : null}
       {state.navigation === 'continents' && state.domain
         ? <Continents domain={state.domain} ledgers={ledgers} achievements={achievements} /> : null}
