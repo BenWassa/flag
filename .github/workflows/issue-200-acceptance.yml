@@ -26,3 +26,5 @@ jobs:
         run: npx playwright test --project=chromium
       - name: Exact-production mobile Chromium browser matrix
         run: npx playwright test --project=mobile-chromium
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime
