@@ -42,4 +42,4 @@ jobs:
       - name: Exact-production A to B PWA lifecycle
         run: npm run test:pwa-runtime
       - name: Exact-production Locations feedback geometry
-        run: npx playwright test tests/browser/locations-feedback-geometry.spec.ts tests/browser/locations-reduced-motion.spec.ts --project=chromium
+        run: npx playwright test tests/browser/locations-feedback-geometry.spec.ts tests/browser/locations-reduced-motion.spec.ts --project=chromium --workers=1
