@@ -80,7 +80,7 @@ const markerIds = new Set();
 const markerIdsByContinent = new Map();
 const markerIdsByScope = new Map();
 let markerInstances = 0;
-let centreLandPrecedence = 0;
+let embeddedHostCentres = 0;
 let edgeSamples = 0;
 let edgeUncontested = 0;
 let zoomRetired = 0;
@@ -133,26 +133,23 @@ for (const frame of frames) {
 
     const bareCentre = frame.index.resolve(marker.anchor[0], marker.anchor[1]);
     const assistedCentre = frame.index.resolve(marker.anchor[0], marker.anchor[1], frame.scale);
-    if (bareCentre && bareCentre !== marker.id) {
-      // Explicitly permitted by #200: truthful real land keeps precedence over
-      // an assisted marker whose source anchor happens to fall on that land.
-      centreLandPrecedence += 1;
-      assert.equal(
-        assistedCentre,
-        bareCentre,
-        `${marker.id} marker centre preserves real-land precedence (${bareCentre}) in ${frame.scope.label}.`,
-      );
-    } else {
-      assert.equal(
-        assistedCentre,
-        marker.id,
-        `${marker.id} marker centre resolves its own canonical identity in ${frame.scope.label}.`,
-      );
-    }
+    if (bareCentre && bareCentre !== marker.id) embeddedHostCentres += 1;
+
+    // #166 deliberately lets an embedded microstate own its own assisted centre
+    // even when the broader host polygon is what bare containment sees first
+    // (San Marino / Italy is the canonical case). Real-land precedence is
+    // preserved by the bounded intrusion rule away from that tiny centre, not by
+    // making the visible microstate marker itself untappable.
+    assert.equal(
+      assistedCentre,
+      marker.id,
+      `${marker.id} marker centre resolves its own canonical identity in ${frame.scope.label}.`,
+    );
 
     // Probe 80% of the practical radius in eight directions. Over another real
-    // polygon that polygon legitimately owns the tap. Over open water, assert
-    // this marker wherever no other assisted anchor is nearer.
+    // polygon that polygon legitimately owns the tap once the established
+    // intrusion bound is exceeded. Over open water, assert this marker wherever
+    // no other assisted anchor is nearer.
     const radius = ASSIST_RADIUS_PX * frame.scale.degreesPerPixel;
     for (let turn = 0; turn < 8; turn += 1) {
       edgeSamples += 1;
@@ -219,5 +216,5 @@ assert.ok(markerIdsByScope.get('polynesia')?.size, 'Polynesia marker inventory i
 console.log(
   `Spatial marker parity verification passed: ${frames.length} frames, ${markerInstances} marker instances / `
   + `${markerIds.size} countries, ${edgeUncontested}/${edgeSamples} uncontested edge samples, `
-  + `${zoomRetired} zoom-retirement cases, ${centreLandPrecedence} centre real-land precedence cases.`,
+  + `${zoomRetired} zoom-retirement cases, ${embeddedHostCentres} embedded-host marker centres.`,
 );
