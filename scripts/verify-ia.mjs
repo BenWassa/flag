@@ -36,7 +36,7 @@ const buttons = (html) => [...html.matchAll(/<button\b[^>]*>/g)].map(([tag]) => 
 // Spatial is the default presentation. Projected map labels own normal scope
 // choice; the command band owns only selected-scope identity, progress and
 // actions. Conventional launchers remain the renderer-failure fallback, while a
-// hidden scope list exists only for forced colours where WebGL is unavailable.
+// scope list is mounted only under forced colours where WebGL is unavailable.
 // ---------------------------------------------------------------------------
 
 const LAUNCHER_VIEW = { flags: 'scope', locations: 'map-home', outlines: 'outline-home', neighbors: 'neighbor-home' };
@@ -59,17 +59,10 @@ function renderCommand(route, view) {
 
   for (const domain of LEARNING_DOMAIN_IDS) {
     const continents = renderCommand({ name: 'learning', domain }, 'domain');
-    assert.equal((continents.match(/class="spatial-fallback-choice"/g) ?? []).length, CONTINENTS.length,
-      `${domain} keeps one forced-colours fallback control per continent.`);
+    assert.equal(continents.includes('spatial-fallback-choice'), false,
+      `${domain} mounts no duplicate continent controls in normal Spatial.`);
     assert.equal(continents.includes('spatial-chip'), false,
-      `${domain} has no normal duplicate continent-chip surface.`);
-    const supported = CONTINENTS.filter((continent) => scopeSupportsDomain(
-      { kind: 'continent', id: continent.id, label: continent.name }, domain));
-    assert.equal((continents.match(/disabled=""/g) ?? []).length, CONTINENTS.length - supported.length,
-      `${domain} names unshipped continents honestly rather than offering them.`);
-    if (supported.length < CONTINENTS.length) {
-      assert.ok(continents.includes('coming soon'), `${domain} says so in words in fallback.`);
-    }
+      `${domain} has no retired continent-chip surface.`);
     assert.equal(continents.includes('spatial-command__progress'), false,
       `${domain} world choice shows no scope progress before a scope is selected.`);
   }
@@ -86,8 +79,8 @@ function renderCommand(route, view) {
       `${domain}/${scope.id} exposes exactly one selected-scope progress treatment.`);
     assert.equal(html.includes('region-row'), false, `${domain}/${scope.id} renders no launcher rows.`);
     assert.equal(html.includes('spatial-chip'), false, `${domain}/${scope.id} renders no normal sibling chips.`);
-    assert.ok(html.includes('spatial-command__fallback-choices'),
-      `${domain}/${scope.id} retains only the forced-colours fallback scope group.`);
+    assert.equal(html.includes('spatial-fallback-choice'), false,
+      `${domain}/${scope.id} mounts no fallback choices outside forced colours.`);
   }
 }
 
@@ -138,6 +131,7 @@ const spatial = await readFile('dist/spatial.css', 'utf8');
 const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const launcher = await readFile('src/react/components/Launcher.tsx', 'utf8');
 const screens = await readFile('src/react/screens/PassiveScreens.tsx', 'utf8');
+const command = await readFile('src/spatial/SpatialCommand.tsx', 'utf8');
 const progressComponent = await readFile('.verify-dist/react/components/ProgressStrip.js', 'utf8');
 assert.ok(app.includes('store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting'), 'AtlasApp passes aggregate persistence state to Home.');
 assert.ok(app.includes('createHashRouter') && app.includes('installNavigationGestures'), 'AtlasApp owns routing and global navigation lifecycle.');
@@ -149,8 +143,11 @@ assert.match(atlasTheme, /\.page--tile-index \.continent-list\s*\{[^}]*grid-temp
 assert.match(atlasTheme, /\.page--tile-index \.continent-row__open\s*\{[^}]*width:\s*100%/, 'The whole fallback continent row is the navigation target.');
 assert.match(atlasTheme, /\.region-row__open\s*\{[^}]*width:\s*100%/, 'The whole fallback region row is the selection target.');
 assert.equal(styles.includes('.launcher-map'), false, 'Retired launcher-map styling stays removed.');
+assert.match(command, /useForcedColours\(\)/, 'Spatial owns an explicit forced-colours presentation branch.');
+assert.match(command, /forcedColours \? <nav className="spatial-command__fallback-choices"/,
+  'Fallback scope controls mount only while forced colours is active.');
 assert.match(spatial, /\.spatial-command__fallback-choices\s*\{\s*display:\s*none;/,
-  'Fallback scope choices are absent from normal Spatial presentation and accessibility.');
+  'Fallback scope choices default out of normal Spatial presentation.');
 assert.match(spatial, /@media\s*\(forced-colors:\s*active\)[\s\S]*\.spatial-command__fallback-choices\s*\{[^}]*display:\s*flex;/,
-  'Forced colours restores the non-WebGL scope controls.');
+  'Forced colours lays out the non-WebGL scope controls.');
 console.log('IA verification passed: geography-led Spatial scope choice, one selected-scope progress treatment with immediate Play/Learn, isolated forced-colours and renderer fallbacks, honest unsupported scope truth, review/exit paths, and responsive layout contracts.');
