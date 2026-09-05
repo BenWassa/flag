@@ -49,17 +49,38 @@ const VIEWPORTS = [
   { name: 'desktop', width: 1440, height: 900 },
 ] as const;
 
-async function openSpatial(page: Page, path: string, width: number, height: number) {
-  await page.setViewportSize({ width, height });
-  await page.goto(`/#${path}`);
-  await page.waitForSelector(CAMERA, { timeout: 30_000 });
-}
-
 async function cameraDistance(page: Page): Promise<number> {
   const value = await page.locator(CAMERA).getAttribute('data-camera-distance');
   const distance = Number(value);
   expect(Number.isFinite(distance), `finite production camera distance (${value})`).toBe(true);
   return distance;
+}
+
+async function waitForCameraSettle(page: Page, context = 'camera'): Promise<number> {
+  const deadline = Date.now() + 10_000;
+  let previous = Number.NaN;
+  let stableSamples = 0;
+
+  while (Date.now() < deadline) {
+    const current = await cameraDistance(page);
+    if (Number.isFinite(previous) && Math.abs(current - previous) <= 0.0005) {
+      stableSamples += 1;
+      if (stableSamples >= 5) return current;
+    } else {
+      stableSamples = 0;
+    }
+    previous = current;
+    await page.waitForTimeout(80);
+  }
+
+  throw new Error(`${context} did not settle within 10 seconds (last distance ${previous})`);
+}
+
+async function openSpatial(page: Page, path: string, width: number, height: number) {
+  await page.setViewportSize({ width, height });
+  await page.goto(`/#${path}`);
+  await page.waitForSelector(CAMERA, { timeout: 30_000 });
+  await waitForCameraSettle(page, `${path} initial frame`);
 }
 
 async function stageCentre(page: Page): Promise<{ x: number; y: number }> {
@@ -72,7 +93,7 @@ async function wheelOutToClamp(page: Page): Promise<number> {
   const centre = await stageCentre(page);
   await page.mouse.move(centre.x, centre.y);
   for (let step = 0; step < 12; step += 1) await page.mouse.wheel(0, 100);
-  return cameraDistance(page);
+  return waitForCameraSettle(page, 'wheel zoom-out clamp');
 }
 
 async function expectScopeRelativeClamp(page: Page, initial: number, context: string) {
@@ -89,11 +110,11 @@ async function expectScopeRelativeClamp(page: Page, initial: number, context: st
   const centre = await stageCentre(page);
   await page.mouse.move(centre.x, centre.y);
   await page.mouse.wheel(0, 500);
-  expect(await cameraDistance(page), `${context} stays clamped`).toBeCloseTo(maximum, 3);
+  expect(await waitForCameraSettle(page, `${context} repeated zoom-out`), `${context} stays clamped`).toBeCloseTo(maximum, 3);
 
   // Zoom-in remains available from the bound.
   await page.mouse.wheel(0, -100);
-  expect(await cameraDistance(page), `${context} still zooms in`).toBeLessThan(maximum);
+  expect(await waitForCameraSettle(page, `${context} zoom-in`), `${context} still zooms in`).toBeLessThan(maximum);
 }
 
 async function expectProjectedLabelsUsable(page: Page, scope: ScopeCase) {
@@ -158,13 +179,13 @@ test.describe('camera lifecycle and gesture ownership', () => {
     const portrait = await cameraDistance(page);
 
     await page.setViewportSize({ width: 844, height: 390 });
-    await expect.poll(() => cameraDistance(page)).not.toBeCloseTo(portrait, 3);
-    const landscape = await cameraDistance(page);
+    const landscape = await waitForCameraSettle(page, 'Africa landscape resize');
+    expect(landscape).not.toBeCloseTo(portrait, 3);
     await expectProjectedLabelsUsable(page, scope);
     await expectScopeRelativeClamp(page, landscape, 'Africa after portrait → landscape resize');
 
     await page.setViewportSize({ width: 390, height: 844 });
-    await expect.poll(() => cameraDistance(page)).toBeCloseTo(portrait, 3);
+    expect(await waitForCameraSettle(page, 'Africa portrait restore')).toBeCloseTo(portrait, 3);
     await expect(page).toHaveURL(/#\/flags\/africa$/);
   });
 
@@ -173,16 +194,16 @@ test.describe('camera lifecycle and gesture ownership', () => {
     const continentDistance = await cameraDistance(page);
     await selectProjectedScope(page, 'west-africa');
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
-    await expect.poll(() => cameraDistance(page)).not.toBeCloseTo(continentDistance, 3);
-    const regionDistance = await cameraDistance(page);
+    const regionDistance = await waitForCameraSettle(page, 'West Africa forward selection');
+    expect(regionDistance).not.toBeCloseTo(continentDistance, 3);
 
     await page.goBack();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
-    await expect.poll(() => cameraDistance(page)).toBeCloseTo(continentDistance, 3);
+    expect(await waitForCameraSettle(page, 'Africa browser Back')).toBeCloseTo(continentDistance, 3);
 
     await page.goForward();
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
-    await expect.poll(() => cameraDistance(page)).toBeCloseTo(regionDistance, 3);
+    expect(await waitForCameraSettle(page, 'West Africa browser Forward')).toBeCloseTo(regionDistance, 3);
     await expect(page.locator('.spatial-scope[data-scope-id="west-africa"][aria-current="true"]')).toHaveAttribute('data-facing', 'front');
   });
 
@@ -215,7 +236,7 @@ test.describe('camera lifecycle and gesture ownership', () => {
       fire('pointerup', 2, point.x + 20, point.y);
       fire('pointerup', 1, point.x - 45, point.y);
     }, { x, y });
-    expect(await cameraDistance(page), 'pinch-out retreat changes camera distance').toBeGreaterThan(initial);
+    expect(await waitForCameraSettle(page, 'Micronesia pinch retreat'), 'pinch-out retreat changes camera distance').toBeGreaterThan(initial);
     expect(page.url(), 'pinch does not navigate').toBe(url);
 
     const afterPinch = await cameraDistance(page);
@@ -228,6 +249,7 @@ test.describe('camera lifecycle and gesture ownership', () => {
     await page.mouse.down();
     await page.mouse.move(x + 80, y, { steps: 8 });
     await page.mouse.up();
+    await waitForCameraSettle(page, 'Micronesia drag');
     expect(page.url(), 'drag does not navigate').toBe(url);
   });
 
@@ -236,7 +258,7 @@ test.describe('camera lifecycle and gesture ownership', () => {
     await openSpatial(page, '/flags', 390, 844);
     await selectProjectedScope(page, 'asia');
     await expect(page).toHaveURL(/#\/flags\/asia$/);
-    const initial = await cameraDistance(page);
+    const initial = await waitForCameraSettle(page, 'Asia reduced-motion selection');
     await expectScopeRelativeClamp(page, initial, 'Asia under reduced motion');
   });
 
