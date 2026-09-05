@@ -171,22 +171,23 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
 
 /** Closest useful frame, in degrees of arc. See `distanceForSpan`. */
 const MINIMUM_FRAMED_SPAN_DEG = 18;
-/**
- * Furthest effective arc worth fitting into a selected-globe frame.
- *
- * Beyond about 60° either side of the camera target, geography is strongly
- * foreshortened at the globe limb and projected names are no longer useful.
- * Retreating farther therefore mostly shrinks the central geography rather than
- * adding readable context. Home has its own exact whole-sphere fit.
- */
-const MAXIMUM_FRAMED_SPAN_DEG = 120;
+/** Existing world/general upper bound; selected scopes may pass a tighter one. */
+const DEFAULT_MAXIMUM_FRAMED_SPAN_DEG = 170;
 
 /**
  * Camera distance that frames a span of degrees in a viewport of the given
  * vertical field of view. Derived rather than tuned per scope so a new region
- * needs no hand-authored camera entry.
+ * needs no hand-authored camera entry. Callers may tighten the effective-span
+ * ceiling when the presentation contract has a narrower useful front-facing arc;
+ * ordinary world framing keeps the established 170° default.
  */
-export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: number, aspect: number): number {
+export function distanceForSpan(
+  spanLatDeg: number,
+  spanLonDeg: number,
+  fovDeg: number,
+  aspect: number,
+  maximumSpanDeg = DEFAULT_MAXIMUM_FRAMED_SPAN_DEG,
+): number {
   // Chord subtended on a unit sphere by the larger angular span, with the
   // longitude span foreshortened by the aspect ratio it has to fit into.
   const effective = Math.max(spanLatDeg, (spanLonDeg / Math.max(aspect, 0.35)) * 0.75);
@@ -195,10 +196,8 @@ export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: 
   // get a screen of empty ocean with no orienting geography around it. The floor
   // is roughly 2,000 km, which is enough to show the neighbours that make a
   // small scope legible.
-  const angle = Math.min(
-    Math.max(effective, MINIMUM_FRAMED_SPAN_DEG),
-    MAXIMUM_FRAMED_SPAN_DEG,
-  ) * DEG;
+  const maximum = Math.max(MINIMUM_FRAMED_SPAN_DEG, maximumSpanDeg);
+  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), maximum) * DEG;
   const chord = 2 * Math.sin(angle / 2);
   const fov = fovDeg * DEG;
   // 1.0 is the sphere radius; the camera must clear the surface as well as fit
@@ -266,8 +265,7 @@ export const ASSIST_RADIUS_PX = 24;
  *
  * The half-width is measured as twice area over perimeter — which is exactly the
  * width of a long thin shape and the radius of a round one — rather than from
- * the bounding box, because a box is a poor proxy for how much room a country
- * actually has. Italy's box is nine degrees across while the peninsula is nowhere
+ * the bounding box, because a box is a poor proxy for how much room the country has. Italy's box is nine degrees across while the peninsula is nowhere
  * near that wide, and a box-derived bound let San Marino and Vatican City claim
  * discs big enough to cover most of it.
  */
