@@ -70,7 +70,7 @@ Defined once in `atlas-theme.css` and consumed by the globe, Locations and Neigh
 
 Figure and ground inside the green: what can be acted on is light, what is only context is deeper, and ocean clears context land by roughly 3:1 so a coastline reads without depending on its stroke. On the globe the same two greens run one step more saturated, because they sit on deep ocean against night rather than on a light page.
 
-Evidence fills geography in. A cleared country takes a deep correctness green that clears both the pale in-scope land and the sage context land by value, so a board visibly fills as a round is played. Immediate answer feedback still outranks all stored evidence, by solid correctness green, a heavier stroke and the one arrival animation.
+Evidence fills geography in. A cleared country takes a deep correctness green that clears both the pale in-scope land and the sage context land by value, so a board visibly fills as a round is played. Immediate answer feedback still outranks all stored evidence through stronger interior semantic fill and the one arrival animation; correctness never relies on a widened exterior stroke, and topology-derived coastlines/shared borders keep ownership of the visible boundary.
 
 ### Mode identity
 

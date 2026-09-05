@@ -156,7 +156,11 @@ assert.ok(viewportSource.includes('pointermove') && viewportSource.includes('sta
 
 const mapCss = await readFile('dist/map.css', 'utf8');
 assert.ok(mapCss.includes('.map-country--current-wrong'), 'The production stylesheet contains the explicit wrong-country state.');
-assert.ok(mapCss.includes('stroke-dasharray: 5 3'), 'Wrong-country feedback has a non-colour dashed cue.');
+assert.ok(
+  mapCss.includes('.map-country--current-wrong .map-country__shape')
+    && !mapCss.includes('.map-country--current-wrong .map-country__callout-target'),
+  'Wrong-country semantic colour is carried by canonical country geometry, while non-colour wording is verified in rendered feedback above.',
+);
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
 assert.ok(serviceWorker.includes('flag-atlas-runtime-v1'), 'React/Vite advances the shell cache while preserving map presentation.');
 
