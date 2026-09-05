@@ -13,7 +13,7 @@ import { loadGlobeAsset } from '../data/globe/index.js';
 import type { ContinentId } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
 import { DEG, framingFor, GeographyIndex, mergeForPicking, type TouchScale } from './geo.js';
-import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
+import type { GlobeAsset } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
   framingBoxes,
@@ -23,6 +23,7 @@ import {
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
+import { scopeMarkersFor, type ScopeMarker } from './scope-markers.js';
 import type { SpatialState } from './spatial-state.js';
 import {
   createGlobeScene,
@@ -36,16 +37,6 @@ export { WebGLUnavailableError };
 /** Distance limits: closer than this clips the surface, further reads as a marble. */
 const MIN_DISTANCE = 1.06;
 const MAX_DISTANCE = 4.2;
-/**
- * A country narrower than this fraction of the framed span is unreadable at that
- * frame and gets a scope marker instead. Roughly six pixels on a 400 px stage.
- */
-const MARKER_SIZE_FRACTION = 0.015;
-
-interface ScopeMarker {
-  id: string;
-  anchor: readonly [number, number];
-}
 
 export interface StageControllerOptions {
   onSelectCountry(countryId: string): void;
@@ -115,32 +106,27 @@ export async function createStageController(
   /**
    * Scope markers, not labels. Choosing Polynesia frames three islands that are
    * each a couple of pixels across; without a mark the learner is looking at an
-   * empty ocean and cannot tell the scope loaded. Only countries small enough to
-   * be unreadable at the scope frame are candidates.
+   * empty ocean and cannot tell the scope loaded.
    *
-   * #200 adds the second gate: a marker is drawn only while the SAME current-LOD
-   * `GeographyIndex` grants that country practical touch assistance, and the
-   * marker uses the index's exact source-derived anchor. The visible mark can no
-   * longer outlive its 48 px interaction envelope after zoom, nor point at the
-   * world-LOD locator while detail picking resolves around a different anchor.
+   * #200 makes the shared pure inventory in `scope-markers.ts` authoritative:
+   * a marker is drawn only while the SAME current-LOD `GeographyIndex` grants
+   * that country practical touch assistance, and it uses that index's exact
+   * source-derived anchor. The visible mark cannot outlive its 48 px interaction
+   * envelope after zoom or point at a world anchor while detail picking resolves
+   * around a different one.
    */
   function markersFor(next: SpatialState): ScopeMarker[] {
     if (next.mode !== 'focus' || !next.framedScope) return [];
-    const framing = framingFor(framingBoxes(world, countryIdsForScope(next.framedScope)));
+    const ids = countryIdsForScope(next.framedScope);
+    const framing = framingFor(framingBoxes(world, ids));
     if (!framing) return [];
-    const threshold = Math.max(framing.spanLon, framing.spanLat) * MARKER_SIZE_FRACTION;
-    const scale = touchScale();
-    const markers: ScopeMarker[] = [];
-    for (const id of countryIdsForScope(next.framedScope)) {
-      const worldCountry = worldById.get(id);
-      if (!worldCountry) continue;
-      const box: GlobeBounds = worldCountry.mainland;
-      if (Math.max(box[2] - box[0], box[3] - box[1]) > threshold) continue;
-      const anchor = pickingIndex.assistanceAnchor(id, scale);
-      if (!anchor) continue;
-      markers.push({ id, anchor });
-    }
-    return markers;
+    return scopeMarkersFor(
+      ids,
+      worldById,
+      Math.max(framing.spanLon, framing.spanLat),
+      pickingIndex,
+      touchScale(),
+    );
   }
 
   function syncMarkers() {
