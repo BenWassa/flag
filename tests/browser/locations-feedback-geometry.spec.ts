@@ -16,8 +16,6 @@ type FeedbackCase = Readonly<{
   helper?: 'locator' | 'callout';
 }>;
 
-type OutcomeStateClass = 'map-country--current-correct' | 'map-country--current-wrong';
-
 const CASES: readonly FeedbackCase[] = [
   {
     label: 'dense West Africa narrow country',
@@ -108,89 +106,55 @@ async function currentTargetId(page: Page): Promise<string> {
   return countryIdForName(await page.locator('#map-prompt-heading').innerText());
 }
 
-async function answerAndInspectOutcomeGeometry(page: Page, countryId: string, stateClass: OutcomeStateClass) {
-  const answer = page.locator(`.map-svg .map-country[data-action="map-answer"][data-id="${countryId}"]`).first();
-  await expect(answer).toBeVisible();
+async function answerMainMapCountry(page: Page, countryId: string) {
+  const group = page.locator(`.map-svg .map-country[data-action="map-answer"][data-id="${countryId}"]`).first();
+  await expect(group).toBeVisible();
+  await group.evaluate((node) => {
+    node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
+  });
+}
 
-  // Correct Play feedback intentionally lasts only 620 ms. Install the observer
-  // before dispatching the real click so the exact production state is sampled
-  // in the DOM mutation that creates it, rather than racing its later advance
-  // timer under CI load.
-  return answer.evaluate((answerNode, expectedStateClass) => new Promise<{
-    semantic: Array<{ className: string; fill: string; stroke: string; animationName: string }>;
-    helperMarks: Array<{ className: string; fill: string; stroke: string }>;
-    calloutLine: { stroke: string; width: string } | null;
-    mainLayering: boolean;
-    boundaryStroke: string | null;
-    feedbackClass: string;
-    feedbackText: string;
-  }>((resolve, reject) => {
-    let settled = false;
-    let observer: MutationObserver;
-
-    const inspect = () => {
-      if (settled) return;
-      const node = document.querySelector<SVGGElement>(`.map-svg .${expectedStateClass}`);
-      const feedback = document.querySelector<HTMLElement>('.answer-feedback');
-      if (!node || !feedback?.textContent?.trim()) return;
-
-      const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')]
-        .map((element) => {
-          const style = getComputedStyle(element);
-          return {
-            className: element.getAttribute('class') ?? '',
-            fill: style.fill,
-            stroke: style.stroke,
-            animationName: style.animationName,
-          };
-        });
-      const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')]
-        .map((element) => {
-          const style = getComputedStyle(element);
-          return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
-        });
-      const calloutLine = node.querySelector<SVGElement>('.map-country__callout-line');
-      const lineStyle = calloutLine ? getComputedStyle(calloutLine) : null;
-      const svg = node.closest('.map-svg');
-      const countries = svg?.querySelector('.map-active-countries') ?? null;
-      const boundaries = svg?.querySelector('.map-boundaries') ?? null;
-      const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
-
-      settled = true;
-      observer.disconnect();
-      window.clearTimeout(timeoutId);
-      resolve({
-        semantic,
-        helperMarks,
-        calloutLine: lineStyle ? { stroke: lineStyle.stroke, width: lineStyle.strokeWidth } : null,
-        mainLayering: Boolean(
-          countries
-          && boundaries
-          && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING),
-        ),
-        boundaryStroke: boundary ? getComputedStyle(boundary).stroke : null,
-        feedbackClass: feedback.className,
-        feedbackText: feedback.textContent ?? '',
+async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--current-wrong') {
+  const group = page.locator(`.map-svg .${stateClass}`).first();
+  await expect(group).toBeAttached({ timeout: 2_000 });
+  await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
+  return group.evaluate((node) => {
+    const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')]
+      .map((element) => {
+        const style = getComputedStyle(element);
+        return {
+          className: element.getAttribute('class') ?? '',
+          fill: style.fill,
+          stroke: style.stroke,
+          animationName: style.animationName,
+        };
       });
+    const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')]
+      .map((element) => {
+        const style = getComputedStyle(element);
+        return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
+      });
+    const calloutLine = node.querySelector<SVGElement>('.map-country__callout-line');
+    const lineStyle = calloutLine ? getComputedStyle(calloutLine) : null;
+    const svg = node.closest('.map-svg');
+    const countries = svg?.querySelector('.map-active-countries') ?? null;
+    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
+    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
+    const feedback = document.querySelector<HTMLElement>('.answer-feedback');
+    return {
+      semantic,
+      helperMarks,
+      calloutLine: lineStyle ? { stroke: lineStyle.stroke, width: lineStyle.strokeWidth } : null,
+      mainLayering: Boolean(
+        countries
+        && boundaries
+        && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING),
+      ),
+      boundaryStroke: boundary ? getComputedStyle(boundary).stroke : null,
+      feedbackClass: feedback?.className ?? '',
+      feedbackText: feedback?.textContent ?? '',
     };
-
-    observer = new MutationObserver(inspect);
-    observer.observe(document.body, {
-      subtree: true,
-      childList: true,
-      attributes: true,
-      characterData: true,
-    });
-    const timeoutId = window.setTimeout(() => {
-      if (settled) return;
-      settled = true;
-      observer.disconnect();
-      reject(new Error(`Timed out observing ${expectedStateClass} after answering ${countryId}.`));
-    }, 2_500);
-
-    answerNode.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
-    inspect();
-  }), stateClass);
+  });
 }
 
 for (const fixture of CASES) {
@@ -213,10 +177,13 @@ for (const fixture of CASES) {
       expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
-    const stateClass: OutcomeStateClass = targetId === fixture.countryId
-      ? 'map-country--current-correct'
-      : 'map-country--current-wrong';
-    const inspection = await answerAndInspectOutcomeGeometry(page, fixture.countryId, stateClass);
+    // Freeze only timers created from this point onward. The exact production
+    // round and geography have already loaded, but its deliberate 620/1500 ms
+    // Play dwell cannot race the geometry inspection under CI scheduling.
+    await page.clock.install();
+    await answerMainMapCountry(page, fixture.countryId);
+    const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
+    const inspection = await inspectOutcomeGeometry(page, stateClass);
 
     expect(inspection.semantic.length).toBeGreaterThan(0);
     for (const mark of inspection.semantic) {
@@ -254,10 +221,10 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
   const fixture = CASES[1];
   await openPlay(page, fixture);
   const targetId = await currentTargetId(page);
-  const stateClass: OutcomeStateClass = targetId === fixture.countryId
-    ? 'map-country--current-correct'
-    : 'map-country--current-wrong';
-  const inspection = await answerAndInspectOutcomeGeometry(page, fixture.countryId, stateClass);
+  await page.clock.install();
+  await answerMainMapCountry(page, fixture.countryId);
+  const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
+  const inspection = await inspectOutcomeGeometry(page, stateClass);
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
   for (const mark of inspection.semantic) {
