@@ -9,10 +9,12 @@
  * create/dispose pair rather than risking a half-torn-down GL context.
  */
 
+import { PerspectiveCamera, Vector3 } from 'three';
+
 import { loadGlobeAsset } from '../data/globe/index.js';
 import type { ContinentId } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
-import { DEG, framingFor, GeographyIndex, mergeForPicking, type TouchScale } from './geo.js';
+import { DEG, framingFor, GeographyIndex, mergeForPicking, toSphere, type TouchScale } from './geo.js';
 import type { GlobeAsset } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
@@ -23,7 +25,7 @@ import {
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
-import { scopeMarkersFor, type ScopeMarker } from './scope-markers.js';
+import { SCOPE_MARKER_RADIUS, scopeMarkersFor, type ScopeMarker } from './scope-markers.js';
 import type { SpatialState } from './spatial-state.js';
 import {
   createGlobeScene,
@@ -87,20 +89,67 @@ export async function createStageController(
   }
 
   const worldById = new Map(world.countries.map((country) => [country.id, country]));
+  const touchCamera = new PerspectiveCamera(GLOBE_FOV, 1, 0.01, 20);
+  const projectedMarker = new Vector3();
 
   /**
-   * How many degrees of arc one CSS pixel covers at the current camera.
+   * How many degrees of arc one CSS pixel covers at the current camera, plus an
+   * optional exact screen-space metric for a real tap.
    *
-   * Interaction envelopes are sized in pixels and converted through this, so a
-   * microstate keeps a constant practical touch radius on screen instead of a
-   * constant angular one — which would be unusable at world zoom and would
-   * swallow half a continent close in. It follows manual pinch and wheel zoom
-   * too, so assistance retires itself as the learner zooms in.
+   * The angular scale still decides WHEN a country is too small to aim at and
+   * still bounds how far assistance may intrude onto real land. But a visible
+   * marker is rendered at radius 1.008 while `scene.pickAt` raycasts the unit
+   * globe. Those two points are not screen-coincident under perspective,
+   * especially near the limb. #200 therefore measures the final practical
+   * 24 px radius against the marker's actual projected pixel position.
    */
-  function touchScale(): TouchScale {
+  function touchScale(clientX?: number, clientY?: number): TouchScale {
+    const width = container.clientWidth || 1;
     const height = container.clientHeight || 1;
     const visibleSpanDeg = (2 * Math.atan(Math.tan((GLOBE_FOV / 2) * DEG) * Math.max(0.01, director.pose.distance - 1))) / DEG;
-    return { degreesPerPixel: visibleSpanDeg / height };
+    const degreesPerPixel = visibleSpanDeg / height;
+    if (clientX === undefined || clientY === undefined) return { degreesPerPixel };
+
+    const rect = container.getBoundingClientRect();
+    const [cameraX, cameraY, cameraZ] = toSphere(director.pose.lon, director.pose.lat, director.pose.distance);
+    touchCamera.aspect = width / height;
+    touchCamera.position.set(cameraX, cameraY, cameraZ);
+    touchCamera.lookAt(0, 0, 0);
+    touchCamera.updateProjectionMatrix();
+    touchCamera.updateMatrixWorld(true);
+
+    return {
+      degreesPerPixel,
+      screenDistanceToAnchorPx(anchor) {
+        const [markerX, markerY, markerZ] = toSphere(anchor[0], anchor[1], SCOPE_MARKER_RADIUS);
+
+        // Match the renderer's depth behaviour: a marker hidden by the unit
+        // globe is not a selectable visible affordance. Test the camera→marker
+        // segment against the unit sphere and reject if it enters the sphere
+        // before reaching the elevated marker point.
+        const dx = markerX - cameraX;
+        const dy = markerY - cameraY;
+        const dz = markerZ - cameraZ;
+        const length = Math.hypot(dx, dy, dz);
+        if (length <= 0) return null;
+        const ux = dx / length;
+        const uy = dy / length;
+        const uz = dz / length;
+        const b = cameraX * ux + cameraY * uy + cameraZ * uz;
+        const c = cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ - 1;
+        const discriminant = b * b - c;
+        if (discriminant >= 0) {
+          const intersection = -b - Math.sqrt(discriminant);
+          if (intersection > 0 && intersection < length - 1e-5) return null;
+        }
+
+        projectedMarker.set(markerX, markerY, markerZ).project(touchCamera);
+        if (projectedMarker.z < -1 || projectedMarker.z > 1) return null;
+        const markerClientX = rect.left + ((projectedMarker.x + 1) / 2) * width;
+        const markerClientY = rect.top + ((1 - projectedMarker.y) / 2) * height;
+        return Math.hypot(clientX - markerClientX, clientY - markerClientY);
+      },
+    };
   }
 
   /**
@@ -154,7 +203,7 @@ export async function createStageController(
   function resolveCountry(clientX: number, clientY: number): string | null {
     const hit = scene.pickAt(clientX, clientY);
     if (!hit) return null;
-    return pickingIndex.resolve(hit.lon, hit.lat, touchScale());
+    return pickingIndex.resolve(hit.lon, hit.lat, touchScale(clientX, clientY));
   }
 
   const removeGestures = installGestures(container, {
