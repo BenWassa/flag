@@ -109,6 +109,16 @@ async function expectProjectedLabelsUsable(page: Page, scope: ScopeCase) {
   expect(box!.height, `${scope.label} label keeps practical touch height`).toBeGreaterThanOrEqual(44);
 }
 
+async function selectProjectedScope(page: Page, scopeId: string) {
+  const control = page.locator(`.spatial-scope[data-scope-id="${scopeId}"]`);
+  await expect(control).toHaveCount(1);
+  // Keyboard activation is valid whether the name is currently front-facing or
+  // parked: #197 turns the camera to a far-side label without creating route
+  // state, and #198 makes these projected controls own normal scope selection.
+  await control.focus();
+  await page.keyboard.press('Enter');
+}
+
 async function captureStage(page: Page, testInfo: TestInfo, name: string) {
   await page.locator(STAGE).screenshot({ path: testInfo.outputPath(`issue-199-${name}.png`) });
 }
@@ -161,7 +171,7 @@ test.describe('camera lifecycle and gesture ownership', () => {
   test('Back/Forward retargets the same camera without creating a navigation stack', async ({ page }) => {
     await openSpatial(page, '/flags/africa', 390, 844);
     const continentDistance = await cameraDistance(page);
-    await page.locator('.spatial-chip', { hasText: 'West Africa' }).click();
+    await selectProjectedScope(page, 'west-africa');
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
     await expect.poll(() => cameraDistance(page)).not.toBeCloseTo(continentDistance, 3);
     const regionDistance = await cameraDistance(page);
@@ -224,7 +234,7 @@ test.describe('camera lifecycle and gesture ownership', () => {
   test('reduced motion arrives directly at the selected scope and keeps the same clamp', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openSpatial(page, '/flags', 390, 844);
-    await page.locator('.spatial-chip', { hasText: 'Asia' }).click();
+    await selectProjectedScope(page, 'asia');
     await expect(page).toHaveURL(/#\/flags\/asia$/);
     const initial = await cameraDistance(page);
     await expectScopeRelativeClamp(page, initial, 'Asia under reduced motion');
