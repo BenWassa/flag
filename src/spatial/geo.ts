@@ -138,7 +138,10 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   const provisional = Math.atan2(y / list.length, x / list.length) / DEG;
 
   /*
-   * The frame is the UNION of what it was given, re-centred on that union.
+   * The frame is the exact UNION of what it was given, re-centred on that union.
+   * Camera distance supplies the breathing room; inflating the geography itself
+   * made selected scopes systematically smaller and also moved #197 label anchor
+   * search away from the same truth the camera was interpreting.
    *
    * Which countries a scope contributes is decided upstream by the continent's
    * declared framing policy — the same `focusExcludeCountryIds` /
@@ -161,15 +164,22 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   return {
     lon: wrapLon(provisional + (westOffset + eastOffset) / 2),
     lat: (south + north) / 2,
-    spanLon: Math.max(0, eastOffset - westOffset) * FRAMING_PADDING,
-    spanLat: Math.max(0, north - south) * FRAMING_PADDING,
+    spanLon: Math.max(0, eastOffset - westOffset),
+    spanLat: Math.max(0, north - south),
   };
 }
 
-/** Breathing room so the framed scope is not edge-to-edge in the viewport. */
-const FRAMING_PADDING = 1.12;
 /** Closest useful frame, in degrees of arc. See `distanceForSpan`. */
 const MINIMUM_FRAMED_SPAN_DEG = 18;
+/**
+ * Furthest effective arc worth fitting into a selected-globe frame.
+ *
+ * Beyond about 60° either side of the camera target, geography is strongly
+ * foreshortened at the globe limb and projected names are no longer useful.
+ * Retreating farther therefore mostly shrinks the central geography rather than
+ * adding readable context. Home has its own exact whole-sphere fit.
+ */
+const MAXIMUM_FRAMED_SPAN_DEG = 120;
 
 /**
  * Camera distance that frames a span of degrees in a viewport of the given
@@ -185,7 +195,10 @@ export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: 
   // get a screen of empty ocean with no orienting geography around it. The floor
   // is roughly 2,000 km, which is enough to show the neighbours that make a
   // small scope legible.
-  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), 170) * DEG;
+  const angle = Math.min(
+    Math.max(effective, MINIMUM_FRAMED_SPAN_DEG),
+    MAXIMUM_FRAMED_SPAN_DEG,
+  ) * DEG;
   const chord = 2 * Math.sin(angle / 2);
   const fov = fovDeg * DEG;
   // 1.0 is the sphere radius; the camera must clear the surface as well as fit
