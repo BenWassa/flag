@@ -45,6 +45,43 @@ describe('Spatial marker / practical-touch parity (#200)', () => {
     expect(index.resolve(nearEdgeLon, anchor![1], phoneScale)).toBe('TNY');
   });
 
+  it('uses exact rendered screen distance when the unit-sphere ray is geographically displaced', () => {
+    const country = locatorCountry('TNY', 10, 4);
+    const index = new GeographyIndex([country]);
+
+    // Ten geographic degrees away is far outside the old angular 24 px proxy,
+    // but this models the production ray/marker parallax: the actual tap is on
+    // the rendered marker centre, so the screen metric is authoritative over
+    // open water.
+    const onMarker: TouchScale = {
+      degreesPerPixel: 0.1,
+      screenDistanceToAnchorPx: () => 0,
+    };
+    expect(index.resolve(20, 4, onMarker)).toBe('TNY');
+
+    // The exact practical radius is still 24 CSS px; it is not an unbounded
+    // locator shortcut.
+    const outsideMarker: TouchScale = {
+      degreesPerPixel: 0.1,
+      screenDistanceToAnchorPx: () => ASSIST_RADIUS_PX + 1,
+    };
+    expect(index.resolve(10, 4, outsideMarker)).toBeNull();
+  });
+
+  it('never lets exact screen assistance relax the existing real-land intrusion bound', () => {
+    const host = squareCountry('BIG', 0, 0, 4);
+    const tiny = locatorCountry('TNY', 0, 0);
+    const index = new GeographyIndex([host, tiny]);
+    const screenAligned: TouchScale = {
+      degreesPerPixel: 0.1,
+      screenDistanceToAnchorPx: (anchor) => anchor[0] === 0 && anchor[1] === 0 ? 0 : null,
+    };
+
+    // This tap is still inside BIG but 1.5° from the tiny anchor. BIG's
+    // characteristic half-width is 2°, so #166 permits only 1° of intrusion.
+    expect(index.resolve(1.5, 0, screenAligned)).toBe('BIG');
+  });
+
   it('uses the current LOD anchor rather than assuming the world locator survives detail', () => {
     const world = locatorCountry('TNY', 10, 4);
     const detail = squareCountry('TNY', 10.35, 4.1, 0.2);
