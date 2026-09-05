@@ -221,7 +221,16 @@ assert.equal(outlineDataSource.includes('AFRICA_GEOMETRY'), false, 'Outline data
 const generatorSource = await readFile('scripts/map-generation-core.mjs', 'utf8');
 assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'), 'Locator-island silhouettes must be emitted by the canonical shared production map generator.');
 const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
-assert.equal(mapRendererSource.includes('outlinePath'), false, 'Location rendering must continue to use its existing locator behavior for tiny islands.');
+assert.ok(
+  mapRendererSource.includes('!geometry.path && geometry.outlinePath')
+    && mapRendererSource.includes('class="map-country__feedback-shape"'),
+  'Locator-only Locations feedback may reuse canonical outlinePath geometry without turning it into the interaction surface.',
+);
+assert.ok(
+  mapRendererSource.includes('geometry.locator ?')
+    && mapRendererSource.includes('class="map-country__locator"'),
+  'Location interaction must continue to use its established locator behaviour for tiny islands.',
+);
 
 const outlineStorage = await readFile('.verify-dist/infrastructure/outline-storage.js', 'utf8');
 assert.ok(outlineStorage.includes('flag-atlas:outline-progress:v1'), 'Outline mastery must use its own persisted ledger key.');
