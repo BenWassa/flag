@@ -234,6 +234,7 @@ export function createScopeLabelLayer(
         next.push(entry);
       }
       for (const stale of existing.values()) stale.button.remove();
+      entries = next;
       // One forced layout per navigation, never per frame: the sizes cannot
       // change while only the camera is moving.
       measuredWidth = -1;
