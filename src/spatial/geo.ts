@@ -266,13 +266,17 @@ export interface TouchScale {
   degreesPerPixel: number;
 }
 
-interface Envelope {
-  id: string;
+export interface CountryTouchGeometry {
+  /** Source-derived anchor shared by any visible marker and its interaction envelope. */
   anchor: readonly [number, number];
   /** Largest latitude-corrected dimension of the country's mainland, in degrees. */
   spanDeg: number;
   /** Characteristic half-width, in degrees: how much room this country has. */
   roomDeg: number;
+}
+
+interface Envelope extends CountryTouchGeometry {
+  id: string;
 }
 
 /**
@@ -309,6 +313,26 @@ function characteristicHalfWidth(country: GlobeCountry): number {
 }
 
 /**
+ * The one source-derived touch description for a country at a given LOD.
+ *
+ * #200 makes this public because the visible marker and the invisible envelope
+ * must consume the same identity/anchor/span calculation. A marker may still be
+ * visually more selective than assistance, but it may never invent a different
+ * anchor or remain visible after this geometry is no longer assisted.
+ */
+export function touchGeometryForCountry(country: GlobeCountry): CountryTouchGeometry {
+  const [west, south, east, north] = country.mainland;
+  const midLat = (south + north) / 2;
+  const height = north - south;
+  const width = (east - west) * Math.cos(midLat * DEG);
+  return {
+    anchor: country.locator ?? [(west + east) / 2, midLat],
+    spanDeg: Math.max(height, width),
+    roomDeg: characteristicHalfWidth(country),
+  };
+}
+
+/**
  * Geographic picking index.
  *
  * PICKING GEOMETRY IS NOT DISPLAY GEOMETRY. The renderer draws tessellated,
@@ -321,7 +345,9 @@ function characteristicHalfWidth(country: GlobeCountry): number {
  * file draws anything. The envelopes below are invisible, derived entirely from
  * the canonical generated geometry already in the asset, and depend only on the
  * camera — never on the current question — so they are stable, cannot be
- * enlarged into visible target circles, and cannot leak an answer.
+ * enlarged into visible target circles, and cannot leak an answer. #200 adds the
+ * explicit marker-facing eligibility seam so a visible marker can consume this
+ * exact anchor/span contract instead of reconstructing it separately.
  */
 export class GeographyIndex {
   private readonly countries: readonly GlobeCountry[];
@@ -330,22 +356,27 @@ export class GeographyIndex {
 
   constructor(countries: readonly GlobeCountry[]) {
     this.countries = countries;
-    this.envelopes = countries.map((country) => {
-      const [west, south, east, north] = country.mainland;
-      const midLat = (south + north) / 2;
-      const height = north - south;
-      const width = (east - west) * Math.cos(midLat * DEG);
-      return {
-        id: country.id,
-        // The locator when simplification retained no ring, otherwise the centre
-        // of the country's own largest polygon. Source-derived either way: no
-        // country is ever moved, and nothing here is hand-authored.
-        anchor: country.locator ?? [(west + east) / 2, midLat],
-        spanDeg: Math.max(height, width),
-        roomDeg: characteristicHalfWidth(country),
-      };
-    });
+    this.envelopes = countries.map((country) => ({
+      id: country.id,
+      ...touchGeometryForCountry(country),
+    }));
     this.byId = new Map(this.envelopes.map((envelope) => [envelope.id, envelope]));
+  }
+
+  /**
+   * The canonical anchor when this country currently qualifies for practical
+   * touch assistance, or null once zoom makes its own geometry aimable.
+   *
+   * This is intentionally one-way presentation information: the marker may use
+   * a stricter visual threshold, but anything it draws must come through here so
+   * marker presence and the interaction envelope retire together.
+   */
+  assistanceAnchor(countryId: string, touch: TouchScale): readonly [number, number] | null {
+    const scale = touch.degreesPerPixel;
+    if (scale <= 0) return null;
+    const envelope = this.byId.get(countryId);
+    if (!envelope || envelope.spanDeg >= scale * ASSIST_THRESHOLD_PX) return null;
+    return envelope.anchor;
   }
 
   /**
