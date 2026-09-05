@@ -42,6 +42,11 @@ const MAX_DISTANCE = 4.2;
  */
 const MARKER_SIZE_FRACTION = 0.015;
 
+interface ScopeMarker {
+  id: string;
+  anchor: readonly [number, number];
+}
+
 export interface StageControllerOptions {
   onSelectCountry(countryId: string): void;
   prefersReducedMotion(): boolean;
@@ -93,37 +98,6 @@ export async function createStageController(
   const worldById = new Map(world.countries.map((country) => [country.id, country]));
 
   /**
-   * Scope markers, not labels. Choosing Polynesia frames three islands that are
-   * each a couple of pixels across; without a mark the learner is looking at an
-   * empty ocean and cannot tell the scope loaded. Only countries small enough to
-   * be unreadable at the current frame get one, so a continent of ordinary-sized
-   * countries stays unmarked.
-   */
-  function markersFor(next: SpatialState): Array<readonly [number, number]> {
-    if (next.mode !== 'focus' || !next.framedScope) return [];
-    const framing = framingFor(framingBoxes(world, countryIdsForScope(next.framedScope)));
-    if (!framing) return [];
-    const threshold = Math.max(framing.spanLon, framing.spanLat) * MARKER_SIZE_FRACTION;
-    const points: Array<readonly [number, number]> = [];
-    for (const id of countryIdsForScope(next.framedScope)) {
-      const country = worldById.get(id);
-      if (!country) continue;
-      const box: GlobeBounds = country.mainland;
-      if (Math.max(box[2] - box[0], box[3] - box[1]) > threshold) continue;
-      points.push(country.locator ?? [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]);
-    }
-    return points;
-  }
-
-  const director: CameraDirector = createCameraDirector(
-    poseForFraming(WORLD_FRAMING, GLOBE_FOV, scene.aspect),
-    {
-      apply: (pose) => scene.setCamera(pose.lon, pose.lat, pose.distance),
-      prefersReducedMotion: options.prefersReducedMotion,
-    },
-  );
-
-  /**
    * How many degrees of arc one CSS pixel covers at the current camera.
    *
    * Interaction envelopes are sized in pixels and converted through this, so a
@@ -137,6 +111,59 @@ export async function createStageController(
     const visibleSpanDeg = (2 * Math.atan(Math.tan((GLOBE_FOV / 2) * DEG) * Math.max(0.01, director.pose.distance - 1))) / DEG;
     return { degreesPerPixel: visibleSpanDeg / height };
   }
+
+  /**
+   * Scope markers, not labels. Choosing Polynesia frames three islands that are
+   * each a couple of pixels across; without a mark the learner is looking at an
+   * empty ocean and cannot tell the scope loaded. Only countries small enough to
+   * be unreadable at the scope frame are candidates.
+   *
+   * #200 adds the second gate: a marker is drawn only while the SAME current-LOD
+   * `GeographyIndex` grants that country practical touch assistance, and the
+   * marker uses the index's exact source-derived anchor. The visible mark can no
+   * longer outlive its 48 px interaction envelope after zoom, nor point at the
+   * world-LOD locator while detail picking resolves around a different anchor.
+   */
+  function markersFor(next: SpatialState): ScopeMarker[] {
+    if (next.mode !== 'focus' || !next.framedScope) return [];
+    const framing = framingFor(framingBoxes(world, countryIdsForScope(next.framedScope)));
+    if (!framing) return [];
+    const threshold = Math.max(framing.spanLon, framing.spanLat) * MARKER_SIZE_FRACTION;
+    const scale = touchScale();
+    const markers: ScopeMarker[] = [];
+    for (const id of countryIdsForScope(next.framedScope)) {
+      const worldCountry = worldById.get(id);
+      if (!worldCountry) continue;
+      const box: GlobeBounds = worldCountry.mainland;
+      if (Math.max(box[2] - box[0], box[3] - box[1]) > threshold) continue;
+      const anchor = pickingIndex.assistanceAnchor(id, scale);
+      if (!anchor) continue;
+      markers.push({ id, anchor });
+    }
+    return markers;
+  }
+
+  function syncMarkers() {
+    if (!state) return;
+    const markers = markersFor(state);
+    scene.setScopeMarkers(markers.map((marker) => marker.anchor));
+    if (markers.length) container.dataset.scopeMarkerIds = markers.map((marker) => marker.id).join(' ');
+    else delete container.dataset.scopeMarkerIds;
+  }
+
+  const director: CameraDirector = createCameraDirector(
+    poseForFraming(WORLD_FRAMING, GLOBE_FOV, scene.aspect),
+    {
+      apply: (pose) => {
+        scene.setCamera(pose.lon, pose.lat, pose.distance);
+        // Marker eligibility is screen-scale dependent for exactly the same
+        // reason assistance is. Re-evaluate on travel, drag, pinch/wheel and
+        // resize so the visible affordance retires with the hit envelope.
+        syncMarkers();
+      },
+      prefersReducedMotion: options.prefersReducedMotion,
+    },
+  );
 
   function resolveCountry(clientX: number, clientY: number): string | null {
     const hit = scene.pickAt(clientX, clientY);
@@ -192,6 +219,7 @@ export async function createStageController(
     if (!continentId) {
       pickingIndex = new GeographyIndex(world.countries);
       scene.setDetail(null);
+      syncMarkers();
       return;
     }
     try {
@@ -200,12 +228,16 @@ export async function createStageController(
       pickingIndex = new GeographyIndex(mergeForPicking(asset.countries, world.countries));
       scene.setDetail(asset);
       if (state) scene.setCountryStates(state.countryStates);
+      // Detail can replace a world locator with a real polygon. Recompute the
+      // marker from the same rebuilt picking index before the learner can tap it.
+      syncMarkers();
     } catch {
       // Detail is an enhancement. The world LOD stays mounted and every scope
       // remains navigable and selectable without it.
       if (token === detailToken) {
         pickingIndex = new GeographyIndex(world.countries);
         detailId = null;
+        syncMarkers();
       }
     }
   }
@@ -219,14 +251,18 @@ export async function createStageController(
       scene.setActive(!yielded && visible);
       container.dataset.mode = next.mode;
       container.dataset.picking = next.picking;
-      if (yielded) return;
+      if (yielded) {
+        syncMarkers();
+        return;
+      }
 
       void mountDetail(next.detail);
       scene.setCountryStates(next.countryStates);
-      scene.setScopeMarkers(markersFor(next));
       // Cold loads and deep links initialise AT the destination rather than
-      // replaying the ancestor chain as a cutscene.
+      // replaying the ancestor chain as a cutscene. `director.apply` owns marker
+      // synchronisation so every intermediate camera scale stays coherent too.
       director.travelTo(poseFor(next), firstPaint);
+      syncMarkers();
       firstPaint = false;
     },
 
