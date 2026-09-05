@@ -41,6 +41,10 @@ function visualCountryMark(page: Page, id: string) {
   return page.locator(`.map-country[data-id="${id}"] .map-country__shape, .map-country[data-id="${id}"] .map-country__locator, .map-country[data-id="${id}"] .map-country__marker, .map-country[data-id="${id}"] .map-country__callout-target`).first();
 }
 
+function feedbackCountryGeometry(page: Page, id: string) {
+  return page.locator(`.map-country[data-id="${id}"] .map-country__shape, .map-country[data-id="${id}"] .map-country__feedback-shape`).first();
+}
+
 for (const reducedMotion of [false, true]) {
   test(`Learn wrong feedback settles semantically with ${reducedMotion ? 'reduced' : 'normal'} motion`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: reducedMotion ? 'reduce' : 'no-preference' });
@@ -48,16 +52,17 @@ for (const reducedMotion of [false, true]) {
     const target = await currentTarget(page);
     const wrong = await wrongChoice(page, target);
     const wrongCountry = page.locator(`.map-country[data-id="${wrong}"]`);
-    const wrongVisual = visualCountryMark(page, wrong);
+    const wrongFeedbackGeometry = feedbackCountryGeometry(page, wrong);
 
     await answer(page, wrong);
     await expect(wrongCountry).toHaveClass(/map-country--wrong-pulse/);
     // Observe motion while the transient semantic state is still active. The
     // application clears that state after exactly LOCATION_WRONG_FEEDBACK_MS,
     // so waiting on unrelated text before sampling animation creates a race at
-    // the same boundary the test is intended to verify.
+    // the same boundary the test is intended to verify. Issue #201 moves the
+    // animation to the canonical polygon rather than locator/callout symbology.
     await expect.poll(
-      () => wrongVisual.evaluate((node) => getComputedStyle(node).animationName),
+      () => wrongFeedbackGeometry.evaluate((node) => getComputedStyle(node).animationName),
       { timeout: Math.max(250, LOCATION_WRONG_FEEDBACK_MS - 40) },
     ).toBe(reducedMotion ? 'none' : 'map-wrong');
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
