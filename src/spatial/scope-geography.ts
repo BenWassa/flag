@@ -84,6 +84,20 @@ export function poseForFraming(framing: Framing, fovDeg: number, aspect: number)
 }
 
 /**
+ * Selected scopes may retreat modestly beyond their initial frame, but never to
+ * the old global-marble distance. Scale the camera's CLEARANCE above the unit
+ * sphere rather than its absolute distance: doing so keeps the same 80% minimum
+ * apparent scale for a small island group and a continent without any per-scope
+ * table. Home/world retain their separate whole-globe/global behaviour.
+ */
+const FRAMED_SCOPE_MAX_CLEARANCE_MULTIPLIER = 1.25;
+
+export function maximumDistanceForFramedScope(initialDistance: number): number {
+  const clearance = Math.max(0, initialDistance - 1);
+  return 1 + clearance * FRAMED_SCOPE_MAX_CLEARANCE_MULTIPLIER;
+}
+
+/**
  * Issue #187 — Home promises the whole globe, not merely a world-level frame.
  *
  * Scope framing is intentionally based on geographic spans and is allowed to
