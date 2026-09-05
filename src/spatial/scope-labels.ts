@@ -16,10 +16,11 @@
  * `transform`, so centring stays a CSS declaration and the layer owns only where
  * a name is, never how it looks.
  *
- * Forced-colours mode is the one place these cannot exist: the canvas is hidden
- * there because it cannot follow a replaced palette, and a name anchored to a
- * hidden globe has nothing to anchor to. The command surface keeps every scope
- * as an ordinary control, which is what that mode falls back to.
+ * Issue #198 makes these controls the normal Spatial scope chooser. Forced
+ * colours is the one place they cannot exist: the canvas is hidden there because
+ * it cannot follow a replaced palette, and the command surface mounts an
+ * isolated ordinary-DOM fallback list instead. Full renderer failure uses the
+ * conventional Launcher.
  */
 
 import { DRAG_THRESHOLD_PX } from './gestures.js';
@@ -58,7 +59,7 @@ export interface ScopeLabelLayer {
   destroy(): void;
 }
 
-/** A shape as well as a colour, matching the command surface's own marks. */
+/** A shape as well as a colour, matching the selected-scope earned-state mark. */
 const statusMark = (status: ScopeStatus) => (status === 'complete' ? '◆' : '●');
 
 /** Breathing room between two names, and between a name and the stage edge. */
@@ -181,8 +182,8 @@ export function createScopeLabelLayer(
       if (overlaps(x, y)) {
         // A small stage cannot hold every name legibly, and two names written
         // over each other name nothing. The ones that cannot be placed stand
-        // down — still focusable, still selectable, and still listed in full by
-        // the command surface — rather than crowding the geography.
+        // down rather than crowding the geography. They remain focusable and
+        // selectable; keyboard focus turns the Earth to meet the chosen scope.
         entry.facing = false;
         entry.button.dataset.facing = 'back';
         continue;

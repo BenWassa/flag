@@ -1,11 +1,11 @@
 /*
- * Spatial Atlas — the production navigation surface (#119, #166, #187).
+ * Spatial Atlas — the production navigation surface (#119, #166, #187, #198).
  *
  * Geography is the dominant object. Ordinary domain/scope navigation keeps its
  * compact command band, while Home is the one composition exception: the whole
  * Earth owns the viewport and a single neutral translucent chooser is layered
- * over it. That surface deliberately uses no backdrop blur, so the exception
- * does not create a continuous compositing/rendering cost on phone GPUs.
+ * over it. That surface deliberately uses no `backdrop-filter` blur, so the
+ * exception does not create a continuous compositing/rendering cost on phone GPUs.
  */
 
 .spatial-shell {
@@ -14,13 +14,8 @@
   background: var(--canvas);
 }
 
-/*
- * Navigating: geography dominates and the command surface takes only what it
- * needs. The stage keeps a floor even on the shortest phone, and the band is
- * capped so it can never grow past it and clip. Its parts are already ordered by
- * need — place, then Play, then the lateral choices — so if anything has to
- * scroll on a 320x480 screen it is the chips, never the primary action.
- */
+/* Navigating: geography gets every pixel the compact selected-scope command
+   surface does not need. No persistent geography list competes for this space. */
 .spatial-shell[data-surface] { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
 
 /* Issue #187 — Home is globe-first rather than globe-plus-command-band. The
@@ -134,8 +129,8 @@
  * Progressive disclosure gives the learner the boundaries of the units they can
  * currently choose between; these are the names of those same units, anchored
  * over the place each one is. They are real buttons, so they are focusable,
- * announced and operable, and they dispatch exactly the action the equivalent
- * chip below the globe does.
+ * announced and operable, and they dispatch the same typed scope action as a
+ * geography tap. #198 makes them the sole normal scope-choice controls.
  *
  * The projected position arrives as custom properties rather than as a computed
  * `transform`, so centring stays in CSS and one declaration owns the geometry.
@@ -198,8 +193,7 @@
 .spatial-scope[data-status='mastered'] .spatial-scope__mark { color: var(--map-mastery); }
 .spatial-scope[data-status='complete'] .spatial-scope__mark { color: var(--map-prestige); }
 
-/* Geography this domain has not shipped is named honestly and is not offered,
-   exactly as its equivalent chip is. */
+/* Geography this domain has not shipped is named honestly and is not offered. */
 .spatial-scope:disabled { opacity: 0.5; cursor: default; }
 
 /*
@@ -224,9 +218,8 @@
 /* ---------------------------------------------------------------------------
  * Command surface
  *
- * One band of real controls, anchored to the geography above it. Its parts read
- * top to bottom in the order the learner needs them: which domain, which place,
- * what it holds, what to do, where else to go.
+ * One compact band anchored to the geography: domain, selected place, one
+ * progress strip, then Play/Learn. Scope choice itself stays on the Earth.
  * ------------------------------------------------------------------------- */
 
 .spatial-command {
@@ -244,28 +237,16 @@
 }
 
 /* Home-only translucent chooser. This is one surface over the Earth, not a
-   stack of glass cards. The 92% neutral fill keeps text stable over coastlines,
-   while the absence of backdrop-filter avoids decorative blur/compositing cost. */
+   stack of glass cards. */
 .spatial-command[data-surface='domains'] {
   z-index: 1;
   place-self: center;
-  /* Narrow enough that the planet is still the first thing on the screen. The
-     chooser is one surface over the Earth, not a page laid on top of it, so it
-     takes the width its four modes need and leaves the rest to the geography. */
   width: min(432px, calc(100% - 56px - env(safe-area-inset-left) - env(safe-area-inset-right)));
   max-height: calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   padding: clamp(14px, 3.4vw, 20px);
   border: 1px solid color-mix(in srgb, var(--line-strong) 76%, transparent);
   border-radius: var(--radius-tile);
-  /* 82% rather than the old 92%. Against the near-white space the chooser used
-     to sit on, opacity was only a texture choice; against a planet it decides
-     whether there is a planet behind the chooser at all. Text stays far clear of
-     4.5:1 at this value even over the deepest ocean, and the surface is still one
-     flat fill with no blur and nothing nested inside it. */
   background: color-mix(in srgb, var(--surface) 82%, transparent);
-  /* Over night geography a soft page shadow disappears. The ring is what gives
-     the one translucent surface an edge against the planet behind it; it is
-     still one surface, with no blur and nothing nested inside it. */
   box-shadow: 0 0 0 1px rgba(10, 23, 37, .5), 0 18px 44px rgba(10, 23, 37, .45);
   overflow-y: auto;
 }
@@ -310,9 +291,18 @@
 .spatial-command__domain-mark { display: inline-flex; width: 15px; height: 15px; }
 .spatial-command__domain-mark svg { width: 100%; height: 100%; }
 
+.spatial-command__identity {
+  grid-column: 2;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
 /* The selected place is the one dominant label on the screen. */
 .spatial-command__place {
   grid-column: 2;
+  min-width: 0;
   margin: 0;
   color: var(--text);
   font-size: 25px;
@@ -320,6 +310,8 @@
   line-height: 1.15;
   letter-spacing: -0.015em;
 }
+
+.spatial-command__identity .spatial-command__place { grid-column: auto; flex: 1 1 auto; }
 
 .spatial-command__meta {
   grid-column: 2;
@@ -336,22 +328,42 @@
 .spatial-command__mark--mastered { color: var(--mastery); }
 .spatial-command__mark--complete { color: color-mix(in srgb, var(--prestige) 72%, var(--text)); }
 
-/* Play is immediately available, without a further page or a scroll. */
+/* A continent always reserves this small slot so earning the crest does not
+   reflow the selected-place identity. The image itself is existing prestige
+   artwork; the wrapper provides its accessible earned-state wording. */
+.spatial-command__crest-slot {
+  flex: 0 0 42px;
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+}
+
+.spatial-command__crest,
+.spatial-command__crest .continent-trophy {
+  display: block;
+  width: 40px;
+  height: 40px;
+}
+
+.spatial-command__crest .continent-trophy { object-fit: contain; }
+
+/* Exactly one progress treatment belongs to the currently selected geography. */
+.spatial-command__progress { min-width: 0; }
+
+/* Play is immediately available for the framed scope, without another page. */
 .spatial-command__actions { display: grid; gap: var(--space-2); }
 .spatial-command__actions .button { width: 100%; }
 
+/* Home still uses this class for mode choice. Geographic choice does not. */
 .spatial-command__choices { display: grid; gap: 6px; }
 
-.spatial-command__choices--wrap {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  /* DESIGN.md forbids horizontal scrolling for primary selection: a learner on
-     a 320 px screen must see every area of a continent at once. */
-}
+/* A non-WebGL scope list exists only for forced colours, where the stage and its
+   projected controls are deliberately hidden. Normal Spatial has no duplicate
+   visible or accessibility-tree list beneath the globe. */
+.spatial-command__fallback-choices { display: none; }
 
-/* Lateral choices. Quiet by default, and never louder than the primary action. */
-.spatial-chip {
+.spatial-fallback-choice {
   min-height: var(--control-height-compact);
   padding: 6px 12px;
   border: 1px solid var(--line);
@@ -361,23 +373,16 @@
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);
 }
 
-.spatial-chip:disabled { cursor: default; opacity: 0.45; }
-.spatial-chip__mark { margin-inline-start: 6px; font-size: 10px; vertical-align: 1px; }
-.spatial-chip--mastered { border-color: color-mix(in srgb, var(--mastery) 45%, var(--line)); }
-.spatial-chip--mastered .spatial-chip__mark { color: var(--mastery); }
-.spatial-chip--complete { border-color: color-mix(in srgb, var(--prestige) 58%, var(--line)); }
-.spatial-chip--complete .spatial-chip__mark { color: color-mix(in srgb, var(--prestige) 70%, var(--text)); }
-
-.spatial-chip[aria-current='true'] {
+.spatial-fallback-choice:disabled { cursor: default; opacity: 0.45; }
+.spatial-fallback-choice[aria-current='true'] {
   border-color: color-mix(in srgb, var(--action) 55%, var(--line));
   background: var(--action-soft);
   color: var(--action-pressed);
 }
 
-.spatial-chip:focus-visible,
+.spatial-fallback-choice:focus-visible,
 .spatial-mode:focus-visible {
   outline: 3px solid color-mix(in srgb, var(--action) 35%, transparent);
   outline-offset: 2px;
@@ -502,7 +507,6 @@
 /* Wide and short viewports both want geography beside the controls rather than
    above them: a 390px-tall landscape phone has no room for a stacked band. */
 @media (min-width: 860px), (orientation: landscape) and (max-height: 540px) {
-  /* Matching specificity, so these actually replace the stacked templates. */
   .spatial-shell[data-surface],
   .spatial-shell:not([data-surface]) {
     grid-template-rows: none;
@@ -514,8 +518,6 @@
   }
   .spatial-command { align-content: start; max-height: none; }
 
-  /* Home is the deliberate exception: full globe remains behind one centred
-     chooser rather than becoming a left/right split. */
   .spatial-shell[data-surface='domains'] {
     grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   }
@@ -599,8 +601,11 @@
   }
 
   .spatial-command[data-surface='domains'] .spatial-mode__meta { justify-self: end; }
-
   .spatial-command[data-surface='domains'] .spatial-mode__meter { display: none; }
+
+  .spatial-command__crest-slot { flex-basis: 36px; width: 36px; height: 36px; }
+  .spatial-command__crest,
+  .spatial-command__crest .continent-trophy { width: 34px; height: 34px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -609,18 +614,26 @@
 
 /*
  * Forced-colours mode replaces the palette wholesale; a WebGL canvas cannot
- * follow it, so the geography is hidden rather than left as an unreadable
- * rectangle. The command surface is real DOM and stays exactly where it is, so
- * every action the geography offered remains available.
+ * follow it, so the geography and its projected controls stand down. #198's
+ * fallback-only list appears here — and only here — so every scope remains an
+ * ordinary operable control without duplicating normal Spatial navigation.
  */
 @media (forced-colors: active) {
-  /* The canvas cannot follow a replaced palette, so the geography stands down
-     and the names anchored over it go with it. Every scope they offered remains
-     available as a real control in the command surface below. */
   .spatial-stage { display: none; }
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
-  .spatial-chip, .spatial-mode { border: 1px solid ButtonText; }
+  .spatial-mode, .spatial-fallback-choice { border: 1px solid ButtonText; }
+
+  .spatial-command__fallback-choices {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .spatial-fallback-choice {
+    background: ButtonFace;
+    color: ButtonText;
+  }
 
   .spatial-shell[data-surface='domains'] {
     min-height: 100svh;
