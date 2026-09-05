@@ -1,19 +1,20 @@
 name: Issue 200 merge diagnostic
 
 on:
-  pull_request:
+  push:
+    branches:
+      - issue-200-spatial-marker-hit-parity
 
 permissions:
   contents: read
 
 jobs:
   merge-diagnostic:
-    if: github.head_ref == 'issue-200-spatial-marker-hit-parity'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
       - name: Materialise merge with current main
         shell: bash
