@@ -264,6 +264,16 @@ export function AtlasApp() {
     if (route) navigateStable(route);
   }, [navigateStable, spatialState]);
 
+  /**
+   * Issue #197 — a name written on the Earth resolves through exactly the action
+   * its equivalent DOM control calls, so the two can never diverge.
+   */
+  const selectScope = useCallback((scopeId: string) => {
+    if (!spatialState.domain) return;
+    const route = routeForScopeId(spatialState.domain, scopeId);
+    if (route) navigateStable(route);
+  }, [navigateStable, spatialState]);
+
   const rendererUnavailable = useCallback(() => setSpatialAvailable(false), []);
 
   useEffect(() => {
@@ -306,6 +316,7 @@ export function AtlasApp() {
           achievements={store.achievements}
           persisting={spatialState.domain ? domainPersisting(store, spatialState.domain) : persisting}
           onSelectCountry={selectCountry}
+          onSelectScope={selectScope}
           onRendererUnavailable={rendererUnavailable}
         >{content}</SpatialShell>
       : content}

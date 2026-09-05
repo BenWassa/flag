@@ -16,6 +16,8 @@ import type { StageController } from './stage-controller.js';
 export interface SpatialStageProps {
   state: SpatialState;
   onSelectCountry(countryId: string): void;
+  /** A name written on the geography was chosen (#197). */
+  onSelectScope(scopeId: string): void;
   /** Renderer could not start. The shell falls back to conventional presentation. */
   onUnavailable(): void;
 }
@@ -25,16 +27,21 @@ const prefersReducedMotion = () =>
   && typeof window.matchMedia === 'function'
   && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-export function SpatialStage({ state, onSelectCountry, onUnavailable }: SpatialStageProps) {
+export function SpatialStage({ state, onSelectCountry, onSelectScope, onUnavailable }: SpatialStageProps) {
   const container = useRef<HTMLDivElement | null>(null);
   const controller = useRef<StageController | null>(null);
   const latest = useRef(state);
   const select = useRef(onSelectCountry);
+  const selectScope = useRef(onSelectScope);
   const [ready, setReady] = useState(false);
 
   // Declared before the boot effect so both refs are current by the time it
   // runs, without writing to a ref during render.
-  useEffect(() => { latest.current = state; select.current = onSelectCountry; });
+  useEffect(() => {
+    latest.current = state;
+    select.current = onSelectCountry;
+    selectScope.current = onSelectScope;
+  });
 
   useEffect(() => {
     const host = container.current;
@@ -47,6 +54,7 @@ export function SpatialStage({ state, onSelectCountry, onUnavailable }: SpatialS
         if (cancelled) return;
         const instance = await createStageController(host, {
           onSelectCountry: (countryId) => select.current(countryId),
+          onSelectScope: (scopeId) => selectScope.current(scopeId),
           prefersReducedMotion,
         });
         // The dynamic import can resolve after an unmount, and a controller

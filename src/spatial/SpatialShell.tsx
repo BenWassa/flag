@@ -30,6 +30,7 @@ export interface SpatialShellProps {
   achievements: EarnedAchievementState;
   persisting: boolean;
   onSelectCountry(countryId: string): void;
+  onSelectScope(scopeId: string): void;
   onRendererUnavailable(): void;
   children: ReactNode;
 }
@@ -41,6 +42,7 @@ export function SpatialShell({
   achievements,
   persisting,
   onSelectCountry,
+  onSelectScope,
   onRendererUnavailable,
   children,
 }: SpatialShellProps) {
@@ -54,7 +56,12 @@ export function SpatialShell({
 
   return (
     <div className="spatial-shell" data-mode={state.mode} data-surface={state.navigation ?? undefined}>
-      <SpatialStage state={state} onSelectCountry={onSelectCountry} onUnavailable={onRendererUnavailable} />
+      <SpatialStage
+        state={state}
+        onSelectCountry={onSelectCountry}
+        onSelectScope={onSelectScope}
+        onUnavailable={onRendererUnavailable}
+      />
       {state.navigation
         ? <SpatialCommand state={state} ledgers={ledgers} achievements={achievements} persisting={persisting} />
         : <div className="spatial-shell__panel" ref={panel}>{children}</div>}

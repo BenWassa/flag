@@ -46,9 +46,11 @@ import {
   ShaderMaterial,
   SphereGeometry,
   Vector2,
+  Vector3,
   WebGLRenderer,
 } from 'three';
 import { Earcut } from 'three/src/extras/Earcut.js';
+import { boundarySegments, buildBoundaryTopology, type BoundaryTopology } from '../disclosure.js';
 import { fromSphere, subdivide, toSphere, type Triangle } from '../geo.js';
 import type { GlobeAsset, GlobeCountry } from '../globe-asset.js';
 import type { CountryState } from '../spatial-state.js';
@@ -66,7 +68,11 @@ const LAND_RADIUS = 1.0015;
 const DETAIL_LAND_RADIUS = 1.0022;
 const BORDER_RADIUS = 1.003;
 const DETAIL_BORDER_RADIUS = 1.0034;
+/** The emphasised outline sits just above the boundary it is one of. */
+const EMPHASIS_LIFT = 0.0004;
 const LOCATOR_RADIUS = 1.006;
+/** Where a projected DOM label is anchored: just clear of the highest mark. */
+const LABEL_RADIUS = 1.01;
 const MARKER_RADIUS = 1.008;
 /**
  * The atmosphere shell. Everything of it that falls inside the planet's own
@@ -91,15 +97,21 @@ export const GLOBE_FOV = 38;
  * than its own oceans to have a silhouette at all. It is still not a starfield.
  */
 const PALETTE: Record<
-  'space' | 'ocean' | 'border' | 'marker' | 'markerHalo' | 'locator' | 'atmosphere',
+  'space' | 'ocean' | 'border' | 'emphasis' | 'marker' | 'markerHalo' | 'locator' | 'atmosphere',
   number
 > & Record<CountryState, number> = {
   space: 0x0a1725,          // --map-space
   ocean: 0x164964,          // --map-ocean-deep
   atmosphere: 0x4fa3d1,     // --map-atmosphere
-  /* Coastlines and borders are one merged buffer, so this single dark green
-     draws both. It has to separate land from land and land from ocean. */
+  /* Coastlines and boundaries are one merged buffer, so this single dark green
+     draws both. It has to separate land from land and land from ocean. Which
+     boundaries exist at all is the progressive-disclosure question (#197); this
+     is only what one of them looks like. */
   border: 0x3f5b45,
+  /* The one selected area, drawn a step deeper than the areas beside it. It is
+     never the only signal: the land inside it is already the in-scope tone and
+     the DOM names it in words. */
+  emphasis: 0x1e3326,
   /* Scope emphasis is still Atlas Blue, and still only for countries too small
      to read at the current frame. The halo beneath it is what lets one dot stay
      legible over deep ocean and over pale in-scope land alike. */
@@ -127,6 +139,33 @@ export interface GlobePick {
   lat: number;
 }
 
+/**
+ * Issue #197 — how much political boundary the Earth is currently drawing.
+ *
+ * The scene owns no taxonomy: it is told which countries belong together and
+ * draws the edges of those groups. A grouping with every country on its own is
+ * ordinary country borders, so the levels are one mechanism rather than three
+ * code paths.
+ */
+export interface BoundaryPlan {
+  /** Stable identity for this plan. Equal keys reuse the built buffers. */
+  key: string;
+  /** Group id per country. A country with no entry stands as its own group. */
+  groupOf: ReadonlyMap<string, string>;
+  /** Groups whose own outline is drawn a step stronger than the rest. */
+  emphasis: ReadonlySet<string>;
+  /** Whether country locator dots belong to this level of detail. */
+  locators: boolean;
+}
+
+/** A geographic anchor placed in the stage's own CSS pixel space. */
+export interface ProjectedPoint {
+  x: number;
+  y: number;
+  /** False when the anchor is round the back of the planet. */
+  facing: boolean;
+}
+
 export interface GlobeHandle {
   readonly canvas: HTMLCanvasElement;
   readonly aspect: number;
@@ -135,6 +174,10 @@ export interface GlobeHandle {
   setCountryStates(states: CountryPresentation): void;
   /** Mounts a higher-detail asset over the base meshes for its countries. */
   setDetail(asset: GlobeAsset | null): void;
+  /** Sets which political boundaries the geography draws. */
+  setBoundaries(plan: BoundaryPlan): void;
+  /** Places a geographic anchor in stage pixels, for a real DOM control over it. */
+  project(lon: number, lat: number): ProjectedPoint;
   /**
    * Marks in-scope countries too small to read at the current frame. This is the
    * globe's equivalent of the 2D maps' locator dot: without it, choosing
@@ -198,24 +241,31 @@ function buildCountryGeometry(country: GlobeCountry, radius: number): BufferGeom
   return geometry;
 }
 
-function buildBorderGeometry(
-  countries: readonly GlobeCountry[],
+/**
+ * Line geometry for the boundaries of one grouping.
+ *
+ * `boundarySegments` decides WHICH edges survive — an edge two countries of the
+ * same group share is interior and is dropped — and this only lifts the result
+ * onto the sphere. `emphasised` picks one half of that same derivation, so the
+ * two strengths are one grouping rather than two passes that could disagree.
+ */
+function buildBoundaryGeometry(
+  topology: BoundaryTopology,
   radius: number,
+  plan: BoundaryPlan,
+  emphasised: boolean,
   exclude?: ReadonlySet<string>,
 ): BufferGeometry {
+  const segments = emphasised && plan.emphasis.size === 0 ? [] : boundarySegments(topology, {
+    groupOf: (id) => plan.groupOf.get(id) ?? id,
+    emphasis: plan.emphasis,
+    emphasised,
+    exclude,
+  });
   const positions: number[] = [];
-  for (const country of countries) {
-    if (exclude?.has(country.id)) continue;
-    for (const polygon of country.polygons) {
-      for (const ring of polygon) {
-        for (let i = 0; i < ring.length; i += 1) {
-          const from = ring[i];
-          const to = ring[(i + 1) % ring.length];
-          positions.push(...toSphere(from[0], from[1], radius));
-          positions.push(...toSphere(to[0], to[1], radius));
-        }
-      }
-    }
+  for (let i = 0; i + 3 < segments.length; i += 4) {
+    positions.push(...toSphere(segments[i], segments[i + 1], radius));
+    positions.push(...toSphere(segments[i + 2], segments[i + 3], radius));
   }
   const geometry = new BufferGeometry();
   geometry.setAttribute('position', new BufferAttribute(new Float32Array(positions), 3));
@@ -298,8 +348,12 @@ void main() {
 interface Layer {
   group: Group;
   meshes: Map<string, Mesh>;
+  /** Boundaries of the current grouping, and the emphasised one among them. */
   borders: LineSegments;
+  emphasis: LineSegments;
   locators: Points | null;
+  /** Which segments this asset's countries share. Derived once per asset. */
+  topology: BoundaryTopology;
 }
 
 export function createGlobeScene(container: HTMLElement, base: GlobeAsset): GlobeHandle {
@@ -372,6 +426,9 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
   } satisfies Record<CountryState, MeshBasicMaterial>;
 
   const borderMaterial = new LineBasicMaterial({ color: PALETTE.border, transparent: true, opacity: 0.85 });
+  // One step stronger, for the single area the learner has selected. WebGL line
+  // width is not portable, so weight comes from tone rather than thickness.
+  const emphasisMaterial = new LineBasicMaterial({ color: PALETTE.emphasis });
   // A locator says "a country exists here". It is the least important thing on
   // screen and must not out-shout the geography, so it takes a pale cartographic
   // tone rather than Atlas Blue, which is reserved for action and selection.
@@ -385,7 +442,7 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
     alphaTest: 0.5,
   });
 
-  function buildLayer(asset: GlobeAsset, detail: boolean, exclude?: ReadonlySet<string>): Layer {
+  function buildLayer(asset: GlobeAsset, detail: boolean): Layer {
     const landRadius = detail ? DETAIL_LAND_RADIUS : LAND_RADIUS;
     const group = new Group();
     const meshes = new Map<string, Mesh>();
@@ -397,21 +454,18 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       meshes.set(country.id, mesh);
       group.add(mesh);
     }
-    const borders = new LineSegments(
-      buildBorderGeometry(asset.countries, detail ? DETAIL_BORDER_RADIUS : BORDER_RADIUS, exclude),
-      borderMaterial,
-    );
-    group.add(borders);
-    const locatorData = buildLocatorGeometry(asset.countries, exclude);
-    const locators = locatorData ? new Points(locatorData.geometry, locatorMaterial) : null;
-    if (locators) group.add(locators);
+    const borders = new LineSegments(new BufferGeometry(), borderMaterial);
+    const emphasis = new LineSegments(new BufferGeometry(), emphasisMaterial);
+    emphasis.renderOrder = 1;
+    group.add(borders, emphasis);
     scene.add(group);
-    return { group, meshes, borders, locators };
+    return { group, meshes, borders, emphasis, locators: null, topology: buildBoundaryTopology(asset.countries) };
   }
 
   function disposeLayer(layer: Layer) {
     for (const mesh of layer.meshes.values()) mesh.geometry.dispose();
     layer.borders.geometry.dispose();
+    layer.emphasis.geometry.dispose();
     layer.locators?.geometry.dispose();
     scene.remove(layer.group);
     layer.group.clear();
@@ -419,28 +473,55 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
 
   const baseLayer = buildLayer(base, false);
   let detailLayer: Layer | null = null;
+  let detailAsset: GlobeAsset | null = null;
   let detailLod: string | null = null;
   let states: CountryPresentation = new Map();
+  /**
+   * Country borders everywhere is the geometry the scene starts with, so a first
+   * frame drawn before the application has said anything is still truthful
+   * cartography. The first `setBoundaries` replaces it.
+   */
+  let plan: BoundaryPlan = { key: 'country', groupOf: new Map(), emphasis: new Set(), locators: true };
+  let linesKey = '';
 
   /**
-   * Borders and locators are merged buffers, so a covered country cannot simply
-   * be hidden the way its mesh can. Rebuilding the base layer's lines without
-   * the detail layer's countries is what stops a coarse world outline showing
-   * through beside the finer one it was replaced by — a visible double stroke,
-   * and a stray world locator dot sitting on top of real detail geometry.
+   * Rebuilds every boundary buffer for the current plan and LOD.
    *
-   * It runs once per continent entry over a buffer of a few tens of thousands of
-   * vertices, not per frame.
+   * Boundaries and locators are merged buffers, so a covered country cannot
+   * simply be hidden the way its mesh can. Excluding the detail layer's
+   * countries from the base layer is what stops a coarse world outline showing
+   * through beside the finer one it replaced — a visible double stroke, and a
+   * stray world locator dot sitting on top of real detail geometry.
+   *
+   * Guarded by the plan's key, so it runs once per navigation over a buffer of a
+   * few tens of thousands of vertices, never per frame.
    */
-  function rebuildBaseLines(exclude?: ReadonlySet<string>) {
+  function rebuildLines() {
+    const key = `${plan.key}|${detailLod ?? ''}`;
+    if (key === linesKey) return;
+    linesKey = key;
+    const covered = detailAsset ? new Set(detailAsset.countries.map((country) => country.id)) : undefined;
+
     baseLayer.borders.geometry.dispose();
-    baseLayer.borders.geometry = buildBorderGeometry(base.countries, BORDER_RADIUS, exclude);
+    baseLayer.borders.geometry = buildBoundaryGeometry(baseLayer.topology, BORDER_RADIUS, plan, false, covered);
+    baseLayer.emphasis.geometry.dispose();
+    baseLayer.emphasis.geometry = buildBoundaryGeometry(baseLayer.topology, BORDER_RADIUS + EMPHASIS_LIFT, plan, true, covered);
+
+    if (detailLayer) {
+      detailLayer.borders.geometry.dispose();
+      detailLayer.borders.geometry = buildBoundaryGeometry(detailLayer.topology, DETAIL_BORDER_RADIUS, plan, false);
+      detailLayer.emphasis.geometry.dispose();
+      detailLayer.emphasis.geometry = buildBoundaryGeometry(detailLayer.topology, DETAIL_BORDER_RADIUS + EMPHASIS_LIFT, plan, true);
+    }
+
     if (baseLayer.locators) {
       baseLayer.group.remove(baseLayer.locators);
       baseLayer.locators.geometry.dispose();
       baseLayer.locators = null;
     }
-    const locatorData = buildLocatorGeometry(base.countries, exclude);
+    // A locator says "a country exists here", which is country detail: it belongs
+    // to the levels that draw countries, not to continent or area navigation.
+    const locatorData = plan.locators ? buildLocatorGeometry(base.countries, covered) : null;
     if (locatorData) {
       baseLayer.locators = new Points(locatorData.geometry, locatorMaterial);
       baseLayer.group.add(baseLayer.locators);
@@ -493,6 +574,8 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
 
   const raycaster = new Raycaster();
   const pointer = new Vector2();
+  const projected = new Vector3();
+  const viewport = { width: 1, height: 1 };
   let renderPending = false;
   let disposed = false;
   let active = true;
@@ -526,6 +609,11 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
     const rect = container.getBoundingClientRect();
     const width = Math.max(1, Math.round(rect.width));
     const height = Math.max(1, Math.round(rect.height));
+    // Kept so projecting an anchor never reads layout: a name is re-projected
+    // on every frame of camera travel, and a forced reflow per name per frame
+    // is exactly the cost the render-on-demand design exists to avoid.
+    viewport.width = width;
+    viewport.height = height;
     renderer.setPixelRatio(dpr());
     renderer.setSize(width, height, false);
     camera.aspect = width / height;
@@ -572,15 +660,39 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       if ((asset?.lod ?? null) === detailLod) return;
       if (detailLayer) { disposeLayer(detailLayer); detailLayer = null; }
       detailLod = asset?.lod ?? null;
-      if (asset) {
-        const covered = new Set(asset.countries.map((country) => country.id));
-        detailLayer = buildLayer(asset, true);
-        rebuildBaseLines(covered);
-      } else {
-        rebuildBaseLines();
-      }
+      detailAsset = asset;
+      if (asset) detailLayer = buildLayer(asset, true);
+      linesKey = '';
+      rebuildLines();
       applyStates();
       requestRender();
+    },
+
+    setBoundaries(next) {
+      plan = next;
+      rebuildLines();
+      requestRender();
+    },
+
+    /**
+     * Where a geographic anchor lands on screen, and whether the planet is in
+     * the way. The label itself is real DOM positioned from this; nothing here
+     * draws text, and the scene never learns what a scope is called.
+     */
+    project(lon, lat) {
+      const [x, y, z] = toSphere(lon, lat, LABEL_RADIUS);
+      projected.set(x, y, z);
+      const distance = camera.position.length() || 1;
+      // An anchor is visible while it is nearer the camera than the horizon
+      // circle, with a small margin so a name never smears along the limb.
+      const cosine = projected.dot(camera.position) / (LABEL_RADIUS * distance);
+      const facing = cosine > 1 / distance + 0.06;
+      projected.project(camera);
+      return {
+        x: (projected.x * 0.5 + 0.5) * viewport.width,
+        y: (-projected.y * 0.5 + 0.5) * viewport.height,
+        facing,
+      };
     },
 
     /**
@@ -650,6 +762,7 @@ export function createGlobeScene(container: HTMLElement, base: GlobeAsset): Glob
       disc?.dispose();
       for (const material of Object.values(materials)) material.dispose();
       borderMaterial.dispose();
+      emphasisMaterial.dispose();
       locatorMaterial.dispose();
       oceanGeometry.dispose();
       oceanMaterial.dispose();
