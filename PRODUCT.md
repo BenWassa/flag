@@ -37,6 +37,8 @@ Results / geographic context
 
 The important product rules are:
 
+- geographic detail is disclosed progressively (#197): world navigation shows continents rather than a country tessellation, a framed continent reveals its learner-facing areas, selecting an area keeps navigation at area level, and country boundaries appear only where the learning mechanic is actually about countries;
+- each currently selectable continent or area is named on the Earth itself by a real, focusable control that dispatches the same action as its equivalent chip;
 - the typed hash router remains authoritative;
 - the persistent Earth interprets route state rather than creating a second navigation stack;
 - tapping geography **selects/focuses** a durable scope and never starts a round accidentally;

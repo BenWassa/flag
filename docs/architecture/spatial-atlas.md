@@ -31,6 +31,35 @@ Geography taps and DOM controls dispatch the same `AtlasActions` (`openScope`, `
 
 The old one-tap launcher-row presentation is not the normal product surface.
 
+## Progressive disclosure (#197)
+
+Geographic detail is a function of the current decision level, published by `deriveSpatialState` as `boundaries` (`continent` | `region` | `country`), `labels` and `labelLevel`. The renderer owns none of it.
+
+### Shells are derived, not authored
+
+`src/spatial/disclosure.ts` builds a **boundary topology** once per loaded asset: every segment, with the country or countries carrying it. Because all seven assets come from one pinned Natural Earth topology, two neighbours carry their common boundary vertex for vertex, so a segment held by two countries of the same group is an interior border by construction. Dropping those leaves exactly the group's outline.
+
+Consequences that matter:
+
+- there is no second geography source, no baked shell asset, no handwritten geometry and no mask;
+- re-grouping is a linear scan with two lookups per segment, so a navigation never rebuilds geometry from rings;
+- an identity grouping is ordinary country borders, so the three levels are one mechanism rather than three code paths;
+- `scripts/verify-spatial-disclosure.mjs` proves the cancellation against the canonical land-adjacency tables rather than assuming it.
+
+The scene is handed a `BoundaryPlan` — a grouping, an emphasised set and whether locators belong to this level — and knows nothing about continents or regions.
+
+### Names on the Earth
+
+Selectable scopes are named by real DOM buttons in `src/spatial/scope-labels.ts`, positioned over the canvas from a geographic anchor and dispatching the same `AtlasActions` a geography tap does. Nothing is drawn as text in the scene.
+
+An anchor is the most interior point of a scope's own geometry **inside that scope's own camera framing** — the same framing policy the camera uses, so Europe is named in Europe rather than in Siberia. A scope with no interior at that scale is an archipelago and is named across its frame's centre, as an atlas does.
+
+Placement rules, in order: behind the planet, off the frame, or unable to sit without colliding, a name stands down — still focusable, still selectable, and reached by keyboard it turns the camera to itself rather than changing the route.
+
+### Why the command surface keeps its own list
+
+The projected controls are accessible in their own right; the command surface's chips are not an accessibility duplicate of them. They render before the lazy spatial stack has loaded, survive renderer failure and forced colours, carry the per-scope progress figure a name on the geography must not clutter it with, and are the server-renderable surface the IA checks assert route parity against.
+
 ## Preservation boundaries
 
 The spatial layer must not change:
@@ -101,5 +130,6 @@ The spatial stack is lazy-loaded. Core bootstrap/world assets follow the accepte
 - #104 — historical map-first launcher exploration: [`../closed/issue-104-map-first-launcher.md`](../closed/issue-104-map-first-launcher.md).
 - #119 — Spatial exploration, renderer decision, spherical geography, interaction contracts and accepted candidate. Key records include [`../closed/issue-119-spatial-atlas-moonshot.md`](../closed/issue-119-spatial-atlas-moonshot.md), [`../closed/issue-119-spatial-interaction-contract.md`](../closed/issue-119-spatial-interaction-contract.md), [`../closed/issue-119-spherical-geography-contract.md`](../closed/issue-119-spherical-geography-contract.md) and [`../closed/issue-119-renderer-decision.md`](../closed/issue-119-renderer-decision.md).
 - #166 — production cutover and tiny-geography picking hardening: [`../closed/issue-166-spatial-production-cutover.md`](../closed/issue-166-spatial-production-cutover.md).
+- #197 — progressive continent → region → country disclosure and names written on the Earth.
 
 See [`../history.md`](../history.md) for the broader project lineage.

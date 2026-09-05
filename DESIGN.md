@@ -70,7 +70,7 @@ Defined once in `atlas-theme.css` and consumed by the globe, Locations and Neigh
 
 Figure and ground inside the green: what can be acted on is light, what is only context is deeper, and ocean clears context land by roughly 3:1 so a coastline reads without depending on its stroke. On the globe the same two greens run one step more saturated, because they sit on deep ocean against night rather than on a light page.
 
-Evidence fills geography in. A cleared country takes a deep correctness green that clears both the pale in-scope land and the sage context land by value, so a board visibly fills as a round is played. Immediate answer feedback still outranks all stored evidence through stronger interior semantic fill and the one arrival animation; correctness never relies on a widened exterior stroke, and topology-derived coastlines/shared borders keep ownership of the visible boundary.
+Evidence fills geography in. A cleared country takes a deep correctness green that clears both the pale in-scope land and the sage context land by value, so a board visibly fills as a round is played. Immediate answer feedback still outranks all stored evidence, by solid correctness green, a heavier stroke and the one arrival animation.
 
 ### Mode identity
 
@@ -169,6 +169,34 @@ At continent/region focus:
 Outside the documented Home exception, the command surface is label, proximity, rules and a small control group — not a dashboard/card stack or translucent panel.
 
 The conventional `Launcher` is renderer-failure fallback only. Do not restore it beneath the globe or document its old full-width rows as the normal product experience.
+
+## Progressive geographic disclosure
+
+Political detail follows the decision the learner is currently making, not the geometry the asset happens to contain.
+
+| Level | Boundaries drawn | Names written on the Earth |
+| --- | --- | --- |
+| World / choose a continent | continent outlines | continent names |
+| Continent focus | that continent's learner-facing areas | area names |
+| Area focus | the same areas, the selected one a step stronger | the same area names |
+| Live activity | the level the learner navigated at | none |
+| Results | countries | none |
+
+- world Spatial navigation reads as continents, never as a country tessellation;
+- an area outline appears only once a continent is framed, and country borders never appear merely because an area was selected;
+- country detail belongs to the moment the learning mechanic is actually about countries — the domain-native activities own their own surfaces, and Results reframes the countries just practised;
+- boundary hierarchy stays restrained: one quiet boundary tone, one deeper tone for the single selected area, no third weight and no choropleth;
+- shells are the canonical country geometry with shared edges cancelled. There is no second geography source, no hand-drawn shell and no mask.
+
+Names on the Earth are real DOM controls anchored over the geography, never text baked into the scene:
+
+- each names one currently selectable scope and dispatches exactly the action its equivalent control does;
+- each carries a full-size touch target independent of how small its lettering is;
+- each is focusable and announced, carries earned state in words, and turns the Earth toward itself when reached by keyboard from the far side;
+- a name is drawn only where the place it names actually is: behind the planet, off the frame, or with no room to sit without colliding, it stands down rather than being parked somewhere untrue;
+- lettering is map lettering — a halo, no surface, no chip — so the geography stays the object and the chrome stays quiet.
+
+The command surface keeps its own complete list of the same scopes. That is not a duplicate accessibility fallback: it renders before the lazy spatial stack arrives, survives renderer failure and forced colours, and carries the per-scope progress figure a name on the map must not clutter the geography with.
 
 ## Spatial motion and gesture ownership
 

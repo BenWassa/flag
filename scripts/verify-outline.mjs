@@ -1,117 +1,202 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
+import { COUNTRIES, COUNTRY_BY_ID } from '../.verify-dist/data/countries.js';
+import {
+  AFRICA_MAP_COUNTRY_IDS,
+  WEST_AFRICA_MAP_COUNTRY_IDS,
+} from '../.verify-dist/data/map-scopes.js';
+import { AFRICA_GEOMETRY } from '../.verify-dist/data/maps/africa.js';
+import {
+  buildOutlineAsset,
+  buildOutlineQuiz,
+  chooseOutlineDistractors,
+  normalizeOutlineGeometry,
+} from '../.verify-dist/domain/outline.js';
+import { createInitialAchievementState } from '../.verify-dist/domain/achievements.js';
+import { applyAttempt, createInitialProgress, getRecord } from '../.verify-dist/domain/progress.js';
+import { createSeededRandom } from '../.verify-dist/domain/quiz.js';
+import { outlineSilhouette } from '../.verify-dist/ui/components/outline.js';
+import { escapeHtml } from '../.verify-dist/ui/format.js';
+import { parentRoute, parseRoutePath, serializeRoutePath } from '../.verify-dist/routing/routes.js';
 import { loadScreens, renderScreen } from './lib/react-markup.mjs';
-import {
-  OUTLINE_BY_ID,
-  outlineChoiceIds,
-  outlineDistractorPool,
-  outlineRecord,
-} from '../.verify-dist/data/outlines.js';
-import {
-  applyOutlineGuess,
-  buildOutlineSession,
-  createInitialOutlineProgress,
-  outlineSummary,
-} from '../.verify-dist/domain/outline-game.js';
-import {
-  continentOutlineSummaries,
-  outlineAchievements,
-  regionOutlineSummaries,
-} from '../.verify-dist/domain/outline-progress.js';
-import { parseRoutePath, parentRoute, serializeRoutePath } from '../.verify-dist/domain/routes.js';
 
-const {
-  OutlineHomeScreen,
-  OutlineQuizScreen,
-  OutlineResultsScreen,
-} = await loadScreens('OutlineScreens.js');
-const renderOutlineHome = (progress, scope, achievements, available) => renderScreen(OutlineHomeScreen, {
-  progress,
-  scope,
-  achievements,
-  available,
-});
-const renderOutlineQuiz = (session) => renderScreen(OutlineQuizScreen, { session });
-const renderOutlineResults = (session) => renderScreen(OutlineResultsScreen, { session });
+const { LauncherScreen } = await loadScreens('LauncherScreens.js');
+const { OutlineQuizScreen } = await loadScreens('RecognitionScreens.js');
 
-const outlineIds = [...OUTLINE_BY_ID.keys()];
-assert.equal(outlineIds.length, 54, 'Africa outline corpus must cover exactly the 54 canonical countries.');
-
-for (const countryId of outlineIds) {
-  assert.match(countryId, /^[A-Z]{3}$/, `Outline id ${countryId} must use ISO3.`);
-  const item = OUTLINE_BY_ID.get(countryId);
-  assert.ok(item?.path, `${countryId} must have a source-derived silhouette path.`);
-  assert.equal(item?.viewBox, '0 0 100 100', `${countryId} outline is normalized into a 100x100 silhouette frame.`);
-  assert.equal(item?.path.includes('NaN'), false, `${countryId} normalized path contains no NaN coordinates.`);
-  assert.equal(item?.path.includes('Infinity'), false, `${countryId} normalized path contains no infinite coordinates.`);
+function renderOutlineHome(progress, scope, achievements, persisting) {
+  return renderScreen(LauncherScreen, {
+    domain: 'outlines',
+    scope,
+    achievements,
+    persisting,
+    ledgers: { flags: progress, locations: progress, outlines: progress, neighbors: progress },
+  });
 }
 
-for (const countryId of ['CPV', 'COM', 'MUS', 'SYC']) {
-  const item = OUTLINE_BY_ID.get(countryId);
-  assert.ok((item?.path.match(/M/g) ?? []).length > 1, `${countryId} must retain multipart island morphology.`);
+function renderOutlineQuiz(asset, session, progress, answeredCountryId) {
+  return renderScreen(OutlineQuizScreen, {
+    asset,
+    session,
+    progress,
+    answeredCountryId,
+  });
 }
 
-for (const countryId of outlineIds) {
-  const pool = outlineDistractorPool(countryId);
-  assert.ok(pool.length >= 3, `${countryId} must have at least three valid distractors.`);
-  assert.equal(pool.includes(countryId), false, `${countryId} distractor pool must exclude the target.`);
-  assert.equal(new Set(pool).size, pool.length, `${countryId} distractor pool must not duplicate countries.`);
-  assert.ok(pool.every((id) => OUTLINE_BY_ID.has(id)), `${countryId} distractor pool must remain inside the canonical outline corpus.`);
+const africaIds = [...AFRICA_MAP_COUNTRY_IDS];
+const africaSet = new Set(africaIds);
+const geometryIds = Object.keys(AFRICA_GEOMETRY).filter((id) => africaSet.has(id)).sort();
+assert.deepEqual(geometryIds, [...africaIds].sort(), 'Every scored Africa ISO3 must reconcile to canonical production geometry.');
+
+for (const id of africaIds) {
+  const country = COUNTRY_BY_ID.get(id);
+  assert.ok(country, `Curriculum country missing for ${id}.`);
+  assert.equal(country.id, country.iso3, `${id} must use ISO3 as the identity key.`);
+
+  const geometry = AFRICA_GEOMETRY[id];
+  assert.ok(geometry?.path ?? geometry?.outlinePath, `Canonical production polygon missing for ${id}.`);
+  const normalized = normalizeOutlineGeometry(geometry);
+  assert.equal(normalized.countryId, id);
+
+  const coords = [...normalized.path.matchAll(/(-?\d+(?:\.\d+)?),(-?\d+(?:\.\d+)?)/g)]
+    .flatMap((match) => [Number(match[1]), Number(match[2])]);
+  assert.ok(coords.length >= 6, `${id} normalized silhouette must retain polygon coordinates.`);
+  assert.ok(Math.min(...coords) >= 7.99 && Math.max(...coords) <= 92.01, `${id} must fit the fixed normalized frame.`);
 }
 
-const choiceIds = outlineChoiceIds('GHA', () => 0.5);
-assert.equal(choiceIds.length, 4, 'Outline questions expose exactly four choices.');
-assert.equal(choiceIds.includes('GHA'), true, 'Outline choices include the target country.');
-assert.equal(new Set(choiceIds).size, 4, 'Outline choices are unique.');
+const islandIds = ['CPV', 'STP', 'COM', 'MUS', 'SYC'];
+for (const id of islandIds) {
+  const geometry = AFRICA_GEOMETRY[id];
+  assert.ok(geometry.locator, `${id} must retain the production map locator.`);
+  assert.equal(geometry.path, undefined, `${id} must not become a directly rendered map polygon.`);
+  assert.ok(geometry.outlinePath, `${id} must retain the canonical generated polygon for silhouette learning.`);
 
-const progress = createInitialOutlineProgress(outlineIds);
-let learn = buildOutlineSession('learn', 'outline-learn-verify', ['GHA']);
-let learnResult = applyOutlineGuess(learn, progress, choiceIds.find((id) => id !== 'GHA') ?? 'MLI', 100);
-learn = learnResult.session;
-assert.equal(learn.targets.GHA?.attempts, 1, 'A wrong Learn guess increments the target attempt count.');
-assert.equal(learn.targets.GHA?.resolved, false, 'A wrong Learn guess leaves the target unresolved.');
-learnResult = applyOutlineGuess(learn, learnResult.progress, 'GHA', 200);
-learn = learnResult.session;
-assert.equal(learn.targets.GHA?.resolved, true, 'A correct Learn guess resolves the target.');
-assert.equal(learn.targets.GHA?.resolution, 'one-miss', 'Learn records one-miss evidence after one wrong guess.');
+  const normalized = normalizeOutlineGeometry(geometry);
+  assert.ok(normalized.subpathCount >= 2, `${id} must preserve multipart/island geometry rather than collapse to one locator.`);
+  const withoutLocator = { ...geometry, locator: undefined, hitAssist: undefined, callout: undefined };
+  assert.equal(
+    normalizeOutlineGeometry(withoutLocator).path,
+    normalized.path,
+    `${id} silhouette must derive from canonical country polygons, not map locator/callout metadata.`,
+  );
+}
 
-let play = buildOutlineSession('test', 'outline-play-verify', ['GHA']);
-const playWrongId = outlineChoiceIds('GHA', () => 0.4).find((id) => id !== 'GHA') ?? 'MLI';
-const playResult = applyOutlineGuess(play, progress, playWrongId, 300);
-play = playResult.session;
-assert.equal(play.targets.GHA?.resolved, true, 'Play resolves after the first submitted answer.');
-assert.equal(play.attempts.length, 1, 'Play records exactly one attempt.');
-assert.equal(play.attempts[0]?.correct, false, 'Wrong Play attempts remain explicit evidence.');
-assert.equal(play.attempts[0]?.selectedCountryId, playWrongId, 'Play stores the selected wrong country for feedback.');
-
-const learnHtml = renderOutlineQuiz(buildOutlineSession('learn', 'outline-learn-render', ['GHA']));
-assert.ok(learnHtml.includes('outline-frame--stage'), 'Outline Learn renders the canonical silhouette in the stage.');
-assert.ok(learnHtml.includes('data-action="outline-answer"'), 'Outline Learn renders answer controls.');
-assert.ok(learnHtml.includes('Ghana'), 'Outline Learn can identify the target in its answer set.');
-
-const playHtml = renderOutlineQuiz(play);
-assert.ok(playHtml.includes('answer-feedback--wrong'), 'Outline Play renders explicit shared wrong-answer feedback.');
-assert.ok(playHtml.includes('Answer:'), 'Outline Play wrong feedback identifies the correct answer non-visually.');
-assert.equal((playHtml.match(/data-action="outline-answer"/g) ?? []).length, 0, 'Resolved Outline Play locks further answers during feedback.');
-
-let correctPlay = buildOutlineSession('test', 'outline-play-correct-render', ['GHA']);
-correctPlay = applyOutlineGuess(correctPlay, progress, 'GHA', 300).session;
-const correctPlayHtml = renderOutlineQuiz(correctPlay);
-assert.ok(correctPlayHtml.includes('answer-feedback--correct'), 'Outline Play renders explicit shared correct-answer feedback.');
-assert.ok(correctPlayHtml.includes('Correct'), 'Correct Outline Play feedback is understandable without colour.');
-
-const resultHtml = renderOutlineResults(correctPlay);
-assert.ok(resultHtml.includes('Perfect round'), 'A perfect Outline Play result retains the shared perfect-round acknowledgement.');
-assert.ok(resultHtml.includes('Play again'), 'Outline Results offer a practical repeat action.');
-
-const outlineProgress = createInitialOutlineProgress(outlineIds);
 const westScope = { kind: 'region', id: 'west-africa', label: 'West Africa' };
-const westSummaries = regionOutlineSummaries(outlineProgress, 'africa');
-assert.ok(westSummaries.some((item) => item.id === 'west-africa'), 'Outline progress exposes West Africa through the shared regional hierarchy.');
-assert.ok(continentOutlineSummaries(outlineProgress).some((item) => item.id === 'africa'), 'Outline progress exposes Africa through the shared continent hierarchy.');
-assert.deepEqual(outlineAchievements(outlineProgress), { regions: [], continents: [] }, 'Fresh outline progress has no achievements.');
-assert.equal(outlineSummary(outlineProgress, outlineIds).mastered, 0, 'Fresh outline progress has no mastered countries.');
+const westIds = new Set(WEST_AFRICA_MAP_COUNTRY_IDS);
+const westAsset = buildOutlineAsset(
+  westScope,
+  WEST_AFRICA_MAP_COUNTRY_IDS.map((id) => AFRICA_GEOMETRY[id]),
+  africaIds.filter((id) => !westIds.has(id)).map((id) => AFRICA_GEOMETRY[id]),
+);
+assert.equal(Object.keys(westAsset.geometries).length, 54, 'Outline asset keeps same-continent context for plausible distractors.');
+assert.deepEqual([...westAsset.countryIds].sort(), [...WEST_AFRICA_MAP_COUNTRY_IDS].sort(), 'Active outline scope must not expand beyond the requested region.');
 
+const outlineProgress = createInitialProgress(COUNTRIES.filter((country) => africaSet.has(country.id)));
+const questions = buildOutlineQuiz({
+  countries: COUNTRIES,
+  progress: outlineProgress,
+  scope: westScope,
+  mode: 'learn',
+  size: 10,
+  sessionId: 'outline-verify',
+  asset: westAsset,
+});
+assert.equal(questions.length, 10, 'A normal regional outline round should contain ten questions.');
+
+const correctPositions = [0, 0, 0, 0];
+for (const question of questions) {
+  assert.ok(westIds.has(question.countryId), 'Targets must stay inside the selected region.');
+  assert.equal(question.optionCountryIds.length, 4, 'Each outline question must have exactly four options.');
+  assert.equal(new Set(question.optionCountryIds).size, 4, 'Outline options must not contain duplicates.');
+  assert.equal(question.optionCountryIds[question.correctIndex], question.countryId, 'Correct index must identify the target country.');
+  assert.ok(question.optionCountryIds.every((id) => africaSet.has(id)), 'Africa outline distractors must remain within supported curriculum.');
+  const distractors = question.optionCountryIds.filter((id) => id !== question.countryId);
+  assert.ok(distractors.every((id) => COUNTRY_BY_ID.get(id)?.regionId === 'west-africa'), 'Fresh regional questions should use same-region distractors when enough exist.');
+  correctPositions[question.correctIndex] += 1;
+}
+assert.ok(Math.max(...correctPositions) - Math.min(...correctPositions) <= 1, 'Correct option ordering must stay balanced across positions.');
+
+const confused = structuredClone(outlineProgress);
+confused.records.DZA.confusionCounts.ZAF = 4;
+const targetDza = COUNTRY_BY_ID.get('DZA');
+assert.ok(targetDza);
+const africaAsset = buildOutlineAsset(
+  { kind: 'continent', id: 'africa', label: 'Africa' },
+  africaIds.map((id) => AFRICA_GEOMETRY[id]),
+);
+const confusedDistractors = chooseOutlineDistractors(
+  targetDza,
+  COUNTRIES.filter((country) => africaSet.has(country.id)),
+  confused,
+  africaAsset,
+  3,
+  createSeededRandom(17),
+);
+assert.ok(confusedDistractors.some((country) => country.id === 'ZAF'), 'Recorded outline confusions should outrank generic similarity signals.');
+
+// The generic mastery transition is reused, but the state object is separate.
+const flagProgress = createInitialProgress(COUNTRIES);
+let outlineLedger = createInitialProgress(COUNTRIES.filter((country) => africaSet.has(country.id)));
+for (const sessionId of ['outline-a', 'outline-b', 'outline-c']) {
+  outlineLedger = applyAttempt(outlineLedger, 'GHA', {
+    sessionId,
+    countryId: 'GHA',
+    selectedCountryId: 'GHA',
+    responseTimeMs: 900,
+    now: new Date('2026-08-19T12:00:00Z'),
+  }).state;
+}
+assert.equal(getRecord(outlineLedger, 'GHA').status, 'mastered', 'Outline Learn must use established mastery semantics.');
+assert.equal(getRecord(flagProgress, 'GHA').status, 'unseen', 'Outline mastery must not contaminate flag mastery.');
+
+const sample = questions[0];
+const sampleTarget = COUNTRY_BY_ID.get(sample.countryId);
+assert.ok(sampleTarget);
+const sampleGeometry = westAsset.geometries[sample.countryId];
+assert.ok(sampleGeometry);
+const silhouette = outlineSilhouette(sampleGeometry);
+assert.ok(silhouette.includes('viewBox="0 0 100 100"'), 'Every silhouette must expose the same fixed SVG viewport.');
+assert.ok(silhouette.includes('aria-label="Country silhouette to identify"'), 'Unanswered silhouette needs useful generic screen-reader text.');
+assert.equal(silhouette.includes(sampleTarget.id), false, 'Silhouette markup must not expose the answer ISO3.');
+assert.equal(silhouette.includes(sampleTarget.name), false, 'Silhouette accessibility/DOM metadata must not expose the answer name.');
+assert.equal(/data-(?:country|answer|id)=/.test(silhouette), false, 'Silhouette renderer must not carry answer-bearing data attributes.');
+
+const learnSession = {
+  id: 'learn-render',
+  mode: 'learn',
+  scope: westScope,
+  startedAt: '2026-08-19T12:00:00.000Z',
+  questions: [sample],
+  currentIndex: 0,
+  attempts: [],
+};
+const testSession = { ...learnSession, id: 'test-render', mode: 'test' };
+const wrongId = sample.optionCountryIds.find((id) => id !== sample.countryId);
+assert.ok(wrongId);
+// React's server renderer uses the equivalent hexadecimal apostrophe entity;
+// normalise it so this assertion checks the learner-visible name, not an
+// implementation-specific entity spelling.
+const renderedSampleName = escapeHtml(sampleTarget.name).replaceAll('&#39;', '&#x27;');
+
+const unansweredHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, null);
+const svgMarkup = unansweredHtml.match(/<svg[\s\S]*?<\/svg>/)?.[0] ?? '';
+assert.ok(svgMarkup, 'Outline quiz must render the silhouette SVG.');
+assert.equal(svgMarkup.includes(sampleTarget.name), false, 'Unanswered SVG subtree must not contain the answer name.');
+assert.equal(svgMarkup.includes(sampleTarget.id), false, 'Unanswered SVG subtree must not contain the answer ISO3.');
+assert.equal((unansweredHtml.match(/class="answer-button /g) ?? []).length, 4, 'Outline quiz must render four answer controls.');
+
+const learnedHtml = renderOutlineQuiz(westAsset, learnSession, outlineProgress, wrongId);
+assert.ok(learnedHtml.includes(`Correct: ${renderedSampleName}`), 'Learn mode must reveal the correct answer immediately after a miss.');
+const testedHtml = renderOutlineQuiz(westAsset, testSession, outlineProgress, wrongId);
+assert.ok(testedHtml.includes('answer-feedback--wrong'), 'Play mode must show immediate wrong-answer feedback.');
+assert.ok(testedHtml.includes('Not quite'), 'Play feedback must communicate the outcome without relying on colour.');
+assert.ok(testedHtml.includes(`Answer: ${renderedSampleName}`), 'Play mode must reveal the correct answer after a miss.');
+assert.equal(testedHtml.includes('Answer recorded'), false, 'Play mode must not fall back to a neutral acknowledgement.');
+assert.ok(
+  testedHtml.includes('answer-button--correct') && testedHtml.includes('answer-button--wrong'),
+  'Play mode must mark both the selected wrong option and the correct option.',
+);
+
+const outlineAchievements = createInitialAchievementState();
 const homeHtml = renderOutlineHome(outlineProgress, { kind: 'continent', id: 'africa', label: 'Africa' }, outlineAchievements, true);
 assert.ok(homeHtml.includes('aria-labelledby="scope-outlines-africa-action scope-outlines-africa-label scope-outlines-africa-count scope-outlines-africa-progress"') && homeHtml.includes('Learn Africa'), 'Africa outlines render through the shared Play/Learn launcher.');
 assert.equal(/\b\d+ regions\b/.test(homeHtml), false, 'Africa outline launcher omits its redundant region summary.');
@@ -136,17 +221,7 @@ assert.equal(outlineDataSource.includes('AFRICA_GEOMETRY'), false, 'Outline data
 const generatorSource = await readFile('scripts/map-generation-core.mjs', 'utf8');
 assert.ok(generatorSource.includes('countryGeometry.outlinePath = countryPath'), 'Locator-island silhouettes must be emitted by the canonical shared production map generator.');
 const mapRendererSource = await readFile('src/ui/components/map.ts', 'utf8');
-assert.ok(
-  mapRendererSource.includes('!geometry.path && geometry.outlinePath')
-    && mapRendererSource.includes('class="map-country__feedback-shape"')
-    && mapRendererSource.includes('aria-hidden="true"'),
-  'Locations may reuse locator-island outlinePath only as hidden feedback geometry while the locator remains the interaction surface.',
-);
-assert.ok(
-  mapRendererSource.includes('geometry.locator ?')
-    && mapRendererSource.includes('map-country__locator-hit'),
-  'Location interaction must continue to use the existing locator behaviour for tiny islands.',
-);
+assert.equal(mapRendererSource.includes('outlinePath'), false, 'Location rendering must continue to use its existing locator behavior for tiny islands.');
 
 const outlineStorage = await readFile('.verify-dist/infrastructure/outline-storage.js', 'utf8');
 assert.ok(outlineStorage.includes('flag-atlas:outline-progress:v1'), 'Outline mastery must use its own persisted ledger key.');

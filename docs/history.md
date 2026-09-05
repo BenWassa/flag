@@ -13,12 +13,16 @@ Atlas deliberately preserves closed GitHub issues and `docs/closed/` records bec
         ↓ prototypes, renderer decision, spherical assets, route adapter
 #166 production cutover
         ↓
+#197 progressive continent → region → country disclosure
+        ↓
 Spatial Atlas is the default production presentation
 ```
 
 - **#104** explored a geography-first launcher against the old row UI. Its separate future programme is superseded by the successful Spatial cutover; its constraints remain useful historical input.
 - **#119** proved the persistent-Earth interaction, renderer choice, canonical spherical asset generation, route→spatial adapter, accessibility equivalence and activity boundary.
 - **#166** removed the `globe + old page underneath` composition, made Spatial the default, fixed shared tiny-geography picking, retired the preview path and preserved graceful classic fallback.
+
+- **#197** made geographic detail follow the learner's current decision: world navigation reads as continents, a framed continent reveals its learner-facing areas, and country boundaries appear only where the activity is about countries. Continent/area shells are derived from the canonical country geometry by cancelling shared edges, and each selectable scope is named on the Earth by a real DOM control.
 
 Start current Spatial work from [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md). The #104/#119/#166 records live under `closed/`.
 

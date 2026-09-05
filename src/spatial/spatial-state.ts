@@ -51,8 +51,37 @@ export type CountryState = 'ordinary' | 'active' | 'dimmed' | 'unavailable' | 'm
 /** What a tap on geography is currently allowed to mean. */
 export type PickingMode = 'none' | 'continent' | 'region';
 
+/**
+ * Which political boundaries the Earth draws.
+ *
+ * `continent`  continent outlines only; the world is not a country tessellation.
+ * `region`     the framed continent's areas divide, other continents stay whole.
+ * `country`    individual countries, for an activity that is actually about them.
+ */
+export type BoundaryLevel = 'continent' | 'region' | 'country';
+
 /** Earned state for one selectable scope. Always accompanied by text. */
 export type ScopeStatus = 'mastered' | 'complete';
+
+/**
+ * Issue #197 — one selectable scope named directly on the geography.
+ *
+ * This is a declaration, not a rendered label: it says WHICH scopes the current
+ * decision level offers and what each is called. Where each name sits comes from
+ * the canonical geometry, and the control itself is real DOM anchored over the
+ * Earth — never text baked into the scene.
+ */
+export interface SpatialLabel {
+  /** Routable scope id. The same id `openScope` takes and a geography tap resolves to. */
+  scopeId: string;
+  label: string;
+  /** Earned state, mirrored in words in the control's accessible name. */
+  status?: ScopeStatus;
+  /** The scope the camera is framing. */
+  current: boolean;
+  /** False for geography this domain has not shipped yet. */
+  available: boolean;
+}
 
 /**
  * Issue #166 — which navigation surface the spatial interface is presenting.
@@ -82,6 +111,19 @@ export interface SpatialState {
    * what the geography says in colour. Purple and gold never carry meaning alone.
    */
   scopeStatus: ReadonlyMap<string, ScopeStatus>;
+  /**
+   * Scopes named directly on the geography at this level of the hierarchy, and
+   * which level that is. Empty whenever geography is not the thing being chosen.
+   */
+  labels: readonly SpatialLabel[];
+  labelLevel: 'continent' | 'region' | null;
+  /**
+   * How much political boundary detail the geography should carry. Progressive
+   * disclosure (#197): the learner sees the borders of the units they can
+   * currently choose between, and country borders only where an activity needs
+   * them.
+   */
+  boundaries: BoundaryLevel;
   /** Sentence describing the spatial state for assistive technology. */
   description: string;
   /** Set when the spatial interface is the screen rather than a band above one. */
@@ -119,6 +161,15 @@ export function selectableRegionScopes(continentId: ContinentId, domain: Learnin
     return regionLearningScopes(continentId).map((definition) => definition.scope);
   }
   return getMapContinentConfig(continentId)?.regions.map((region) => region.scope) ?? [];
+}
+
+/**
+ * Which learner-facing region each of a continent's countries belongs to, from
+ * the same table the launcher renders. Also the grouping the globe draws region
+ * boundaries from, so a region's outline can never disagree with its curriculum.
+ */
+export function regionScopeByCountry(continentId: ContinentId, domain: LearningDomain): ReadonlyMap<string, string> {
+  return regionCountryIds(continentId, domain);
 }
 
 function regionCountryIds(continentId: ContinentId, domain: LearningDomain): Map<string, string> {
@@ -229,6 +280,49 @@ function worldCountryStates(domain: LearningDomain | null): ReadonlyMap<string, 
 
 const EMPTY: ReadonlyMap<string, CountryState> = new Map();
 const NO_STATUS: ReadonlyMap<string, ScopeStatus> = new Map();
+const NO_LABELS: readonly SpatialLabel[] = [];
+
+/**
+ * The continents, named on the Earth itself. This is the whole world-level
+ * choice: a learner picks a continent, so continents are what the globe writes
+ * and what its boundaries show. Unshipped geography is still named — honestly,
+ * and unselectable — exactly as its DOM control is.
+ */
+function continentLabels(domain: LearningDomain | null): readonly SpatialLabel[] {
+  if (!domain) return NO_LABELS;
+  return CONTINENTS.map((continent) => ({
+    scopeId: continent.id,
+    label: continent.name,
+    current: false,
+    available: scopeSupportsDomain({ kind: 'continent', id: continent.id, label: continent.name }, domain),
+  }));
+}
+
+/**
+ * The framed continent's areas, named on the Earth. Selecting one keeps
+ * navigation at region level: the siblings stay named and selectable rather than
+ * dissolving into country detail.
+ */
+function regionLabels(
+  continentId: ContinentId | null,
+  domain: LearningDomain | null,
+  framed: StudyScope | undefined,
+  status: ReadonlyMap<string, ScopeStatus>,
+): readonly SpatialLabel[] {
+  if (!continentId || !domain) return NO_LABELS;
+  const labels: SpatialLabel[] = [];
+  for (const region of selectableRegionScopes(continentId, domain)) {
+    if (!region.id) continue;
+    labels.push({
+      scopeId: region.id,
+      label: region.label,
+      status: status.get(region.id),
+      current: framed?.id === region.id,
+      available: true,
+    });
+  }
+  return labels;
+}
 
 function scopeStatusFor(
   continentId: ContinentId | null,
@@ -257,6 +351,9 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       domain,
       countryStates: EMPTY,
       scopeStatus: NO_STATUS,
+      labels: NO_LABELS,
+      labelLevel: null,
+      boundaries: 'continent',
       description: '',
       navigation: null,
     };
@@ -273,6 +370,12 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       domain,
       countryStates: countryStatesForScope(scope, domain, achievements, inScope),
       scopeStatus: NO_STATUS,
+      labels: NO_LABELS,
+      labelLevel: null,
+      // The round is over and its subject was these countries: this is the one
+      // navigation-adjacent state where country detail is what the learner is
+      // actually looking at.
+      boundaries: 'country',
       description: scope ? `${scope.label} is framed on the globe.` : '',
       navigation: null,
     };
@@ -290,6 +393,11 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       domain,
       countryStates: EMPTY,
       scopeStatus: NO_STATUS,
+      labels: NO_LABELS,
+      labelLevel: null,
+      // A live question needs no country detail — the flag is the recognition
+      // object — so the backdrop stays at the level the learner navigated at.
+      boundaries: route.name === 'learning' && route.scope && detailContinent(route.scope) ? 'region' : 'continent',
       description: '',
       navigation: null,
     };
@@ -297,15 +405,25 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
 
   if (route.name === 'learning' && route.scope && LAUNCHER_VIEWS.has(view)) {
     const inScope = new Set(scopeCountryIds(route.scope));
+    const continentId = detailContinent(route.scope);
+    const scopeStatus = scopeStatusFor(continentId, domain, achievements);
     return {
       mode: 'focus',
-      detail: detailContinent(route.scope),
+      detail: continentId,
       framedScope: route.scope,
       picking: 'region',
       domain,
       countryStates: countryStatesForScope(route.scope, domain, achievements, inScope),
-      scopeStatus: scopeStatusFor(detailContinent(route.scope), domain, achievements),
-      description: `${route.scope.label} is framed on the globe. Tap a country to choose its area.`,
+      scopeStatus,
+      labels: regionLabels(continentId, domain, route.scope, scopeStatus),
+      labelLevel: 'region',
+      // Areas divide; the countries inside them do not. Choosing a region is
+      // still the decision in front of the learner, so it is still the only
+      // boundary the geography draws.
+      boundaries: 'region',
+      // #197 named each area on the Earth itself, so the description says where
+      // the choices are rather than describing a tap on a country.
+      description: `${route.scope.label} is framed on the globe. Each area is named on it, and can be chosen there or below.`,
       navigation: 'scope',
     };
   }
@@ -317,8 +435,11 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
     domain,
     countryStates: worldCountryStates(domain),
     scopeStatus: NO_STATUS,
+    labels: continentLabels(domain),
+    labelLevel: domain ? 'continent' : null,
+    boundaries: 'continent',
     description: domain
-      ? 'The whole Earth is framed. Tap a continent, or choose one below.'
+      ? 'The whole Earth is framed. Each continent is named on it, and can be chosen there or below.'
       : 'The whole Earth is framed. Choose what to learn.',
     navigation: domain ? 'continents' : 'domains',
   };

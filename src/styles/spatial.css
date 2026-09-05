@@ -129,6 +129,99 @@
 .spatial-stage[data-ready='true'] .spatial-stage__surface > canvas { opacity: 1; }
 
 /* ---------------------------------------------------------------------------
+ * Names written on the geography (#197)
+ *
+ * Progressive disclosure gives the learner the boundaries of the units they can
+ * currently choose between; these are the names of those same units, anchored
+ * over the place each one is. They are real buttons, so they are focusable,
+ * announced and operable, and they dispatch exactly the action the equivalent
+ * chip below the globe does.
+ *
+ * The projected position arrives as custom properties rather than as a computed
+ * `transform`, so centring stays in CSS and one declaration owns the geometry.
+ * ------------------------------------------------------------------------- */
+
+.spatial-scopes {
+  position: absolute;
+  inset: 0;
+  /* The layer itself never intercepts a drag; only the names do, and a drag
+     that starts on one still rotates the Earth. */
+  pointer-events: none;
+}
+
+.spatial-scope {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-start: 0;
+  translate: var(--spatial-scope-x, 50%) var(--spatial-scope-y, 50%);
+  transform: translate(-50%, -50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  /* A practical touch target above the accessibility minimum, sized
+     independently of how small the lettering itself is. */
+  min-height: var(--control-height-compact);
+  min-width: var(--control-height-compact);
+  padding: 4px 10px;
+  border: 0;
+  background: none;
+  color: var(--map-label-halo);
+  font-size: 12.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  line-height: 1.1;
+  white-space: nowrap;
+  /* Map lettering, not a chip. There is no surface behind a name — a row of
+     little cards would put chrome back on top of the geography — so the halo is
+     what keeps one word legible over pale land, deep ocean and night alike. */
+  text-shadow:
+    0 0 3px var(--map-space),
+    0 1px 2px var(--map-space),
+    0 0 9px rgba(10, 23, 37, 0.8);
+  pointer-events: auto;
+  cursor: pointer;
+  transition: opacity var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);
+}
+
+/* The selected area keeps its name where the others are: one quiet rule under
+   the word itself, in the ordinary action tone, rather than a louder second
+   style or a surface the other names do not have. */
+.spatial-scope[aria-current='true'] .spatial-scope__name {
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--action) 85%, var(--map-label-halo));
+  text-decoration-thickness: 2px;
+  text-underline-offset: 3px;
+}
+
+.spatial-scope__mark { font-size: 10px; }
+.spatial-scope[data-status='mastered'] .spatial-scope__mark { color: var(--map-mastery); }
+.spatial-scope[data-status='complete'] .spatial-scope__mark { color: var(--map-prestige); }
+
+/* Geography this domain has not shipped is named honestly and is not offered,
+   exactly as its equivalent chip is. */
+.spatial-scope:disabled { opacity: 0.5; cursor: default; }
+
+/*
+ * A name whose place is round the back of the planet has nowhere to point, so
+ * it is not drawn — but it stays a real control in the tab order, and reaching
+ * it turns the Earth to meet it. Hiding it from assistive technology instead
+ * would make half the world unreachable without a mouse.
+ */
+.spatial-scope[data-facing='back'] { opacity: 0; pointer-events: none; }
+
+.spatial-scope:focus-visible {
+  opacity: 1;
+  outline: 3px solid color-mix(in srgb, var(--action) 55%, transparent);
+  outline-offset: 0;
+  border-radius: var(--radius-sm);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spatial-scope { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
  * Command surface
  *
  * One band of real controls, anchored to the geography above it. Its parts read
@@ -521,6 +614,9 @@
  * every action the geography offered remains available.
  */
 @media (forced-colors: active) {
+  /* The canvas cannot follow a replaced palette, so the geography stands down
+     and the names anchored over it go with it. Every scope they offered remains
+     available as a real control in the command surface below. */
   .spatial-stage { display: none; }
   .spatial-shell { display: block; height: auto; }
   .spatial-shell__panel { overflow: visible; }
