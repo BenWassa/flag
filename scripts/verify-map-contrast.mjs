@@ -5,6 +5,7 @@ const theme = await readFile('src/styles/atlas-theme.css', 'utf8');
 const launcherShell = await readFile('src/styles/styles.css', 'utf8');
 const locations = await readFile('src/styles/map.css', 'utf8');
 const cartography = await readFile('src/styles/map-cartography.css', 'utf8');
+const locationStyles = `${locations}\n${cartography}`;
 const neighbours = await readFile('src/styles/neighbors.css', 'utf8');
 const mapRenderer = await readFile('src/ui/components/map.ts', 'utf8');
 
@@ -23,7 +24,7 @@ for (const token of tokens) {
 }
 
 for (const [surface, css, required] of [
-  ['Locations', `${locations}\n${cartography}`, tokens.slice(0, 6)],
+  ['Locations', locationStyles, tokens.slice(0, 6)],
   ['Neighbours', neighbours, ['--map-ocean', '--map-context-land', '--map-active-land', '--map-active-border', '--map-label-halo']],
 ]) {
   for (const token of required) assert.ok(css.includes(`var(${token})`), `${surface} consumes ${token}.`);
@@ -38,7 +39,7 @@ assert.ok(neighbours.indexOf('.neighbor-map-country--target') > neighbours.index
 assert.ok(neighbours.indexOf('.neighbor-map-country--solved') > neighbours.indexOf('.neighbor-map-country__shape'), 'Neighbours solved treatment outranks neutral map geography.');
 assert.ok(neighbours.indexOf('.neighbor-map-country--revealed') > neighbours.indexOf('.neighbor-map-country__shape'), 'Neighbours revealed treatment outranks neutral map geography.');
 
-for (const [surface, css] of [['Locations', `${locations}\n${cartography}`], ['Neighbours', neighbours]]) {
+for (const [surface, css] of [['Locations', locationStyles], ['Neighbours', neighbours]]) {
   assert.ok(css.includes('@media (forced-colors: active)'), `${surface} has a forced-colours contract.`);
   assert.ok(css.includes('Canvas') && css.includes('CanvasText'), `${surface} maps geography to system colours.`);
 }
@@ -53,7 +54,8 @@ for (const css of [theme, launcherShell, locations, cartography, neighbours]) {
 }
 
 // Issue #201: outcome colour belongs to exact country geometry, never to the
-// practical interaction/cartographic symbols that can extend beyond it.
+// practical interaction/cartographic symbols that can extend beyond it. Check
+// both Locations sheets because map-cartography.css is deliberately loaded last.
 const feedbackStates = [
   'first',
   'one-miss',
@@ -71,9 +73,9 @@ for (const state of feedbackStates) {
   );
   for (const helper of helperMarks) {
     assert.equal(
-      locations.includes(`.map-country--${state} .map-country__${helper}`),
+      locationStyles.includes(`.map-country--${state} .map-country__${helper}`),
       false,
-      `${state} feedback does not colour the ${helper} helper symbol.`,
+      `${state} feedback does not style the ${helper} helper symbol in either Locations stylesheet.`,
     );
   }
 }
