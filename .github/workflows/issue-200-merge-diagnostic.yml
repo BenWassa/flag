@@ -19,15 +19,17 @@ jobs:
       - name: Materialise merge with current main
         shell: bash
         run: |
+          git config user.name "Flag Atlas merge diagnostic"
+          git config user.email "noreply@example.invalid"
           git fetch origin main
           git merge --no-commit --no-ff origin/main || true
           git status --short > merge-status.txt
           git diff --name-only --diff-filter=U > merge-conflicts.txt
       - name: Archive merge workspace
         shell: bash
-        run: tar --exclude=.git -czf issue-200-merge-workspace.tar.gz .
+        run: tar --exclude=.git --exclude=issue-200-merge-workspace.tar.gz -czf /tmp/issue-200-merge-workspace.tar.gz .
       - uses: actions/upload-artifact@v4
         with:
           name: issue-200-merge-workspace
-          path: issue-200-merge-workspace.tar.gz
+          path: /tmp/issue-200-merge-workspace.tar.gz
           if-no-files-found: error
