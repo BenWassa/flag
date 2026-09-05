@@ -101,6 +101,9 @@
 .map-coastline { stroke-width: .82; }
 .map-shared-boundary { stroke-width: .72; }
 
+/* Focus/press are interaction cues and may still use the practical visible
+   marks. Outcome/evidence states are deliberately absent here: #201 confines
+   their semantic colour to canonical country geometry in map.css. */
 .map-country:focus-visible .map-country__shape,
 .map-country:focus-visible .map-country__locator,
 .map-country:focus-visible .map-country__marker,
@@ -108,35 +111,7 @@
 .map-country:active .map-country__shape,
 .map-country:active .map-country__locator,
 .map-country:active .map-country__marker,
-.map-country:active .map-country__callout-target,
-.map-country--first .map-country__shape,
-.map-country--first .map-country__locator,
-.map-country--first .map-country__marker,
-.map-country--first .map-country__callout-target,
-.map-country--one-miss .map-country__shape,
-.map-country--one-miss .map-country__locator,
-.map-country--one-miss .map-country__marker,
-.map-country--one-miss .map-country__callout-target,
-.map-country--two-miss .map-country__shape,
-.map-country--two-miss .map-country__locator,
-.map-country--two-miss .map-country__marker,
-.map-country--two-miss .map-country__callout-target,
-.map-country--revealed .map-country__shape,
-.map-country--revealed .map-country__locator,
-.map-country--revealed .map-country__marker,
-.map-country--revealed .map-country__callout-target,
-.map-country--current-correct .map-country__shape,
-.map-country--current-correct .map-country__locator,
-.map-country--current-correct .map-country__marker,
-.map-country--current-correct .map-country__callout-target,
-.map-country--recorded .map-country__shape,
-.map-country--recorded .map-country__locator,
-.map-country--recorded .map-country__marker,
-.map-country--recorded .map-country__callout-target,
-.map-country--wrong-pulse .map-country__shape,
-.map-country--wrong-pulse .map-country__locator,
-.map-country--wrong-pulse .map-country__marker,
-.map-country--wrong-pulse .map-country__callout-target {
+.map-country:active .map-country__callout-target {
   paint-order: stroke fill;
 }
 
