@@ -33,11 +33,11 @@ jobs:
           tests/browser/spatial-framing.spec.ts
           tests/browser/spatial-scope-selection.spec.ts
           --project=mobile-chromium
-      - name: PWA runtime regression
-        run: npm run test:pwa-runtime
       - name: Upload rendered framing evidence
         uses: actions/upload-artifact@v4
         with:
           name: issue-199-rendered-framing
           path: test-results/**/issue-199-*.png
           if-no-files-found: error
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime
