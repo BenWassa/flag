@@ -6,7 +6,7 @@ import {
   touchGeometryForCountry,
   type TouchScale,
 } from './geo.js';
-import type { GlobeBounds, GlobeCountry, GlobePolygon } from './globe-asset.js';
+import type { GlobeBounds, GlobeCountry } from './globe-asset.js';
 
 function squareCountry(id: string, lon: number, lat: number, size: number): GlobeCountry {
   const half = size / 2;
@@ -18,8 +18,7 @@ function squareCountry(id: string, lon: number, lat: number, size: number): Glob
     [bounds[0], bounds[3]],
     [bounds[0], bounds[1]],
   ];
-  const polygon: GlobePolygon = [ring];
-  return { id, polygons: [polygon], bounds, mainland: bounds, framing: bounds };
+  return { id, polygons: [[ring]], bounds, mainland: bounds, framing: bounds };
 }
 
 function locatorCountry(id: string, lon: number, lat: number): GlobeCountry {
