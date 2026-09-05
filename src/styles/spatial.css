@@ -4,8 +4,8 @@
  * Geography is the dominant object. Ordinary domain/scope navigation keeps its
  * compact command band, while Home is the one composition exception: the whole
  * Earth owns the viewport and a single neutral translucent chooser is layered
- * over it. That surface deliberately uses no backdrop blur, so the exception
- * does not create a continuous compositing/rendering cost on phone GPUs.
+ * over it. That surface deliberately uses no `backdrop-filter` blur, so the
+ * exception does not create a continuous compositing/rendering cost on phone GPUs.
  */
 
 .spatial-shell {
@@ -460,14 +460,10 @@
 .spatial-command[data-domain='flags'] .spatial-command__domain-mark { color: var(--domain-flags); }
 .spatial-command[data-surface='domains'] .spatial-mode[data-domain='locations'] .spatial-mode__mark,
 .spatial-command[data-domain='locations'] .spatial-command__domain-mark { color: var(--domain-locations); }
-.spatial-command[data-surface='domains'] .spatial-mode[data-domain='outlines'] .spatial-command__mark,
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='outlines'] .spatial-mode__mark,
 .spatial-command[data-domain='outlines'] .spatial-command__domain-mark { color: var(--domain-outlines); }
-.spatial-command[data-surface='domains'] .spatial-mode[data-domain='neighbors'] .spatial-command__mark,
+.spatial-command[data-surface='domains'] .spatial-mode[data-domain='neighbors'] .spatial-mode__mark,
 .spatial-command[data-domain='neighbors'] .spatial-command__domain-mark { color: var(--domain-neighbors); }
-
-/* Keep icon accent selectors explicit: the mark belongs to the mode tile. */
-.spatial-command[data-surface='domains'] .spatial-mode[data-domain='outlines'] .spatial-mode__mark { color: var(--domain-outlines); }
-.spatial-command[data-surface='domains'] .spatial-mode[data-domain='neighbors'] .spatial-mode__mark { color: var(--domain-neighbors); }
 
 .spatial-command[data-surface='domains'] .spatial-mode__name {
   font-size: 16px;
