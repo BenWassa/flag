@@ -23,6 +23,7 @@ import {
   countryIdsForScope,
   maximumDistanceForFramedScope,
   poseForFraming,
+  poseForSelectedFraming,
   poseForWholeGlobe,
   WORLD_FRAMING,
   type Pose,
@@ -95,7 +96,9 @@ export async function createStageController(
     if (next.navigation === 'domains') return poseForWholeGlobe(GLOBE_FOV, scene.aspect);
     const boxes = next.framedScope ? framingBoxes(world, countryIdsForScope(next.framedScope)) : [];
     const framing = framingFor(boxes) ?? WORLD_FRAMING;
-    return poseForFraming(framing, GLOBE_FOV, scene.aspect);
+    return next.framedScope
+      ? poseForSelectedFraming(framing, GLOBE_FOV, scene.aspect)
+      : poseForFraming(framing, GLOBE_FOV, scene.aspect);
   }
 
   /**
