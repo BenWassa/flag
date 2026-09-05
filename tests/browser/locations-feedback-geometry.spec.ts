@@ -104,13 +104,11 @@ async function answerMainMapCountry(page: Page, countryId: string) {
   await group.evaluate((node) => {
     node.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true, view: window }));
   });
-  await expect(page.locator('.answer-feedback')).toBeVisible({ timeout: 1_000 });
 }
 
 async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--current-wrong') {
   const group = page.locator(`.map-svg .${stateClass}`).first();
   await expect(group).toBeAttached({ timeout: 500 });
-  await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   return group.evaluate((node) => {
     const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')]
       .map((element) => {
@@ -129,10 +127,23 @@ async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--curr
       });
     const calloutLine = node.querySelector<SVGElement>('.map-country__callout-line');
     const lineStyle = calloutLine ? getComputedStyle(calloutLine) : null;
+    const svg = node.closest('.map-svg');
+    const countries = svg?.querySelector('.map-active-countries') ?? null;
+    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
+    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
+    const feedback = document.querySelector<HTMLElement>('.answer-feedback');
     return {
       semantic,
       helperMarks,
       calloutLine: lineStyle ? { stroke: lineStyle.stroke, width: lineStyle.strokeWidth } : null,
+      mainLayering: Boolean(
+        countries
+        && boundaries
+        && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING),
+      ),
+      boundaryStroke: boundary ? getComputedStyle(boundary).stroke : null,
+      feedbackClass: feedback?.className ?? '',
+      feedbackText: feedback?.textContent ?? '',
     };
   });
 }
@@ -154,11 +165,14 @@ for (const fixture of CASES) {
     }
     if (fixture.multipart) {
       const path = await semanticPath.getAttribute('d');
-      expect((path?.match(/M/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
+      expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
     await answerMainMapCountry(page, fixture.countryId);
     const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
+    // Correct Play feedback advances after a 620ms reading dwell. Sample the
+    // rendered state in one evaluation as soon as React exposes the state class,
+    // rather than serialising assertions across that deliberate transient.
     const inspection = await inspectOutcomeGeometry(page, stateClass);
 
     expect(inspection.semantic.length).toBeGreaterThan(0);
@@ -180,24 +194,14 @@ for (const fixture of CASES) {
       expect(inspection.calloutLine).not.toBeNull();
     }
 
-    const mainLayering = await page.locator('.map-svg').evaluate((svg) => {
-      const countries = svg.querySelector('.map-active-countries');
-      const boundaries = svg.querySelector('.map-boundaries');
-      return Boolean(
-        countries
-        && boundaries
-        && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING),
-      );
-    });
-    expect(mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
-    const boundary = page.locator('.map-svg .map-coastline, .map-svg .map-shared-boundary').first();
-    await expect(boundary).toBeAttached();
-    expect(await boundary.evaluate((node) => getComputedStyle(node).stroke)).not.toBe('none');
-
+    expect(inspection.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
+    expect(inspection.boundaryStroke).not.toBeNull();
+    expect(inspection.boundaryStroke).not.toBe('none');
+    expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
     if (stateClass === 'map-country--current-correct') {
-      await expect(page.locator('.answer-feedback--correct')).toBeVisible();
+      expect(inspection.feedbackClass).toContain('answer-feedback--correct');
     } else {
-      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+      expect(inspection.feedbackClass).toContain('answer-feedback--wrong');
     }
   });
 }
@@ -216,5 +220,5 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
     expect(mark.stroke).toBe('none');
     expect(mark.animationName).toBe('none');
   }
-  await expect(page.locator('.answer-feedback')).toBeVisible();
+  expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
 });
