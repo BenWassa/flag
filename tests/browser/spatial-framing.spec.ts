@@ -98,7 +98,7 @@ async function expectScopeRelativeClamp(page: Page, initial: number, context: st
 
 async function expectProjectedLabelsUsable(page: Page, scope: ScopeCase) {
   const front = page.locator('.spatial-scope[data-facing="front"]');
-  expect(await front.count(), `${scope.label} keeps at least one truthful projected label visible`).toBeGreaterThan(0);
+  await expect(front.first(), `${scope.label} keeps at least one truthful projected label visible`).toBeVisible();
 
   if (!scope.currentLabel) return;
   const current = page.locator(`.spatial-scope[data-scope-id="${scope.currentLabel}"][aria-current="true"]`);
@@ -153,7 +153,7 @@ test.describe('selected-scope camera contract', () => {
 
 test.describe('camera lifecycle and gesture ownership', () => {
   test('orientation/resize recomputes the selected frame and its zoom-out bound', async ({ page }) => {
-    const scope = REQUIRED_SCOPES.find((item) => item.id === 'caucasus')!;
+    const scope = REQUIRED_SCOPES.find((item) => item.id === 'africa')!;
     await openSpatial(page, scope.path, 390, 844);
     const portrait = await cameraDistance(page);
 
@@ -161,11 +161,11 @@ test.describe('camera lifecycle and gesture ownership', () => {
     await expect.poll(() => cameraDistance(page)).not.toBeCloseTo(portrait, 3);
     const landscape = await cameraDistance(page);
     await expectProjectedLabelsUsable(page, scope);
-    await expectScopeRelativeClamp(page, landscape, 'Caucasus after portrait → landscape resize');
+    await expectScopeRelativeClamp(page, landscape, 'Africa after portrait → landscape resize');
 
     await page.setViewportSize({ width: 390, height: 844 });
     await expect.poll(() => cameraDistance(page)).toBeCloseTo(portrait, 3);
-    await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
+    await expect(page).toHaveURL(/#\/flags\/africa$/);
   });
 
   test('Back/Forward retargets the same camera without creating a navigation stack', async ({ page }) => {
