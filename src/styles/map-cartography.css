@@ -102,8 +102,8 @@
 .map-shared-boundary { stroke-width: .72; }
 
 /* Focus/press are interaction cues and may still use the practical visible
-   marks. Outcome/evidence states are deliberately absent here: #201 confines
-   their semantic colour to canonical country geometry in map.css. */
+   marks. Outcome/evidence states are deliberately absent here: Issue 201
+   confines their semantic colour to canonical country geometry in map.css. */
 .map-country:focus-visible .map-country__shape,
 .map-country:focus-visible .map-country__locator,
 .map-country:focus-visible .map-country__marker,
