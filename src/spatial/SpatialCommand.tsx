@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { CONTINENTS } from '../data/continents.js';
 import {
   getContinentAchievementReadModel,
@@ -29,9 +30,9 @@ import type { ScopeStatus, SpatialState } from './spatial-state.js';
  * geographic choices beneath the Earth.
  *
  * Forced colours is the exception because WebGL must stand down there. A small
- * fallback-only scope list is therefore rendered in the DOM but hidden in normal
- * Spatial presentation. Complete renderer failure still leaves the application
- * to the conventional Launcher, which is built from the same scope model.
+ * fallback-only scope list is mounted only while forced colours is active.
+ * Complete renderer failure still leaves the application to the conventional
+ * Launcher, which is built from the same scope model.
  */
 
 export interface SpatialCommandProps {
@@ -53,11 +54,25 @@ function statusNotes(region: Pick<ScopeRegion, 'complete' | 'domainMastered'>): 
     .filter((word): word is string => word !== null);
 }
 
-/**
- * Scope choices that exist only when the map itself cannot be the choice
- * surface, currently forced-colours mode. `display: none` removes this duplicate
- * from both the visual and accessibility trees during normal Spatial use.
- */
+/** The non-WebGL scope controls should track a live system setting, not a route. */
+function useForcedColours(): boolean {
+  const query = '(forced-colors: active)';
+  const read = () => typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia(query).matches;
+  const [active, setActive] = useState(read);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const media = window.matchMedia(query);
+    const update = () => setActive(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return active;
+}
+
+/** Scope choices mounted only when the map itself cannot be the choice surface. */
 function FallbackChoice({ label, notes, current, onClick, disabled }: {
   label: string;
   notes?: readonly string[];
@@ -113,9 +128,10 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
 }
 
 /** Choose a continent on the Earth; no duplicate visible list sits below it. */
-function Continents({ domain, ledgers }: {
+function Continents({ domain, ledgers, forcedColours }: {
   domain: LearningDomain;
   ledgers: ProgressLedgers;
+  forcedColours: boolean;
 }) {
   const actions = useAtlasActions();
   const world = domain === 'flags' ? buildProgressSummary(ledgers, { kind: 'world', label: 'World' }, 'flags') : null;
@@ -130,7 +146,7 @@ function Continents({ domain, ledgers }: {
         <button className="button button--primary" type="button" onClick={() => actions.startFlags('test')}>Play world</button>
         <button className="button button--secondary" type="button" onClick={() => actions.startFlags('learn')}>Learn world</button>
       </div> : null}
-      <nav className="spatial-command__fallback-choices" aria-label="Continents">
+      {forcedColours ? <nav className="spatial-command__fallback-choices" aria-label="Continents">
         {CONTINENTS.map((continent) => {
           const scope: StudyScope = { kind: 'continent', id: continent.id, label: continent.name };
           const supported = scopeSupportsDomain(scope, domain);
@@ -144,16 +160,17 @@ function Continents({ domain, ledgers }: {
             />
           );
         })}
-      </nav>
+      </nav> : null}
     </>
   );
 }
 
 /** A continent or region is framed. Only that scope gets progress and actions. */
-function Scope({ state, ledgers, achievements }: {
+function Scope({ state, ledgers, achievements, forcedColours }: {
   state: SpatialState;
   ledgers: ProgressLedgers;
   achievements: EarnedAchievementState;
+  forcedColours: boolean;
 }) {
   const actions = useAtlasActions();
   const domain = state.domain;
@@ -224,7 +241,7 @@ function Scope({ state, ledgers, achievements }: {
         >Learn {active.label}</button>
       </div>
 
-      <nav className="spatial-command__fallback-choices" aria-label={`Areas of ${model.continentScope.label}`}>
+      {forcedColours ? <nav className="spatial-command__fallback-choices" aria-label={`Areas of ${model.continentScope.label}`}>
         <FallbackChoice
           label={`All ${model.continentScope.label}`}
           current={onContinent}
@@ -242,21 +259,22 @@ function Scope({ state, ledgers, achievements }: {
             />
           );
         })}
-      </nav>
+      </nav> : null}
     </>
   );
 }
 
 export function SpatialCommand({ state, ledgers, achievements, persisting }: SpatialCommandProps) {
+  const forcedColours = useForcedColours();
   if (!state.navigation) return null;
   const notice = !persisting && state.domain ? storageNoticeFor(state.domain) : null;
   return (
     <section className="spatial-command" data-surface={state.navigation} data-domain={state.domain ?? undefined} aria-label="Atlas navigation">
       {state.navigation === 'domains' ? <Domains ledgers={ledgers} achievements={achievements} /> : null}
       {state.navigation === 'continents' && state.domain
-        ? <Continents domain={state.domain} ledgers={ledgers} /> : null}
+        ? <Continents domain={state.domain} ledgers={ledgers} forcedColours={forcedColours} /> : null}
       {state.navigation === 'scope'
-        ? <Scope state={state} ledgers={ledgers} achievements={achievements} /> : null}
+        ? <Scope state={state} ledgers={ledgers} achievements={achievements} forcedColours={forcedColours} /> : null}
       {notice ? <p className="storage-notice">{notice}</p> : null}
     </section>
   );
