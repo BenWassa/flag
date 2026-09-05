@@ -33,7 +33,7 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 15. Progressive disclosure beats explanatory text in routine flows.
 16. Achievement treatment stays subordinate to the learning task until something genuinely scarce has been earned.
 17. Spatial motion must preserve orientation but remain interruptible and respect reduced motion.
-18. A 3D surface never replaces equivalent real DOM controls or answer-safe accessibility semantics.
+18. Spatial choice remains a real-DOM interaction even when anchored over the 3D Earth; forced-colours and renderer-failure paths preserve equivalent accessible semantics without duplicating the normal navigation surface.
 
 ## Core palette
 
@@ -158,13 +158,14 @@ At continent/region focus:
 
 - selected geography is the one dominant label;
 - domain is visible but secondary;
+- the projected names and geography own continent/region selection; the command band does not repeat parent/sibling choices;
+- exactly one quiet progress strip belongs to the currently selected scope;
+- a selected continent reserves a small stable slot for its existing completion crest, rendered only when the persisted achievement is earned; do not invent continent-level Mastery wording;
 - **Play {Scope}** is the primary action and immediately available;
 - **Learn {Scope}** is secondary where supported;
-- parent/sibling geography is quiet lateral navigation;
-- tapping geography selects/focuses scope and never starts a round;
+- tapping geography or its projected label selects/focuses scope and never starts a round;
 - whole-continent Play is available at continent focus;
-- region Play follows deliberate region focus;
-- primary choices wrap rather than requiring horizontal scrolling.
+- region Play follows deliberate region focus.
 
 Outside the documented Home exception, the command surface is label, proximity, rules and a small control group — not a dashboard/card stack or translucent panel.
 
@@ -190,13 +191,13 @@ Political detail follows the decision the learner is currently making, not the g
 
 Names on the Earth are real DOM controls anchored over the geography, never text baked into the scene:
 
-- each names one currently selectable scope and dispatches exactly the action its equivalent control does;
+- each names one currently selectable scope and dispatches exactly the action a geography tap does;
 - each carries a full-size touch target independent of how small its lettering is;
 - each is focusable and announced, carries earned state in words, and turns the Earth toward itself when reached by keyboard from the far side;
 - a name is drawn only where the place it names actually is: behind the planet, off the frame, or with no room to sit without colliding, it stands down rather than being parked somewhere untrue;
 - lettering is map lettering — a halo, no surface, no chip — so the geography stays the object and the chrome stays quiet.
 
-The command surface keeps its own complete list of the same scopes. That is not a duplicate accessibility fallback: it renders before the lazy spatial stack arrives, survives renderer failure and forced colours, and carries the per-scope progress figure a name on the map must not clutter the geography with.
+Normal Spatial does not repeat those scope choices below the Earth. The projected labels and geography own selection; the command surface reports only the selected scope's progress and Play/Learn actions. When forced colours hides WebGL, an isolated ordinary-DOM scope list replaces the unavailable geographic controls. If the renderer fails entirely, the conventional `Launcher` is the fallback. Both fallback paths consume the same scope/support truth rather than introducing a second navigation model.
 
 ## Spatial motion and gesture ownership
 
@@ -271,7 +272,8 @@ Avoid confetti or repeated celebration for ordinary correct answers.
 
 ## Accessibility
 
-- real DOM equivalents for spatial choices;
+- real DOM controls own Spatial scope choices, including the projected labels on the Earth;
+- isolated forced-colours and renderer-failure fallbacks preserve equivalent scope/support truth without duplicating normal navigation;
 - visible focus;
 - keyboard operation where mechanics permit it;
 - no colour-only state;
