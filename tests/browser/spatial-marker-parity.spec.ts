@@ -7,6 +7,7 @@ import { OCEANIA_GLOBE_ASSET } from '../../src/data/globe/oceania.js';
 import { WORLD_GLOBE_ASSET } from '../../src/data/globe/world.js';
 import { getMapContinentConfig } from '../../src/data/map-scopes.js';
 import type { ContinentId } from '../../src/domain/models.js';
+import { TRAVEL_MS } from '../../src/spatial/camera-director.js';
 import { DEG, GeographyIndex, framingFor, mergeForPicking, toSphere } from '../../src/spatial/geo.js';
 import { decodeGlobeAsset, type GlobeAsset } from '../../src/spatial/globe-asset.js';
 import {
@@ -92,6 +93,10 @@ async function openCase(page: Page, markerCase: MarkerCase) {
     new RegExp(`(?:^|\\s)${markerCase.id}(?:\\s|$)`),
     { timeout: 30_000 },
   );
+  // Hash navigation keeps the persistent stage alive, so later cases animate
+  // from the previous continent. Wait for the production travel contract to
+  // settle before projecting the marker against its final scope pose.
+  await page.waitForTimeout(TRAVEL_MS + 100);
 
   const box = await page.locator(SURFACE).boundingBox();
   expect(box).not.toBeNull();
