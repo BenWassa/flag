@@ -31,11 +31,12 @@ const visibleText = (html) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')
 const buttons = (html) => [...html.matchAll(/<button\b[^>]*>/g)].map(([tag]) => tag);
 
 // ---------------------------------------------------------------------------
-// Issue #166 — the production navigation surface
+// Issue #198 — geography-led production navigation surface
 //
-// Spatial is the default presentation, so the IA contract is asserted against
-// what learners are actually served. The conventional launcher assertions below
-// stay as the renderer-failure fallback's own contract.
+// Spatial is the default presentation. Projected map labels own normal scope
+// choice; the command band owns only selected-scope identity, progress and
+// actions. Conventional launchers remain the renderer-failure fallback, while a
+// scope list is mounted only under forced colours where WebGL is unavailable.
 // ---------------------------------------------------------------------------
 
 const LAUNCHER_VIEW = { flags: 'scope', locations: 'map-home', outlines: 'outline-home', neighbors: 'neighbor-home' };
@@ -58,18 +59,15 @@ function renderCommand(route, view) {
 
   for (const domain of LEARNING_DOMAIN_IDS) {
     const continents = renderCommand({ name: 'learning', domain }, 'domain');
-    assert.equal((continents.match(/<button class="spatial-chip/g) ?? []).length, CONTINENTS.length,
-      `${domain} lists every continent.`);
-    const supported = CONTINENTS.filter((continent) => scopeSupportsDomain(
-      { kind: 'continent', id: continent.id, label: continent.name }, domain));
-    assert.equal((continents.match(/disabled=""/g) ?? []).length, CONTINENTS.length - supported.length,
-      `${domain} names unshipped continents honestly rather than offering them.`);
-    if (supported.length < CONTINENTS.length) {
-      assert.ok(continents.includes('coming soon'), `${domain} says so in words.`);
-    }
+    assert.equal(continents.includes('spatial-fallback-choice'), false,
+      `${domain} mounts no duplicate continent controls in normal Spatial.`);
+    assert.equal(continents.includes('spatial-chip'), false,
+      `${domain} has no retired continent-chip surface.`);
+    assert.equal(continents.includes('spatial-command__progress'), false,
+      `${domain} world choice shows no scope progress before a scope is selected.`);
   }
 
-  // A framed scope exposes Play immediately, for its own scope, in every domain.
+  // A framed scope exposes exactly its own progress and actions in every domain.
   for (const [domain, scope] of [['flags', africa], ['flags', westAfrica], ['locations', africa],
     ['outlines', africa], ['neighbors', westAfrica]]) {
     const html = renderCommand({ name: 'learning', domain, scope }, LAUNCHER_VIEW[domain]);
@@ -77,9 +75,12 @@ function renderCommand(route, view) {
     assert.ok(html.includes(`Learn ${scope.label}`), `${domain}/${scope.id} offers Learn for the framed scope.`);
     assert.equal((html.match(/class="spatial-command__place"/g) ?? []).length, 1,
       `${domain}/${scope.id} names the selected place exactly once.`);
+    assert.equal((html.match(/class="spatial-command__progress"/g) ?? []).length, 1,
+      `${domain}/${scope.id} exposes exactly one selected-scope progress treatment.`);
     assert.equal(html.includes('region-row'), false, `${domain}/${scope.id} renders no launcher rows.`);
-    // Lateral choices select a scope; they never start a round.
-    assert.ok(html.includes(`All ${africa.label}`), `${domain}/${scope.id} offers its parent continent.`);
+    assert.equal(html.includes('spatial-chip'), false, `${domain}/${scope.id} renders no normal sibling chips.`);
+    assert.equal(html.includes('spatial-fallback-choice'), false,
+      `${domain}/${scope.id} mounts no fallback choices outside forced colours.`);
   }
 }
 
@@ -99,9 +100,8 @@ for (const domain of LEARNING_DOMAIN_IDS) {
   if (supported.length < CONTINENTS.length) assert.ok(html.includes('Coming soon'), `${domain} exposes unavailable coverage in words.`);
 }
 
-// The conventional launcher is now the renderer-failure fallback. It still has
-// to be complete and correct, so its invariants stay asserted here; the
-// production spatial surface is asserted separately below.
+// The conventional launcher is the renderer-failure fallback. It stays complete
+// and correct even though normal Spatial no longer repeats these rows.
 const launchers = [
   ['flags', renderScreen(LauncherScreen, { domain: 'flags', scope: africa, ledgers, achievements, persisting: true })],
   ['locations', renderScreen(LauncherScreen, { domain: 'locations', scope: africa, ledgers, achievements, persisting: true })],
@@ -127,9 +127,11 @@ for (const [name, html] of [['Flags', flagResults], ['Outlines', outlineResults]
 
 const styles = await readFile('dist/styles.css', 'utf8');
 const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
+const spatial = await readFile('dist/spatial.css', 'utf8');
 const app = await readFile('src/react/AtlasApp.tsx', 'utf8');
 const launcher = await readFile('src/react/components/Launcher.tsx', 'utf8');
 const screens = await readFile('src/react/screens/PassiveScreens.tsx', 'utf8');
+const command = await readFile('src/spatial/SpatialCommand.tsx', 'utf8');
 const progressComponent = await readFile('.verify-dist/react/components/ProgressStrip.js', 'utf8');
 assert.ok(app.includes('store.persisting && store.mapPersisting && store.outlinePersisting && store.neighborPersisting'), 'AtlasApp passes aggregate persistence state to Home.');
 assert.ok(app.includes('createHashRouter') && app.includes('installNavigationGestures'), 'AtlasApp owns routing and global navigation lifecycle.');
@@ -137,8 +139,15 @@ assert.equal(app.includes('quick-play'), false, 'AtlasApp contains no retired ro
 assert.ok(launcher.includes('playScope') && launcher.includes('region-row__progress'), 'Production Launcher owns full-row scope actions and progress.');
 assert.equal(progressComponent.includes('statLegend'), false, 'The unused statLegend export stays deleted.');
 assert.equal(screens.includes('renderLocationsHome'), false, 'React passive screens contain no legacy renderer.');
-assert.match(atlasTheme, /\.page--tile-index \.continent-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/, 'Continent selection is a single full-width stack.');
-assert.match(atlasTheme, /\.page--tile-index \.continent-row__open\s*\{[^}]*width:\s*100%/, 'The whole continent row is the navigation target.');
-assert.match(atlasTheme, /\.region-row__open\s*\{[^}]*width:\s*100%/, 'The whole region row is the selection target.');
+assert.match(atlasTheme, /\.page--tile-index \.continent-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/, 'Fallback continent selection is a single full-width stack.');
+assert.match(atlasTheme, /\.page--tile-index \.continent-row__open\s*\{[^}]*width:\s*100%/, 'The whole fallback continent row is the navigation target.');
+assert.match(atlasTheme, /\.region-row__open\s*\{[^}]*width:\s*100%/, 'The whole fallback region row is the selection target.');
 assert.equal(styles.includes('.launcher-map'), false, 'Retired launcher-map styling stays removed.');
-console.log('IA verification passed: spatial navigation surface (domains, continents, framed scope with immediate Play/Learn and no launcher beneath), React mode-first fallback Home and launchers, honest unsupported shells, review/exit paths, and responsive layout contracts.');
+assert.match(command, /useForcedColours\(\)/, 'Spatial owns an explicit forced-colours presentation branch.');
+assert.match(command, /forcedColours \? <nav className="spatial-command__fallback-choices"/,
+  'Fallback scope controls mount only while forced colours is active.');
+assert.match(spatial, /\.spatial-command__fallback-choices\s*\{\s*display:\s*none;/,
+  'Fallback scope choices default out of normal Spatial presentation.');
+assert.match(spatial, /@media\s*\(forced-colors:\s*active\)[\s\S]*\.spatial-command__fallback-choices\s*\{[^}]*display:\s*flex;/,
+  'Forced colours lays out the non-WebGL scope controls.');
+console.log('IA verification passed: geography-led Spatial scope choice, one selected-scope progress treatment with immediate Play/Learn, isolated forced-colours and renderer fallbacks, honest unsupported scope truth, review/exit paths, and responsive layout contracts.');

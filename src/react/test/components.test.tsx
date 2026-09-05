@@ -136,23 +136,40 @@ describe('React screen actions', () => {
     expect(screen.getByText('Complete', { exact: true }).textContent).toBe('Complete');
   });
 
-  it('exposes the same earned semantics in the Spatial command controls', () => {
+  it('keeps earned region semantics on the selected Spatial scope without sibling controls', () => {
     const achievements = {
       ...createInitialAchievementState(),
       regionDomainMasteries: [regionDomainMasteryKey('west-africa', 'flags')],
-      completeRegions: ['southern-africa'],
+    };
+    const state = deriveSpatialState({
+      route: { name: 'learning', domain: 'flags', scope: { kind: 'region', id: 'west-africa', label: 'West Africa' } },
+      view: 'scope',
+      achievements,
+    });
+    const { container } = render(<AtlasActionsContext value={actions()}><SpatialCommand state={state} ledgers={ledgers()} achievements={achievements} persisting /></AtlasActionsContext>);
+
+    expect(screen.getByRole('heading', { level: 1, name: /West Africa.*Mastered/i })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Play West Africa' })).toBeTruthy();
+    expect(screen.getByRole('button', { name: 'Learn West Africa' })).toBeTruthy();
+    expect(container.querySelectorAll('.spatial-command__progress')).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: /North Africa/i })).toBeNull();
+    expect(container.querySelector('.spatial-fallback-choice')).toBeNull();
+  });
+
+  it('reserves the selected-continent crest slot and exposes an earned crest accessibly', () => {
+    const achievements = {
+      ...createInitialAchievementState(),
+      completeContinents: ['africa' as const],
     };
     const state = deriveSpatialState({
       route: { name: 'learning', domain: 'flags', scope: { kind: 'continent', id: 'africa', label: 'Africa' } },
       view: 'scope',
       achievements,
     });
-    render(<AtlasActionsContext value={actions()}><SpatialCommand state={state} ledgers={ledgers()} achievements={achievements} persisting /></AtlasActionsContext>);
+    const { container } = render(<AtlasActionsContext value={actions()}><SpatialCommand state={state} ledgers={ledgers()} achievements={achievements} persisting /></AtlasActionsContext>);
 
-    expect(screen.getByRole('button', { name: /West Africa.*Mastered/i }).classList.contains('spatial-chip--mastered')).toBe(true);
-    expect(screen.getByRole('button', { name: /Southern Africa.*complete/i }).classList.contains('spatial-chip--complete')).toBe(true);
-    const unearned = screen.getByRole('button', { name: /North Africa/i });
-    expect(unearned.classList.contains('spatial-chip--mastered')).toBe(false);
-    expect(unearned.classList.contains('spatial-chip--complete')).toBe(false);
+    expect(container.querySelector('.spatial-command__crest-slot')).toBeTruthy();
+    expect(screen.getByRole('img', { name: 'Africa complete, continent crest earned' })).toBeTruthy();
+    expect(screen.queryByText(/continent Mastery/i)).toBeNull();
   });
 });
