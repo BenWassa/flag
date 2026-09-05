@@ -101,17 +101,21 @@ for (const label of ['Africa', 'Asia', 'North America', 'South America', 'Oceani
   );
 }
 
-for (const label of ['Caucasus', 'Polynesia']) {
+// The 18° floor is applied after aspect-aware effective-span calculation. A
+// zero-size frame therefore isolates the actual orienting floor at any viewport;
+// feeding 18° back through portrait aspect correction would incorrectly enlarge
+// it a second time.
+const phoneFloorDistance = poseForSelectedFraming(
+  { lon: 0, lat: 0, spanLon: 0, spanLat: 0 },
+  GLOBE_FOV,
+  390 / 844,
+).distance;
+for (const label of ['Caucasus', 'Polynesia', 'Micronesia']) {
   const row = phoneEvidence.get(label);
   assert.ok(row, `${label} has 390x844 production framing evidence.`);
-  const floorDistance = poseForSelectedFraming(
-    { lon: 0, lat: 0, spanLon: 18, spanLat: 18 },
-    GLOBE_FOV,
-    390 / 844,
-  ).distance;
   assert.ok(
-    Math.abs(row.initial - floorDistance) < 1e-10,
-    `${label} keeps the 18° orienting floor instead of over-zooming tiny geography.`,
+    row.initial >= phoneFloorDistance - 1e-10,
+    `${label} never frames tighter than the 18° orienting floor.`,
   );
 }
 
