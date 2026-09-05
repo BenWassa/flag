@@ -138,7 +138,10 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   const provisional = Math.atan2(y / list.length, x / list.length) / DEG;
 
   /*
-   * The frame is the UNION of what it was given, re-centred on that union.
+   * The frame is the exact UNION of what it was given, re-centred on that union.
+   * Camera distance supplies the breathing room; inflating the geography itself
+   * made selected scopes systematically smaller and also moved #197 label anchor
+   * search away from the same truth the camera was interpreting.
    *
    * Which countries a scope contributes is decided upstream by the continent's
    * declared framing policy — the same `focusExcludeCountryIds` /
@@ -161,22 +164,30 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   return {
     lon: wrapLon(provisional + (westOffset + eastOffset) / 2),
     lat: (south + north) / 2,
-    spanLon: Math.max(0, eastOffset - westOffset) * FRAMING_PADDING,
-    spanLat: Math.max(0, north - south) * FRAMING_PADDING,
+    spanLon: Math.max(0, eastOffset - westOffset),
+    spanLat: Math.max(0, north - south),
   };
 }
 
-/** Breathing room so the framed scope is not edge-to-edge in the viewport. */
-const FRAMING_PADDING = 1.12;
 /** Closest useful frame, in degrees of arc. See `distanceForSpan`. */
 const MINIMUM_FRAMED_SPAN_DEG = 18;
+/** Existing world/general upper bound; selected scopes may pass a tighter one. */
+const DEFAULT_MAXIMUM_FRAMED_SPAN_DEG = 170;
 
 /**
  * Camera distance that frames a span of degrees in a viewport of the given
  * vertical field of view. Derived rather than tuned per scope so a new region
- * needs no hand-authored camera entry.
+ * needs no hand-authored camera entry. Callers may tighten the effective-span
+ * ceiling when the presentation contract has a narrower useful front-facing arc;
+ * ordinary world framing keeps the established 170° default.
  */
-export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: number, aspect: number): number {
+export function distanceForSpan(
+  spanLatDeg: number,
+  spanLonDeg: number,
+  fovDeg: number,
+  aspect: number,
+  maximumSpanDeg = DEFAULT_MAXIMUM_FRAMED_SPAN_DEG,
+): number {
   // Chord subtended on a unit sphere by the larger angular span, with the
   // longitude span foreshortened by the aspect ratio it has to fit into.
   const effective = Math.max(spanLatDeg, (spanLonDeg / Math.max(aspect, 0.35)) * 0.75);
@@ -185,7 +196,8 @@ export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: 
   // get a screen of empty ocean with no orienting geography around it. The floor
   // is roughly 2,000 km, which is enough to show the neighbours that make a
   // small scope legible.
-  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), 170) * DEG;
+  const maximum = Math.max(MINIMUM_FRAMED_SPAN_DEG, maximumSpanDeg);
+  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), maximum) * DEG;
   const chord = 2 * Math.sin(angle / 2);
   const fov = fovDeg * DEG;
   // 1.0 is the sphere radius; the camera must clear the surface as well as fit
@@ -253,8 +265,7 @@ export const ASSIST_RADIUS_PX = 24;
  *
  * The half-width is measured as twice area over perimeter — which is exactly the
  * width of a long thin shape and the radius of a round one — rather than from
- * the bounding box, because a box is a poor proxy for how much room a country
- * actually has. Italy's box is nine degrees across while the peninsula is nowhere
+ * the bounding box, because a box is a poor proxy for how much room the country has. Italy's box is nine degrees across while the peninsula is nowhere
  * near that wide, and a box-derived bound let San Marino and Vatican City claim
  * discs big enough to cover most of it.
  */

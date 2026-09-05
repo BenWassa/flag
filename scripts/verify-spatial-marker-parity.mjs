@@ -15,7 +15,6 @@ import {
   ASSIST_THRESHOLD_PX,
   DEG,
   GeographyIndex,
-  distanceForSpan,
   framingFor,
   mergeForPicking,
   touchGeometryForCountry,
@@ -25,6 +24,7 @@ import { decodeGlobeAsset } from '../.verify-dist/spatial/globe-asset.js';
 import {
   countryIdsForScope,
   framingBoxes,
+  poseForSelectedFraming,
 } from '../.verify-dist/spatial/scope-geography.js';
 import { scopeMarkersFor } from '../.verify-dist/spatial/scope-markers.js';
 
@@ -56,12 +56,11 @@ for (const continent of CONTINENTS) {
     const ids = countryIdsForScope(scope);
     const framing = framingFor(framingBoxes(world, ids));
     if (!framing) continue;
-    const distance = distanceForSpan(
-      framing.spanLat,
-      framing.spanLon,
+    const distance = poseForSelectedFraming(
+      framing,
       GLOBE_FOV,
       STAGE.width / STAGE.height,
-    );
+    ).distance;
     const scale = { degreesPerPixel: degreesPerPixel(distance) };
     const markers = scopeMarkersFor(
       ids,

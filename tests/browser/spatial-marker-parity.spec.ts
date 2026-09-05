@@ -13,7 +13,7 @@ import { decodeGlobeAsset, type GlobeAsset } from '../../src/spatial/globe-asset
 import {
   countryIdsForScope,
   framingBoxes,
-  poseForFraming,
+  poseForSelectedFraming,
   type Pose,
 } from '../../src/spatial/scope-geography.js';
 
@@ -50,7 +50,7 @@ const CENTER_CASES: readonly MarkerCase[] = [
 function initialPose(continent: MarkerCase['continent'], aspect: number): Pose {
   const config = getMapContinentConfig(continent)!;
   const framing = framingFor(framingBoxes(world, countryIdsForScope(config.scope)))!;
-  return poseForFraming(framing, GLOBE_FOV, aspect);
+  return poseForSelectedFraming(framing, GLOBE_FOV, aspect);
 }
 
 function touchScale(pose: Pose, height: number) {
