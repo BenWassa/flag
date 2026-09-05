@@ -84,6 +84,43 @@ export function poseForFraming(framing: Framing, fovDeg: number, aspect: number)
 }
 
 /**
+ * Selected continents/regions only need the useful front-facing globe arc.
+ * Geography beyond about ±60° from the target is strongly limb-foreshortened;
+ * backing away to fit more of it mainly shrinks useful geography and #197's
+ * projected labels. World-level selection deliberately keeps its older 170°
+ * distance contract above, and Home has a complete-sphere fit below.
+ */
+const SELECTED_SCOPE_MAXIMUM_FRAMED_SPAN_DEG = 120;
+
+export function poseForSelectedFraming(framing: Framing, fovDeg: number, aspect: number): Pose {
+  return {
+    lon: framing.lon,
+    lat: framing.lat,
+    distance: distanceForSpan(
+      framing.spanLat,
+      framing.spanLon,
+      fovDeg,
+      aspect,
+      SELECTED_SCOPE_MAXIMUM_FRAMED_SPAN_DEG,
+    ),
+  };
+}
+
+/**
+ * Selected scopes may retreat modestly beyond their initial frame, but never to
+ * the old global-marble distance. Scale the camera's CLEARANCE above the unit
+ * sphere rather than its absolute distance: doing so keeps the same 80% minimum
+ * apparent scale for a small island group and a continent without any per-scope
+ * table. Home/world retain their separate whole-globe/global behaviour.
+ */
+const FRAMED_SCOPE_MAX_CLEARANCE_MULTIPLIER = 1.25;
+
+export function maximumDistanceForFramedScope(initialDistance: number): number {
+  const clearance = Math.max(0, initialDistance - 1);
+  return 1 + clearance * FRAMED_SCOPE_MAX_CLEARANCE_MULTIPLIER;
+}
+
+/**
  * Issue #187 — Home promises the whole globe, not merely a world-level frame.
  *
  * Scope framing is intentionally based on geographic spans and is allowed to

@@ -21,7 +21,9 @@ import {
   continentForCountry,
   framingBoxes,
   countryIdsForScope,
+  maximumDistanceForFramedScope,
   poseForFraming,
+  poseForSelectedFraming,
   poseForWholeGlobe,
   WORLD_FRAMING,
   type Pose,
@@ -94,7 +96,22 @@ export async function createStageController(
     if (next.navigation === 'domains') return poseForWholeGlobe(GLOBE_FOV, scene.aspect);
     const boxes = next.framedScope ? framingBoxes(world, countryIdsForScope(next.framedScope)) : [];
     const framing = framingFor(boxes) ?? WORLD_FRAMING;
-    return poseForFraming(framing, GLOBE_FOV, scene.aspect);
+    return next.framedScope
+      ? poseForSelectedFraming(framing, GLOBE_FOV, scene.aspect)
+      : poseForFraming(framing, GLOBE_FOV, scene.aspect);
+  }
+
+  /**
+   * Zoom-out is a property of the current framing, never of a named continent.
+   * A selected scope may retreat only 25% farther from the sphere than its
+   * initial pose; world-level navigation keeps the accepted global ceiling and
+   * Home can always recover its complete-sphere fit on narrow portrait.
+   */
+  function maximumDistanceFor(next: SpatialState): number {
+    const initialDistance = poseFor(next).distance;
+    if (next.navigation === 'domains') return Math.max(MAX_DISTANCE, initialDistance);
+    if (!next.framedScope) return MAX_DISTANCE;
+    return Math.min(MAX_DISTANCE, maximumDistanceForFramedScope(initialDistance));
   }
 
   const worldById = new Map(world.countries.map((country) => [country.id, country]));
@@ -236,6 +253,9 @@ export async function createStageController(
     {
       apply: (pose) => {
         scene.setCamera(pose.lon, pose.lat, pose.distance);
+        // Read-only production evidence for camera-contract browser tests. It is
+        // not application state and cannot influence routing, picking or labels.
+        container.dataset.cameraDistance = pose.distance.toFixed(6);
         // Names ride the camera. Reprojecting here rather than on a frame loop
         // keeps the layer exactly as idle as the renderer already is.
         labels?.reposition();
@@ -303,13 +323,7 @@ export async function createStageController(
     },
     onDolly: (factor) => {
       const { lon, lat, distance } = director.pose;
-      // Ordinary spatial navigation retains the accepted 4.2 maximum. Home may
-      // start farther back solely so the whole sphere fits a narrow portrait
-      // viewport; letting the learner zoom back out to that fit avoids a sudden
-      // jump inward after the first pinch without creating a new global limit.
-      const maximumDistance = state?.navigation === 'domains'
-        ? Math.max(MAX_DISTANCE, poseFor(state).distance)
-        : MAX_DISTANCE;
+      const maximumDistance = state ? maximumDistanceFor(state) : MAX_DISTANCE;
       director.nudge({ lon, lat, distance: Math.max(MIN_DISTANCE, Math.min(maximumDistance, distance * factor)) });
     },
   });

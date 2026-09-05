@@ -18,7 +18,6 @@ import {
   ASSIST_THRESHOLD_PX,
   DEG,
   GeographyIndex,
-  distanceForSpan,
   framingFor,
   mergeForPicking,
 } from '../.verify-dist/spatial/geo.js';
@@ -27,6 +26,7 @@ import {
   WORLD_FRAMING,
   countryIdsForScope,
   framingBoxes,
+  poseForSelectedFraming,
 } from '../.verify-dist/spatial/scope-geography.js';
 
 /** Matches `GLOBE_FOV` in the renderer, which the verifier must not import. */
@@ -65,7 +65,7 @@ for (const continent of CONTINENTS) {
     const framing = framingFor(framingBoxes(world, ids)) ?? WORLD_FRAMING;
     const scale = {
       degreesPerPixel: degreesPerPixel(
-        distanceForSpan(framing.spanLat, framing.spanLon, GLOBE_FOV, STAGE.width / STAGE.height),
+        poseForSelectedFraming(framing, GLOBE_FOV, STAGE.width / STAGE.height).distance,
       ),
     };
     frames.push({ continent: continent.id, scope, ids, index, byId, scale });
