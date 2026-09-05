@@ -2,6 +2,14 @@ import { type GeographyIndex, type TouchScale } from './geo.js';
 import type { GlobeCountry } from './globe-asset.js';
 
 /**
+ * Scope markers sit just above the unit globe so their halo does not z-fight
+ * with land. Picking still raycasts the unit sphere, so #200 uses this exact
+ * rendered radius when measuring a tap against the visible marker in screen
+ * space. Keep it aligned with `globe-scene.ts`'s marker point radius.
+ */
+export const SCOPE_MARKER_RADIUS = 1.008;
+
+/**
  * A country narrower than this fraction of the framed span is unreadable at that
  * frame and may receive a scope marker. Roughly six pixels on a 400 px stage.
  *
