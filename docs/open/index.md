@@ -6,6 +6,8 @@ GitHub Issues are the canonical task tracker. Closed implementation/design recor
 
 Spatial Atlas is the accepted/default navigation presentation. The automated hardening programme, #186/#187 Home/focus corrections and #191 automatic PWA update lifecycle are merged and deployed. Current `main` must preserve the typed router, learning/evidence/mastery semantics, canonical geography, offline/PWA behaviour and British English unless a future issue explicitly changes one of those contracts.
 
+Geographic detail is progressively disclosed (#197): world navigation reads as continents, a framed continent reveals its learner-facing areas, and country boundaries appear only where the activity is about countries. Continent and area shells are derived from the canonical country geometry by cancelling shared edges — there is no second geography source — and each selectable scope is named on the Earth by a real DOM control. See [`../architecture/spatial-atlas.md`](../architecture/spatial-atlas.md) and `DESIGN.md`.
+
 Authoritative PWA update architecture:
 
 - [`../architecture/pwa-update-lifecycle.md`](../architecture/pwa-update-lifecycle.md)

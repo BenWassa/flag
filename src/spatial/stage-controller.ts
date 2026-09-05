@@ -9,13 +9,16 @@
  * create/dispose pair rather than risking a half-torn-down GL context.
  */
 
+import { CONTINENTS } from '../data/continents.js';
 import { loadGlobeAsset } from '../data/globe/index.js';
-import type { ContinentId } from '../domain/models.js';
+import type { ContinentId, StudyScope } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
+import { scopeAnchor } from './disclosure.js';
 import { DEG, framingFor, GeographyIndex, mergeForPicking, type TouchScale } from './geo.js';
 import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
+  continentForCountry,
   framingBoxes,
   countryIdsForScope,
   poseForFraming,
@@ -23,11 +26,13 @@ import {
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
-import type { SpatialState } from './spatial-state.js';
+import { createScopeLabelLayer, type ScopeLabelLayer, type ScopeLabelTarget } from './scope-labels.js';
+import { regionScopeByCountry, type SpatialLabel, type SpatialState } from './spatial-state.js';
 import {
   createGlobeScene,
   GLOBE_FOV,
   WebGLUnavailableError,
+  type BoundaryPlan,
   type GlobeHandle,
 } from './renderer/globe-scene.js';
 
@@ -44,6 +49,8 @@ const MARKER_SIZE_FRACTION = 0.015;
 
 export interface StageControllerOptions {
   onSelectCountry(countryId: string): void;
+  /** A name written on the geography was chosen. Same action as a tap (#197). */
+  onSelectScope(scopeId: string): void;
   prefersReducedMotion(): boolean;
 }
 
@@ -115,10 +122,124 @@ export async function createStageController(
     return points;
   }
 
+  /**
+   * Issue #197 — which political boundaries the geography draws, derived from
+   * the same curriculum tables the launcher and the router read.
+   *
+   * The scene is handed a grouping, never a taxonomy. World level groups every
+   * country by its continent, so the Earth reads as continents rather than as a
+   * country tessellation; a framed continent regroups its OWN countries by the
+   * areas that domain offers, so areas divide and countries do not. Country
+   * detail is a grouping of one country each, which is what the results frame —
+   * the round is over and it was about those countries — asks for.
+   */
+  const CONTINENT_GROUPS: ReadonlyMap<string, string> = new Map(
+    world.countries
+      .map((country) => [country.id, continentForCountry(country.id)] as const)
+      .filter((pair): pair is readonly [string, ContinentId] => pair[1] !== null),
+  );
+  const NO_GROUPS: ReadonlyMap<string, string> = new Map();
+  const NO_EMPHASIS: ReadonlySet<string> = new Set();
+
+  function boundaryPlanFor(next: SpatialState): BoundaryPlan {
+    if (next.boundaries === 'country') {
+      return { key: 'country', groupOf: NO_GROUPS, emphasis: NO_EMPHASIS, locators: true };
+    }
+    if (next.boundaries === 'continent' || !next.detail || !next.domain) {
+      return { key: 'continent', groupOf: CONTINENT_GROUPS, emphasis: NO_EMPHASIS, locators: false };
+    }
+    const groupOf = new Map(CONTINENT_GROUPS);
+    for (const [countryId, regionId] of regionScopeByCountry(next.detail, next.domain)) {
+      // A learner-facing area may legitimately reach across a continent boundary
+      // — Middle East holds Egypt — but a tap there still selects Africa, so the
+      // shell must not claim geography its own level cannot select either.
+      if (continentForCountry(countryId) === next.detail) groupOf.set(countryId, regionId);
+    }
+    const emphasis = new Set<string>();
+    const framed = next.framedScope;
+    if (next.mode === 'focus' && framed?.kind === 'region' && framed.id) emphasis.add(framed.id);
+    return {
+      key: `region:${next.detail}:${next.domain}:${[...emphasis].join(',')}`,
+      groupOf,
+      emphasis,
+      locators: false,
+    };
+  }
+
+  /**
+   * Where each name is written. Cached: an anchor depends only on canonical
+   * geometry and the scope's own declared framing, never on the camera, so it
+   * cannot drift as the learner rotates or zooms.
+   */
+  const anchors = new Map<string, readonly [number, number]>();
+
+  function anchorFor(label: SpatialLabel, level: 'continent' | 'region'): readonly [number, number] {
+    const cached = anchors.get(label.scopeId);
+    if (cached) return cached;
+    const scope: StudyScope = { kind: level, id: label.scopeId, label: label.label };
+    const ids = countryIdsForScope(scope);
+    const framing = framingFor(framingBoxes(world, ids)) ?? WORLD_FRAMING;
+    const polygons: number[][][][] = [];
+    for (const id of ids) {
+      const country = worldById.get(id);
+      if (country?.polygons.length) polygons.push(...country.polygons);
+    }
+    const anchor = scopeAnchor(polygons, framing);
+    anchors.set(label.scopeId, anchor);
+    return anchor;
+  }
+
+  /**
+   * Earned state reaches the projected control in words, exactly as it reaches
+   * the command surface's chip. The mark beside the name is decoration over
+   * something already said.
+   */
+  function accessibleName(label: SpatialLabel): string {
+    const notes = [
+      label.available ? null : 'coming soon',
+      label.status === 'complete' ? 'complete' : label.status === 'mastered' ? 'Mastered' : null,
+    ].filter((note): note is string => note !== null);
+    return [label.label, ...notes].join(', ');
+  }
+
+  /**
+   * What this set of names is, for assistive technology.
+   *
+   * It says "on the globe" because the command surface offers the same scopes as
+   * its own group: two identically named lists would be indistinguishable to a
+   * screen reader, and the difference between them — one is written on the
+   * geography, one carries each scope's progress — is worth a word.
+   */
+  function labelGroupNameFor(next: SpatialState): string | null {
+    if (next.labelLevel === 'continent') return 'Continents on the globe';
+    if (next.labelLevel !== 'region') return null;
+    const continent = CONTINENTS.find((item) => item.id === next.detail);
+    return continent ? `Areas of ${continent.name} on the globe` : 'Areas on the globe';
+  }
+
+  function labelTargetsFor(next: SpatialState): ScopeLabelTarget[] {
+    const level = next.labelLevel;
+    if (!level) return [];
+    return next.labels.map((label) => ({
+      scopeId: label.scopeId,
+      label: label.label,
+      name: accessibleName(label),
+      status: label.status,
+      current: label.current,
+      available: label.available,
+      anchor: anchorFor(label, level),
+    }));
+  }
+
   const director: CameraDirector = createCameraDirector(
     poseForFraming(WORLD_FRAMING, GLOBE_FOV, scene.aspect),
     {
-      apply: (pose) => scene.setCamera(pose.lon, pose.lat, pose.distance),
+      apply: (pose) => {
+        scene.setCamera(pose.lon, pose.lat, pose.distance);
+        // Names ride the camera. Reprojecting here rather than on a frame loop
+        // keeps the layer exactly as idle as the renderer already is.
+        labels?.reposition();
+      },
       prefersReducedMotion: options.prefersReducedMotion,
     },
   );
@@ -144,9 +265,29 @@ export async function createStageController(
     return pickingIndex.resolve(hit.lon, hit.lat, touchScale());
   }
 
+  /**
+   * A press that began on a projected name belongs to that control. Without
+   * this the same gesture would both activate the button and pick whatever
+   * geography happens to lie under the word.
+   */
+  let pressedOnLabel = false;
+  const onPointerDownCapture = (event: PointerEvent) => {
+    const target = event.target;
+    pressedOnLabel = target instanceof Element && target.closest('.spatial-scopes') !== null;
+  };
+  container.addEventListener('pointerdown', onPointerDownCapture, true);
+
+  const labels: ScopeLabelLayer = createScopeLabelLayer(container, {
+    onSelect: (scopeId) => options.onSelectScope(scopeId),
+    // Reaching a name on the far side by keyboard turns the planet to it. This
+    // is a camera nudge like a drag, never a route change.
+    onReveal: (lon, lat) => director.travelTo({ lon, lat, distance: director.pose.distance }),
+    project: (lon, lat) => scene.project(lon, lat),
+  });
+
   const removeGestures = installGestures(container, {
     onTap: (x, y) => {
-      if (!state || state.picking === 'none') return;
+      if (!state || state.picking === 'none' || pressedOnLabel) return;
       const countryId = resolveCountry(x, y);
       if (countryId) options.onSelectCountry(countryId);
     },
@@ -182,6 +323,7 @@ export async function createStageController(
     if (!visible) return;
     scene.resize();
     if (state) director.retarget(poseFor(state));
+    labels.reposition();
   });
   observer.observe(container);
 
@@ -222,8 +364,10 @@ export async function createStageController(
       if (yielded) return;
 
       void mountDetail(next.detail);
+      scene.setBoundaries(boundaryPlanFor(next));
       scene.setCountryStates(next.countryStates);
       scene.setScopeMarkers(markersFor(next));
+      labels.set(labelGroupNameFor(next), labelTargetsFor(next));
       // Cold loads and deep links initialise AT the destination rather than
       // replaying the ancestor chain as a cutscene.
       director.travelTo(poseFor(next), firstPaint);
@@ -235,6 +379,8 @@ export async function createStageController(
       director.stop();
       observer.disconnect();
       removeGestures();
+      container.removeEventListener('pointerdown', onPointerDownCapture, true);
+      labels.destroy();
       scene.dispose();
     },
   };

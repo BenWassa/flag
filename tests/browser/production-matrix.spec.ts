@@ -27,7 +27,9 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
     await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    await page.getByRole('button', { name: 'Africa' }).click();
+    // Africa is also named on the globe (#197); this matrix covers the command
+    // surface, so it names that control rather than either at random.
+    await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
     await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
   }
@@ -36,7 +38,7 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
 test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fallback', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flags' }).click();
-  await page.getByRole('button', { name: 'Africa' }).click();
+  await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
   await page.getByRole('button', { name: 'Learn Africa' }).click();
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
@@ -66,7 +68,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await page.goto('/#/locations');
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
 
-  const northAmerica = page.getByRole('button', { name: 'North America' });
+  const northAmerica = page.locator('.spatial-chip', { hasText: 'North America' });
   await expect(northAmerica).toBeVisible();
   await northAmerica.click();
   await expect(page).toHaveURL(/#\/locations\/north-america$/);
@@ -90,7 +92,7 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await expect(page.locator('.continent-row--shell')).toHaveCount(0);
   await expect(page.getByText('Coming soon')).toHaveCount(0);
 
-  const oceania = page.getByRole('button', { name: 'Oceania' });
+  const oceania = page.locator('.spatial-chip', { hasText: 'Oceania' });
   await expect(oceania).toBeVisible();
   await oceania.click();
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
