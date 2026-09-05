@@ -86,6 +86,14 @@ function countryIdForName(name: string): string {
   return country.id;
 }
 
+function expectNoVisibleStroke(stroke: string, label?: string) {
+  // Chromium may expose SVG's initial `stroke: none` as either the literal
+  // `none` or an empty computed value depending on how the property is supplied.
+  // Both mean that no exterior stroke is painted; any actual stroke colour still
+  // fails this contract.
+  expect(stroke === '' || stroke === 'none', label).toBe(true);
+}
+
 async function openPlay(page: Page, fixture: FeedbackCase) {
   await page.setViewportSize(fixture.viewport);
   await page.goto(`/#/locations/${fixture.continent}/${fixture.region}`);
@@ -177,7 +185,7 @@ for (const fixture of CASES) {
 
     expect(inspection.semantic.length).toBeGreaterThan(0);
     for (const mark of inspection.semantic) {
-      expect(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`).toBe('none');
+      expectNoVisibleStroke(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`);
     }
     for (const mark of inspection.helperMarks) {
       expect(
@@ -217,7 +225,7 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
   for (const mark of inspection.semantic) {
-    expect(mark.stroke).toBe('none');
+    expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
   expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
