@@ -6,30 +6,128 @@ on:
       - issue-200-spatial-marker-hit-parity
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  merge-diagnostic:
+  merge-current-main:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.sha }}
           fetch-depth: 0
-      - name: Materialise merge with current main
+      - name: Merge current main semantically
         shell: bash
         run: |
-          git config user.name "Flag Atlas merge diagnostic"
+          set -euo pipefail
+          git config user.name "Flag Atlas integration"
           git config user.email "noreply@example.invalid"
           git fetch origin main
           git merge --no-commit --no-ff origin/main || true
-          git status --short > merge-status.txt
-          git diff --name-only --diff-filter=U > merge-conflicts.txt
-      - name: Archive merge workspace
-        shell: bash
-        run: tar --exclude=.git --exclude=issue-200-merge-workspace.tar.gz -czf /tmp/issue-200-merge-workspace.tar.gz .
-      - uses: actions/upload-artifact@v4
-        with:
-          name: issue-200-merge-workspace
-          path: /tmp/issue-200-merge-workspace.tar.gz
-          if-no-files-found: error
+
+          conflicts="$(git diff --name-only --diff-filter=U | sort)"
+          expected=$'package.json\nsrc/spatial/stage-controller.ts'
+          if [[ "$conflicts" != "$expected" ]]; then
+            printf 'Unexpected merge conflicts:\n%s\n' "$conflicts"
+            exit 1
+          fi
+
+          # Preserve current-main #199 verification and add #200's generated parity audit.
+          git checkout --theirs package.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('package.json')
+          data = json.loads(path.read_text())
+          needle = 'node scripts/verify-spatial-touch.mjs'
+          addition = 'node scripts/verify-spatial-marker-parity.mjs'
+          verify = data['scripts']['verify']
+          if 'verify-spatial-framing.mjs' not in verify:
+              raise SystemExit('missing #199 framing verifier after semantic resolution')
+          if addition not in verify:
+              verify = verify.replace(f'{needle} && npm run verify:clean', f'{needle} && {addition} && npm run verify:clean')
+          data['scripts']['verify'] = verify
+          path.write_text(json.dumps(data, indent=2) + '\n')
+          PY
+
+          # Git's auto-merge already combines #199 selected framing with #200 marker logic;
+          # resolve only the two overlapping behavioural blocks, retaining both contracts.
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('src/spatial/stage-controller.ts')
+          text = path.read_text()
+          first = '''<<<<<<< HEAD
+                  syncMarkers();
+          =======
+                  // Read-only production evidence for camera-contract browser tests. It is
+                  // not application state and cannot influence routing, picking or labels.
+                  container.dataset.cameraDistance = pose.distance.toFixed(6);
+                  // Names ride the camera. Reprojecting here rather than on a frame loop
+                  // keeps the layer exactly as idle as the renderer already is.
+          >>>>>>> origin/main
+                  labels?.reposition();'''
+          combined = '''        // Read-only production evidence for camera-contract browser tests. It is
+                  // not application state and cannot influence routing, picking or labels.
+                  container.dataset.cameraDistance = pose.distance.toFixed(6);
+                  syncMarkers();
+                  // Names ride the camera. Reprojecting here rather than on a frame loop
+                  // keeps the layer exactly as idle as the renderer already is.
+                  labels?.reposition();'''
+          second = '''<<<<<<< HEAD
+                const maximumDistance = state?.navigation === 'domains'
+                  ? Math.max(MAX_DISTANCE, poseFor(state).distance)
+                  : MAX_DISTANCE;
+          =======
+                const maximumDistance = state ? maximumDistanceFor(state) : MAX_DISTANCE;
+          >>>>>>> origin/main'''
+          if first not in text or second not in text:
+              raise SystemExit('expected stage conflict blocks changed')
+          text = text.replace(first, combined).replace(second, '      const maximumDistance = state ? maximumDistanceFor(state) : MAX_DISTANCE;')
+          if any(marker in text for marker in ('<<<<<<<', '=======', '>>>>>>>')):
+              raise SystemExit('unresolved conflict marker remains')
+          for required in ('poseForSelectedFraming', 'maximumDistanceForFramedScope', 'screenDistanceToAnchorPx', 'syncMarkers()', 'cameraDistance'):
+              if required not in text:
+                  raise SystemExit(f'missing integrated stage contract: {required}')
+          path.write_text(text)
+          PY
+
+          # #200 acceptance must model the same tighter selected-scope frame #199 ships.
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/verify-spatial-marker-parity.mjs')
+          text = path.read_text()
+          text = text.replace('  distanceForSpan,\n', '')
+          if 'poseForSelectedFraming,' not in text:
+              text = text.replace('  framingBoxes,\n', '  framingBoxes,\n  poseForSelectedFraming,\n')
+          old = '''    const distance = distanceForSpan(
+                framing.spanLat,
+                framing.spanLon,
+                GLOBE_FOV,
+                STAGE.width / STAGE.height,
+              );'''
+          new = '''    const distance = poseForSelectedFraming(
+                framing,
+                GLOBE_FOV,
+                STAGE.width / STAGE.height,
+              ).distance;'''
+          if old not in text:
+              raise SystemExit('marker verifier framing call changed unexpectedly')
+          path.write_text(text.replace(old, new))
+
+          path = Path('tests/browser/spatial-marker-parity.spec.ts')
+          text = path.read_text()
+          if 'poseForFraming,' not in text or 'return poseForFraming(framing, GLOBE_FOV, aspect);' not in text:
+              raise SystemExit('browser marker framing call changed unexpectedly')
+          text = text.replace('poseForFraming,', 'poseForSelectedFraming,')
+          text = text.replace('return poseForFraming(framing, GLOBE_FOV, aspect);', 'return poseForSelectedFraming(framing, GLOBE_FOV, aspect);')
+          path.write_text(text)
+          PY
+
+          git rm .github/workflows/issue-200-merge-diagnostic.yml
+          git add package.json src/spatial/stage-controller.ts scripts/verify-spatial-marker-parity.mjs tests/browser/spatial-marker-parity.spec.ts
+          test -z "$(git diff --name-only --diff-filter=U)"
+          git diff --check --cached
+          node --check scripts/verify-spatial-marker-parity.mjs
+          node -e "JSON.parse(require('fs').readFileSync('package.json','utf8'))"
+          git commit -m "Merge current main into #200 marker parity"
+          git push origin HEAD:issue-200-spatial-marker-hit-parity
