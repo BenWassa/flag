@@ -98,6 +98,8 @@ Picking geometry is not display geometry. Identity is resolved against canonical
 
 Tiny geography can receive an invisible interaction envelope derived from canonical geometry and camera scale. Nothing larger is drawn merely to satisfy touch targeting; the envelope is stable, answer-independent and retires as the learner zooms in.
 
+A visible tiny-country scope marker is a presentation of that same practical-touch contract, not a second targeting system. Marker identity and anchor come from the current `GeographyIndex` after the mounted detail LOD has been merged with world geography. A marker is drawn only while that exact country is currently eligible for practical assistance, and marker inventory is recalculated whenever camera scale or the mounted LOD changes. Consequently a visible marker cannot remain after its assisted target has retired on zoom, nor keep a world-LOD anchor while picking has moved to a detail-LOD anchor.
+
 Precedence preserves truthful ownership:
 
 1. a tiny country owns its own land;
@@ -105,7 +107,7 @@ Precedence preserves truthful ownership:
 3. assistance reaching toward a neighbour is bounded so an aimable neighbour retains practical ownership;
 4. otherwise the containing polygon wins normally.
 
-`scripts/verify-spatial-touch.mjs` and spatial geo tests hold this contract.
+`scripts/verify-spatial-touch.mjs`, `scripts/verify-spatial-marker-parity.mjs` and spatial geo/marker tests hold this contract. Exact-production browser coverage additionally exercises visible marker centres, practical-envelope edges, zoom/rotation and gesture ownership.
 
 ## Pointer ownership
 
@@ -131,5 +133,6 @@ The spatial stack is lazy-loaded. Core bootstrap/world assets follow the accepte
 - #119 — Spatial exploration, renderer decision, spherical geography, interaction contracts and accepted candidate. Key records include [`../closed/issue-119-spatial-atlas-moonshot.md`](../closed/issue-119-spatial-atlas-moonshot.md), [`../closed/issue-119-spatial-interaction-contract.md`](../closed/issue-119-spatial-interaction-contract.md), [`../closed/issue-119-spherical-geography-contract.md`](../closed/issue-119-spherical-geography-contract.md) and [`../closed/issue-119-renderer-decision.md`](../closed/issue-119-renderer-decision.md).
 - #166 — production cutover and tiny-geography picking hardening: [`../closed/issue-166-spatial-production-cutover.md`](../closed/issue-166-spatial-production-cutover.md).
 - #197 — progressive continent → region → country disclosure and names written on the Earth.
+- #200 — visible tiny-country markers and practical touch targets share current-LOD identity/anchor and camera-scale eligibility.
 
 See [`../history.md`](../history.md) for the broader project lineage.
