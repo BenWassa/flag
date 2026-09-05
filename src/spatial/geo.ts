@@ -264,6 +264,13 @@ export const ASSIST_INTRUSION_SHARE = 0.5;
 export interface TouchScale {
   /** Degrees of arc per CSS pixel at the current camera distance. */
   degreesPerPixel: number;
+  /**
+   * Exact CSS-pixel distance from the current tap to this anchor's VISIBLE
+   * rendered marker projection. Return null when that marker point is offscreen
+   * or occluded by the globe. Omitted in pure/generated checks, which retain the
+   * established angular fallback.
+   */
+  screenDistanceToAnchorPx?: (anchor: readonly [number, number]) => number | null;
 }
 
 export interface CountryTouchGeometry {
@@ -413,9 +420,12 @@ export class GeographyIndex {
    *   1. a speck always owns its own land outright;
    *   2. otherwise every speck whose envelope covers the point competes, and the
    *      nearest anchor wins, ties broken by smaller span then by ISO3, so
-   *      overlapping open-water envelopes resolve deterministically. An envelope
-   *      reaching onto another country's land is bounded by that country's own
-   *      room, so it can never cover a neighbour over;
+   *      overlapping open-water envelopes resolve deterministically. When a
+   *      rendered screen metric is supplied, the practical 24 px radius is
+   *      measured from the visible marker itself rather than approximated from
+   *      the unit-sphere ray hit. An envelope reaching onto another country's
+   *      land remains bounded by that country's own room, so exact screen-space
+   *      targeting cannot cover a neighbour over;
    *   3. with no such candidate, the containing polygon wins unchanged.
    *
    * This is what #117's "real polygons beat assisted surfaces" means once the
@@ -439,14 +449,16 @@ export class GeographyIndex {
     // Rule 1. A speck owns its own land outright — nothing may take it.
     if (standing && standing.spanDeg < threshold) return contained;
 
-    // Rule 2's bound: over water an envelope keeps its full radius; over land it
-    // reaches no further than the country beneath it can spare.
-    const radius = standing
+    // Rule 2's geographic bound: over water an envelope has no competing land
+    // to protect; over land it reaches no further than the country beneath it
+    // can spare. The exact screen metric below never relaxes this land bound.
+    const geographicRadius = standing
       ? Math.min(scale * ASSIST_RADIUS_PX, standing.roomDeg * ASSIST_INTRUSION_SHARE)
       : scale * ASSIST_RADIUS_PX;
     // Longitude degrees shrink with latitude; without the cosine a Pacific
     // envelope would claim a band far wider than it looks on screen.
     const lonScale = Math.cos(latDeg * DEG);
+    const screenDistance = touch?.screenDistanceToAnchorPx;
 
     let best: Envelope | null = null;
     let bestDistance = Infinity;
@@ -454,14 +466,30 @@ export class GeographyIndex {
       if (envelope.spanDeg >= threshold) continue;
       const dLat = latDeg - envelope.anchor[1];
       const dLon = wrapLon(lon - envelope.anchor[0]) * lonScale;
-      const distance = Math.hypot(dLat, dLon);
-      if (distance > radius || distance > bestDistance) continue;
-      if (distance === bestDistance && best) {
+      const geographicDistance = Math.hypot(dLat, dLon);
+
+      let candidateDistance: number;
+      if (screenDistance) {
+        const pixels = screenDistance(envelope.anchor);
+        if (pixels === null || pixels > ASSIST_RADIUS_PX) continue;
+        // Real-land precedence is still protected in geographic space. Over
+        // open water the visible marker's exact 24 px disc is authoritative,
+        // which fixes perspective/parallax drift between r=1.008 markers and
+        // the unit-sphere point returned by the raycaster.
+        if (standing && geographicDistance > geographicRadius) continue;
+        candidateDistance = pixels;
+      } else {
+        if (geographicDistance > geographicRadius) continue;
+        candidateDistance = geographicDistance;
+      }
+
+      if (candidateDistance > bestDistance) continue;
+      if (candidateDistance === bestDistance && best) {
         if (envelope.spanDeg > best.spanDeg) continue;
         if (envelope.spanDeg === best.spanDeg && envelope.id >= best.id) continue;
       }
       best = envelope;
-      bestDistance = distance;
+      bestDistance = candidateDistance;
     }
     return best?.id ?? contained;
   }
