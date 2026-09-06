@@ -32,9 +32,6 @@ const caboVerde = asset.countries.find((item) => item.countryId === 'CPV');
 assert.ok(caboVerde?.locator, 'Cabo Verde remains a single island dot target.');
 const cpvHtml = renderMapQuiz(asset, buildMapSession(asset, 'learn', 'cpv-dot-edge', ['CPV']), null);
 const cpvGroup = cpvHtml.match(/<g class="map-country[^"]*"[^>]*data-id="CPV"[\s\S]*?<\/g>/)?.[0] ?? '';
-// #117 moved assist discs into their own layer beneath the country shapes, so
-// the touch surface is asserted by the answer it resolves rather than by which
-// group it sits in.
 assert.match(
   cpvHtml,
   /<g class="map-assist-hits">[\s\S]*data-id="CPV"><circle class="map-country__locator-hit"/,
@@ -42,43 +39,55 @@ assert.match(
 );
 assert.ok(!cpvGroup.includes('map-country__callout-line'), 'Cabo Verde itself does not duplicate the dot with a line/callout target.');
 
-// Play feedback is target-neutral until the tap, then explicit in the same render.
+// #202: Play stays target-neutral through wrong guesses one and two. The same
+// map remains interactive and only the selected wrong geometry is transiently
+// marked. Resolution colour appears only when the retrieval actually resolves.
 let session = buildMapSession(asset, 'test', 'explicit-play-feedback', ['GHA', 'MLI']);
 const firstTarget = session.countryIds[0];
 const nextTarget = session.countryIds[1];
 assert.ok(firstTarget && nextTarget && firstTarget !== nextTarget);
 
-const progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
+let progress = createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS);
 const before = renderMapQuiz(asset, session, null);
 assert.ok(!before.includes('answer-feedback--correct') && !before.includes('answer-feedback--wrong'), 'Unanswered Play does not leak correctness.');
 assert.ok(!before.includes('map-country--current-correct') && !before.includes('map-country--current-wrong'), 'Unanswered Play has no outcome map styling.');
 
 const wrong = applyMapGuess(session, progress, nextTarget, 500);
 session = wrong.session;
-const immediateWrong = renderMapQuiz(asset, session, null);
-assert.ok(immediateWrong.includes('answer-feedback--wrong'), 'A wrong Play tap gets the shared semantic feedback panel immediately.');
-assert.ok(immediateWrong.includes('Not quite'), 'Wrong feedback is understandable without colour.');
-assert.ok(immediateWrong.includes('Answer:'), 'Wrong feedback identifies the actual answer.');
-assert.ok(immediateWrong.includes('map-country--current-wrong'), 'The selected wrong country gets an explicit persistent wrong state.');
-assert.ok(immediateWrong.includes('map-country--current-correct'), 'The actual target is indicated after a wrong Play tap.');
-assert.ok(!immediateWrong.includes('Answer recorded'), 'The ambiguous recorded acknowledgement is gone.');
-assert.equal((immediateWrong.match(/data-action="map-answer"/g) ?? []).length, 0, 'Resolved Play locks map answers during the feedback dwell.');
+progress = wrong.progress;
+const immediateWrong = renderMapQuiz(asset, session, nextTarget);
+assert.equal(wrong.outcome.resolved, false, 'First wrong Play tap leaves the target unresolved.');
+assert.ok(immediateWrong.includes('answer-feedback--wrong'), 'A wrong Play tap gets explicit semantic feedback immediately.');
+assert.ok(immediateWrong.includes('Incorrect'), 'Wrong feedback is understandable without colour.');
+assert.ok(immediateWrong.includes('2 tries left'), 'Wrong feedback reports the remaining retrieval budget.');
+assert.ok(!immediateWrong.includes('Answer:'), 'Wrong feedback does not identify the answer before reveal.');
+assert.ok(immediateWrong.includes('map-country--wrong-pulse'), 'Only the selected wrong country receives transient error feedback.');
+assert.ok(!immediateWrong.includes('map-country--current-correct'), 'The actual target is not indicated after an unresolved miss.');
+assert.ok(!immediateWrong.includes('map-country--revealed'), 'The actual target is not revealed after one miss.');
+assert.ok((immediateWrong.match(/data-action="map-answer"/g) ?? []).length > 0, 'Unresolved Play keeps map answers available.');
+
+const recovered = applyMapGuess(session, progress, firstTarget, 500);
+session = recovered.session;
+const recoveredHtml = renderMapQuiz(asset, session, null);
+assert.equal(recovered.session.targets[firstTarget].resolution, 'one-miss');
+assert.ok(recoveredHtml.includes('map-country--one-miss'), 'Correct after one miss uses the stored amber resolution state.');
+assert.ok(!recoveredHtml.includes('map-country--current-correct'), 'Assisted Play success never receives first-try green emphasis.');
+assert.ok(recoveredHtml.includes('After 1 miss'), 'Assisted Play success is stated in words.');
+assert.equal((recoveredHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Resolved Play locks duplicate answers during its dwell.');
 
 session = advanceMapSession(session);
 const nextQuestion = renderMapQuiz(asset, session, null);
 assert.ok(!nextQuestion.includes('map-country--current-correct'), 'A resolved target state never leaks into the next Play target.');
-assert.ok(!nextQuestion.includes('map-country--current-wrong'), 'A previous wrong selection never cues the next answer.');
+assert.ok(!nextQuestion.includes('map-country--wrong-pulse'), 'A previous wrong selection never cues the next answer.');
 
 let correctSession = buildMapSession(asset, 'test', 'explicit-play-correct', ['GHA']);
 const correct = applyMapGuess(correctSession, createInitialLocationProgress(AFRICA_MAP_COUNTRY_IDS), 'GHA', 500);
 correctSession = correct.session;
 const immediateCorrect = renderMapQuiz(asset, correctSession, null);
-assert.ok(immediateCorrect.includes('answer-feedback--correct'), 'A correct Play tap gets shared correct feedback immediately.');
-assert.ok(immediateCorrect.includes('Correct'), 'Correct feedback is understandable without colour.');
-assert.ok(immediateCorrect.includes('map-country--current-correct'), 'The correct country receives the established high-salience success state.');
+assert.ok(immediateCorrect.includes('answer-feedback--correct'), 'A first-try Play tap gets shared correct feedback immediately.');
+assert.ok(immediateCorrect.includes('First try'), 'First-try feedback is understandable without colour.');
+assert.ok(immediateCorrect.includes('map-country--first map-country--current-correct'), 'Only first-try Play receives the established high-salience green success state.');
 
-// Every generated scope has a target-independent opening focus. Exercise the
-// same aspect fitting used by the production controller across Issue #78's QA matrix.
 const viewportMatrix = [
   [320, 568],
   [390, 844],
@@ -140,10 +149,6 @@ for (const config of AFRICA_MAP_SCOPE_CONFIGS) {
   assert.equal(firstFocus, secondFocus, `${config.scope.label} initial framing is independent of the current target country.`);
 }
 
-// These assertions deliberately inspect the canonical controller source. Vite
-// minifies the browser entry, so source-text implementation guards must not
-// depend on post-bundle symbol spelling while the behavioural tests above keep
-// running against emitted domain/view modules.
 const viewportSource = await readFile('src/map-viewport.ts', 'utf8');
 assert.ok(viewportSource.includes('states.get(sessionId)'), 'Per-session viewport state remains part of the production controller.');
 assert.match(
@@ -155,7 +160,7 @@ assert.ok(viewportSource.includes('data-map-max-zoom') || viewportSource.include
 assert.ok(viewportSource.includes('pointermove') && viewportSource.includes('startDistance'), 'Pan and pinch remain in the production controller.');
 
 const mapCss = await readFile('dist/map.css', 'utf8');
-assert.ok(mapCss.includes('.map-country--current-wrong'), 'The production stylesheet contains the explicit wrong-country state.');
+assert.ok(mapCss.includes('.map-country--current-wrong'), 'The production stylesheet retains the explicit wrong-country state.');
 assert.ok(
   mapCss.includes('.map-country--current-wrong .map-country__shape')
     && !mapCss.includes('.map-country--current-wrong .map-country__callout-target'),
@@ -164,4 +169,4 @@ assert.ok(
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
 assert.ok(serviceWorker.includes('flag-atlas-runtime-v1'), 'React/Vite advances the shell cache while preserving map presentation.');
 
-console.log('Locations edge verification passed: small-country targets, explicit Play feedback, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');
+console.log('Locations edge verification passed: small-country targets, three-strike Play feedback, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');
