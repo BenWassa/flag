@@ -105,11 +105,16 @@ test.describe('the Earth names what can be chosen', () => {
   });
 
   test('names retire while an activity owns the geography', async ({ page }) => {
-    await openSpatial(page, '/flags/africa/southern-africa');
-    await expect(scopeNames(page)).toHaveCount(5);
-    await page.getByRole('button', { name: 'Play Southern Africa' }).click();
-    // A live question: geography is inert context and offers nothing to choose.
-    await expect(scopeNames(page)).toHaveCount(0);
+    // The names are real DOM anchored over the stage, so a yielding activity has
+    // to retire them, not merely stop drawing them: they would otherwise remain
+    // controls for a scope the learner is no longer choosing. Every domain,
+    // because every live activity yields (#207).
+    for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
+      await openSpatial(page, `/${domain}/africa/southern-africa`);
+      await expect(scopeNames(page), domain).toHaveCount(5);
+      await page.getByRole('button', { name: 'Play Southern Africa' }).click();
+      await expect(scopeNames(page), domain).toHaveCount(0);
+    }
   });
 
   test('every named area of every continent is present in every domain', async ({ page }) => {
