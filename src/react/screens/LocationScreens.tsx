@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef } from 'react';
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { getMapContinentConfigForScope } from '../../data/map-scopes.js';
 import { currentMapTarget } from '../../domain/map-game.js';
@@ -22,31 +22,47 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
   const surfaceRef = useRef<HTMLDivElement>(null);
   const keyboardFocusCountryId = useRef<string | null>(null);
 
-  // The raw SVG is replaced when answer state changes. Keep a keyboard learner
-  // on the same still-selectable geography through miss one/two (including the
-  // transient wrong-colour reset), but never move pointer focus. Restore once
-  // during layout and once on the next frame so a short-landscape relayout
-  // cannot strand focus on the document body after the SVG replacement. Once a
-  // target resolves its answer controls disappear, so this naturally stands down.
-  useLayoutEffect(() => {
+  const restoreKeyboardCountry = () => {
     const countryId = keyboardFocusCountryId.current;
     if (!interactive || !countryId) return;
     const selector = `[data-action="map-answer"][data-id="${CSS.escape(countryId)}"][tabindex]`;
-    const restore = () => {
-      const focusable = surfaceRef.current?.querySelector<HTMLElement>(selector);
-      if (focusable) focusable.focus({ preventScroll: true });
-      else keyboardFocusCountryId.current = null;
-    };
-    restore();
-    const frame = window.requestAnimationFrame(restore);
-    return () => window.cancelAnimationFrame(frame);
+    const focusable = surfaceRef.current?.querySelector<HTMLElement>(selector);
+    if (focusable) focusable.focus({ preventScroll: true });
+    else keyboardFocusCountryId.current = null;
+  };
+
+  // The raw SVG is replaced when answer state changes. Restore during the
+  // React commit when the same keyboard-selected country is still actionable.
+  useLayoutEffect(() => {
+    restoreKeyboardCountry();
   }, [interactive, lastWrongCountryId, session.attempts.length, session.currentIndex]);
+
+  // Some map/viewport work can replace descendants after the React layout
+  // effect. Observe child replacement itself so keyboard focus follows the
+  // canonical country identity rather than a disposable SVG node. This only
+  // activates after a keyboard answer; pointer interaction clears the intent.
+  useEffect(() => {
+    const surface = surfaceRef.current;
+    if (!surface || !interactive) return;
+    const observer = new MutationObserver(() => {
+      if (!keyboardFocusCountryId.current || document.activeElement !== document.body) return;
+      restoreKeyboardCountry();
+    });
+    observer.observe(surface, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [interactive]);
 
   return <div
     ref={surfaceRef}
     className="map-stage__surface"
+    onFocusCapture={(event) => {
+      if (!keyboardFocusCountryId.current) return;
+      const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
+      if (element?.dataset.id) keyboardFocusCountryId.current = element.dataset.id;
+    }}
     onClick={(event) => {
       if (!interactive) return;
+      keyboardFocusCountryId.current = null;
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
       if (element?.dataset.id) actions.answerLocation(element.dataset.id, element);
     }}
