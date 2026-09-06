@@ -2,12 +2,13 @@ import { expect, test, type Locator, type Page } from '@playwright/test';
 
 /**
  * Issue #197 — progressive disclosure of continent, region and country detail.
+ * Issue #198 — projected geography owns normal scope choice; the command band
+ * contains only the selected scope's progress and actions.
  *
  * The derivations behind this are proved in Node by
  * `scripts/verify-spatial-disclosure.mjs`. What only a real renderer can answer
  * is here: that the names actually land on the geography, stay inside the stage,
- * follow the camera, retire when the hierarchy changes, and reach the same
- * routes their equivalent controls do.
+ * follow the camera, retire when the hierarchy changes and navigate durably.
  *
  * Headless Chromium is engineering evidence, not physical-device evidence.
  */
@@ -31,29 +32,34 @@ async function names(locator: Locator): Promise<string[]> {
   return locator.evaluateAll((elements) => elements.map((element) => element.textContent?.trim() ?? ''));
 }
 
+const EXPECTED_AREAS: Record<string, string[]> = {
+  africa: ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa'],
+  asia: ['Central Asia', 'East Asia', 'South Asia', 'Southeast Asia', 'Middle East', 'Caucasus'],
+  europe: ['Northern Europe', 'Western Europe', 'Central Europe', 'Southern Europe', 'Eastern Europe', 'Balkans'],
+  'north-america': ['Northern America', 'Central America', 'Caribbean'],
+  'south-america': ['Andean', 'Southern Cone', 'Brazil', 'Guianas'],
+  oceania: ['Australia & New Zealand', 'Melanesia', 'Micronesia', 'Polynesia'],
+};
+
 test.describe('the Earth names what can be chosen', () => {
   test('world level offers every continent as a control on the globe', async ({ page }) => {
     await openSpatial(page, '/flags');
     await expect(scopeNames(page)).toHaveCount(6);
-    // Distinct from the command surface's own "Continents" group, so a screen
-    // reader announces two useful lists rather than the same one twice.
     await expect(page.locator('.spatial-scopes')).toHaveAttribute('aria-label', 'Continents on the globe');
-    // The globe opens over Africa and Europe, so at least those are written on it.
     expect(await visibleNames(page).count()).toBeGreaterThan(0);
     for (const label of await names(scopeNames(page))) {
       expect(['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania']).toContain(label);
     }
+    await expect(page.locator('.spatial-chip')).toHaveCount(0);
   });
 
-  test('a name on the globe reaches the same route as its equivalent control', async ({ page }) => {
+  test('a projected name owns the durable route without a duplicate command control', async ({ page }) => {
     await openSpatial(page, '/flags');
     await named(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
-    const viaName = page.url();
-    await page.goBack();
-    await expect(page).toHaveURL(/#\/flags$/);
-    await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
-    expect(page.url()).toBe(viaName);
+    await expect(page.locator('.spatial-command__progress[data-scope-id="africa"]')).toHaveCount(1);
+    await expect(page.locator('.spatial-command').getByRole('button', { name: 'Africa', exact: true })).toHaveCount(0);
+    await expect(page.locator('.spatial-chip')).toHaveCount(0);
   });
 
   test('choosing a continent reveals its areas and no country borders', async ({ page }) => {
@@ -61,9 +67,7 @@ test.describe('the Earth names what can be chosen', () => {
     await named(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
     await expect(page.locator('.spatial-scopes')).toHaveAttribute('aria-label', 'Areas of Africa on the globe');
-    expect(await names(scopeNames(page))).toEqual([
-      'North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa',
-    ]);
+    expect(await names(scopeNames(page))).toEqual(EXPECTED_AREAS.africa);
     // Continent names have retired: the decision in front of the learner changed.
     await expect(named(page, 'Asia')).toHaveCount(0);
   });
@@ -98,9 +102,7 @@ test.describe('the Earth names what can be chosen', () => {
 
   test('a cold deep link opens already naming its own level', async ({ page }) => {
     await openSpatial(page, '/neighbors/oceania/melanesia');
-    expect(await names(scopeNames(page))).toEqual([
-      'Australia & New Zealand', 'Melanesia', 'Micronesia', 'Polynesia',
-    ]);
+    expect(await names(scopeNames(page))).toEqual(EXPECTED_AREAS.oceania);
     await expect(page.locator('.spatial-scope[aria-current="true"]')).toContainText('Melanesia');
   });
 
@@ -114,11 +116,10 @@ test.describe('the Earth names what can be chosen', () => {
 
   test('every named area of every continent is present in every domain', async ({ page }) => {
     for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-      for (const continent of ['africa', 'asia', 'europe', 'north-america', 'south-america', 'oceania']) {
+      for (const [continent, expected] of Object.entries(EXPECTED_AREAS)) {
         await openSpatial(page, `/${domain}/${continent}`);
-        const chips = await page.locator('.spatial-command__choices .spatial-chip').allTextContents();
-        const areas = chips.map((text) => text.trim()).filter((text) => !text.startsWith('All '));
-        expect(await names(scopeNames(page)), `${domain}/${continent}`).toEqual(areas);
+        expect(await names(scopeNames(page)), `${domain}/${continent}`).toEqual(expected);
+        await expect(page.locator('.spatial-chip')).toHaveCount(0);
       }
     }
   });
@@ -186,7 +187,7 @@ test.describe('names behave as geography, and as controls', () => {
     });
     await page.goto('/#/flags/africa');
     await expect(page.locator('.spatial-scopes')).toHaveCount(0);
-    for (const area of ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa']) {
+    for (const area of EXPECTED_AREAS.africa) {
       await expect(page.getByRole('button', { name: new RegExp(`Play ${area}`) })).toBeVisible();
     }
   });
