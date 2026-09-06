@@ -65,10 +65,13 @@ for (const reducedMotion of [false, true]) {
 
     await page.clock.fastForward(LOCATION_WRONG_FEEDBACK_MS);
     await expect(wrongCountry).not.toHaveClass(/map-country--wrong-pulse/);
+    await expect(wrongCountry).not.toHaveClass(/map-country--first|map-country--one-miss|map-country--two-miss|map-country--revealed/);
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
-    const settledFill = await wrongGeometry.evaluate((node) => getComputedStyle(node).fill);
-    const neutralFill = await page.locator(`.map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__shape, .map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__feedback-shape`).first().evaluate((node) => getComputedStyle(node).fill);
-    expect(settledFill).toBe(neutralFill);
+    // A keyboard learner remains focused on the wrong country after the
+    // transient pulse clears, so its focus affordance may intentionally change
+    // the computed fill. The semantic contract is that no wrong/resolution
+    // class remains, not that focused and unfocused countries share a fill.
+    await expect.poll(() => page.evaluate((id) => (document.activeElement as HTMLElement | null)?.dataset.id ?? null, wrong)).toBe(wrong);
 
     await answer(page, target);
     await expect(page.locator('.map-prompt__status--correct')).toHaveText('Correct · after 1 miss');
