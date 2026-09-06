@@ -151,20 +151,25 @@ for (const fixture of CASES) {
   });
 }
 
-test('reduced motion and forced colours keep feedback contained and explicit', async ({ page }) => {
+test('reduced motion and forced colours keep unresolved feedback contained and explicit', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
   const fixture = CASES[1];
   await openPlay(page, fixture);
   await freezeFeedbackTimers(page);
   const targetId = await currentTargetId(page);
-  await answerMainMapCountry(page, targetId);
-  const inspection = await inspectOutcomeGeometry(page, 'map-country--current-correct');
+  const wrongId = await page.locator('.map-svg .map-country[data-action="map-answer"][data-id]').evaluateAll((groups, target) => (
+    groups.map((group) => group.getAttribute('data-id')).find((id) => id && id !== target) ?? null
+  ), targetId);
+  expect(wrongId).toBeTruthy();
+  await answerMainMapCountry(page, wrongId!);
+  const inspection = await inspectOutcomeGeometry(page, 'map-country--wrong-pulse');
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
   for (const mark of inspection.semantic) {
     expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
-  expect(inspection.feedbackClass).toContain('answer-feedback--correct');
-  expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
+  expect(inspection.feedbackClass).toContain('answer-feedback--neutral');
+  expect(inspection.feedbackClass).not.toContain('answer-feedback--wrong');
+  expect(inspection.feedbackText).toContain('tries left');
 });
