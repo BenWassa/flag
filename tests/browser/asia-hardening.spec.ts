@@ -15,6 +15,15 @@ function idForName(name: string): string {
   return country.id;
 }
 
+async function fixSessionId(page: Page, sessionId: string) {
+  await page.addInitScript(({ id }) => {
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      configurable: true,
+      value: () => id,
+    });
+  }, { id: sessionId });
+}
+
 async function openScope(page: Page, route: string, label: string) {
   await page.goto(route);
   await page.getByRole('button', { name: label }).click();
@@ -138,27 +147,25 @@ test('feedback rerender preserves shared hit sizes and previously answered count
   await expect(page.locator(`.map-country[data-id="${first}"]`)).toHaveClass(/map-country--wrong-pulse/);
 });
 
-test('an assisted country resolved earlier remains a normal wrong guess in a region round', async ({ page }) => {
-  test.setTimeout(150_000);
+test('an assisted country resolved earlier remains a normal retryable miss in Play', async ({ page }) => {
+  await fixSessionId(page, 'asia-assisted-5');
   await page.setViewportSize({ width: 390, height: 844 });
-  await openScope(page, '/#/locations/asia/southeast-asia', 'Learn Southeast Asia');
-  for (let index = 0; index < 11; index += 1) {
-    const name = await page.locator('#map-prompt-heading').innerText();
-    const id = idForName(name);
-    if (id === 'BRN' || id === 'SGP') {
-      const point = await actionablePoint(page, id);
-      await page.mouse.click(point.x, point.y);
-      await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
-      await waitForAdvance(page, name);
-      const wrongPoint = await actionablePoint(page, id);
-      await page.mouse.click(wrongPoint.x, wrongPoint.y);
-      await expect(page.locator(`.map-country[data-id="${id}"]`)).toHaveClass(/map-country--wrong-pulse/);
-      return;
-    }
-    await answerKeyboard(page, id);
-    await waitForAdvance(page, name);
-  }
-  throw new Error('No assisted Southeast Asia country encountered');
+  await openScope(page, '/#/locations/asia/southeast-asia', 'Play Southeast Asia');
+  expect(await currentId(page)).toBe('BRN');
+
+  const point = await actionablePoint(page, 'BRN');
+  await page.mouse.click(point.x, point.y);
+  await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
+  await expect(page.locator('.map-round-count')).toHaveText('2 / 11', { timeout: 15_000 });
+
+  const activeName = await page.locator('#map-prompt-heading').innerText();
+  const wrongPoint = await actionablePoint(page, 'BRN');
+  await page.mouse.click(wrongPoint.x, wrongPoint.y);
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+  await expect(page.locator('#map-prompt-heading')).toHaveText(activeName);
+  await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+  await expect(page.locator('.map-country[data-id="BRN"]')).toHaveClass(/map-country--wrong-pulse/);
 });
 
 test('Play re-enables the previous country after advance as an ordinary retryable miss', async ({ page }) => {
