@@ -147,8 +147,8 @@ assert.equal(roundRank(9, 10).id, 'strong');
 assert.equal(roundRank(7, 10).id, 'solid');
 assert.equal(roundRank(4, 10).id, 'building');
 assert.equal(roundRank(0, 0).id, 'building', 'An empty round scores nothing rather than scoring perfectly.');
-for (const [correct, total] of [[10, 10], [9, 10], [7, 10], [4, 10], [0, 0]]) {
-  const rank = roundRank(correct, total);
+for (const [correctCount, total] of [[10, 10], [9, 10], [7, 10], [4, 10], [0, 0]]) {
+  const rank = roundRank(correctCount, total);
   assert.ok(rank.label && rank.detail, `Rank ${rank.id} states itself in words.`);
   assert.equal(rank.label.includes('Perfect round'), false, 'The rank never restates the Perfect round ceremony.');
 }
@@ -278,7 +278,7 @@ assert.ok(
 );
 assert.ok(!outlineWrong.includes('Answer recorded'), 'Outlines Play never falls back to the ambiguous recorded state.');
 
-/* --- Locations reuses the same Play feedback contract --- */
+/* --- Locations uses graded three-strike Play feedback --- */
 
 const westAsset = await loadMapAsset('west-africa');
 assert.ok(westAsset, 'West Africa asset loads for Locations feedback verification.');
@@ -295,9 +295,9 @@ assert.deepEqual(
 const mapCorrect = applyMapGuess(mapCorrectSession, locationProgress, 'GHA', 400);
 mapCorrectSession = mapCorrect.session;
 const mapCorrectHtml = renderMapQuiz(westAsset, mapCorrectSession, null);
-assert.ok(mapCorrectHtml.includes('answer-feedback--correct'), 'Locations correct feedback uses the shared panel.');
-assert.ok(mapCorrectHtml.includes('Correct'), 'Locations correct feedback is explicit in text.');
-assert.ok(mapCorrectHtml.includes('map-country--current-correct'), 'Locations correct feedback is also visible on the geography.');
+assert.ok(mapCorrectHtml.includes('answer-feedback--correct'), 'Locations first-try feedback uses the correct panel.');
+assert.ok(mapCorrectHtml.includes('First try'), 'Locations first-try feedback is explicit in text.');
+assert.ok(mapCorrectHtml.includes('map-country--current-correct'), 'Locations first-try feedback is also visible on the geography.');
 assert.deepEqual(
   [...mapCorrectHtml.matchAll(/round-score__value">([^<]*)</g)].map(([, value]) => value),
   ['1', '0'],
@@ -305,16 +305,37 @@ assert.deepEqual(
 );
 
 let mapWrongSession = buildMapSession(westAsset, 'test', 'locations-play-wrong', ['GHA']);
-const mapWrong = applyMapGuess(mapWrongSession, locationProgress, 'MLI', 400);
-mapWrongSession = mapWrong.session;
-const mapWrongHtml = renderMapQuiz(westAsset, mapWrongSession, 'MLI');
-assert.ok(mapWrongHtml.includes('answer-feedback--wrong'), 'Locations wrong feedback uses the shared panel.');
-assert.ok(mapWrongHtml.includes('Not quite'), 'Locations wrong feedback is explicit in text.');
-assert.ok(mapWrongHtml.includes('Answer: Ghana'), 'Locations wrong feedback names the correct country.');
-assert.ok(mapWrongHtml.includes('map-country--wrong-pulse'), 'Locations marks the wrong selection on the map.');
-assert.ok(mapWrongHtml.includes('map-country--current-correct'), 'Locations simultaneously indicates the actual target after a miss.');
-assert.ok(!mapWrongHtml.includes('Answer recorded'), 'Locations no longer renders the ambiguous recorded state.');
-assert.equal((mapWrongHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Locations locks further answer taps during the resolved feedback dwell.');
+const firstMiss = applyMapGuess(mapWrongSession, locationProgress, 'MLI', 400);
+mapWrongSession = firstMiss.session;
+const firstMissHtml = renderMapQuiz(westAsset, mapWrongSession, 'MLI');
+assert.ok(firstMissHtml.includes('answer-feedback--neutral'), 'Locations unresolved miss uses neutral feedback.');
+assert.ok(!firstMissHtml.includes('answer-feedback--wrong'), 'Locations unresolved miss does not use the failure tone.');
+assert.ok(firstMissHtml.includes('2 tries left'), 'Locations first miss communicates the remaining retry budget.');
+assert.ok(firstMissHtml.includes('map-country--wrong-pulse'), 'Locations marks the wrong selection transiently on the map.');
+assert.ok(!firstMissHtml.includes('map-country--current-correct'), 'Locations unresolved miss does not reveal the target.');
+assert.ok(!firstMissHtml.includes('Answer: Ghana'), 'Locations unresolved miss does not leak the answer in text.');
+assert.ok((firstMissHtml.match(/data-action="map-answer"/g) ?? []).length > 0, 'Locations keeps answer controls available after the first miss.');
+
+const assisted = applyMapGuess(mapWrongSession, firstMiss.progress, 'GHA', 450);
+mapWrongSession = assisted.session;
+const assistedHtml = renderMapQuiz(westAsset, mapWrongSession, null);
+assert.ok(assistedHtml.includes('answer-feedback--neutral'), 'Locations assisted success stays distinct from clean green feedback.');
+assert.ok(assistedHtml.includes('After 1 miss'), 'Locations assisted success states the miss count in words.');
+assert.ok(assistedHtml.includes('map-country--one-miss'), 'Locations one-miss success uses the amber graded geography state.');
+assert.ok(!assistedHtml.includes('map-country--current-correct'), 'Locations assisted success is not overridden by clean green emphasis.');
+assert.equal((assistedHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Locations locks further answer taps only after resolution.');
+
+let revealSession = buildMapSession(westAsset, 'test', 'locations-play-reveal', ['GHA']);
+const revealMiss1 = applyMapGuess(revealSession, locationProgress, 'MLI', 500);
+const revealMiss2 = applyMapGuess(revealMiss1.session, revealMiss1.progress, 'SEN', 550);
+const revealMiss3 = applyMapGuess(revealMiss2.session, revealMiss2.progress, 'CIV', 600);
+revealSession = revealMiss3.session;
+const revealHtml = renderMapQuiz(westAsset, revealSession, null);
+assert.ok(revealHtml.includes('answer-feedback--wrong'), 'Locations third miss uses the failure tone.');
+assert.ok(revealHtml.includes('Revealed'), 'Locations third miss explicitly identifies the reveal outcome.');
+assert.ok(revealHtml.includes('Ghana'), 'Locations reveal names the correct country only after the third miss.');
+assert.ok(revealHtml.includes('map-country--revealed'), 'Locations reveal paints the correct country with the failure state.');
+assert.equal((revealHtml.match(/data-action="map-answer"/g) ?? []).length, 0, 'Locations locks further answer taps after reveal.');
 
 const andeanAsset = await loadMapAsset('andean');
 assert.ok(andeanAsset, 'Andean asset loads for continent-specific Locations copy verification.');
@@ -378,5 +399,5 @@ assert.ok(flagsRoundSource.includes('advanceNow'), 'The Flags Play dwell can be 
 assert.ok(outlinesRoundSource.includes('advanceNow'), 'The Outlines Play dwell can be skipped from the keyboard.');
 
 console.log(
-  'Play feedback verification passed: shared Flags/Outlines/Locations outcome model, visible Play scores, scope-correct map guidance, immediate correct/wrong states, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',
+  'Play feedback verification passed: shared Flags/Outlines feedback, graded three-strike Locations outcomes, visible Play scores, scope-correct map guidance, non-colour cues, quiet Learn, reduced motion, and outcome-aware dwell.',
 );
