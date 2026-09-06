@@ -180,7 +180,7 @@ Political detail follows the decision the learner is currently making, not the g
 | World / choose a continent | continent outlines | continent names |
 | Continent focus | that continent's learner-facing areas | area names |
 | Area focus | the same areas, the selected one a step stronger | the same area names |
-| Live activity | the level the learner navigated at | none |
+| Live activity | none — the geography has left the screen | none |
 | Results | countries | none |
 
 - world Spatial navigation reads as continents, never as a country tessellation;
@@ -199,6 +199,18 @@ Names on the Earth are real DOM controls anchored over the geography, never text
 
 Normal Spatial does not repeat those scope choices below the Earth. The projected labels and geography own selection; the command surface reports only the selected scope's progress and Play/Learn actions. When forced colours hides WebGL, an isolated ordinary-DOM scope list replaces the unavailable geographic controls. If the renderer fails entirely, the conventional `Launcher` is the fallback. Both fallback paths consume the same scope/support truth rather than introducing a second navigation model.
 
+### Flags keeps geography-led scope selection
+
+Flags is not a spatial-recognition mechanic, so #207 asked whether it should choose its scope on the Earth at all, or through a compact Flags-specific continent/area list. Geography-led selection is the shipped answer, measured against the production flow rather than assumed for consistency:
+
+- a list saves no interaction. Home → Flags → continent → area → **Play** is four taps on the Earth, and four in a list. Whole-continent Play is three either way;
+- it saves no touch precision. Every projected name already carries a full-size target at the 320px floor, which is what a row would have offered;
+- it saves no 3D. The Earth is the Home surface, so it is mounted and drawn before a domain is chosen;
+- it costs orientation. The scopes Flags teaches are named geographically — *West Africa*, *the Maghreb*, *Southern Africa* — and seeing where they are is free incidental learning a list would discard;
+- it costs a second scope-choice presentation, with its own layout, focus and forced-colours behaviour, for one domain.
+
+So Flags reaches the same scopes through the same geography as the other three domains, and then yields the screen completely. This is a product judgement about this flow, not a rule that a domain may never present scope differently: #198 removed duplicated bottom scope lists from normal Spatial navigation, and that remains right, but it does not forbid a deliberate Flags-specific row/list presentation should the flow later justify one. What is forbidden is duplication — geography owns the choice, or rows own it, never both on the same screen.
+
 ## Spatial motion and gesture ownership
 
 - one-finger drag rotates the Earth after the drag threshold;
@@ -215,7 +227,19 @@ Tiny geography may use invisible source-derived interaction envelopes. Display g
 
 ### Flags
 
-Preserve true flag aspect ratios. The flag is the primary recognition object. Hidden Flags Learn items must not leak names through visible or accessible metadata. Flags Play may retain quiet inert globe context only when it cannot hint the answer.
+Flags uses geography only while geography is genuinely part of choosing the learning scope. The live recognition activity owns the viewport: the flag is the dominant object, and the answer geometry stays stable across flag aspect ratios.
+
+Preserve true flag aspect ratios and complete artwork — no stretch, no crop, no ratio normalisation. Hidden Flags Learn items must not leak names through visible or accessible metadata.
+
+The live round is a stable game board, not a page that happens to contain a quiz:
+
+- header and progress occupy a predictable top zone;
+- the flag owns a reserved stage whose block-size is determined by the layout tier, never by the flag's own intrinsic ratio;
+- the answers occupy a predictable interaction zone that no flag ratio may move;
+- the floating feedback card's room is reserved permanently rather than on answer, so feedback and advancement resize nothing above them;
+- on ordinary phone portrait the complete unanswered question fits the viewport. At the small-phone floor the flag stage steps down to roughly a third of the viewport so all four options stay reachable without scrolling; only the reserved feedback area may then sit below the fold.
+
+A Flags round takes no inert globe, geographic banner, map strip or duplicated scope navigation. Do not compensate by adding decorative map context elsewhere in the round.
 
 ### Locations
 

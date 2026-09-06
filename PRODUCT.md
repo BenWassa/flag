@@ -55,7 +55,7 @@ Do not restore the old `globe + launcher page underneath`, one-tap launcher-row 
 
 Spatial continuity does not mean every learning mechanic becomes a globe interaction.
 
-- **Flags Play** keeps the flag as the recognition object; quiet inert spatial context may remain where it cannot hint the answer.
+- **Flags Play** keeps the flag as the recognition object and takes the viewport. Geography is how the scope was chosen, not something the round carries (#207).
 - **Flags Learn** is the browse/reveal gallery and may take the viewport.
 - **Locations** yields to its canonical projected map activity.
 - **Outlines** yields to the silhouette activity.
