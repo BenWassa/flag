@@ -57,7 +57,8 @@ session = wrong.session;
 progress = wrong.progress;
 const immediateWrong = renderMapQuiz(asset, session, nextTarget);
 assert.equal(wrong.outcome.resolved, false, 'First wrong Play tap leaves the target unresolved.');
-assert.ok(immediateWrong.includes('answer-feedback--wrong'), 'A wrong Play tap gets explicit semantic feedback immediately.');
+assert.ok(immediateWrong.includes('answer-feedback--neutral'), 'An unresolved wrong Play tap uses neutral feedback rather than failure red.');
+assert.ok(!immediateWrong.includes('answer-feedback--wrong'), 'Failure styling is withheld until reveal.');
 assert.ok(immediateWrong.includes('Incorrect'), 'Wrong feedback is understandable without colour.');
 assert.ok(immediateWrong.includes('2 tries left'), 'Wrong feedback reports the remaining retrieval budget.');
 assert.ok(!immediateWrong.includes('Answer:'), 'Wrong feedback does not identify the answer before reveal.');
@@ -166,7 +167,16 @@ assert.ok(
     && !mapCss.includes('.map-country--current-wrong .map-country__callout-target'),
   'Wrong-country semantic colour is carried by canonical country geometry, while non-colour wording is verified in rendered feedback above.',
 );
+const wrongPulseRules = [...mapCss.matchAll(/\.map-country--wrong-pulse[^\{]*\{([^}]*)\}/g)].map((match) => match[1]).join('\n');
+const wrongPulseKeyframes = mapCss.match(/@keyframes map-wrong\s*\{([\s\S]*?)\n\}/)?.[1] ?? '';
+assert.equal(wrongPulseRules.includes('var(--wrong'), false, 'Unresolved miss fill does not use the red failure token.');
+assert.equal(wrongPulseKeyframes.includes('var(--wrong'), false, 'Unresolved miss animation never pulses through the red failure token.');
+assert.match(
+  mapCss,
+  /\.map-country--revealed \.map-country__shape,[\s\S]*?\{\s*fill:\s*var\(--wrong-soft\)/,
+  'Resolved reveal remains the red canonical-geometry state.',
+);
 const serviceWorker = await readFile('dist/sw.js', 'utf8');
 assert.ok(serviceWorker.includes('flag-atlas-runtime-v1'), 'React/Vite advances the shell cache while preserving map presentation.');
 
-console.log('Locations edge verification passed: small-country targets, three-strike Play feedback, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');
+console.log('Locations edge verification passed: small-country targets, three-strike Play feedback, red-only reveal semantics, target-independent scope framing, viewport matrix, session pan/zoom persistence, and shell cache version.');
