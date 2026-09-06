@@ -42,8 +42,8 @@ jobs:
           --workers=1
           --retries=0
       # #212 tracks two pre-existing mobile marker-parity failures already present
-      # on #200's final head. They are exercised by the temporary reconciliation
-      # step below until the fix is proved and promoted into this permanent list.
+      # on #200's final head. They remain outside the permanent list until the
+      # complete broad mobile run below proves the edge-tap repair.
       - name: Current mobile product contracts
         run: >-
           npx playwright test
@@ -55,20 +55,10 @@ jobs:
           --project=mobile-chromium
           --workers=1
           --retries=0
-      # Temporary #212 evidence. Remove this step before merge once the complete
-      # Chromium suite and mobile marker contract are reconciled and the final
-      # commands/results are recorded in the issue closeout.
+      # Temporary #212 evidence. Remove this step before merge after the exact
+      # documented broad command is green and its result is recorded in #212.
       - name: Full broad-suite reconciliation evidence
-        shell: bash
-        run: |
-          set +e
-          npx playwright test --project=chromium --workers=1 --retries=0
-          desktop_status=$?
-          npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=mobile-chromium --workers=1 --retries=0
-          mobile_marker_status=$?
-          if [ "$desktop_status" -ne 0 ] || [ "$mobile_marker_status" -ne 0 ]; then
-            exit 1
-          fi
+        run: npm run test:browser
       - name: Exact-production PWA lifecycle
         run: >-
           npx playwright test
