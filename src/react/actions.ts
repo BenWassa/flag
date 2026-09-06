@@ -13,7 +13,7 @@ export interface AtlasActions {
   revealFlag(countryId: string): void;
   toggleAllFlagNames(): void;
   answerFlag(countryId: string): void;
-  answerLocation(countryId: string, preserveKeyboardFocus?: boolean): void;
+  answerLocation(countryId: string, element?: HTMLElement | null): void;
   answerOutline(countryId: string): void;
   setNeighborQuery(value: string): void;
   submitNeighbor(countryId: string): void;
