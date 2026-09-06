@@ -150,11 +150,11 @@ function renderInsetPanel(
           ${(asset.contextPaths ?? []).map((path) => `<path class="map-context-country" d="${path}" />`).join('')}
           ${context.map((item) => (item.path ? `<path class="map-context-country" d="${item.path}" />` : '')).join('')}
         </g>
+        <g class="map-inset__countries">${members.map((item) => countryMarkup(item, false)).join('')}</g>
         <g class="map-inset__boundaries" aria-hidden="true">
           ${(asset.coastlinePaths ?? []).map((path) => `<path class="map-coastline" d="${path}" />`).join('')}
           ${(asset.sharedBoundaryPaths ?? []).map((path) => `<path class="map-shared-boundary" d="${path}" />`).join('')}
         </g>
-        <g class="map-inset__countries">${members.map((item) => countryMarkup(item, false)).join('')}</g>
         ${inset.marks.map((mark, index) => (isSelectable(mark.countryId) ? `
           <circle
             class="map-inset__hit"
@@ -226,9 +226,16 @@ export function renderMapSvg(
     const selectable = interactive && !currentTargetResolved;
     const keyboard = focusable ? ' tabindex="0" role="button" aria-label="Selectable country area"' : '';
     const action = selectable ? ` data-action="map-answer" data-id="${geometry.countryId}"${keyboard}` : '';
+    // Tiny island countries may use a locator for practical interaction while
+    // retaining their exact generated polygon in outlinePath. Feedback paints
+    // that canonical polygon, never the enlarged locator/callout symbology.
+    const feedbackGeometry = !geometry.path && geometry.outlinePath
+      ? `<path class="map-country__feedback-shape" d="${geometry.outlinePath}" aria-hidden="true" />`
+      : '';
     return `
       <g class="${classes}"${action}>
         ${geometry.path ? `<path class="map-country__shape" d="${geometry.path}" />` : ''}
+        ${feedbackGeometry}
         ${geometry.marker ? `<circle class="map-country__marker" cx="${geometry.marker.cx}" cy="${geometry.marker.cy}" r="${geometry.marker.r}" aria-hidden="true" />` : ''}
         ${geometry.locator ? `
           <circle class="map-country__locator" cx="${geometry.locator.cx}" cy="${geometry.locator.cy}" r="${geometry.locator.r}" />

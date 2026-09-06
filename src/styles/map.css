@@ -128,6 +128,15 @@
   vector-effect: non-scaling-stroke;
   transition: fill 90ms ease-out, stroke 90ms ease-out, opacity 90ms ease-out;
 }
+/* Locator-only islands still retain their exact generated polygon in
+   outlinePath. This otherwise invisible path exists only so outcome colour can
+   fill the country itself rather than an enlarged locator/callout symbol. */
+.map-country__feedback-shape {
+  fill: transparent;
+  stroke: none;
+  pointer-events: none;
+  transition: fill 90ms ease-out, opacity 90ms ease-out;
+}
 .map-country__callout-line {
   fill: none;
   stroke: var(--map-active-border);
@@ -186,113 +195,56 @@
  * off-white" reading collapsed: white and khaki sit about 1.09:1 apart and the
  * two states became one. Evidence instead FILLS a country as it is earned —
  * first-try correct is a deep green, misses run through amber — so the board
- * visibly fills in as a round is played, and the immediate answer feedback below
- * still outranks all of it with solid correctness green, a heavier stroke and
- * the one arrival animation. The mix runs deep enough to clear the sage context
- * land by value as well as by hue; a lighter green read as the same weight.
+ * visibly fills in as a round is played. The topology-derived coastline and
+ * shared-border layer remains above these fills and owns the visible boundary.
+ * The mix runs deep enough to clear the sage context land by value as well as by
+ * hue; a lighter green read as the same weight.
  */
 .map-country--first .map-country__shape,
-.map-country--first .map-country__locator,
-.map-country--first .map-country__marker,
-.map-country--first .map-country__callout-target {
+.map-country--first .map-country__feedback-shape {
   fill: color-mix(in srgb, var(--correct) 76%, var(--map-label-halo));
-  stroke: var(--correct);
-  stroke-width: 1.15;
 }
-.map-country--first .map-country__callout-line { stroke: var(--correct); }
 .map-country--one-miss .map-country__shape,
-.map-country--one-miss .map-country__locator,
-.map-country--one-miss .map-country__marker,
-.map-country--one-miss .map-country__callout-target {
+.map-country--one-miss .map-country__feedback-shape {
   fill: color-mix(in srgb, var(--learning) 42%, var(--map-label-halo));
-  stroke: color-mix(in srgb, var(--learning) 78%, var(--map-active-border));
-  stroke-width: 1.25;
 }
-.map-country--one-miss .map-country__callout-line { stroke: color-mix(in srgb, var(--learning) 78%, var(--map-active-border)); }
 .map-country--two-miss .map-country__shape,
-.map-country--two-miss .map-country__locator,
-.map-country--two-miss .map-country__marker,
-.map-country--two-miss .map-country__callout-target {
+.map-country--two-miss .map-country__feedback-shape {
   fill: color-mix(in srgb, var(--learning) 74%, var(--map-label-halo));
-  stroke: var(--learning);
-  stroke-width: 1.35;
 }
-.map-country--two-miss .map-country__callout-line { stroke: var(--learning); }
 .map-country--revealed .map-country__shape,
-.map-country--revealed .map-country__locator,
-.map-country--revealed .map-country__marker,
-.map-country--revealed .map-country__callout-target {
+.map-country--revealed .map-country__feedback-shape {
   fill: var(--wrong-soft);
-  stroke: var(--wrong);
-  stroke-width: 1.45;
 }
-.map-country--revealed .map-country__callout-line { stroke: var(--wrong); }
 
-/* Immediate answer feedback is much stronger than stored Learn evidence.
-   Correct is a solid semantic-green state. A current wrong Play selection is
-   semantic red with a dashed stroke so the distinction survives without colour. */
+/* Immediate answer feedback is stronger than stored Learn evidence through an
+   interior-only fill response. Correct/wrong colour never widens the country's
+   exterior; topology-derived coastlines/shared borders stay crisp above it.
+   Textual feedback carries the non-colour outcome distinction. */
 .map-country--current-correct .map-country__shape,
-.map-country--current-correct .map-country__locator,
-.map-country--current-correct .map-country__marker,
-.map-country--current-correct .map-country__callout-target,
-.map-country.map-country--current-correct:focus-visible .map-country__shape,
-.map-country.map-country--current-correct:focus-visible .map-country__locator,
-.map-country.map-country--current-correct:focus-visible .map-country__marker,
-.map-country.map-country--current-correct:focus-visible .map-country__callout-target {
+.map-country--current-correct .map-country__feedback-shape {
   fill: var(--mastered);
-  stroke: var(--mastered);
-  stroke-width: 3;
   opacity: 1;
   animation: map-correct 480ms cubic-bezier(.2,.8,.2,1);
 }
-.map-country--current-correct .map-country__callout-line { stroke: var(--mastered); stroke-width: 2.5; }
 .map-country--current-wrong .map-country__shape,
-.map-country--current-wrong .map-country__locator,
-.map-country--current-wrong .map-country__marker,
-.map-country--current-wrong .map-country__callout-target,
-.map-country.map-country--current-wrong:focus-visible .map-country__shape,
-.map-country.map-country--current-wrong:focus-visible .map-country__locator,
-.map-country.map-country--current-wrong:focus-visible .map-country__marker,
-.map-country.map-country--current-wrong:focus-visible .map-country__callout-target {
+.map-country--current-wrong .map-country__feedback-shape {
   fill: var(--wrong-soft);
-  stroke: var(--wrong);
-  stroke-width: 3;
-  stroke-dasharray: 5 3;
   opacity: 1;
 }
-.map-country--current-wrong .map-country__callout-line {
-  stroke: var(--wrong);
-  stroke-width: 2.5;
-  stroke-dasharray: 5 3;
-}
 .map-country--wrong-pulse .map-country__shape,
-.map-country--wrong-pulse .map-country__locator,
-.map-country--wrong-pulse .map-country__marker,
-.map-country--wrong-pulse .map-country__callout-target,
-.map-country.map-country--wrong-pulse:focus-visible .map-country__shape,
-.map-country.map-country--wrong-pulse:focus-visible .map-country__locator,
-.map-country.map-country--wrong-pulse:focus-visible .map-country__marker,
-.map-country.map-country--wrong-pulse:focus-visible .map-country__callout-target {
+.map-country--wrong-pulse .map-country__feedback-shape {
   fill: var(--wrong-soft);
-  stroke: var(--wrong);
-  stroke-width: 3;
   opacity: 1;
   animation: map-wrong var(--motion-feedback-emphasis) var(--ease-feedback) both;
 }
-.map-country--wrong-pulse .map-country__callout-line { stroke: var(--wrong); stroke-width: 2.5; animation: map-wrong-line var(--motion-feedback-emphasis) var(--ease-feedback) both; }
 @keyframes map-correct {
-  0% { opacity: .5; stroke-width: 4.2; }
-  38% { opacity: 1; stroke-width: 3.5; }
-  100% { opacity: 1; stroke-width: 3; }
+  0% { fill: color-mix(in srgb, var(--mastered) 46%, var(--map-active-land)); }
+  38%, 100% { fill: var(--mastered); }
 }
 @keyframes map-wrong {
-  0% { opacity: .55; stroke-width: 4; }
-  45% { opacity: 1; stroke-width: 3; }
-  100% { opacity: 1; stroke-width: 3; }
-}
-@keyframes map-wrong-line {
-  0%, 45% { stroke: var(--wrong); stroke-width: 2.5; }
-  100% { stroke: var(--wrong); stroke-width: 2.5; }
+  0%, 100% { fill: var(--wrong-soft); }
+  45% { fill: color-mix(in srgb, var(--wrong) 64%, var(--wrong-soft)); }
 }
 
 /* Results favour error structure over a generic percentage score. */
@@ -387,14 +339,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .map-country--wrong-pulse .map-country__shape,
-  .map-country--wrong-pulse .map-country__locator,
-  .map-country--wrong-pulse .map-country__marker,
-  .map-country--wrong-pulse .map-country__callout-target,
+  .map-country--wrong-pulse .map-country__feedback-shape,
   .map-country--current-correct .map-country__shape,
-  .map-country--current-correct .map-country__locator,
-  .map-country--current-correct .map-country__marker,
-  .map-country--current-correct .map-country__callout-target,
-  .map-country--wrong-pulse .map-country__callout-line { animation: none; }
+  .map-country--current-correct .map-country__feedback-shape { animation: none; }
 }
 
 @media (forced-colors: active) {
@@ -404,23 +351,16 @@
   .map-country__locator,
   .map-country__marker,
   .map-country__callout-target { fill: Canvas; stroke: CanvasText; }
+  .map-country__feedback-shape { fill: transparent; stroke: none; }
   .map-context-country,
   .map-context-locator { opacity: .65; }
   .map-country__callout-line { stroke: CanvasText; }
   .map-country--wrong-pulse .map-country__shape,
-  .map-country--wrong-pulse .map-country__locator,
-  .map-country--wrong-pulse .map-country__marker,
-  .map-country--wrong-pulse .map-country__callout-target,
+  .map-country--wrong-pulse .map-country__feedback-shape,
   .map-country--revealed .map-country__shape,
-  .map-country--revealed .map-country__locator,
-  .map-country--revealed .map-country__marker,
-  .map-country--revealed .map-country__callout-target,
+  .map-country--revealed .map-country__feedback-shape,
   .map-country--current-correct .map-country__shape,
-  .map-country--current-correct .map-country__locator,
-  .map-country--current-correct .map-country__marker,
-  .map-country--current-correct .map-country__callout-target,
+  .map-country--current-correct .map-country__feedback-shape,
   .map-country--current-wrong .map-country__shape,
-  .map-country--current-wrong .map-country__locator,
-  .map-country--current-wrong .map-country__marker,
-  .map-country--current-wrong .map-country__callout-target { stroke: Highlight; stroke-width: 3; }
+  .map-country--current-wrong .map-country__feedback-shape { fill: Highlight; stroke: none; }
 }
