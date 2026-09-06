@@ -19,13 +19,8 @@ async function openPlay(page: Page, continent: string, region: string, label: st
 }
 
 async function freezeResolvedFeedbackTimers(page: Page) {
-  await page.evaluate(() => {
-    const nativeSetTimeout = window.setTimeout.bind(window);
-    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
-      if ((timeout ?? 0) >= 600) return 2_147_000_000;
-      return nativeSetTimeout(handler, timeout, ...args);
-    }) as typeof window.setTimeout;
-  });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
 }
 
 async function currentTarget(page: Page) {
