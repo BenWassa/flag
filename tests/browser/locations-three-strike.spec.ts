@@ -24,13 +24,17 @@ async function currentTarget(page: Page) {
 }
 
 async function selectableIds(page: Page, targetId: string): Promise<string[]> {
-  return page.locator('.map-country[data-action="map-answer"], .map-inset__hit[data-action="map-answer"]').evaluateAll((elements, target) => (
+  return page.locator('[data-action="map-answer"][tabindex]').evaluateAll((elements, target) => (
     [...new Set(elements.map((element) => element.getAttribute('data-id')).filter((id): id is string => Boolean(id) && id !== target))]
   ), targetId);
 }
 
+function answerControl(page: Page, countryId: string) {
+  return page.locator(`[data-action="map-answer"][data-id="${countryId}"][tabindex]`).first();
+}
+
 async function answer(page: Page, countryId: string) {
-  const control = page.locator(`.map-country[data-action="map-answer"][data-id="${countryId}"], .map-inset__hit[data-action="map-answer"][data-id="${countryId}"]`).first();
+  const control = answerControl(page, countryId);
   await expect(control).toBeVisible();
   await control.focus();
   await control.press('Enter');
@@ -48,11 +52,13 @@ test('miss, miss, correct resolves orange without answer leakage', async ({ page
   await expect(page.locator('.map-country--revealed')).toHaveCount(0);
   await expect(page.locator(`.map-country[data-id="${target.id}"]`)).not.toHaveClass(/map-country--current-correct/);
   await expect(page.locator('.map-country[data-action="map-answer"]')).not.toHaveCount(0);
+  await expect(answerControl(page, wrongIds[0])).toBeFocused();
 
   await answer(page, wrongIds[1]);
   await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
   await expect(page.locator('.answer-feedback--wrong')).toContainText('1 try left');
   await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+  await expect(answerControl(page, wrongIds[1])).toBeFocused();
 
   await answer(page, target.id);
   const targetGroup = page.locator(`.map-country[data-id="${target.id}"]`).first();
@@ -72,6 +78,7 @@ test('three misses reveal only on the third wrong guess and lock resolution', as
     await answer(page, wrongIds[index]);
     await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
     await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+    await expect(answerControl(page, wrongIds[index])).toBeFocused();
   }
   await answer(page, wrongIds[2]);
 
@@ -100,6 +107,7 @@ for (const fixture of VIEWPORT_CASES) {
     await answer(page, wrongId);
     await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
     await expect(page.locator('.answer-feedback--wrong')).toContainText('2 tries left');
+    await expect(answerControl(page, wrongId)).toBeFocused();
     await answer(page, target.id);
     await expect(page.locator(`.map-country[data-id="${target.id}"]`).first()).toHaveClass(/map-country--one-miss/);
     await expect(page.locator('.answer-feedback--neutral')).toContainText('After 1 miss');
@@ -113,6 +121,7 @@ test('reduced motion and forced colours retain the complete semantic ladder', as
   const wrongIds = await selectableIds(page, target.id);
   await answer(page, wrongIds[0]);
   await expect(page.locator('.answer-feedback--wrong')).toContainText('2 tries left');
+  await expect(answerControl(page, wrongIds[0])).toBeFocused();
   const wrongShape = page.locator('.map-country--wrong-pulse .map-country__shape, .map-country--wrong-pulse .map-country__feedback-shape').first();
   await expect(wrongShape).toBeAttached();
   await expect(wrongShape).toHaveCSS('animation-name', 'none');
