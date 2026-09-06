@@ -47,11 +47,9 @@ describe('spatial stage gestures', () => {
     const spy = handlers();
     installGestures(element, spy);
     element.dispatchEvent(pointer('pointerdown', 1, 180, 300));
-    // Ordinary finger roll, below the drag threshold.
     element.dispatchEvent(pointer('pointermove', 1, 183, 302));
     element.dispatchEvent(pointer('pointermove', 1, 185, 304));
     element.dispatchEvent(pointer('pointerup', 1, 185, 304));
-    // The geography never moved, so the pick lands where the learner aimed.
     expect(spy.onRotate).not.toHaveBeenCalled();
     expect(spy.onTap).toHaveBeenCalledWith(180, 300);
   });
@@ -122,6 +120,21 @@ describe('spatial stage gestures', () => {
     element.dispatchEvent(pointer('pointermove', 1, 120, 300));
     element.dispatchEvent(pointer('pointerup', 1, 120, 300));
     expect(element.setPointerCapture).not.toHaveBeenCalled();
+    expect(spy.onRotate).not.toHaveBeenCalled();
+    expect(spy.onTap).not.toHaveBeenCalled();
+  });
+
+  it('leaves edge multi-touch to the platform and never turns it into a tap', () => {
+    const element = stage();
+    const spy = handlers();
+    installGestures(element, spy);
+    const x = EDGE_GUTTER_PX - 2;
+    element.dispatchEvent(pointer('pointerdown', 1, x, 300));
+    element.dispatchEvent(pointer('pointerdown', 2, x + 20, 300));
+    element.dispatchEvent(pointer('pointerup', 2, x + 20, 300));
+    element.dispatchEvent(pointer('pointerup', 1, x, 300));
+    expect(element.setPointerCapture).not.toHaveBeenCalled();
+    expect(spy.onDolly).not.toHaveBeenCalled();
     expect(spy.onRotate).not.toHaveBeenCalled();
     expect(spy.onTap).not.toHaveBeenCalled();
   });
