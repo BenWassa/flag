@@ -2,8 +2,7 @@ import { COUNTRY_BY_ID } from '../data/countries.js';
 import { AFRICA_MAP_SCOPE } from '../data/map-scopes.js';
 import { loadMapAsset } from '../data/maps/index.js';
 import type { LearningActivity, StudyScope } from '../domain/models.js';
-import type { MapMode, MapRegionAsset } from '../domain/map-models.js';
-import { answerFeedback, roundScore, scoreAnnouncement } from '../domain/round-feedback.js';
+import type { MapGuessOutcome, MapMode, MapRegionAsset } from '../domain/map-models.js';
 import { routeForScope } from '../routing/routes.js';
 import { setActiveRoundRoute } from './active-round.js';
 import { beginRoundLaunch, isCurrentRoundLaunch } from './round-launch-guard.js';
@@ -27,6 +26,13 @@ export interface LocationsRound {
   /** No-op unless a map round has just finished (mirrors the original app.ts view-name guard). */
   reviewMistakes(): void;
   repeat(): void;
+}
+
+function resolvedFeedbackDwellMs(outcome: MapGuessOutcome): number {
+  if (outcome.revealed) return playFeedbackDwellMs(false);
+  if (outcome.misses >= 2) return 850;
+  if (outcome.misses === 1) return 700;
+  return playFeedbackDwellMs(true);
 }
 
 export function createLocationsRound(context: RoundContext): LocationsRound {
@@ -98,14 +104,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
 
   function answerAnnouncement(): string {
     const outcome = store.mapLastOutcome;
-    const session = store.mapSession;
-    if (!outcome || !session) return '';
-    if (session.mode === 'test') {
-      const target = COUNTRY_BY_ID.get(outcome.targetCountryId);
-      const feedback = answerFeedback(outcome.correct, target?.name ?? 'Country');
-      const score = scoreAnnouncement(roundScore(session.attempts, session.countryIds.length));
-      return `${feedback.title}. ${feedback.detail}. ${score}`;
-    }
+    if (!outcome || !store.mapSession) return '';
     if (outcome.correct) {
       if (outcome.misses === 0) return 'Correct on the first try.';
       return `Correct after ${outcome.misses} ${outcome.misses === 1 ? 'miss' : 'misses'}.`;
@@ -131,19 +130,10 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
 
     cancelWrongReset();
     const outcome = store.answerMap(countryId);
-    const advanceDelay = store.mapSession.mode === 'test'
-      ? playFeedbackDwellMs(outcome.correct)
-      : outcome.revealed
-        ? 1400
-        : outcome.misses >= 2
-          ? 850
-          : outcome.misses === 1
-            ? 700
-            : 520;
     announce(answerAnnouncement());
     finishInteraction(selector);
 
-    if (store.mapSession.mode === 'learn' && !outcome.correct) {
+    if (!outcome.correct && !outcome.revealed) {
       pendingWrongReset = window.setTimeout(() => {
         pendingWrongReset = null;
         if (store.view.name !== 'map-quiz') return;
@@ -164,7 +154,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
         if (next) announce(`Next country. Find ${next.name}.`);
       }
       finishInteraction(null);
-    }, advanceDelay);
+    }, resolvedFeedbackDwellMs(outcome));
   }
 
   function reviewMistakes(): void {
