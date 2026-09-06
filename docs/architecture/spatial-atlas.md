@@ -87,10 +87,14 @@ Forced-colours mode can hide the canvas while leaving real DOM navigation usable
 | Outlines Play/Learn | yielded | silhouette is the recognition object |
 | Neighbours Play/Learn | yielded | neighbour map/set interaction owns the screen |
 | Flags Learn, Profile | yielded | full/scrolling surfaces need the viewport |
-| Flags Play | context | flag cannot be read from an inert unhighlighted Earth |
+| Flags Play | yielded | the flag is the learning object and owns the viewport (#207) |
 | Results | results | reframe geography just practised |
 
-In live `context` mode the globe carries no answer-leaking scope highlight and takes no competing pointer input.
+Every live activity yields. #207 retired the fifth `context` mode, which had kept
+an inert globe strip above a live Flags question: it was answer-safe, but it took
+a fixed share of a phone viewport for a backdrop that contributes nothing once the
+scope has been chosen. There is one stage-yielding mechanism and no parallel path
+that hides the canvas some other way. Spatial continuity is between activities.
 
 ## Touch and picking
 

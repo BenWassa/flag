@@ -616,6 +616,15 @@ body { letter-spacing: -.006em; }
   transition: background-color var(--motion-ui) var(--ease-ui), border-color var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui), box-shadow var(--motion-press) var(--ease-press), transform var(--motion-press) var(--ease-press);
 }
 
+/* The tactile 60px baseline above is unconditional, so the short-viewport
+   step-down has to be declared in this sheet: an identical rule in styles.css
+   loses to it on source order regardless of the media query, which is why a
+   small phone was still being charged 60px per answer (#207). 52px is the
+   established standard control height. */
+@media (max-height: 720px) {
+  .answer-button { min-height: var(--control-height-standard); }
+}
+
 .answer-button:not(:disabled):active {
   box-shadow: 0 1px 0 var(--line-strong);
   transform: translateY(2px);

@@ -37,6 +37,7 @@ jobs:
           tests/browser/locations-feedback-geometry.spec.ts
           tests/browser/locations-reduced-motion.spec.ts
           tests/browser/recognition-rounds.spec.ts
+          tests/browser/flags-activity-viewport.spec.ts
           tests/browser/neighbors-suggestions-a11y.spec.ts
           --project=chromium
           --workers=1
@@ -52,6 +53,7 @@ jobs:
           tests/browser/spatial-scope-selection.spec.ts
           tests/browser/spatial-framing.spec.ts
           tests/browser/locations-three-strike.spec.ts
+          tests/browser/flags-activity-viewport.spec.ts
           --project=mobile-chromium
           --workers=1
           --retries=0

@@ -402,6 +402,13 @@ export async function createStageController(
       container.dataset.mode = next.mode;
       container.dataset.picking = next.picking;
       if (yielded) {
+        // The projected names are real DOM inside the stage, so a yielded stage
+        // has to retire them rather than merely stop drawing: `display: none`
+        // takes them off the screen and out of the accessibility tree, but they
+        // would still be controls for a scope the learner is not currently
+        // choosing. Every yielding state publishes no labels, so this is the
+        // authoritative state applied, not a special case (#207).
+        labels.set(labelGroupNameFor(next), labelTargetsFor(next));
         syncMarkers();
         return;
       }

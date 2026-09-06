@@ -126,12 +126,14 @@ test.describe('geography and DOM parity', () => {
 });
 
 test.describe('activities own the screen', () => {
-  test('a Flags round keeps geography as inert context and returns to it', async ({ page }) => {
+  test('a Flags round owns the screen and returns to the geography after it', async ({ page }) => {
     await openSpatial(page, '/flags/africa/southern-africa');
     await page.getByRole('button', { name: 'Play Southern Africa' }).click();
-    expect(await stageMode(page)).toBe('context');
-    // No scope highlighting and no pointer target while a question is live.
-    await expect(page.locator('.spatial-stage[data-mode="context"] .spatial-stage__surface')).toHaveCSS('pointer-events', 'none');
+    // #207: the flag is the learning object and the round is the content. The
+    // stage no longer keeps a share of the viewport as inert context.
+    await page.waitForFunction(() => document.querySelector('.spatial-shell')?.getAttribute('data-mode') === 'yielded', null, { timeout: 30000 });
+    expect(await stageMode(page)).toBe('yielded');
+    await expect(page.locator('.spatial-stage')).toBeHidden();
     await expect(page.locator('.spatial-command')).toHaveCount(0);
     await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);
 
