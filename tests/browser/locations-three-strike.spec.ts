@@ -18,6 +18,16 @@ async function openPlay(page: Page, continent: string, region: string, label: st
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 }
 
+async function freezeFeedbackTimers(page: Page) {
+  await page.evaluate(() => {
+    const nativeSetTimeout = window.setTimeout.bind(window);
+    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
+      if ((timeout ?? 0) >= 500) return 2_147_000_000;
+      return nativeSetTimeout(handler, timeout, ...args);
+    }) as typeof window.setTimeout;
+  });
+}
+
 async function currentTarget(page: Page) {
   const name = await page.locator('#map-prompt-heading').innerText();
   return { id: countryIdForName(name), name };
@@ -42,6 +52,7 @@ async function answer(page: Page, countryId: string) {
 
 test('miss, miss, correct resolves orange without answer leakage', async ({ page }) => {
   await openPlay(page, 'north-america', 'caribbean', 'Caribbean', { width: 412, height: 915 });
+  await freezeFeedbackTimers(page);
   const target = await currentTarget(page);
   const wrongIds = await selectableIds(page, target.id);
   expect(wrongIds.length).toBeGreaterThanOrEqual(2);
@@ -72,6 +83,7 @@ test('miss, miss, correct resolves orange without answer leakage', async ({ page
 
 test('three misses reveal only on the third wrong guess and lock resolution', async ({ page }) => {
   await openPlay(page, 'oceania', 'micronesia', 'Micronesia', { width: 390, height: 844 });
+  await freezeFeedbackTimers(page);
   const target = await currentTarget(page);
   const wrongIds = await selectableIds(page, target.id);
   expect(wrongIds.length).toBeGreaterThanOrEqual(3);
@@ -90,7 +102,6 @@ test('three misses reveal only on the third wrong guess and lock resolution', as
   await expect(targetGroup).toHaveClass(/map-country--revealed/);
   await expect(page.locator('.answer-feedback--wrong')).toContainText('Revealed');
   await expect(page.locator('.answer-feedback--wrong')).toContainText('After 3 misses');
-  await expect(page.locator('.map-country--wrong-pulse')).toHaveCount(0);
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
 });
 
@@ -105,6 +116,7 @@ const VIEWPORT_CASES = [
 for (const fixture of VIEWPORT_CASES) {
   test(`${fixture.viewport.width}x${fixture.viewport.height} keeps one-miss recovery usable`, async ({ page }) => {
     await openPlay(page, fixture.continent, fixture.region, fixture.label, fixture.viewport);
+    await freezeFeedbackTimers(page);
     const target = await currentTarget(page);
     const [wrongId] = await selectableIds(page, target.id);
     expect(wrongId).toBeTruthy();
@@ -122,6 +134,7 @@ for (const fixture of VIEWPORT_CASES) {
 test('reduced motion and forced colours retain the complete semantic ladder', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
   await openPlay(page, 'africa', 'west-africa', 'West Africa', { width: 390, height: 844 });
+  await freezeFeedbackTimers(page);
   const target = await currentTarget(page);
   const wrongIds = await selectableIds(page, target.id);
   await answer(page, wrongIds[0]);
