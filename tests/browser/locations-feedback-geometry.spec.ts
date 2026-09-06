@@ -87,10 +87,6 @@ function countryIdForName(name: string): string {
 }
 
 function expectNoVisibleStroke(stroke: string, label?: string) {
-  // Chromium may expose SVG's initial `stroke: none` as either the literal
-  // `none` or an empty computed value depending on how the property is supplied.
-  // Both mean that no exterior stroke is painted; any actual stroke colour still
-  // fails this contract.
   expect(stroke === '' || stroke === 'none', label).toBe(true);
 }
 
@@ -177,9 +173,6 @@ for (const fixture of CASES) {
       expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
-    // Freeze only timers created from this point onward. The exact production
-    // round and geography have already loaded, but its feedback dwell cannot
-    // race the geometry inspection under CI scheduling.
     await page.clock.install();
     await answerMainMapCountry(page, fixture.countryId);
     const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
@@ -224,14 +217,14 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
   await openPlay(page, fixture);
   const targetId = await currentTargetId(page);
   await page.clock.install();
-  await answerMainMapCountry(page, fixture.countryId);
-  const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
-  const inspection = await inspectOutcomeGeometry(page, stateClass);
+  await answerMainMapCountry(page, targetId);
+  const inspection = await inspectOutcomeGeometry(page, 'map-country--current-correct');
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
   for (const mark of inspection.semantic) {
     expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
+  expect(inspection.feedbackClass).toContain('answer-feedback--correct');
   expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
 });
