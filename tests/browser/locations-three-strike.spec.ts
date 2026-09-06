@@ -78,6 +78,11 @@ test('three misses reveal only on the third wrong guess and lock resolution', as
   const wrongIds = await selectableIds(page, target.id);
   expect(wrongIds.length).toBeGreaterThanOrEqual(3);
 
+  // Keep transient feedback timers deterministic while asserting keyboard-focus
+  // ownership. The dedicated reduced-motion suite separately advances the
+  // production timer and verifies that focus remains stable after the pulse clears.
+  await page.clock.install();
+
   for (let index = 0; index < 2; index += 1) {
     await answer(page, wrongIds[index]);
     await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
