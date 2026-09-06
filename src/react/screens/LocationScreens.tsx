@@ -24,15 +24,22 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
 
   // The raw SVG is replaced when answer state changes. Keep a keyboard learner
   // on the same still-selectable geography through miss one/two (including the
-  // transient wrong-colour reset), but never move pointer focus. Once a target
-  // resolves its answer controls disappear, so this naturally stands down.
+  // transient wrong-colour reset), but never move pointer focus. Restore once
+  // during layout and once on the next frame so a short-landscape relayout
+  // cannot strand focus on the document body after the SVG replacement. Once a
+  // target resolves its answer controls disappear, so this naturally stands down.
   useLayoutEffect(() => {
     const countryId = keyboardFocusCountryId.current;
     if (!interactive || !countryId) return;
     const selector = `[data-action="map-answer"][data-id="${CSS.escape(countryId)}"][tabindex]`;
-    const focusable = surfaceRef.current?.querySelector<HTMLElement>(selector);
-    if (focusable) focusable.focus({ preventScroll: true });
-    else keyboardFocusCountryId.current = null;
+    const restore = () => {
+      const focusable = surfaceRef.current?.querySelector<HTMLElement>(selector);
+      if (focusable) focusable.focus({ preventScroll: true });
+      else keyboardFocusCountryId.current = null;
+    };
+    restore();
+    const frame = window.requestAnimationFrame(restore);
+    return () => window.cancelAnimationFrame(frame);
   }, [interactive, lastWrongCountryId, session.attempts.length, session.currentIndex]);
 
   return <div
