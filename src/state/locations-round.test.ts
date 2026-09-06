@@ -59,7 +59,7 @@ describe('Locations wrong-answer feedback state', () => {
     expect(finishInteraction).toHaveBeenLastCalledWith(`[data-id="${wrong}"]`);
   });
 
-  it('does not apply the Learn reset timer to Play current-wrong feedback', () => {
+  it('clears transient Play error colour while leaving the unresolved target active', () => {
     const store = new AppStore();
     expect(store.startMapSession(asset, 'test')).toBe(true);
     const target = store.mapSession!.countryIds[0];
@@ -67,10 +67,24 @@ describe('Locations wrong-answer feedback state', () => {
     const round = createLocationsRound(context(store));
 
     round.submitAnswer(wrong, `[data-id="${wrong}"]`);
-    vi.advanceTimersByTime(LOCATION_WRONG_FEEDBACK_MS);
-
-    expect(store.view.name).toBe('map-quiz');
     expect(store.mapLastWrongCountryId).toBe(wrong);
     expect(store.mapLastOutcome?.correct).toBe(false);
+    expect(store.mapLastOutcome?.resolved).toBe(false);
+    expect(store.mapSession!.targets[target]?.resolved).toBe(false);
+    const attempts = structuredClone(store.mapSession!.attempts);
+    const progress = structuredClone(store.locationProgress);
+    const outcome = structuredClone(store.mapLastOutcome);
+
+    vi.advanceTimersByTime(LOCATION_WRONG_FEEDBACK_MS - 1);
+    expect(store.mapLastWrongCountryId).toBe(wrong);
+    vi.advanceTimersByTime(1);
+
+    expect(store.view.name).toBe('map-quiz');
+    expect(store.mapLastWrongCountryId).toBeNull();
+    expect(store.mapSession!.countryIds[store.mapSession!.currentIndex]).toBe(target);
+    expect(store.mapSession!.targets[target]?.resolved).toBe(false);
+    expect(store.mapSession!.attempts).toEqual(attempts);
+    expect(store.locationProgress).toEqual(progress);
+    expect(store.mapLastOutcome).toEqual(outcome);
   });
 });
