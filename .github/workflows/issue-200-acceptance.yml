@@ -1,0 +1,30 @@
+name: Issue 200 acceptance
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    if: github.head_ref == 'issue-200-spatial-marker-hit-parity'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Tiny-marker exact-production Chromium interaction
+        run: npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=chromium
+      - name: Tiny-marker exact-production mobile Chromium interaction
+        run: npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=mobile-chromium
+      - name: Exact-production Chromium browser matrix
+        run: npx playwright test --project=chromium
+      - name: Exact-production mobile Chromium browser matrix
+        run: npx playwright test --project=mobile-chromium
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime
