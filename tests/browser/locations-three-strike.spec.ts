@@ -51,7 +51,7 @@ test('miss, miss, correct resolves orange without answer leakage', async ({ page
   await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
   await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
   await expect(page.locator('.map-country--revealed')).toHaveCount(0);
-  await expect(page.locator(`.map-country[data-id="${target.id}"]`)).not.toHaveClass(/map-country--current-correct/);
+  await expect(answerControl(page, target.id)).not.toHaveClass(/map-country--current-correct/);
   await expect(page.locator('.map-country[data-action="map-answer"]')).not.toHaveCount(0);
   await expect(answerControl(page, wrongIds[0])).toBeFocused();
 
