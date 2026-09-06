@@ -47,13 +47,8 @@ async function openPlay(page: Page, fixture: FeedbackCase) {
 }
 
 async function freezeFeedbackTimers(page: Page) {
-  await page.evaluate(() => {
-    const nativeSetTimeout = window.setTimeout.bind(window);
-    window.setTimeout = ((handler: TimerHandler, timeout?: number, ...args: unknown[]) => {
-      if ((timeout ?? 0) >= 500) return 2_147_000_000;
-      return nativeSetTimeout(handler, timeout, ...args);
-    }) as typeof window.setTimeout;
-  });
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
 }
 
 async function currentTargetId(page: Page): Promise<string> {
