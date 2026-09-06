@@ -10,7 +10,13 @@
  * document, so page scrolling outside the stage and the platform edge-back
  * gesture both keep working. A drag that STARTS inside the edge gutter is left
  * entirely to the browser: Android and iOS both begin their back gesture there,
- * and a globe that swallows it would break system navigation.
+ * and a globe that captures or rotates it would break system navigation.
+ *
+ * A stationary edge tap is different: #200 requires a visible tiny-country
+ * marker to remain selectable even when framing places its practical envelope
+ * inside that reserved gutter. We therefore track edge presses without capture
+ * or rotation. Movement past the drag threshold is ceded to the browser; a
+ * completed stationary tap still resolves where the learner pressed.
  *
  * POINTER OWNERSHIP (#166) follows the contract #22 established for the
  * projected 2D map, for the same reason it was established there — a tap on a
@@ -57,7 +63,8 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   let origin: { x: number; y: number } | null = null;
   let dragging = false;
   let pinchStart = 0;
-  let ignore = false;
+  /** Edge-origin gestures never capture or manipulate the globe. */
+  let edgeOwned = false;
 
   const spread = () => {
     const [a, b] = [...points.values()];
@@ -71,12 +78,12 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   const onPointerDown = (event: PointerEvent) => {
     if (points.size === 0) {
       const rect = stage.getBoundingClientRect();
-      ignore = event.clientX - rect.left < EDGE_GUTTER_PX || rect.right - event.clientX < EDGE_GUTTER_PX;
+      edgeOwned = event.clientX - rect.left < EDGE_GUTTER_PX || rect.right - event.clientX < EDGE_GUTTER_PX;
       origin = { x: event.clientX, y: event.clientY };
       dragging = false;
     }
-    if (ignore) return;
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (edgeOwned) return;
     if (points.size === 2) {
       pinchStart = spread();
       // A second pointer establishes a pinch, which owns the gesture outright
@@ -87,10 +94,16 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    if (ignore) return;
     const previous = points.get(event.pointerId);
     if (!previous) return;
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (edgeOwned) {
+      // Preserve the OS/browser edge gesture. We only need to know whether the
+      // press stopped being a tap; no capture, rotation or dolly is allowed.
+      if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DRAG_THRESHOLD_PX) dragging = true;
+      return;
+    }
 
     if (points.size === 2 && pinchStart > 0) {
       const next = spread();
@@ -118,10 +131,16 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   };
 
   const onPointerUp = (event: PointerEvent) => {
-    if (ignore) { if (points.size <= 1) ignore = false; return; }
     const had = points.size;
     points.delete(event.pointerId);
     if (points.size < 2) pinchStart = 0;
+
+    if (edgeOwned) {
+      if (had === 1 && !dragging && origin) handlers.onTap(origin.x, origin.y);
+      if (points.size === 0) { edgeOwned = false; origin = null; dragging = false; }
+      return;
+    }
+
     // The press never became a drag, so it was aimed: report where it started.
     if (had === 1 && !dragging && origin) handlers.onTap(origin.x, origin.y);
     if (points.size === 0) { origin = null; dragging = false; }
@@ -130,7 +149,7 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   const onPointerCancel = (event: PointerEvent) => {
     points.delete(event.pointerId);
     pinchStart = 0;
-    if (points.size === 0) { ignore = false; origin = null; dragging = false; }
+    if (points.size === 0) { edgeOwned = false; origin = null; dragging = false; }
   };
 
   const onWheel = (event: WheelEvent) => {
