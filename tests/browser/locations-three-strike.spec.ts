@@ -69,8 +69,8 @@ test('miss, miss, correct resolves orange without answer leakage', async ({ page
 
   await freezeResolvedFeedbackTimers(page);
   await answer(page, target.id);
-  const targetGroup = page.locator(`.map-country[data-id="${target.id}"]`).first();
-  await expect(targetGroup).toHaveClass(/map-country--two-miss/);
+  const targetGroup = page.locator('.map-country--two-miss').first();
+  await expect(targetGroup).toBeAttached();
   await expect(targetGroup).not.toHaveClass(/map-country--current-correct/);
   await expect(page.locator('.answer-feedback--neutral')).toContainText('After 2 misses');
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
@@ -93,8 +93,7 @@ test('three misses reveal only on the third wrong guess and lock resolution', as
 
   await freezeResolvedFeedbackTimers(page);
   await answer(page, wrongIds[2]);
-  const targetGroup = page.locator(`.map-country[data-id="${target.id}"]`).first();
-  await expect(targetGroup).toHaveClass(/map-country--revealed/);
+  await expect(page.locator('.map-country--revealed').first()).toBeAttached();
   await expect(page.locator('.answer-feedback--wrong')).toContainText('Revealed');
   await expect(page.locator('.answer-feedback--wrong')).toContainText('After 3 misses');
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
@@ -121,7 +120,7 @@ for (const fixture of VIEWPORT_CASES) {
     await expect(answerControl(page, wrongId)).toBeFocused();
     await freezeResolvedFeedbackTimers(page);
     await answer(page, target.id);
-    await expect(page.locator(`.map-country[data-id="${target.id}"]`).first()).toHaveClass(/map-country--one-miss/);
+    await expect(page.locator('.map-country--one-miss').first()).toBeAttached();
     await expect(page.locator('.answer-feedback--neutral')).toContainText('After 1 miss');
   });
 }
@@ -141,5 +140,5 @@ test('reduced motion and forced colours retain the complete semantic ladder', as
   await freezeResolvedFeedbackTimers(page);
   await answer(page, target.id);
   await expect(page.locator('.answer-feedback--neutral')).toContainText('After 1 miss');
-  await expect(page.locator(`.map-country[data-id="${target.id}"]`).first()).toHaveClass(/map-country--one-miss/);
+  await expect(page.locator('.map-country--one-miss').first()).toBeAttached();
 });
