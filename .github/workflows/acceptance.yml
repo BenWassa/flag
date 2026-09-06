@@ -55,6 +55,23 @@ jobs:
           --project=mobile-chromium
           --workers=1
           --retries=0
+      # Temporary #212 evidence. Remove this step before merge once the broad
+      # historical contracts have been reconciled and their final command is
+      # recorded in the issue closeout.
+      - name: Reconciled broad-contract evidence
+        run: >-
+          npx playwright test
+          tests/browser/atlas.spec.ts
+          tests/browser/design-token-regression.spec.ts
+          tests/browser/navigation-mastery.spec.ts
+          tests/browser/spatial-disclosure.spec.ts
+          tests/browser/spatial-atlas.spec.ts
+          tests/browser/production-matrix.spec.ts
+          tests/browser/asia-hardening.spec.ts
+          tests/browser/map-neighbors-rounds.spec.ts
+          --project=chromium
+          --workers=1
+          --retries=0
       - name: Exact-production PWA lifecycle
         run: >-
           npx playwright test
