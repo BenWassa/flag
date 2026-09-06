@@ -37,7 +37,9 @@ Canonical country identity is ISO3. Projected maps, outlines, neighbours and sph
 
 - `npm run check` type-checks the application and is already part of `npm test`; do not run it redundantly in CI before `npm test`.
 - `npm test` is the primary full repository gate under Node 22.
+- `npm run test:browser:chromium` and `npm run test:browser:mobile` are the deterministic broad browser suites. They run serially with zero retries; `npm run test:browser` runs both in sequence. Do not use parallelism or retries to hide broad-suite instability.
 - The normal PR/main automation entry point is `.github/workflows/ci.yml`. Its repository gate produces `flag-atlas-dist`, then its reusable exact-production acceptance job tests that same artifact in Chromium/mobile Chromium and through the PWA lifecycle.
+- The permanent acceptance list is a focused cross-cutting merge gate, not a duplicate of every historical browser test. Broader suites remain available for reconciliation, expansion and higher-risk work when warranted.
 - Match additional focused validation to risk: keyboard/accessibility, reduced motion, responsive layout, renderer failure, generated geography and exact artifact inspection where relevant.
 - Never claim physical device/manual evidence that was inferred from automated tests.
 
