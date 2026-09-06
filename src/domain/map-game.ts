@@ -208,7 +208,8 @@ function recordResolution(
     });
     replaceEvidenceRecord(record, applied.record);
   }
-  // Play incorrect has already recorded its contradictory wrong selection.
+  // Legacy `incorrect` resolutions, if encountered in an old in-memory result,
+  // have already recorded their contradictory selection.
   return 0;
 }
 
@@ -252,12 +253,7 @@ export function applyMapGuess(
     target.selectedCountryId = selectedCountryId;
     recordWrongGuess(record, selectedCountryId, timestamp, activity);
 
-    if (session.mode === 'test') {
-      target.resolved = true;
-      target.resolution = 'incorrect';
-      resolution = 'incorrect';
-      recordResolution(record, session.id, resolution, timestamp, activity);
-    } else if (target.misses >= 3) {
+    if (target.misses >= 3) {
       target.resolved = true;
       target.resolution = 'revealed';
       resolution = 'revealed';

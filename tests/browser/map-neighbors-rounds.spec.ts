@@ -90,10 +90,17 @@ async function completeLocationsRound(page: Page, wrongFirst = false) {
       }, targetId);
       expect(wrong).not.toBeNull();
       await answerLocation(page, wrong as string);
-      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+      await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
+      await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+      await expect(page.locator('#map-prompt-heading')).toHaveText(countryName(targetId));
+      await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+      await answerLocation(page, targetId);
+      await expect(page.locator('.answer-feedback--neutral')).toContainText('After 1 miss');
+      await expect(page.locator('.map-country--one-miss')).toBeAttached();
+      await expect(page.locator('.map-country--current-correct')).toHaveCount(0);
     } else {
       await answerLocation(page, targetId);
-      await expect(page.locator('.answer-feedback--correct')).toBeVisible();
+      await expect(page.locator('.answer-feedback--correct')).toContainText('First try');
     }
     if (index < total - 1) {
       await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });

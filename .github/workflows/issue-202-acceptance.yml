@@ -1,0 +1,28 @@
+name: Issue 202 acceptance
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  acceptance:
+    if: github.head_ref == 'issue-202-locations-three-strike'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: npm run build
+      - name: Three-strike and contained-feedback exact-production Chromium
+        run: npx playwright test tests/browser/locations-three-strike.spec.ts tests/browser/locations-feedback-geometry.spec.ts tests/browser/locations-reduced-motion.spec.ts --project=chromium --workers=1 --retries=0
+      - name: Three-strike exact-production mobile Chromium
+        run: npx playwright test tests/browser/locations-three-strike.spec.ts --project=mobile-chromium --workers=1 --retries=0
+      - name: Spatial marker and practical-touch regression
+        run: npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=chromium --workers=1 --retries=0
+      - name: PWA runtime regression
+        run: npm run test:pwa-runtime

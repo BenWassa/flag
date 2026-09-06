@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { COUNTRIES } from '../../src/data/countries.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -17,67 +17,13 @@ type FeedbackCase = Readonly<{
 }>;
 
 const CASES: readonly FeedbackCase[] = [
-  {
-    label: 'dense West Africa narrow country',
-    continent: 'africa',
-    region: 'west-africa',
-    scopeLabel: 'West Africa',
-    countryId: 'TGO',
-    viewport: { width: 390, height: 844 },
-    helper: 'callout',
-  },
-  {
-    label: 'West Africa locator-only island',
-    continent: 'africa',
-    region: 'west-africa',
-    scopeLabel: 'West Africa',
-    countryId: 'CPV',
-    viewport: { width: 390, height: 844 },
-    requiresFallback: true,
-    helper: 'locator',
-  },
-  {
-    label: 'Middle East dense borders in short landscape',
-    continent: 'asia',
-    region: 'middle-east',
-    scopeLabel: 'Middle East',
-    countryId: 'LBN',
-    viewport: { width: 844, height: 390 },
-  },
-  {
-    label: 'Caucasus dense borders',
-    continent: 'asia',
-    region: 'caucasus',
-    scopeLabel: 'Caucasus',
-    countryId: 'ARM',
-    viewport: { width: 390, height: 844 },
-  },
-  {
-    label: 'Caribbean multipart island in short landscape',
-    continent: 'north-america',
-    region: 'caribbean',
-    scopeLabel: 'Caribbean',
-    countryId: 'KNA',
-    viewport: { width: 844, height: 390 },
-    multipart: true,
-  },
-  {
-    label: 'Pacific multipart island geography',
-    continent: 'oceania',
-    region: 'micronesia',
-    scopeLabel: 'Micronesia',
-    countryId: 'KIR',
-    viewport: { width: 390, height: 844 },
-    multipart: true,
-  },
-  {
-    label: 'ordinary large country',
-    continent: 'oceania',
-    region: 'australia-new-zealand',
-    scopeLabel: 'Australia & New Zealand',
-    countryId: 'AUS',
-    viewport: { width: 844, height: 390 },
-  },
+  { label: 'dense West Africa narrow country', continent: 'africa', region: 'west-africa', scopeLabel: 'West Africa', countryId: 'TGO', viewport: { width: 390, height: 844 }, helper: 'callout' },
+  { label: 'West Africa locator-only island', continent: 'africa', region: 'west-africa', scopeLabel: 'West Africa', countryId: 'CPV', viewport: { width: 390, height: 844 }, requiresFallback: true, helper: 'locator' },
+  { label: 'Middle East dense borders in short landscape', continent: 'asia', region: 'middle-east', scopeLabel: 'Middle East', countryId: 'LBN', viewport: { width: 844, height: 390 } },
+  { label: 'Caucasus dense borders', continent: 'asia', region: 'caucasus', scopeLabel: 'Caucasus', countryId: 'ARM', viewport: { width: 390, height: 844 } },
+  { label: 'Caribbean multipart island in short landscape', continent: 'north-america', region: 'caribbean', scopeLabel: 'Caribbean', countryId: 'KNA', viewport: { width: 844, height: 390 }, multipart: true },
+  { label: 'Pacific multipart island geography', continent: 'oceania', region: 'micronesia', scopeLabel: 'Micronesia', countryId: 'KIR', viewport: { width: 390, height: 844 }, multipart: true },
+  { label: 'ordinary large country', continent: 'oceania', region: 'australia-new-zealand', scopeLabel: 'Australia & New Zealand', countryId: 'AUS', viewport: { width: 844, height: 390 } },
 ];
 
 function countryIdForName(name: string): string {
@@ -87,10 +33,6 @@ function countryIdForName(name: string): string {
 }
 
 function expectNoVisibleStroke(stroke: string, label?: string) {
-  // Chromium may expose SVG's initial `stroke: none` as either the literal
-  // `none` or an empty computed value depending on how the property is supplied.
-  // Both mean that no exterior stroke is painted; any actual stroke colour still
-  // fails this contract.
   expect(stroke === '' || stroke === 'none', label).toBe(true);
 }
 
@@ -100,6 +42,11 @@ async function openPlay(page: Page, fixture: FeedbackCase) {
   await page.getByRole('button', { name: `Play ${fixture.scopeLabel}` }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
+}
+
+async function freezeFeedbackTimers(page: Page) {
+  await page.clock.install();
+  await page.clock.pauseAt(new Date());
 }
 
 async function currentTargetId(page: Page): Promise<string> {
@@ -114,51 +61,54 @@ async function answerMainMapCountry(page: Page, countryId: string) {
   });
 }
 
-async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--current-wrong') {
-  const group = page.locator(`.map-svg .${stateClass}`).first();
-  await expect(group).toBeAttached({ timeout: 2_000 });
-  await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
+async function inspectCountryStructure(group: Locator) {
   return group.evaluate((node) => {
-    const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')]
-      .map((element) => {
-        const style = getComputedStyle(element);
-        return {
-          className: element.getAttribute('class') ?? '',
-          fill: style.fill,
-          stroke: style.stroke,
-          animationName: style.animationName,
-        };
-      });
-    const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')]
-      .map((element) => {
-        const style = getComputedStyle(element);
-        return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
-      });
+    const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
+      const style = getComputedStyle(element);
+      return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
+    });
+    const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')].map((element) => {
+      const style = getComputedStyle(element);
+      return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
+    });
     const calloutLine = node.querySelector<SVGElement>('.map-country__callout-line');
     const lineStyle = calloutLine ? getComputedStyle(calloutLine) : null;
-    const svg = node.closest('.map-svg');
-    const countries = svg?.querySelector('.map-active-countries') ?? null;
-    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
-    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
-    const feedback = document.querySelector<HTMLElement>('.answer-feedback');
     return {
       semantic,
       helperMarks,
       calloutLine: lineStyle ? { stroke: lineStyle.stroke, width: lineStyle.strokeWidth } : null,
-      mainLayering: Boolean(
-        countries
-        && boundaries
-        && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING),
-      ),
+    };
+  });
+}
+
+async function inspectResolvedTarget(page: Page) {
+  const group = page.locator('.map-svg .map-country--current-correct').first();
+  await expect(group).toBeAttached({ timeout: 2_000 });
+  await expect(page.locator('.answer-feedback--correct')).toContainText(/\S/, { timeout: 2_000 });
+  return group.evaluate((node) => {
+    const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
+      const style = getComputedStyle(element);
+      return { fill: style.fill, stroke: style.stroke, animationName: style.animationName };
+    });
+    const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')].map((element) => {
+      const style = getComputedStyle(element);
+      return { fill: style.fill, stroke: style.stroke };
+    });
+    const svg = node.closest('.map-svg');
+    const countries = svg?.querySelector('.map-active-countries') ?? null;
+    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
+    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
+    return {
+      semantic,
+      helperMarks,
+      mainLayering: Boolean(countries && boundaries && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING)),
       boundaryStroke: boundary ? getComputedStyle(boundary).stroke : null,
-      feedbackClass: feedback?.className ?? '',
-      feedbackText: feedback?.textContent ?? '',
     };
   });
 }
 
 for (const fixture of CASES) {
-  test(`${fixture.label}: semantic colour stays inside canonical geometry`, async ({ page }) => {
+  test(`${fixture.label}: canonical geometry stays compatible with contained semantic feedback`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await openPlay(page, fixture);
 
@@ -177,59 +127,50 @@ for (const fixture of CASES) {
       expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
-    // Freeze only timers created from this point onward. The exact production
-    // round and geography have already loaded, but its deliberate 620/1500 ms
-    // Play dwell cannot race the geometry inspection under CI scheduling.
-    await page.clock.install();
-    await answerMainMapCountry(page, fixture.countryId);
-    const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
-    const inspection = await inspectOutcomeGeometry(page, stateClass);
-
-    expect(inspection.semantic.length).toBeGreaterThan(0);
-    for (const mark of inspection.semantic) {
-      expectNoVisibleStroke(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`);
-    }
-    for (const mark of inspection.helperMarks) {
-      expect(
-        inspection.semantic.some((semantic) => semantic.fill === mark.fill),
-        `${fixture.countryId} ${mark.className} remains neutral instead of copying outcome fill`,
-      ).toBe(false);
-    }
-
-    if (fixture.helper === 'locator') {
-      expect(inspection.helperMarks.some((mark) => mark.className.includes('map-country__locator'))).toBe(true);
-    }
+    const structure = await inspectCountryStructure(selected);
+    expect(structure.semantic.length).toBeGreaterThan(0);
+    for (const mark of structure.semantic) expectNoVisibleStroke(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`);
+    if (fixture.helper === 'locator') expect(structure.helperMarks.some((mark) => mark.className.includes('map-country__locator'))).toBe(true);
     if (fixture.helper === 'callout') {
-      expect(inspection.helperMarks.some((mark) => mark.className.includes('map-country__callout-target'))).toBe(true);
-      expect(inspection.calloutLine).not.toBeNull();
+      expect(structure.helperMarks.some((mark) => mark.className.includes('map-country__callout-target'))).toBe(true);
+      expect(structure.calloutLine).not.toBeNull();
     }
 
-    expect(inspection.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
-    expect(inspection.boundaryStroke).not.toBeNull();
-    expect(inspection.boundaryStroke).not.toBe('none');
-    expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
-    if (stateClass === 'map-country--current-correct') {
-      expect(inspection.feedbackClass).toContain('answer-feedback--correct');
-    } else {
-      expect(inspection.feedbackClass).toContain('answer-feedback--wrong');
+    await freezeFeedbackTimers(page);
+    await answerMainMapCountry(page, targetId);
+    const outcome = await inspectResolvedTarget(page);
+    expect(outcome.semantic.length).toBeGreaterThan(0);
+    for (const mark of outcome.semantic) expectNoVisibleStroke(mark.stroke, 'resolved semantic fill has no exterior stroke');
+    for (const mark of outcome.helperMarks) {
+      expect(outcome.semantic.some((semantic) => semantic.fill === mark.fill), 'helper symbology remains neutral instead of copying outcome fill').toBe(false);
     }
+    expect(outcome.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
+    expect(outcome.boundaryStroke).not.toBeNull();
+    expect(outcome.boundaryStroke).not.toBe('none');
   });
 }
 
-test('reduced motion and forced colours keep feedback contained and explicit', async ({ page }) => {
+test('reduced motion and forced colours keep unresolved feedback contained and explicit', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
   const fixture = CASES[1];
   await openPlay(page, fixture);
   const targetId = await currentTargetId(page);
-  await page.clock.install();
-  await answerMainMapCountry(page, fixture.countryId);
-  const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
-  const inspection = await inspectOutcomeGeometry(page, stateClass);
-
-  expect(inspection.semantic.length).toBeGreaterThan(0);
-  for (const mark of inspection.semantic) {
+  const wrongId = await page.locator('.map-svg .map-country[data-action="map-answer"][data-id]').evaluateAll((groups, target) => (
+    groups.map((group) => group.getAttribute('data-id')).find((id) => id && id !== target) ?? null
+  ), targetId);
+  expect(wrongId).toBeTruthy();
+  await answerMainMapCountry(page, wrongId!);
+  const group = page.locator('.map-svg .map-country--wrong-pulse').first();
+  await expect(group).toBeAttached();
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('tries left');
+  const inspection = await group.evaluate((node) => [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
+    const style = getComputedStyle(element);
+    return { stroke: style.stroke, animationName: style.animationName };
+  }));
+  expect(inspection.length).toBeGreaterThan(0);
+  for (const mark of inspection) {
     expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
-  expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
 });

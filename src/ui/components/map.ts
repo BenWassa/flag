@@ -188,8 +188,12 @@ export function renderMapSvg(
   const currentTargetId = session.countryIds[session.currentIndex] ?? null;
   const currentTargetResolved = currentTargetId ? Boolean(session.targets[currentTargetId]?.resolved) : false;
   const lastAttempt = session.attempts.at(-1);
+  // Legacy one-tap Play used a special current-answer overlay because Play hid
+  // stored resolution colours. Three-strike Play opts into graded feedback, so
+  // its first/one/two/reveal resolution classes are authoritative instead.
   const currentPlayAttempt = interactive
     && session.mode === 'test'
+    && !showFeedback
     && currentTargetResolved
     && lastAttempt?.targetCountryId === currentTargetId
       ? lastAttempt

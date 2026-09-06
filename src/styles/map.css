@@ -217,10 +217,8 @@
   fill: var(--wrong-soft);
 }
 
-/* Immediate answer feedback is stronger than stored Learn evidence through an
-   interior-only fill response. Correct/wrong colour never widens the country's
-   exterior; topology-derived coastlines/shared borders stay crisp above it.
-   Textual feedback carries the non-colour outcome distinction. */
+/* Resolved semantic fills remain interior-only. Unresolved miss feedback uses
+   a neutral graphite pulse: red is reserved for resolved failure/reveal. */
 .map-country--current-correct .map-country__shape,
 .map-country--current-correct .map-country__feedback-shape {
   fill: var(--mastered);
@@ -234,7 +232,7 @@
 }
 .map-country--wrong-pulse .map-country__shape,
 .map-country--wrong-pulse .map-country__feedback-shape {
-  fill: var(--wrong-soft);
+  fill: color-mix(in srgb, var(--text) 16%, var(--map-label-halo));
   opacity: 1;
   animation: map-wrong var(--motion-feedback-emphasis) var(--ease-feedback) both;
 }
@@ -243,8 +241,8 @@
   38%, 100% { fill: var(--mastered); }
 }
 @keyframes map-wrong {
-  0%, 100% { fill: var(--wrong-soft); }
-  45% { fill: color-mix(in srgb, var(--wrong) 64%, var(--wrong-soft)); }
+  0%, 100% { fill: color-mix(in srgb, var(--text) 16%, var(--map-label-halo)); }
+  45% { fill: color-mix(in srgb, var(--text) 34%, var(--map-label-halo)); }
 }
 
 /* Results favour error structure over a generic percentage score. */

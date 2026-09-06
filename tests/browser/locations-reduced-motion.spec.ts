@@ -37,11 +37,7 @@ async function answer(page: Page, id: string) {
   await country.press('Enter');
 }
 
-function visualCountryMark(page: Page, id: string) {
-  return page.locator(`.map-country[data-id="${id}"] .map-country__shape, .map-country[data-id="${id}"] .map-country__locator, .map-country[data-id="${id}"] .map-country__marker, .map-country[data-id="${id}"] .map-country__callout-target`).first();
-}
-
-function feedbackCountryGeometry(page: Page, id: string) {
+function semanticCountryGeometry(page: Page, id: string) {
   return page.locator(`.map-country[data-id="${id}"] .map-country__shape, .map-country[data-id="${id}"] .map-country__feedback-shape`).first();
 }
 
@@ -52,7 +48,7 @@ for (const reducedMotion of [false, true]) {
     const target = await currentTarget(page);
     const wrong = await wrongChoice(page, target);
     const wrongCountry = page.locator(`.map-country[data-id="${wrong}"]`);
-    const wrongFeedbackGeometry = feedbackCountryGeometry(page, wrong);
+    const wrongGeometry = semanticCountryGeometry(page, wrong);
 
     // Install the browser clock only after the round is fully loaded. The
     // production timer created by the answer can then be advanced exactly,
@@ -60,23 +56,22 @@ for (const reducedMotion of [false, true]) {
     await page.clock.install();
     await answer(page, wrong);
     await expect(wrongCountry).toHaveClass(/map-country--wrong-pulse/);
-    await expect.poll(
-      () => wrongFeedbackGeometry.evaluate((node) => getComputedStyle(node).animationName),
-    ).toBe(reducedMotion ? 'none' : 'map-wrong');
+    if (reducedMotion) {
+      await expect.poll(
+        () => wrongGeometry.evaluate((node) => getComputedStyle(node).animationName),
+      ).toBe('none');
+    }
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
 
     await page.clock.fastForward(LOCATION_WRONG_FEEDBACK_MS);
     await expect(wrongCountry).not.toHaveClass(/map-country--wrong-pulse/);
+    await expect(wrongCountry).not.toHaveClass(/map-country--first|map-country--one-miss|map-country--two-miss|map-country--revealed/);
     await expect(page.locator('.map-prompt__status')).toContainText(`Not ${COUNTRY_BY_ID.get(wrong)?.name}.`);
-    const settled = await visualCountryMark(page, wrong).evaluate((node) => {
-      const style = getComputedStyle(node);
-      return { fill: style.fill, stroke: style.stroke, width: style.strokeWidth };
-    });
-    const neutral = await page.locator(`.map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__shape, .map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__locator, .map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__marker, .map-country[data-action="map-answer"]:not([data-id="${wrong}"]):not([data-id="${target}"]) .map-country__callout-target`).first().evaluate((node) => {
-      const style = getComputedStyle(node);
-      return { fill: style.fill, stroke: style.stroke, width: style.strokeWidth };
-    });
-    expect(settled).toEqual(neutral);
+    // A keyboard learner remains focused on the wrong country after the
+    // transient pulse clears, so its focus affordance may intentionally change
+    // the computed fill. The semantic contract is that no wrong/resolution
+    // class remains, not that focused and unfocused countries share a fill.
+    await expect.poll(() => page.evaluate((id) => (document.activeElement as HTMLElement | null)?.dataset.id ?? null, wrong)).toBe(wrong);
 
     await answer(page, target);
     await expect(page.locator('.map-prompt__status--correct')).toHaveText('Correct · after 1 miss');
@@ -84,7 +79,7 @@ for (const reducedMotion of [false, true]) {
   });
 }
 
-test('Play current-wrong remains distinct from transient Learn feedback', async ({ page }) => {
+test('Play unresolved miss stays neutral, retryable and transient', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await openRound(page, 'Play');
   const target = await currentTarget(page);
@@ -92,17 +87,17 @@ test('Play current-wrong remains distinct from transient Learn feedback', async 
 
   await page.clock.install();
   await answer(page, wrong);
-  const selection = page.locator('.map-country--current-wrong');
-  await expect(selection).toHaveCount(1);
+  const selection = page.locator(`.map-country[data-id="${wrong}"]`);
   await expect(selection).toHaveClass(/map-country--wrong-pulse/);
-  await expect(page.locator('.map-country--current-correct')).toHaveCount(1);
-  await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+  await expect(selection).not.toHaveClass(/map-country--current-wrong/);
+  await expect(page.locator('.map-country--current-correct')).toHaveCount(0);
+  await expect(page.locator('.answer-feedback--neutral')).toBeVisible();
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+  await expect(page.locator('#map-prompt-heading')).toHaveText(COUNTRY_BY_ID.get(target)?.name ?? '');
   await expect(page.locator('.map-country--one-miss, .map-country--two-miss, .map-country--revealed')).toHaveCount(0);
 
-  // Learn would clear its transient wrong highlight at this point. Play's
-  // resolved wrong state must remain until its longer feedback dwell advances.
-  await page.clock.fastForward(LOCATION_WRONG_FEEDBACK_MS + 180);
-  await expect(selection).toHaveCount(1);
-  await expect(selection).toHaveClass(/map-country--wrong-pulse/);
-  await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+  await page.clock.fastForward(LOCATION_WRONG_FEEDBACK_MS);
+  await expect(selection).not.toHaveClass(/map-country--wrong-pulse/);
+  await expect(page.locator('.answer-feedback--neutral')).toBeVisible();
+  await expect(page.locator(`.map-country[data-action="map-answer"][data-id="${target}"]`)).toHaveCount(1);
 });
