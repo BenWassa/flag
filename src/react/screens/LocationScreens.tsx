@@ -1,3 +1,4 @@
+import { useLayoutEffect, useRef } from 'react';
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { getMapContinentConfigForScope } from '../../data/map-scopes.js';
 import { currentMapTarget } from '../../domain/map-game.js';
@@ -18,7 +19,24 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
   labelledBy: string;
 }) {
   const actions = useAtlasActions();
+  const surfaceRef = useRef<HTMLDivElement>(null);
+  const keyboardFocusCountryId = useRef<string | null>(null);
+
+  // The raw SVG is replaced when answer state changes. Keep a keyboard learner
+  // on the same still-selectable geography through miss one/two (including the
+  // transient wrong-colour reset), but never move pointer focus. Once a target
+  // resolves its answer controls disappear, so this naturally stands down.
+  useLayoutEffect(() => {
+    const countryId = keyboardFocusCountryId.current;
+    if (!interactive || !countryId) return;
+    const selector = `[data-action="map-answer"][data-id="${CSS.escape(countryId)}"][tabindex]`;
+    const focusable = surfaceRef.current?.querySelector<HTMLElement>(selector);
+    if (focusable) focusable.focus({ preventScroll: true });
+    else keyboardFocusCountryId.current = null;
+  }, [interactive, lastWrongCountryId, session.attempts.length, session.currentIndex]);
+
   return <div
+    ref={surfaceRef}
     className="map-stage__surface"
     onClick={(event) => {
       if (!interactive) return;
@@ -30,6 +48,7 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
       if (!element?.dataset.id) return;
       event.preventDefault();
+      keyboardFocusCountryId.current = element.dataset.id;
       actions.answerLocation(element.dataset.id, element);
     }}
     dangerouslySetInnerHTML={{ __html: renderMapSvg(asset, session, { interactive, showFeedback, lastWrongCountryId, labelledBy }) }}
