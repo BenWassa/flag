@@ -35,10 +35,20 @@ Canonical country identity is ISO3. Projected maps, outlines, neighbours and sph
 
 ## Verification
 
-- `npm run check` type-checks the application.
+- `npm run check` type-checks the application and is already part of `npm test`; do not run it redundantly in CI before `npm test`.
 - `npm test` is the primary full repository gate under Node 22.
-- Match additional validation to risk: browser matrices, keyboard/accessibility, reduced motion, responsive layout, renderer failure, PWA/offline, generated geography and exact artifact inspection where relevant.
+- The normal PR/main automation entry point is `.github/workflows/ci.yml`. Its repository gate produces `flag-atlas-dist`, then its reusable exact-production acceptance job tests that same artifact in Chromium/mobile Chromium and through the PWA lifecycle.
+- Match additional focused validation to risk: keyboard/accessibility, reduced motion, responsive layout, renderer failure, generated geography and exact artifact inspection where relevant.
 - Never claim physical device/manual evidence that was inferred from automated tests.
+
+## GitHub Actions architecture
+
+- `.github/workflows/` is permanent operational infrastructure, not issue history. Keep normal PR/main automation to the canonical `CI` workflow plus the permanent reusable acceptance and deployment workflows.
+- Do not add `issue-NNN-*.yml` workflows for ordinary feature work. Put feature regression coverage in the repository test suites; promote durable cross-cutting exact-production checks into `acceptance.yml` when justified.
+- A temporary spike workflow may exist only while the spike genuinely requires isolated infrastructure. Remove it before issue closeout unless the workflow has an explicit continuing operational purpose documented in the repository.
+- GitHub Pages and Firebase deploy only after a successful `main` push CI run. Their `workflow_run` triggers must filter `main` at event level so PR CI does not manufacture skipped deployment runs.
+- Deploy the `flag-atlas-dist` artifact produced by the successful CI run rather than rebuilding a different production artifact. Preserve and verify the exact build SHA at deployment and live-origin acceptance.
+- Do not duplicate expensive setup/build/browser gates across parallel issue workflows. Prefer one canonical gate with clearly named jobs and focused tests.
 
 ## Issue delivery
 
