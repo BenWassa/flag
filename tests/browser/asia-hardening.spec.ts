@@ -156,7 +156,7 @@ test('an assisted country resolved earlier remains a normal wrong guess in a reg
   throw new Error('No assisted Southeast Asia country encountered');
 });
 
-test('Play also re-enables the previous country only after advance', async ({ page }) => {
+test('Play re-enables the previous country after advance as an ordinary retryable miss', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openScope(page, '/#/locations/asia/caucasus', 'Play Caucasus');
   const firstName = await page.locator('#map-prompt-heading').innerText();
@@ -164,11 +164,18 @@ test('Play also re-enables the previous country only after advance', async ({ pa
   await answerKeyboard(page, first);
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
   await waitForAdvance(page, firstName);
+  const activeName = await page.locator('#map-prompt-heading').innerText();
   const previous = page.locator(`.map-country[data-id="${first}"]`);
   await expect(previous).toHaveAttribute('data-action', 'map-answer');
   await previous.focus();
   await previous.press('Enter');
-  await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+  // #202: a first miss in Play no longer resolves the target. It stays neutral,
+  // leaves the prompt active and exposes the remaining retrieval attempts.
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+  await expect(page.locator('#map-prompt-heading')).toHaveText(activeName);
+  await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+  await expect(previous).toHaveClass(/map-country--wrong-pulse/);
 });
 
 for (const viewport of [{ width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
