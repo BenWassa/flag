@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   sync-current-main:
-    if: github.event.head_commit.message != 'Sync #201 with current main'
+    if: github.event.head_commit.message != 'Sync 201 with current main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,7 +23,7 @@ jobs:
           git config user.name "Flag Atlas integration"
           git config user.email "noreply@example.invalid"
           git fetch origin main
-          if ! git merge --no-ff origin/main -m "Sync #201 with current main"; then
+          if ! git merge --no-ff origin/main -m "Sync 201 with current main"; then
             echo "Conflicts:"
             git diff --name-only --diff-filter=U
             exit 1
