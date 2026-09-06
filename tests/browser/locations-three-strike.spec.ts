@@ -77,7 +77,7 @@ test('miss, miss, correct resolves orange without answer leakage', async ({ page
 });
 
 test('three misses reveal only on the third wrong guess and lock resolution', async ({ page }) => {
-  await openPlay(page, 'oceania', 'micronesia', 'Micronesia', { width: 390, height: 844 });
+  await openPlay(page, 'africa', 'west-africa', 'West Africa', { width: 390, height: 844 });
   const target = await currentTarget(page);
   const wrongIds = await selectableIds(page, target.id);
   expect(wrongIds.length).toBeGreaterThanOrEqual(3);
