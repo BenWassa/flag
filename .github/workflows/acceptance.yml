@@ -42,8 +42,8 @@ jobs:
           --workers=1
           --retries=0
       # #212 tracks two pre-existing mobile marker-parity failures already present
-      # on #200's final head. Do not make a known-broken historical assertion a
-      # permanent merge gate; restore it here once #212 proves it genuinely green.
+      # on #200's final head. They are exercised by the temporary reconciliation
+      # step below until the fix is proved and promoted into this permanent list.
       - name: Current mobile product contracts
         run: >-
           npx playwright test
@@ -55,23 +55,20 @@ jobs:
           --project=mobile-chromium
           --workers=1
           --retries=0
-      # Temporary #212 evidence. Remove this step before merge once the broad
-      # historical contracts have been reconciled and their final command is
-      # recorded in the issue closeout.
-      - name: Reconciled broad-contract evidence
-        run: >-
-          npx playwright test
-          tests/browser/atlas.spec.ts
-          tests/browser/design-token-regression.spec.ts
-          tests/browser/navigation-mastery.spec.ts
-          tests/browser/spatial-disclosure.spec.ts
-          tests/browser/spatial-atlas.spec.ts
-          tests/browser/production-matrix.spec.ts
-          tests/browser/asia-hardening.spec.ts
-          tests/browser/map-neighbors-rounds.spec.ts
-          --project=chromium
-          --workers=1
-          --retries=0
+      # Temporary #212 evidence. Remove this step before merge once the complete
+      # Chromium suite and mobile marker contract are reconciled and the final
+      # commands/results are recorded in the issue closeout.
+      - name: Full broad-suite reconciliation evidence
+        shell: bash
+        run: |
+          set +e
+          npx playwright test --project=chromium --workers=1 --retries=0
+          desktop_status=$?
+          npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=mobile-chromium --workers=1 --retries=0
+          mobile_marker_status=$?
+          if [ "$desktop_status" -ne 0 ] || [ "$mobile_marker_status" -ne 0 ]; then
+            exit 1
+          fi
       - name: Exact-production PWA lifecycle
         run: >-
           npx playwright test
