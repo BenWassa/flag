@@ -93,7 +93,7 @@ async function completeLocationsRound(page: Page, wrongFirst = false) {
       // #202 keeps the prompt intentionally stable after unresolved misses.
       // Once the target is actually resolved, round progress is the durable
       // advance contract; do not infer resolution from a short name change.
-      await expect(page.locator('.map-round-count')).toHaveText(`${index + 2}/${total}`, { timeout: 10_000 });
+      await expect(page.locator('.map-round-count')).toHaveText(`${index + 2} / ${total}`, { timeout: 10_000 });
     }
   }
   await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 10_000 });
