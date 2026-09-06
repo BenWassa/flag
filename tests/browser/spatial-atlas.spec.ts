@@ -15,8 +15,6 @@ import { expect, test, type Page } from '@playwright/test';
 
 const STAGE = '.spatial-stage[data-ready="true"] canvas';
 
-// Booting a WebGL surface under SwiftShader, then walking twenty-four
-// domain/continent frames, is slower than the suite default allows.
 test.setTimeout(120_000);
 
 async function openSpatial(page: Page, path: string) {
@@ -28,7 +26,6 @@ async function stageMode(page: Page) {
   return page.locator('.spatial-shell').getAttribute('data-mode');
 }
 
-/** #198: projected geography is the normal continent/region control. */
 function scopeName(page: Page, name: string) {
   return page.locator('.spatial-scope', { hasText: name });
 }
@@ -50,8 +47,6 @@ test.describe('persistent spatial shell', () => {
     await scopeName(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
     expect(await stageMode(page)).toBe('focus');
-
-    // One scene for the whole traversal: the stage is a substrate, not a screen.
     expect(await page.locator('.spatial-stage__surface canvas').count()).toBe(1);
     expect(errors).toEqual([]);
   });
@@ -97,7 +92,6 @@ test.describe('geography routing', () => {
     await openSpatial(page, '/flags');
     const surface = page.locator('.spatial-stage__surface');
     const box = (await surface.boundingBox())!;
-    // The globe opens framed on Africa, so the centre is representative land.
     await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
     await expect(page).toHaveURL(/#\/flags\/(africa|europe|asia)$/);
 
@@ -201,10 +195,13 @@ test.describe('accessibility and resilience', () => {
   test('reduced motion arrives at the destination without animating', async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'reduce' });
     await openSpatial(page, '/flags');
-    await page.addInitScript(() => {
-      (window as unknown as { __frames: number }).__frames = 0;
-    });
-    await scopeName(page, 'Asia').click();
+    const asia = scopeName(page, 'Asia');
+    await expect(asia).toBeAttached();
+    await asia.focus();
+    if (await asia.getAttribute('data-facing') === 'back') {
+      await expect(asia).toHaveAttribute('data-facing', 'front', { timeout: 5_000 });
+    }
+    await asia.press('Enter');
     await expect(page).toHaveURL(/#\/flags\/asia$/);
     expect(await stageMode(page)).toBe('focus');
   });

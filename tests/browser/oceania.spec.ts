@@ -1,7 +1,7 @@
 import { expect, test, type Page } from '@playwright/test';
 import { COUNTRIES } from '../../src/data/countries.js';
 import { loadOutlineAsset } from '../../src/data/outlines.js';
-import { landAdjacencyForScope } from '../../src/data/neighbors/index.js';
+import { getNeighborScopeConfig, landAdjacencyForScope } from '../../src/data/neighbors/index.js';
 
 /**
  * Oceania expansion browser regression.
@@ -78,16 +78,20 @@ for (const viewport of [
 
 test('Oceania topology keeps PNG–Indonesia and zero-neighbour island policy', async () => {
   const melanesia = landAdjacencyForScope('melanesia');
-  const micronesia = landAdjacencyForScope('micronesia');
-  const polynesia = landAdjacencyForScope('polynesia');
   expect(melanesia).toBeDefined();
-  expect(micronesia).toBeDefined();
-  expect(polynesia).toBeDefined();
-
   expect(melanesia!.PNG).toEqual(['IDN']);
   for (const id of ['FJI', 'SLB', 'VUT']) expect(melanesia![id]).toEqual([]);
-  for (const neighbours of Object.values(micronesia!)) expect(neighbours).toEqual([]);
-  for (const neighbours of Object.values(polynesia!)) expect(neighbours).toEqual([]);
+
+  // landAdjacencyForScope intentionally returns the continent-wide canonical
+  // graph. Limit zero-neighbour assertions to each learner scope's target IDs
+  // instead of mistaking PNG's truthful cross-continent edge for Micronesia.
+  for (const scopeId of ['micronesia', 'polynesia'] as const) {
+    const adjacency = landAdjacencyForScope(scopeId);
+    const config = getNeighborScopeConfig(scopeId);
+    expect(adjacency).toBeDefined();
+    expect(config).toBeDefined();
+    for (const id of config!.countryIds) expect(adjacency![id]).toEqual([]);
+  }
 });
 
 test('Pacific canonical multipart outlines remain available to the rendered activity', async ({ page }) => {

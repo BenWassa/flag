@@ -4,6 +4,11 @@ import { COUNTRIES } from '../../src/data/countries.js';
 const ASSIST_IDS = ['BHR', 'BRN', 'ISR', 'KWT', 'LBN', 'MDV', 'PSE', 'QAT', 'SGP'] as const;
 const MARKER_IDS = ['BHR', 'BRN', 'MDV', 'SGP'] as const;
 
+// The broad serial Chromium run can leave SwiftShader/browser-context startup
+// materially slower than the 30s default. Apply the budget before fixtures are
+// created so context provisioning is covered without retries.
+test.setTimeout(120_000);
+
 function idForName(name: string): string {
   const country = COUNTRIES.find((item) => item.name === name);
   if (!country) throw new Error(`Unknown country prompt: ${name}`);

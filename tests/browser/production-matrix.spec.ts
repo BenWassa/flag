@@ -8,6 +8,20 @@ const VIEWPORTS = [
 
 const scope = (page: Page, id: string) => page.locator(`.spatial-scope[data-scope-id="${id}"]`);
 
+async function chooseScope(page: Page, id: string) {
+  const target = scope(page, id);
+  await expect(target).toBeAttached();
+  // A projected name can legitimately begin on the far side of the globe.
+  // Keyboard focus turns the Earth to that geography; Enter then selects it.
+  // This is the current operable Spatial contract, unlike a forced click
+  // through the canvas on a back-facing label.
+  await target.focus();
+  if (await target.getAttribute('data-facing') === 'back') {
+    await expect(target).toHaveAttribute('data-facing', 'front', { timeout: 5_000 });
+  }
+  await target.press('Enter');
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => ({
     viewport: window.innerWidth,
@@ -29,7 +43,7 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
     await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    await scope(page, 'africa').click();
+    await chooseScope(page, 'africa');
     await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
     await expect(page.locator('.spatial-chip')).toHaveCount(0);
@@ -39,7 +53,7 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
 test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fallback', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flags' }).click();
-  await scope(page, 'africa').click();
+  await chooseScope(page, 'africa');
   await page.getByRole('button', { name: 'Learn Africa' }).click();
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
@@ -51,15 +65,12 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
 
-  // A directly typed stable Learn route remains usable on a new document.
   await page.goto('/#/flags/asia/caucasus/learn');
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
   await page.reload();
   await expect(page).toHaveURL(/#\/flags\/asia\/caucasus\/learn$/);
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
 
-  // Active rounds are ephemeral; a cold refresh deliberately returns to the
-  // stable scope rather than pretending that the in-memory round survived.
   await page.goto('/#/flags/asia/caucasus/test');
   await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
@@ -69,21 +80,17 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await page.goto('/#/locations');
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
 
-  const northAmerica = scope(page, 'north-america');
-  await expect(northAmerica).toBeAttached();
-  await northAmerica.click();
+  await chooseScope(page, 'north-america');
   await expect(page).toHaveURL(/#\/locations\/north-america$/);
   await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play North America' })).toBeVisible();
   for (const area of ['northern-america', 'central-america', 'caribbean']) {
     await expect(scope(page, area)).toBeAttached();
   }
-  await scope(page, 'caribbean').click();
+  await chooseScope(page, 'caribbean');
   await expect(page).toHaveURL(/#\/locations\/north-america\/caribbean$/);
   await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
 
-  // The production curriculum has all six continents; normal navigation is
-  // geography-led and therefore presents six projected continent controls.
   await page.goto('/#/locations');
   await page.waitForSelector('.spatial-stage[data-ready="true"] canvas', { timeout: 30_000 });
   await expect(page.locator('.spatial-scopes .spatial-scope')).toHaveCount(6);
@@ -91,20 +98,17 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await expect(page.locator('.continent-row--shell')).toHaveCount(0);
   await expect(page.getByText('Coming soon')).toHaveCount(0);
 
-  const oceania = scope(page, 'oceania');
-  await expect(oceania).toBeAttached();
-  await oceania.click();
+  await chooseScope(page, 'oceania');
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
   await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Oceania' })).toBeVisible();
   for (const area of ['australia-new-zealand', 'melanesia', 'micronesia', 'polynesia']) {
     await expect(scope(page, area)).toBeAttached();
   }
-  await scope(page, 'polynesia').click();
+  await chooseScope(page, 'polynesia');
   await expect(page).toHaveURL(/#\/locations\/oceania\/polynesia$/);
   await expect(page.getByRole('button', { name: 'Play Polynesia' })).toBeVisible();
 
-  // A directly typed durable Oceania scope now resolves to the real launcher.
   await page.goto('/#/locations/oceania');
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
   await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
@@ -137,8 +141,6 @@ test('keeps focus, live feedback, and reduced-motion behaviour accessible', asyn
   await page.goto('/#/flags/asia/caucasus/learn');
   const heading = page.getByRole('heading', { name: 'Caucasus' });
   await expect(heading).toBeVisible();
-  // Current focus lifecycle: a cold deep link does not manufacture heading
-  // focus. Keyboard focus moves only after the learner begins interacting.
   await expect(heading).not.toBeFocused();
 
   const firstFlag = page.locator('.flag-card').first();
