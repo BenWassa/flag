@@ -102,7 +102,7 @@ function locationPlayFeedback(session: MapSession, targetName: string, wrongName
   }
   if (state.resolved) return { tone: 'wrong', title: 'Revealed', detail: `After 3 misses · ${targetName}` };
   const left = Math.max(0, 3 - state.misses);
-  return { tone: 'wrong', title: 'Incorrect', detail: `${wrongName ? `Not ${wrongName} · ` : ''}${left} ${left === 1 ? 'try' : 'tries'} left` };
+  return { tone: 'neutral', title: 'Incorrect', detail: `${wrongName ? `Not ${wrongName} · ` : ''}${left} ${left === 1 ? 'try' : 'tries'} left` };
 }
 
 export function LocationQuizScreen({ asset, session, lastWrongCountryId }: { asset: MapRegionAsset; session: MapSession; lastWrongCountryId: string | null }) {
