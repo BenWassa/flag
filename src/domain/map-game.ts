@@ -188,7 +188,6 @@ function recordResolution(
   }
 
   if (resolution === 'one-miss' || resolution === 'two-miss') {
-    record.lastCorrectAt = timestamp;
     const applied = applyCountryEvidence(record, {
       activity,
       outcome: 'assisted-retrieval',
