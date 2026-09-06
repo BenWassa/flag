@@ -1,0 +1,71 @@
+name: Exact-production acceptance
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-production:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm install
+      - name: Download repository-gate production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: flag-atlas-dist
+          path: dist
+      - name: Verify exact artifact identity
+        run: grep -Fq "name=\"atlas-build\" content=\"${GITHUB_SHA}\"" dist/index.html
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Current desktop product contracts
+        run: >-
+          npx playwright test
+          tests/browser/spatial-home-overlay.spec.ts
+          tests/browser/spatial-home-matrix.spec.ts
+          tests/browser/world-crown.spec.ts
+          tests/browser/spatial-scope-selection.spec.ts
+          tests/browser/spatial-framing.spec.ts
+          tests/browser/spatial-marker-parity.spec.ts
+          tests/browser/locations-three-strike.spec.ts
+          tests/browser/locations-feedback-geometry.spec.ts
+          tests/browser/locations-reduced-motion.spec.ts
+          tests/browser/recognition-rounds.spec.ts
+          tests/browser/neighbors-suggestions-a11y.spec.ts
+          --project=chromium
+          --workers=1
+          --retries=0
+      - name: Current mobile product contracts
+        run: >-
+          npx playwright test
+          tests/browser/spatial-home-overlay.spec.ts
+          tests/browser/world-crown.spec.ts
+          tests/browser/spatial-scope-selection.spec.ts
+          tests/browser/spatial-framing.spec.ts
+          tests/browser/spatial-marker-parity.spec.ts
+          tests/browser/locations-three-strike.spec.ts
+          --project=mobile-chromium
+          --workers=1
+          --retries=0
+      - name: Exact-production PWA lifecycle
+        run: >-
+          npx playwright test
+          tests/browser/pwa-runtime.spec.ts
+          --project=chromium
+          --workers=1
+          --retries=0
+      - name: Upload browser diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flag-atlas-browser-diagnostics
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
