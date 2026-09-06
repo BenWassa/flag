@@ -40,9 +40,10 @@
 }
 
 /*
- * An activity or results screen occupies the second row instead. There the
- * panel is the thing that scrolls, so the stage takes a fixed share and the
- * panel gets the constrained remainder.
+ * A results screen occupies the second row instead. There the panel is the
+ * thing that scrolls, so the stage takes a fixed share and the panel gets the
+ * constrained remainder. No LIVE activity uses this composition any more (#207):
+ * every one of them yields.
  */
 .spatial-shell:not([data-surface]) { grid-template-rows: var(--spatial-stage-height, 40svh) minmax(0, 1fr); }
 
@@ -88,10 +89,6 @@
 
 .spatial-shell[data-mode='yielded'] .spatial-stage { display: none; }
 
-/* An activity is running over the geography. The place persists but must not
-   compete with the learning object, so it takes a quieter share. */
-.spatial-shell[data-mode='context'] { --spatial-stage-height: 22svh; }
-
 .spatial-stage__surface {
   position: relative;
   height: 100%;
@@ -102,15 +99,6 @@
 }
 
 .spatial-stage__surface:active { cursor: grabbing; }
-
-/* A live question owns the pointer completely: the geography must not intercept
-   a tap meant for an answer, and it offers nothing to select in any case.
-   Results deliberately keeps the pointer — nothing there is selectable either,
-   but the learner has finished and the place is theirs to look around. */
-.spatial-stage[data-mode='context'] .spatial-stage__surface {
-  pointer-events: none;
-  cursor: default;
-}
 
 .spatial-stage__canvas {
   display: block;
@@ -532,19 +520,10 @@
   .spatial-command[data-surface='domains'] .spatial-command__place { font-size: 32px; }
 }
 
-/* A short landscape phone has no room to share. Splitting 844x390 between a
-   globe and a Flags question squeezes the answers into a column too narrow to
-   read, and the activity is the content: here the geography stands down
-   completely for the duration of the question, exactly as it already does for
-   the map-native domains. The contract is unchanged; only the layout adapts. */
+/* #207 removed the short-landscape stand-down that used to live here: every
+   live activity now yields at every viewport, so there is no shared composition
+   left for a 844x390 phone to have to undo. */
 @media (orientation: landscape) and (max-height: 540px) {
-  .spatial-shell[data-mode='context'] {
-    display: block;
-    height: auto;
-  }
-  .spatial-shell[data-mode='context'] .spatial-stage { display: none; }
-  .spatial-shell[data-mode='context'] .spatial-shell__panel { overflow: visible; }
-
   .spatial-command[data-surface='domains'] {
     width: min(720px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
     max-height: calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
