@@ -83,7 +83,12 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
       dragging = false;
     }
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
-    if (edgeOwned) return;
+    if (edgeOwned) {
+      // A second pointer can never resolve as an edge tap. It still remains
+      // entirely uncaptured/unhandled so the platform owns the gesture.
+      if (points.size > 1) dragging = true;
+      return;
+    }
     if (points.size === 2) {
       pinchStart = spread();
       // A second pointer establishes a pinch, which owns the gesture outright
