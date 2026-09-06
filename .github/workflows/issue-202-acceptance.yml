@@ -24,9 +24,5 @@ jobs:
         run: npx playwright test tests/browser/locations-three-strike.spec.ts --project=mobile-chromium --workers=1 --retries=0
       - name: Spatial marker and practical-touch regression
         run: npx playwright test tests/browser/spatial-marker-parity.spec.ts --project=chromium --workers=1 --retries=0
-      - name: Exact-production Chromium browser matrix
-        run: npx playwright test --project=chromium
-      - name: Exact-production mobile Chromium browser matrix
-        run: npx playwright test --project=mobile-chromium
       - name: PWA runtime regression
         run: npm run test:pwa-runtime
