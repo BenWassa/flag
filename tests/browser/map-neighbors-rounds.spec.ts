@@ -13,16 +13,8 @@ import {
 } from '../../src/domain/neighbor-game.js';
 import type { StudyMode } from '../../src/domain/models.js';
 
-// Issue #166: every launcher route now boots the persistent spatial stage, and
-// these fixtures navigate to one several times each. Under SwiftShader that
-// costs real seconds — this file's longest case measures 23.5s alone and
-// overruns the 30s default under parallel load — so the budget is raised for
-// the boot rather than the assertions being relaxed.
 test.setTimeout(90_000);
 
-// The app's round order is seeded from its session id. Pinning crypto.randomUUID
-// keeps these browser fixtures stable without replacing the production round
-// builders or injecting application-only state into the page.
 const LOCATION_SESSION_ID = 'browser-fixture-locations-southern';
 const LOCATION_WRONG_SESSION_ID = 'browser-fixture-locations-wrong';
 const LOCATION_PERSIST_SESSION_ID = 'browser-fixture-locations-persist';
@@ -56,10 +48,6 @@ async function openLocationsPlay(page: Page, sessionId = LOCATION_SESSION_ID, sc
   await page.getByRole('button', { name: `Play ${getMapScopeConfig(scopeId)?.scope.label}` }).click();
   await expect(page).toHaveURL(new RegExp(`#/locations/africa/${scopeId}/test$`));
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  // Issue #166: the opening frame lands about 200ms later now that the
-  // launcher route boots the globe first, and much later than that under a
-  // loaded SwiftShader runner. Given the same allowance as the prompt above
-  // it, rather than the 5s expect default.
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 }
 
@@ -68,10 +56,6 @@ async function currentLocationId(page: Page): Promise<string> {
 }
 
 async function answerLocation(page: Page, countryId: string) {
-  // The 44px assist discs are painted below the real country group and can be
-  // the first matching node. Target the country group (or an inset stop) so a
-  // Playwright centre click exercises the same delegated answer path as a
-  // learner tap.
   const answer = page.locator(`.map-country[data-action="map-answer"][data-id="${countryId}"], .map-inset__hit[data-action="map-answer"][data-id="${countryId}"]`).first();
   await expect(answer).toBeVisible();
   await answer.focus();
@@ -90,10 +74,16 @@ async function completeLocationsRound(page: Page, wrongFirst = false) {
       }, targetId);
       expect(wrong).not.toBeNull();
       await answerLocation(page, wrong as string);
-      await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+      await expect(page.locator('.answer-feedback--wrong')).toContainText('2 tries left');
+      await expect(page.locator('#map-prompt-heading')).toHaveText(countryName(targetId));
+      await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+      await answerLocation(page, targetId);
+      await expect(page.locator('.answer-feedback--neutral')).toContainText('After 1 miss');
+      await expect(page.locator('.map-country--one-miss')).toBeAttached();
+      await expect(page.locator('.map-country--current-correct')).toHaveCount(0);
     } else {
       await answerLocation(page, targetId);
-      await expect(page.locator('.answer-feedback--correct')).toBeVisible();
+      await expect(page.locator('.answer-feedback--correct')).toContainText('First try');
     }
     if (index < total - 1) {
       await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
@@ -197,8 +187,6 @@ test.describe('Locations browser matrix (#98)', () => {
     await page.getByRole('button', { name: 'Exit map round' }).click();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa$/);
 
-    // addInitScript applies on the next document; reload before starting the
-    // second fixture on this intentionally reused page.
     await page.reload();
     await openLocationsPlay(page, LOCATION_SESSION_ID);
     const targetId = await currentLocationId(page);
