@@ -581,12 +581,28 @@ button:focus-visible,
   }
 }
 
+/* Short-viewport compaction. The answer control's own height steps down with
+   these tiers, but that declaration lives in atlas-theme.css: that sheet loads
+   second and sets the tactile 60px baseline unconditionally, so a step-down
+   written here never applied at all (#207). */
 @media (max-height: 720px) {
   .quiz-shell { --feedback-clearance: 80px; }
   .question-stage { padding-top: 8px; }
   .flag-stage { --flag-stage-height: min(220px, 38svh); --flag-stage-inset: 12px; }
-  .answer-button { min-height: 52px; }
   .answer-feedback { min-height: 48px; padding: 10px 14px; }
+}
+
+/* The small-phone floor — 320x568 and anything near it (#207). A header, four
+   standard-height answer controls and the permanently reserved feedback area
+   do not leave 38svh for the flag, so this tier spends the difference on the
+   one element that can give it up: the stage steps to roughly a third of the
+   viewport. It remains the largest single object on the screen, and it remains
+   a determined block-size, so #90's guarantee that no flag ratio moves the
+   answers is untouched. What this buys is that the whole unanswered question —
+   header, flag and all four options — is reachable without scrolling. */
+@media (max-height: 640px) {
+  .quiz-shell { --feedback-clearance: 72px; }
+  .flag-stage { --flag-stage-height: min(200px, 32svh); }
 }
 
 /* The launcher can split earlier than a quiz because its compact right rail
@@ -617,10 +633,10 @@ button:focus-visible,
   .question-stage { grid-column: 1; grid-row: 2; }
   .answer-panel { grid-column: 2; grid-row: 2; grid-template-columns: 1fr; align-content: center; }
   .quiz-hint { grid-column: 1; }
-  .flag-stage { --flag-stage-height: 60svh; }
-  /* Still above the 44px minimum target, but four choices plus feedback have to
-     fit in 375px of height on a phone held sideways. */
-  .answer-button { min-height: 46px; }
+  /* Sized so the whole two-column question clears an 844x390 phone without
+     scrolling. The answer column keeps the full tactile control height here —
+     it is the geography column, not the controls, that has room to give. */
+  .flag-stage { --flag-stage-height: min(220px, 54svh); }
 }
 
 @media (prefers-reduced-motion: reduce) {
