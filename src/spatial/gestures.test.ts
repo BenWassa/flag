@@ -3,6 +3,7 @@ import { DRAG_THRESHOLD_PX, EDGE_GUTTER_PX, installGestures } from './gestures.j
 
 /**
  * Issue #166 — tap must stay distinct from rotate, drag and pinch.
+ * Issue #200 — a visible tiny-country marker must remain practically tappable.
  *
  * These are the regressions for the pointer-ownership defect that made small
  * geography unselectable: the stage used to rotate on any movement and resolve
@@ -101,13 +102,26 @@ describe('spatial stage gestures', () => {
     expect(spy.onTap).not.toHaveBeenCalled();
   });
 
-  it('leaves the platform edge-back gutter to the browser', () => {
+  it('allows a stationary edge tap without capturing or rotating', () => {
+    const element = stage();
+    const spy = handlers();
+    installGestures(element, spy);
+    const x = EDGE_GUTTER_PX - 2;
+    element.dispatchEvent(pointer('pointerdown', 1, x, 300));
+    element.dispatchEvent(pointer('pointerup', 1, x, 300));
+    expect(element.setPointerCapture).not.toHaveBeenCalled();
+    expect(spy.onRotate).not.toHaveBeenCalled();
+    expect(spy.onTap).toHaveBeenCalledWith(x, 300);
+  });
+
+  it('leaves an edge swipe to the platform and never resolves it as a tap', () => {
     const element = stage();
     const spy = handlers();
     installGestures(element, spy);
     element.dispatchEvent(pointer('pointerdown', 1, EDGE_GUTTER_PX - 2, 300));
     element.dispatchEvent(pointer('pointermove', 1, 120, 300));
     element.dispatchEvent(pointer('pointerup', 1, 120, 300));
+    expect(element.setPointerCapture).not.toHaveBeenCalled();
     expect(spy.onRotate).not.toHaveBeenCalled();
     expect(spy.onTap).not.toHaveBeenCalled();
   });
