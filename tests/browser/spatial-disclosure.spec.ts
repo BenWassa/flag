@@ -1,4 +1,5 @@
 import { expect, test, type Locator, type Page } from '@playwright/test';
+import { MAP_CONTINENT_CONFIGS } from '../../src/data/map-scopes.js';
 
 /**
  * Issue #197 — progressive disclosure of continent, region and country detail.
@@ -32,24 +33,21 @@ async function names(locator: Locator): Promise<string[]> {
   return locator.evaluateAll((elements) => elements.map((element) => element.textContent?.trim() ?? ''));
 }
 
-const EXPECTED_AREAS: Record<string, string[]> = {
-  africa: ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa'],
-  asia: ['Central Asia', 'East Asia', 'South Asia', 'Southeast Asia', 'Middle East', 'Caucasus'],
-  europe: ['Northern Europe', 'Western Europe', 'Central Europe', 'Southern Europe', 'Eastern Europe', 'Balkans'],
-  'north-america': ['Northern America', 'Central America', 'Caribbean'],
-  'south-america': ['Andean', 'Southern Cone', 'Brazil', 'Guianas'],
-  oceania: ['Australia & New Zealand', 'Melanesia', 'Micronesia', 'Polynesia'],
-};
+const EXPECTED_AREAS = Object.fromEntries(
+  MAP_CONTINENT_CONFIGS.map((continent) => [
+    continent.continentId,
+    continent.regions.map((region) => region.scope.label),
+  ]),
+) as Record<string, string[]>;
 
 test.describe('the Earth names what can be chosen', () => {
   test('world level offers every continent as a control on the globe', async ({ page }) => {
     await openSpatial(page, '/flags');
-    await expect(scopeNames(page)).toHaveCount(6);
+    await expect(scopeNames(page)).toHaveCount(MAP_CONTINENT_CONFIGS.length);
     await expect(page.locator('.spatial-scopes')).toHaveAttribute('aria-label', 'Continents on the globe');
     expect(await visibleNames(page).count()).toBeGreaterThan(0);
-    for (const label of await names(scopeNames(page))) {
-      expect(['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania']).toContain(label);
-    }
+    const continentLabels = MAP_CONTINENT_CONFIGS.map((continent) => continent.scope.label);
+    for (const label of await names(scopeNames(page))) expect(continentLabels).toContain(label);
     await expect(page.locator('.spatial-chip')).toHaveCount(0);
   });
 
@@ -77,7 +75,7 @@ test.describe('the Earth names what can be chosen', () => {
     await named(page, 'West Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
     // The siblings stay named and selectable; only the current one is marked.
-    await expect(scopeNames(page)).toHaveCount(5);
+    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);
     await expect(page.locator('.spatial-scope[aria-current="true"]')).toHaveCount(1);
     await expect(page.locator('.spatial-scope[aria-current="true"]')).toContainText('West Africa');
     await named(page, 'North Africa').click();
@@ -92,10 +90,10 @@ test.describe('the Earth names what can be chosen', () => {
     await expect(page).toHaveURL(/#\/flags\/africa\/east-africa$/);
     await page.goBack();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
-    await expect(scopeNames(page)).toHaveCount(5);
+    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);
     await page.goBack();
     await expect(page).toHaveURL(/#\/flags$/);
-    await expect(scopeNames(page)).toHaveCount(6);
+    await expect(scopeNames(page)).toHaveCount(MAP_CONTINENT_CONFIGS.length);
     await page.goForward();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
   });
@@ -108,7 +106,7 @@ test.describe('the Earth names what can be chosen', () => {
 
   test('names retire while an activity owns the geography', async ({ page }) => {
     await openSpatial(page, '/flags/africa/southern-africa');
-    await expect(scopeNames(page)).toHaveCount(5);
+    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);
     await page.getByRole('button', { name: 'Play Southern Africa' }).click();
     // A live question: geography is inert context and offers nothing to choose.
     await expect(scopeNames(page)).toHaveCount(0);
@@ -116,9 +114,9 @@ test.describe('the Earth names what can be chosen', () => {
 
   test('every named area of every continent is present in every domain', async ({ page }) => {
     for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-      for (const [continent, expected] of Object.entries(EXPECTED_AREAS)) {
-        await openSpatial(page, `/${domain}/${continent}`);
-        expect(await names(scopeNames(page)), `${domain}/${continent}`).toEqual(expected);
+      for (const continent of MAP_CONTINENT_CONFIGS) {
+        await openSpatial(page, `/${domain}/${continent.continentId}`);
+        expect(await names(scopeNames(page)), `${domain}/${continent.continentId}`).toEqual(EXPECTED_AREAS[continent.continentId]);
         await expect(page.locator('.spatial-chip')).toHaveCount(0);
       }
     }
@@ -239,6 +237,6 @@ test.describe('names stay legible on every viewport', () => {
     await openSpatial(page, '/flags');
     await named(page, 'Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa$/);
-    await expect(scopeNames(page)).toHaveCount(5);
+    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);
   });
 });
