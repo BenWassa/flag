@@ -138,7 +138,10 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   const provisional = Math.atan2(y / list.length, x / list.length) / DEG;
 
   /*
-   * The frame is the UNION of what it was given, re-centred on that union.
+   * The frame is the exact UNION of what it was given, re-centred on that union.
+   * Camera distance supplies the breathing room; inflating the geography itself
+   * made selected scopes systematically smaller and also moved #197 label anchor
+   * search away from the same truth the camera was interpreting.
    *
    * Which countries a scope contributes is decided upstream by the continent's
    * declared framing policy — the same `focusExcludeCountryIds` /
@@ -161,22 +164,30 @@ export function framingFor(list: readonly GlobeBounds[]): Framing | null {
   return {
     lon: wrapLon(provisional + (westOffset + eastOffset) / 2),
     lat: (south + north) / 2,
-    spanLon: Math.max(0, eastOffset - westOffset) * FRAMING_PADDING,
-    spanLat: Math.max(0, north - south) * FRAMING_PADDING,
+    spanLon: Math.max(0, eastOffset - westOffset),
+    spanLat: Math.max(0, north - south),
   };
 }
 
-/** Breathing room so the framed scope is not edge-to-edge in the viewport. */
-const FRAMING_PADDING = 1.12;
 /** Closest useful frame, in degrees of arc. See `distanceForSpan`. */
 const MINIMUM_FRAMED_SPAN_DEG = 18;
+/** Existing world/general upper bound; selected scopes may pass a tighter one. */
+const DEFAULT_MAXIMUM_FRAMED_SPAN_DEG = 170;
 
 /**
  * Camera distance that frames a span of degrees in a viewport of the given
  * vertical field of view. Derived rather than tuned per scope so a new region
- * needs no hand-authored camera entry.
+ * needs no hand-authored camera entry. Callers may tighten the effective-span
+ * ceiling when the presentation contract has a narrower useful front-facing arc;
+ * ordinary world framing keeps the established 170° default.
  */
-export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: number, aspect: number): number {
+export function distanceForSpan(
+  spanLatDeg: number,
+  spanLonDeg: number,
+  fovDeg: number,
+  aspect: number,
+  maximumSpanDeg = DEFAULT_MAXIMUM_FRAMED_SPAN_DEG,
+): number {
   // Chord subtended on a unit sphere by the larger angular span, with the
   // longitude span foreshortened by the aspect ratio it has to fit into.
   const effective = Math.max(spanLatDeg, (spanLonDeg / Math.max(aspect, 0.35)) * 0.75);
@@ -185,7 +196,8 @@ export function distanceForSpan(spanLatDeg: number, spanLonDeg: number, fovDeg: 
   // get a screen of empty ocean with no orienting geography around it. The floor
   // is roughly 2,000 km, which is enough to show the neighbours that make a
   // small scope legible.
-  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), 170) * DEG;
+  const maximum = Math.max(MINIMUM_FRAMED_SPAN_DEG, maximumSpanDeg);
+  const angle = Math.min(Math.max(effective, MINIMUM_FRAMED_SPAN_DEG), maximum) * DEG;
   const chord = 2 * Math.sin(angle / 2);
   const fov = fovDeg * DEG;
   // 1.0 is the sphere radius; the camera must clear the surface as well as fit
@@ -253,8 +265,7 @@ export const ASSIST_RADIUS_PX = 24;
  *
  * The half-width is measured as twice area over perimeter — which is exactly the
  * width of a long thin shape and the radius of a round one — rather than from
- * the bounding box, because a box is a poor proxy for how much room a country
- * actually has. Italy's box is nine degrees across while the peninsula is nowhere
+ * the bounding box, because a box is a poor proxy for how much room the country has. Italy's box is nine degrees across while the peninsula is nowhere
  * near that wide, and a box-derived bound let San Marino and Vatican City claim
  * discs big enough to cover most of it.
  */
@@ -264,15 +275,26 @@ export const ASSIST_INTRUSION_SHARE = 0.5;
 export interface TouchScale {
   /** Degrees of arc per CSS pixel at the current camera distance. */
   degreesPerPixel: number;
+  /**
+   * Exact CSS-pixel distance from the current tap to this anchor's VISIBLE
+   * rendered marker projection. Return null when that marker point is offscreen
+   * or occluded by the globe. Omitted in pure/generated checks, which retain the
+   * established angular fallback.
+   */
+  screenDistanceToAnchorPx?: (anchor: readonly [number, number]) => number | null;
 }
 
-interface Envelope {
-  id: string;
+export interface CountryTouchGeometry {
+  /** Source-derived anchor shared by any visible marker and its interaction envelope. */
   anchor: readonly [number, number];
   /** Largest latitude-corrected dimension of the country's mainland, in degrees. */
   spanDeg: number;
   /** Characteristic half-width, in degrees: how much room this country has. */
   roomDeg: number;
+}
+
+interface Envelope extends CountryTouchGeometry {
+  id: string;
 }
 
 /**
@@ -309,6 +331,26 @@ function characteristicHalfWidth(country: GlobeCountry): number {
 }
 
 /**
+ * The one source-derived touch description for a country at a given LOD.
+ *
+ * #200 makes this public because the visible marker and the invisible envelope
+ * must consume the same identity/anchor/span calculation. A marker may still be
+ * visually more selective than assistance, but it may never invent a different
+ * anchor or remain visible after this geometry is no longer assisted.
+ */
+export function touchGeometryForCountry(country: GlobeCountry): CountryTouchGeometry {
+  const [west, south, east, north] = country.mainland;
+  const midLat = (south + north) / 2;
+  const height = north - south;
+  const width = (east - west) * Math.cos(midLat * DEG);
+  return {
+    anchor: country.locator ?? [(west + east) / 2, midLat],
+    spanDeg: Math.max(height, width),
+    roomDeg: characteristicHalfWidth(country),
+  };
+}
+
+/**
  * Geographic picking index.
  *
  * PICKING GEOMETRY IS NOT DISPLAY GEOMETRY. The renderer draws tessellated,
@@ -321,7 +363,9 @@ function characteristicHalfWidth(country: GlobeCountry): number {
  * file draws anything. The envelopes below are invisible, derived entirely from
  * the canonical generated geometry already in the asset, and depend only on the
  * camera — never on the current question — so they are stable, cannot be
- * enlarged into visible target circles, and cannot leak an answer.
+ * enlarged into visible target circles, and cannot leak an answer. #200 adds the
+ * explicit marker-facing eligibility seam so a visible marker can consume this
+ * exact anchor/span contract instead of reconstructing it separately.
  */
 export class GeographyIndex {
   private readonly countries: readonly GlobeCountry[];
@@ -330,22 +374,27 @@ export class GeographyIndex {
 
   constructor(countries: readonly GlobeCountry[]) {
     this.countries = countries;
-    this.envelopes = countries.map((country) => {
-      const [west, south, east, north] = country.mainland;
-      const midLat = (south + north) / 2;
-      const height = north - south;
-      const width = (east - west) * Math.cos(midLat * DEG);
-      return {
-        id: country.id,
-        // The locator when simplification retained no ring, otherwise the centre
-        // of the country's own largest polygon. Source-derived either way: no
-        // country is ever moved, and nothing here is hand-authored.
-        anchor: country.locator ?? [(west + east) / 2, midLat],
-        spanDeg: Math.max(height, width),
-        roomDeg: characteristicHalfWidth(country),
-      };
-    });
+    this.envelopes = countries.map((country) => ({
+      id: country.id,
+      ...touchGeometryForCountry(country),
+    }));
     this.byId = new Map(this.envelopes.map((envelope) => [envelope.id, envelope]));
+  }
+
+  /**
+   * The canonical anchor when this country currently qualifies for practical
+   * touch assistance, or null once zoom makes its own geometry aimable.
+   *
+   * This is intentionally one-way presentation information: the marker may use
+   * a stricter visual threshold, but anything it draws must come through here so
+   * marker presence and the interaction envelope retire together.
+   */
+  assistanceAnchor(countryId: string, touch: TouchScale): readonly [number, number] | null {
+    const scale = touch.degreesPerPixel;
+    if (scale <= 0) return null;
+    const envelope = this.byId.get(countryId);
+    if (!envelope || envelope.spanDeg >= scale * ASSIST_THRESHOLD_PX) return null;
+    return envelope.anchor;
   }
 
   /**
@@ -382,9 +431,12 @@ export class GeographyIndex {
    *   1. a speck always owns its own land outright;
    *   2. otherwise every speck whose envelope covers the point competes, and the
    *      nearest anchor wins, ties broken by smaller span then by ISO3, so
-   *      overlapping open-water envelopes resolve deterministically. An envelope
-   *      reaching onto another country's land is bounded by that country's own
-   *      room, so it can never cover a neighbour over;
+   *      overlapping open-water envelopes resolve deterministically. When a
+   *      rendered screen metric is supplied, the practical 24 px radius is
+   *      measured from the visible marker itself rather than approximated from
+   *      the unit-sphere ray hit. An envelope reaching onto another country's
+   *      land remains bounded by that country's own room, so exact screen-space
+   *      targeting cannot cover a neighbour over;
    *   3. with no such candidate, the containing polygon wins unchanged.
    *
    * This is what #117's "real polygons beat assisted surfaces" means once the
@@ -408,14 +460,16 @@ export class GeographyIndex {
     // Rule 1. A speck owns its own land outright — nothing may take it.
     if (standing && standing.spanDeg < threshold) return contained;
 
-    // Rule 2's bound: over water an envelope keeps its full radius; over land it
-    // reaches no further than the country beneath it can spare.
-    const radius = standing
+    // Rule 2's geographic bound: over water an envelope has no competing land
+    // to protect; over land it reaches no further than the country beneath it
+    // can spare. The exact screen metric below never relaxes this land bound.
+    const geographicRadius = standing
       ? Math.min(scale * ASSIST_RADIUS_PX, standing.roomDeg * ASSIST_INTRUSION_SHARE)
       : scale * ASSIST_RADIUS_PX;
     // Longitude degrees shrink with latitude; without the cosine a Pacific
     // envelope would claim a band far wider than it looks on screen.
     const lonScale = Math.cos(latDeg * DEG);
+    const screenDistance = touch?.screenDistanceToAnchorPx;
 
     let best: Envelope | null = null;
     let bestDistance = Infinity;
@@ -423,14 +477,30 @@ export class GeographyIndex {
       if (envelope.spanDeg >= threshold) continue;
       const dLat = latDeg - envelope.anchor[1];
       const dLon = wrapLon(lon - envelope.anchor[0]) * lonScale;
-      const distance = Math.hypot(dLat, dLon);
-      if (distance > radius || distance > bestDistance) continue;
-      if (distance === bestDistance && best) {
+      const geographicDistance = Math.hypot(dLat, dLon);
+
+      let candidateDistance: number;
+      if (screenDistance) {
+        const pixels = screenDistance(envelope.anchor);
+        if (pixels === null || pixels > ASSIST_RADIUS_PX) continue;
+        // Real-land precedence is still protected in geographic space. Over
+        // open water the visible marker's exact 24 px disc is authoritative,
+        // which fixes perspective/parallax drift between r=1.008 markers and
+        // the unit-sphere point returned by the raycaster.
+        if (standing && geographicDistance > geographicRadius) continue;
+        candidateDistance = pixels;
+      } else {
+        if (geographicDistance > geographicRadius) continue;
+        candidateDistance = geographicDistance;
+      }
+
+      if (candidateDistance > bestDistance) continue;
+      if (candidateDistance === bestDistance && best) {
         if (envelope.spanDeg > best.spanDeg) continue;
         if (envelope.spanDeg === best.spanDeg && envelope.id >= best.id) continue;
       }
       best = envelope;
-      bestDistance = distance;
+      bestDistance = candidateDistance;
     }
     return best?.id ?? contained;
   }

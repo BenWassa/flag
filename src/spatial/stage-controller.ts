@@ -9,24 +9,29 @@
  * create/dispose pair rather than risking a half-torn-down GL context.
  */
 
+import { PerspectiveCamera, Vector3 } from 'three';
+
 import { CONTINENTS } from '../data/continents.js';
 import { loadGlobeAsset } from '../data/globe/index.js';
 import type { ContinentId, StudyScope } from '../domain/models.js';
 import { createCameraDirector, type CameraDirector } from './camera-director.js';
 import { scopeAnchor } from './disclosure.js';
-import { DEG, framingFor, GeographyIndex, mergeForPicking, type TouchScale } from './geo.js';
-import type { GlobeAsset, GlobeBounds } from './globe-asset.js';
+import { DEG, framingFor, GeographyIndex, mergeForPicking, toSphere, type TouchScale } from './geo.js';
+import type { GlobeAsset } from './globe-asset.js';
 import { installGestures } from './gestures.js';
 import {
   continentForCountry,
   framingBoxes,
   countryIdsForScope,
+  maximumDistanceForFramedScope,
   poseForFraming,
+  poseForSelectedFraming,
   poseForWholeGlobe,
   WORLD_FRAMING,
   type Pose,
 } from './scope-geography.js';
 import { createScopeLabelLayer, type ScopeLabelLayer, type ScopeLabelTarget } from './scope-labels.js';
+import { SCOPE_MARKER_RADIUS, scopeMarkersFor, type ScopeMarker } from './scope-markers.js';
 import { regionScopeByCountry, type SpatialLabel, type SpatialState } from './spatial-state.js';
 import {
   createGlobeScene,
@@ -41,11 +46,6 @@ export { WebGLUnavailableError };
 /** Distance limits: closer than this clips the surface, further reads as a marble. */
 const MIN_DISTANCE = 1.06;
 const MAX_DISTANCE = 4.2;
-/**
- * A country narrower than this fraction of the framed span is unreadable at that
- * frame and gets a scope marker instead. Roughly six pixels on a 400 px stage.
- */
-const MARKER_SIZE_FRACTION = 0.015;
 
 export interface StageControllerOptions {
   onSelectCountry(countryId: string): void;
@@ -94,32 +94,120 @@ export async function createStageController(
     if (next.navigation === 'domains') return poseForWholeGlobe(GLOBE_FOV, scene.aspect);
     const boxes = next.framedScope ? framingBoxes(world, countryIdsForScope(next.framedScope)) : [];
     const framing = framingFor(boxes) ?? WORLD_FRAMING;
-    return poseForFraming(framing, GLOBE_FOV, scene.aspect);
+    return next.framedScope
+      ? poseForSelectedFraming(framing, GLOBE_FOV, scene.aspect)
+      : poseForFraming(framing, GLOBE_FOV, scene.aspect);
+  }
+
+  /**
+   * Zoom-out is a property of the current framing, never of a named continent.
+   * A selected scope may retreat only 25% farther from the sphere than its
+   * initial pose; world-level navigation keeps the accepted global ceiling and
+   * Home can always recover its complete-sphere fit on narrow portrait.
+   */
+  function maximumDistanceFor(next: SpatialState): number {
+    const initialDistance = poseFor(next).distance;
+    if (next.navigation === 'domains') return Math.max(MAX_DISTANCE, initialDistance);
+    if (!next.framedScope) return MAX_DISTANCE;
+    return Math.min(MAX_DISTANCE, maximumDistanceForFramedScope(initialDistance));
   }
 
   const worldById = new Map(world.countries.map((country) => [country.id, country]));
+  const touchCamera = new PerspectiveCamera(GLOBE_FOV, 1, 0.01, 20);
+  const projectedMarker = new Vector3();
+
+  /**
+   * How many degrees of arc one CSS pixel covers at the current camera, plus an
+   * optional exact screen-space metric for a real tap.
+   *
+   * The angular scale still decides WHEN a country is too small to aim at and
+   * still bounds how far assistance may intrude onto real land. But a visible
+   * marker is rendered at radius 1.008 while `scene.pickAt` raycasts the unit
+   * globe. Those two points are not screen-coincident under perspective,
+   * especially near the limb. #200 therefore measures the final practical
+   * 24 px radius against the marker's actual projected pixel position.
+   */
+  function touchScale(clientX?: number, clientY?: number): TouchScale {
+    const width = container.clientWidth || 1;
+    const height = container.clientHeight || 1;
+    const visibleSpanDeg = (2 * Math.atan(Math.tan((GLOBE_FOV / 2) * DEG) * Math.max(0.01, director.pose.distance - 1))) / DEG;
+    const degreesPerPixel = visibleSpanDeg / height;
+    if (clientX === undefined || clientY === undefined) return { degreesPerPixel };
+
+    const rect = container.getBoundingClientRect();
+    const [cameraX, cameraY, cameraZ] = toSphere(director.pose.lon, director.pose.lat, director.pose.distance);
+    touchCamera.aspect = width / height;
+    touchCamera.position.set(cameraX, cameraY, cameraZ);
+    touchCamera.lookAt(0, 0, 0);
+    touchCamera.updateProjectionMatrix();
+    touchCamera.updateMatrixWorld(true);
+
+    return {
+      degreesPerPixel,
+      screenDistanceToAnchorPx(anchor) {
+        const [markerX, markerY, markerZ] = toSphere(anchor[0], anchor[1], SCOPE_MARKER_RADIUS);
+
+        // Match the renderer's depth behaviour: a marker hidden by the unit
+        // globe is not a selectable visible affordance. Test the camera→marker
+        // segment against the unit sphere and reject if it enters the sphere
+        // before reaching the elevated marker point.
+        const dx = markerX - cameraX;
+        const dy = markerY - cameraY;
+        const dz = markerZ - cameraZ;
+        const length = Math.hypot(dx, dy, dz);
+        if (length <= 0) return null;
+        const ux = dx / length;
+        const uy = dy / length;
+        const uz = dz / length;
+        const b = cameraX * ux + cameraY * uy + cameraZ * uz;
+        const c = cameraX * cameraX + cameraY * cameraY + cameraZ * cameraZ - 1;
+        const discriminant = b * b - c;
+        if (discriminant >= 0) {
+          const intersection = -b - Math.sqrt(discriminant);
+          if (intersection > 0 && intersection < length - 1e-5) return null;
+        }
+
+        projectedMarker.set(markerX, markerY, markerZ).project(touchCamera);
+        if (projectedMarker.z < -1 || projectedMarker.z > 1) return null;
+        const markerClientX = rect.left + ((projectedMarker.x + 1) / 2) * width;
+        const markerClientY = rect.top + ((1 - projectedMarker.y) / 2) * height;
+        return Math.hypot(clientX - markerClientX, clientY - markerClientY);
+      },
+    };
+  }
 
   /**
    * Scope markers, not labels. Choosing Polynesia frames three islands that are
    * each a couple of pixels across; without a mark the learner is looking at an
-   * empty ocean and cannot tell the scope loaded. Only countries small enough to
-   * be unreadable at the current frame get one, so a continent of ordinary-sized
-   * countries stays unmarked.
+   * empty ocean and cannot tell the scope loaded.
+   *
+   * #200 makes the shared pure inventory in `scope-markers.ts` authoritative:
+   * a marker is drawn only while the SAME current-LOD `GeographyIndex` grants
+   * that country practical touch assistance, and it uses that index's exact
+   * source-derived anchor. The visible mark cannot outlive its 48 px interaction
+   * envelope after zoom or point at a world anchor while detail picking resolves
+   * around a different one.
    */
-  function markersFor(next: SpatialState): Array<readonly [number, number]> {
+  function markersFor(next: SpatialState): ScopeMarker[] {
     if (next.mode !== 'focus' || !next.framedScope) return [];
-    const framing = framingFor(framingBoxes(world, countryIdsForScope(next.framedScope)));
+    const ids = countryIdsForScope(next.framedScope);
+    const framing = framingFor(framingBoxes(world, ids));
     if (!framing) return [];
-    const threshold = Math.max(framing.spanLon, framing.spanLat) * MARKER_SIZE_FRACTION;
-    const points: Array<readonly [number, number]> = [];
-    for (const id of countryIdsForScope(next.framedScope)) {
-      const country = worldById.get(id);
-      if (!country) continue;
-      const box: GlobeBounds = country.mainland;
-      if (Math.max(box[2] - box[0], box[3] - box[1]) > threshold) continue;
-      points.push(country.locator ?? [(box[0] + box[2]) / 2, (box[1] + box[3]) / 2]);
-    }
-    return points;
+    return scopeMarkersFor(
+      ids,
+      worldById,
+      Math.max(framing.spanLon, framing.spanLat),
+      pickingIndex,
+      touchScale(),
+    );
+  }
+
+  function syncMarkers() {
+    if (!state) return;
+    const markers = markersFor(state);
+    scene.setScopeMarkers(markers.map((marker) => marker.anchor));
+    if (markers.length) container.dataset.scopeMarkerIds = markers.map((marker) => marker.id).join(' ');
+    else delete container.dataset.scopeMarkerIds;
   }
 
   /**
@@ -150,9 +238,6 @@ export async function createStageController(
     }
     const groupOf = new Map(CONTINENT_GROUPS);
     for (const [countryId, regionId] of regionScopeByCountry(next.detail, next.domain)) {
-      // A learner-facing area may legitimately reach across a continent boundary
-      // — Middle East holds Egypt — but a tap there still selects Africa, so the
-      // shell must not claim geography its own level cannot select either.
       if (continentForCountry(countryId) === next.detail) groupOf.set(countryId, regionId);
     }
     const emphasis = new Set<string>();
@@ -166,11 +251,6 @@ export async function createStageController(
     };
   }
 
-  /**
-   * Where each name is written. Cached: an anchor depends only on canonical
-   * geometry and the scope's own declared framing, never on the camera, so it
-   * cannot drift as the learner rotates or zooms.
-   */
   const anchors = new Map<string, readonly [number, number]>();
 
   function anchorFor(label: SpatialLabel, level: 'continent' | 'region'): readonly [number, number] {
@@ -189,11 +269,6 @@ export async function createStageController(
     return anchor;
   }
 
-  /**
-   * Earned state reaches the projected control in words, exactly as it reaches
-   * the command surface's chip. The mark beside the name is decoration over
-   * something already said.
-   */
   function accessibleName(label: SpatialLabel): string {
     const notes = [
       label.available ? null : 'coming soon',
@@ -202,14 +277,6 @@ export async function createStageController(
     return [label.label, ...notes].join(', ');
   }
 
-  /**
-   * What this set of names is, for assistive technology.
-   *
-   * It says "on the globe" because the command surface offers the same scopes as
-   * its own group: two identically named lists would be indistinguishable to a
-   * screen reader, and the difference between them — one is written on the
-   * geography, one carries each scope's progress — is worth a word.
-   */
   function labelGroupNameFor(next: SpatialState): string | null {
     if (next.labelLevel === 'continent') return 'Continents on the globe';
     if (next.labelLevel !== 'region') return null;
@@ -236,6 +303,10 @@ export async function createStageController(
     {
       apply: (pose) => {
         scene.setCamera(pose.lon, pose.lat, pose.distance);
+        // Read-only production evidence for camera-contract browser tests. It is
+        // not application state and cannot influence routing, picking or labels.
+        container.dataset.cameraDistance = pose.distance.toFixed(6);
+        syncMarkers();
         // Names ride the camera. Reprojecting here rather than on a frame loop
         // keeps the layer exactly as idle as the renderer already is.
         labels?.reposition();
@@ -244,32 +315,12 @@ export async function createStageController(
     },
   );
 
-  /**
-   * How many degrees of arc one CSS pixel covers at the current camera.
-   *
-   * Interaction envelopes are sized in pixels and converted through this, so a
-   * microstate keeps a constant practical touch radius on screen instead of a
-   * constant angular one — which would be unusable at world zoom and would
-   * swallow half a continent close in. It follows manual pinch and wheel zoom
-   * too, so assistance retires itself as the learner zooms in.
-   */
-  function touchScale(): TouchScale {
-    const height = container.clientHeight || 1;
-    const visibleSpanDeg = (2 * Math.atan(Math.tan((GLOBE_FOV / 2) * DEG) * Math.max(0.01, director.pose.distance - 1))) / DEG;
-    return { degreesPerPixel: visibleSpanDeg / height };
-  }
-
   function resolveCountry(clientX: number, clientY: number): string | null {
     const hit = scene.pickAt(clientX, clientY);
     if (!hit) return null;
-    return pickingIndex.resolve(hit.lon, hit.lat, touchScale());
+    return pickingIndex.resolve(hit.lon, hit.lat, touchScale(clientX, clientY));
   }
 
-  /**
-   * A press that began on a projected name belongs to that control. Without
-   * this the same gesture would both activate the button and pick whatever
-   * geography happens to lie under the word.
-   */
   let pressedOnLabel = false;
   const onPointerDownCapture = (event: PointerEvent) => {
     const target = event.target;
@@ -279,8 +330,6 @@ export async function createStageController(
 
   const labels: ScopeLabelLayer = createScopeLabelLayer(container, {
     onSelect: (scopeId) => options.onSelectScope(scopeId),
-    // Reaching a name on the far side by keyboard turns the planet to it. This
-    // is a camera nudge like a drag, never a route change.
     onReveal: (lon, lat) => director.travelTo({ lon, lat, distance: director.pose.distance }),
     project: (lon, lat) => scene.project(lon, lat),
   });
@@ -291,8 +340,6 @@ export async function createStageController(
       const countryId = resolveCountry(x, y);
       if (countryId) options.onSelectCountry(countryId);
     },
-    // Manual rotation is a camera nudge, never a route change. It cancels
-    // in-flight travel so the learner's hand always wins over choreography.
     onRotate: (deltaLon, deltaLat) => {
       const { lon, lat, distance } = director.pose;
       director.nudge({
@@ -303,26 +350,18 @@ export async function createStageController(
     },
     onDolly: (factor) => {
       const { lon, lat, distance } = director.pose;
-      // Ordinary spatial navigation retains the accepted 4.2 maximum. Home may
-      // start farther back solely so the whole sphere fits a narrow portrait
-      // viewport; letting the learner zoom back out to that fit avoids a sudden
-      // jump inward after the first pinch without creating a new global limit.
-      const maximumDistance = state?.navigation === 'domains'
-        ? Math.max(MAX_DISTANCE, poseFor(state).distance)
-        : MAX_DISTANCE;
+      const maximumDistance = state ? maximumDistanceFor(state) : MAX_DISTANCE;
       director.nudge({ lon, lat, distance: Math.max(MIN_DISTANCE, Math.min(maximumDistance, distance * factor)) });
     },
   });
 
   const observer = new ResizeObserver(() => {
-    // A stage the layout has collapsed — short landscape during a Flags
-    // question, or a yielded activity — must stop rendering rather than keep
-    // painting a one-pixel canvas.
     const visible = container.clientWidth > 0 && container.clientHeight > 0;
     scene.setActive(visible && state?.mode !== 'yielded');
     if (!visible) return;
     scene.resize();
     if (state) director.retarget(poseFor(state));
+    syncMarkers();
     labels.reposition();
   });
   observer.observe(container);
@@ -334,6 +373,7 @@ export async function createStageController(
     if (!continentId) {
       pickingIndex = new GeographyIndex(world.countries);
       scene.setDetail(null);
+      syncMarkers();
       return;
     }
     try {
@@ -342,12 +382,12 @@ export async function createStageController(
       pickingIndex = new GeographyIndex(mergeForPicking(asset.countries, world.countries));
       scene.setDetail(asset);
       if (state) scene.setCountryStates(state.countryStates);
+      syncMarkers();
     } catch {
-      // Detail is an enhancement. The world LOD stays mounted and every scope
-      // remains navigable and selectable without it.
       if (token === detailToken) {
         pickingIndex = new GeographyIndex(world.countries);
         detailId = null;
+        syncMarkers();
       }
     }
   }
@@ -361,16 +401,17 @@ export async function createStageController(
       scene.setActive(!yielded && visible);
       container.dataset.mode = next.mode;
       container.dataset.picking = next.picking;
-      if (yielded) return;
+      if (yielded) {
+        syncMarkers();
+        return;
+      }
 
       void mountDetail(next.detail);
       scene.setBoundaries(boundaryPlanFor(next));
       scene.setCountryStates(next.countryStates);
-      scene.setScopeMarkers(markersFor(next));
       labels.set(labelGroupNameFor(next), labelTargetsFor(next));
-      // Cold loads and deep links initialise AT the destination rather than
-      // replaying the ancestor chain as a cutscene.
       director.travelTo(poseFor(next), firstPaint);
+      syncMarkers();
       firstPaint = false;
     },
 
