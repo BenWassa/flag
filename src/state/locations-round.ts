@@ -20,7 +20,7 @@ export interface LocationsRound {
     activity?: LearningActivity,
     replaceRoute?: boolean,
   ): Promise<void>;
-  submitAnswer(countryId: string, selector: string): void;
+  submitAnswer(countryId: string, selector: string | null): void;
   announceResult(): void;
   cancelPending(): void;
   /** No-op unless a map round has just finished (mirrors the original app.ts view-name guard). */
@@ -123,7 +123,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     announce(`Map round complete. ${firstTryCorrect} of ${total} first try. ${missedCountryIds.length} to review.`);
   }
 
-  function submitAnswer(countryId: string, selector: string): void {
+  function submitAnswer(countryId: string, selector: string | null): void {
     if (store.view.name !== 'map-quiz' || !store.mapSession) return;
     const currentId = store.mapSession.countryIds[store.mapSession.currentIndex];
     if (!currentId || store.mapSession.targets[currentId]?.resolved) return;
@@ -131,13 +131,17 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     cancelWrongReset();
     const outcome = store.answerMap(countryId);
     announce(answerAnnouncement());
-    finishInteraction(selector);
+    // Only unresolved keyboard misses retain an actionable country to restore.
+    // Pointer submissions pass no selector, and resolved answers deliberately
+    // leave focus under browser control because their answer surface is locked.
+    const retryFocusSelector = !outcome.resolved ? selector : null;
+    finishInteraction(retryFocusSelector);
 
     if (!outcome.correct && !outcome.revealed) {
       pendingWrongReset = window.setTimeout(() => {
         pendingWrongReset = null;
         if (store.view.name !== 'map-quiz') return;
-        if (store.clearMapWrongFeedback(countryId)) finishInteraction(selector);
+        if (store.clearMapWrongFeedback(countryId)) finishInteraction(retryFocusSelector);
       }, LOCATION_WRONG_FEEDBACK_MS);
     }
 
