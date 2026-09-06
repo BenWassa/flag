@@ -87,10 +87,6 @@ function countryIdForName(name: string): string {
 }
 
 function expectNoVisibleStroke(stroke: string, label?: string) {
-  // Chromium may expose SVG's initial `stroke: none` as either the literal
-  // `none` or an empty computed value depending on how the property is supplied.
-  // Both mean that no exterior stroke is painted; any actual stroke colour still
-  // fails this contract.
   expect(stroke === '' || stroke === 'none', label).toBe(true);
 }
 
@@ -114,7 +110,7 @@ async function answerMainMapCountry(page: Page, countryId: string) {
   });
 }
 
-async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--current-wrong') {
+async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--wrong-pulse') {
   const group = page.locator(`.map-svg .${stateClass}`).first();
   await expect(group).toBeAttached({ timeout: 2_000 });
   await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
@@ -177,12 +173,9 @@ for (const fixture of CASES) {
       expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
-    // Freeze only timers created from this point onward. The exact production
-    // round and geography have already loaded, but its deliberate 620/1500 ms
-    // Play dwell cannot race the geometry inspection under CI scheduling.
     await page.clock.install();
     await answerMainMapCountry(page, fixture.countryId);
-    const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
+    const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
     const inspection = await inspectOutcomeGeometry(page, stateClass);
 
     expect(inspection.semantic.length).toBeGreaterThan(0);
@@ -212,6 +205,7 @@ for (const fixture of CASES) {
       expect(inspection.feedbackClass).toContain('answer-feedback--correct');
     } else {
       expect(inspection.feedbackClass).toContain('answer-feedback--wrong');
+      expect(inspection.feedbackText).toContain('tries left');
     }
   });
 }
@@ -223,7 +217,7 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
   const targetId = await currentTargetId(page);
   await page.clock.install();
   await answerMainMapCountry(page, fixture.countryId);
-  const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--current-wrong';
+  const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
   const inspection = await inspectOutcomeGeometry(page, stateClass);
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
