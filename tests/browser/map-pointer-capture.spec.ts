@@ -31,7 +31,7 @@ async function expectCleanResolution(page: Page) {
 }
 
 async function waitForRoundAdvance(page: Page, nextIndex: number, total: number) {
-  await expect(page.locator('.map-round-count')).toHaveText(`${nextIndex}/${total}`, { timeout: 10_000 });
+  await expect(page.locator('.map-round-count')).toHaveText(`${nextIndex} / ${total}`, { timeout: 10_000 });
 }
 
 async function polygonInteriorPoint(page: Page, countryId: string): Promise<{ x: number; y: number }> {
