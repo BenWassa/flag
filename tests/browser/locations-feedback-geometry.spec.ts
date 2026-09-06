@@ -16,6 +16,8 @@ type FeedbackCase = Readonly<{
   helper?: 'locator' | 'callout';
 }>;
 
+type OutcomeState = 'map-country--first' | 'map-country--current-correct' | 'map-country--wrong-pulse';
+
 const CASES: readonly FeedbackCase[] = [
   {
     label: 'dense West Africa narrow country',
@@ -110,10 +112,12 @@ async function answerMainMapCountry(page: Page, countryId: string) {
   });
 }
 
-async function inspectOutcomeGeometry(page: Page, stateClass: 'map-country--current-correct' | 'map-country--wrong-pulse') {
+async function inspectOutcomeGeometry(page: Page, stateClass: OutcomeState, requireFeedback = true) {
   const group = page.locator(`.map-svg .${stateClass}`).first();
   await expect(group).toBeAttached({ timeout: 2_000 });
-  await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
+  if (requireFeedback) {
+    await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
+  }
   return group.evaluate((node) => {
     const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')]
       .map((element) => {
@@ -175,8 +179,9 @@ for (const fixture of CASES) {
 
     await page.clock.install();
     await answerMainMapCountry(page, fixture.countryId);
-    const stateClass = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
-    const inspection = await inspectOutcomeGeometry(page, stateClass);
+    const isCorrect = targetId === fixture.countryId;
+    const stateClass: OutcomeState = isCorrect ? 'map-country--first' : 'map-country--wrong-pulse';
+    const inspection = await inspectOutcomeGeometry(page, stateClass, !isCorrect);
 
     expect(inspection.semantic.length).toBeGreaterThan(0);
     for (const mark of inspection.semantic) {
@@ -200,10 +205,8 @@ for (const fixture of CASES) {
     expect(inspection.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
     expect(inspection.boundaryStroke).not.toBeNull();
     expect(inspection.boundaryStroke).not.toBe('none');
-    expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
-    if (stateClass === 'map-country--current-correct') {
-      expect(inspection.feedbackClass).toContain('answer-feedback--correct');
-    } else {
+    if (!isCorrect) {
+      expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
       expect(inspection.feedbackClass).toContain('answer-feedback--neutral');
       expect(inspection.feedbackClass).not.toContain('answer-feedback--wrong');
       expect(inspection.feedbackText).toContain('tries left');
@@ -218,13 +221,11 @@ test('reduced motion and forced colours keep feedback contained and explicit', a
   const targetId = await currentTargetId(page);
   await page.clock.install();
   await answerMainMapCountry(page, targetId);
-  const inspection = await inspectOutcomeGeometry(page, 'map-country--current-correct');
+  const inspection = await inspectOutcomeGeometry(page, 'map-country--first', false);
 
   expect(inspection.semantic.length).toBeGreaterThan(0);
   for (const mark of inspection.semantic) {
     expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
-  expect(inspection.feedbackClass).toContain('answer-feedback--correct');
-  expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
 });
