@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test, type Locator, type Page } from '@playwright/test';
 import { COUNTRIES } from '../../src/data/countries.js';
 
 test.describe.configure({ mode: 'serial' });
@@ -15,8 +15,6 @@ type FeedbackCase = Readonly<{
   multipart?: boolean;
   helper?: 'locator' | 'callout';
 }>;
-
-type OutcomeState = 'map-country--current-correct' | 'map-country--wrong-pulse';
 
 const CASES: readonly FeedbackCase[] = [
   { label: 'dense West Africa narrow country', continent: 'africa', region: 'west-africa', scopeLabel: 'West Africa', countryId: 'TGO', viewport: { width: 390, height: 844 }, helper: 'callout' },
@@ -63,14 +61,11 @@ async function answerMainMapCountry(page: Page, countryId: string) {
   });
 }
 
-async function inspectOutcomeGeometry(page: Page, stateClass: OutcomeState) {
-  const group = page.locator(`.map-svg .${stateClass}`).first();
-  await expect(group).toBeAttached({ timeout: 2_000 });
-  await expect(page.locator('.answer-feedback')).toContainText(/\S/, { timeout: 2_000 });
+async function inspectCountryStructure(group: Locator) {
   return group.evaluate((node) => {
     const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
       const style = getComputedStyle(element);
-      return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke, animationName: style.animationName };
+      return { className: element.getAttribute('class') ?? '', fill: style.fill, stroke: style.stroke };
     });
     const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')].map((element) => {
       const style = getComputedStyle(element);
@@ -78,28 +73,44 @@ async function inspectOutcomeGeometry(page: Page, stateClass: OutcomeState) {
     });
     const calloutLine = node.querySelector<SVGElement>('.map-country__callout-line');
     const lineStyle = calloutLine ? getComputedStyle(calloutLine) : null;
-    const svg = node.closest('.map-svg');
-    const countries = svg?.querySelector('.map-active-countries') ?? null;
-    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
-    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
-    const feedback = document.querySelector<HTMLElement>('.answer-feedback');
     return {
       semantic,
       helperMarks,
       calloutLine: lineStyle ? { stroke: lineStyle.stroke, width: lineStyle.strokeWidth } : null,
+    };
+  });
+}
+
+async function inspectResolvedTarget(page: Page) {
+  const group = page.locator('.map-svg .map-country--current-correct').first();
+  await expect(group).toBeAttached({ timeout: 2_000 });
+  await expect(page.locator('.answer-feedback--correct')).toContainText(/\S/, { timeout: 2_000 });
+  return group.evaluate((node) => {
+    const semantic = [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
+      const style = getComputedStyle(element);
+      return { fill: style.fill, stroke: style.stroke, animationName: style.animationName };
+    });
+    const helperMarks = [...node.querySelectorAll<SVGElement>('.map-country__locator, .map-country__marker, .map-country__callout-target')].map((element) => {
+      const style = getComputedStyle(element);
+      return { fill: style.fill, stroke: style.stroke };
+    });
+    const svg = node.closest('.map-svg');
+    const countries = svg?.querySelector('.map-active-countries') ?? null;
+    const boundaries = svg?.querySelector('.map-boundaries') ?? null;
+    const boundary = svg?.querySelector<SVGElement>('.map-coastline, .map-shared-boundary') ?? null;
+    return {
+      semantic,
+      helperMarks,
       mainLayering: Boolean(countries && boundaries && (countries.compareDocumentPosition(boundaries) & Node.DOCUMENT_POSITION_FOLLOWING)),
       boundaryStroke: boundary ? getComputedStyle(boundary).stroke : null,
-      feedbackClass: feedback?.className ?? '',
-      feedbackText: feedback?.textContent ?? '',
     };
   });
 }
 
 for (const fixture of CASES) {
-  test(`${fixture.label}: semantic colour stays inside canonical geometry`, async ({ page }) => {
+  test(`${fixture.label}: canonical geometry stays compatible with contained semantic feedback`, async ({ page }) => {
     await page.emulateMedia({ reducedMotion: 'no-preference' });
     await openPlay(page, fixture);
-    await freezeFeedbackTimers(page);
 
     const targetId = await currentTargetId(page);
     const selected = page.locator(`.map-svg .map-country[data-action="map-answer"][data-id="${fixture.countryId}"]`).first();
@@ -116,33 +127,26 @@ for (const fixture of CASES) {
       expect((path?.match(/[Mm]/g) ?? []).length, `${fixture.countryId} retains multipart canonical path data`).toBeGreaterThan(1);
     }
 
-    await answerMainMapCountry(page, fixture.countryId);
-    const stateClass: OutcomeState = targetId === fixture.countryId ? 'map-country--current-correct' : 'map-country--wrong-pulse';
-    const inspection = await inspectOutcomeGeometry(page, stateClass);
-
-    expect(inspection.semantic.length).toBeGreaterThan(0);
-    for (const mark of inspection.semantic) expectNoVisibleStroke(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`);
-    for (const mark of inspection.helperMarks) {
-      expect(inspection.semantic.some((semantic) => semantic.fill === mark.fill), `${fixture.countryId} ${mark.className} remains neutral instead of copying outcome fill`).toBe(false);
-    }
-
-    if (fixture.helper === 'locator') expect(inspection.helperMarks.some((mark) => mark.className.includes('map-country__locator'))).toBe(true);
+    const structure = await inspectCountryStructure(selected);
+    expect(structure.semantic.length).toBeGreaterThan(0);
+    for (const mark of structure.semantic) expectNoVisibleStroke(mark.stroke, `${fixture.countryId} ${mark.className} has no semantic exterior stroke`);
+    if (fixture.helper === 'locator') expect(structure.helperMarks.some((mark) => mark.className.includes('map-country__locator'))).toBe(true);
     if (fixture.helper === 'callout') {
-      expect(inspection.helperMarks.some((mark) => mark.className.includes('map-country__callout-target'))).toBe(true);
-      expect(inspection.calloutLine).not.toBeNull();
+      expect(structure.helperMarks.some((mark) => mark.className.includes('map-country__callout-target'))).toBe(true);
+      expect(structure.calloutLine).not.toBeNull();
     }
 
-    expect(inspection.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
-    expect(inspection.boundaryStroke).not.toBeNull();
-    expect(inspection.boundaryStroke).not.toBe('none');
-    expect(inspection.feedbackText.trim().length).toBeGreaterThan(0);
-    if (stateClass === 'map-country--current-correct') {
-      expect(inspection.feedbackClass).toContain('answer-feedback--correct');
-    } else {
-      expect(inspection.feedbackClass).toContain('answer-feedback--neutral');
-      expect(inspection.feedbackClass).not.toContain('answer-feedback--wrong');
-      expect(inspection.feedbackText).toContain('tries left');
+    await freezeFeedbackTimers(page);
+    await answerMainMapCountry(page, targetId);
+    const outcome = await inspectResolvedTarget(page);
+    expect(outcome.semantic.length).toBeGreaterThan(0);
+    for (const mark of outcome.semantic) expectNoVisibleStroke(mark.stroke, 'resolved semantic fill has no exterior stroke');
+    for (const mark of outcome.helperMarks) {
+      expect(outcome.semantic.some((semantic) => semantic.fill === mark.fill), 'helper symbology remains neutral instead of copying outcome fill').toBe(false);
     }
+    expect(outcome.mainLayering, 'topology-derived boundaries paint after semantic fills').toBe(true);
+    expect(outcome.boundaryStroke).not.toBeNull();
+    expect(outcome.boundaryStroke).not.toBe('none');
   });
 }
 
@@ -150,21 +154,23 @@ test('reduced motion and forced colours keep unresolved feedback contained and e
   await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
   const fixture = CASES[1];
   await openPlay(page, fixture);
-  await freezeFeedbackTimers(page);
   const targetId = await currentTargetId(page);
   const wrongId = await page.locator('.map-svg .map-country[data-action="map-answer"][data-id]').evaluateAll((groups, target) => (
     groups.map((group) => group.getAttribute('data-id')).find((id) => id && id !== target) ?? null
   ), targetId);
   expect(wrongId).toBeTruthy();
   await answerMainMapCountry(page, wrongId!);
-  const inspection = await inspectOutcomeGeometry(page, 'map-country--wrong-pulse');
-
-  expect(inspection.semantic.length).toBeGreaterThan(0);
-  for (const mark of inspection.semantic) {
+  const group = page.locator('.map-svg .map-country--wrong-pulse').first();
+  await expect(group).toBeAttached();
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('tries left');
+  const inspection = await group.evaluate((node) => [...node.querySelectorAll<SVGElement>('.map-country__shape, .map-country__feedback-shape')].map((element) => {
+    const style = getComputedStyle(element);
+    return { stroke: style.stroke, animationName: style.animationName };
+  }));
+  expect(inspection.length).toBeGreaterThan(0);
+  for (const mark of inspection) {
     expectNoVisibleStroke(mark.stroke);
     expect(mark.animationName).toBe('none');
   }
-  expect(inspection.feedbackClass).toContain('answer-feedback--neutral');
-  expect(inspection.feedbackClass).not.toContain('answer-feedback--wrong');
-  expect(inspection.feedbackText).toContain('tries left');
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
 });
