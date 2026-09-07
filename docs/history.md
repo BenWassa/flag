@@ -15,16 +15,19 @@ Atlas deliberately preserves closed GitHub issues and `docs/closed/` records bec
         ↓
 #197 progressive continent → region → country disclosure
         ↓
+#207 live Flags activity yields the Spatial stage
+        ↓
+#196 Home chooser returns to ordinary opaque Atlas chrome
+        ↓
 Spatial Atlas is the default production presentation
 ```
 
 - **#104** explored a geography-first launcher against the old row UI. Its separate future programme is superseded by the successful Spatial cutover; its constraints remain useful historical input.
 - **#119** proved the persistent-Earth interaction, renderer choice, canonical spherical asset generation, route→spatial adapter, accessibility equivalence and activity boundary.
 - **#166** removed the `globe + old page underneath` composition, made Spatial the default, fixed shared tiny-geography picking, retired the preview path and preserved graceful classic fallback.
-
-- **#207** ended the last shared composition: the live Flags question yielded the stage like every other activity, and the accompanying product question — whether Flags should choose its scope on the Earth at all — was answered by measuring the production flow. Geography-led selection stayed, because a Flags-specific list would have saved no taps, no touch precision and no 3D cost while discarding geographic orientation. See [`closed/issue-207-flags-activity-viewport.md`](closed/issue-207-flags-activity-viewport.md).
-
 - **#197** made geographic detail follow the learner's current decision: world navigation reads as continents, a framed continent reveals its learner-facing areas, and country boundaries appear only where the activity is about countries. Continent/area shells are derived from the canonical country geometry by cancelling shared edges, and each selectable scope is named on the Earth by a real DOM control.
+- **#207** ended the last shared live-activity composition: the live Flags question yields the stage like every other activity. Geography-led Flags scope selection stayed because a separate list would have saved no taps, touch precision or 3D cost while discarding orientation. See [`closed/issue-207-flags-activity-viewport.md`](closed/issue-207-flags-activity-viewport.md).
+- **#196** retired the Home translucency exception. The bounded centred chooser now uses ordinary opaque cool near-white Atlas chrome with a neutral edge and restrained depth; the full globe remains the dominant saturated object. See [`closed/issue-196-home-chooser-material.md`](closed/issue-196-home-chooser-material.md).
 
 Start current Spatial work from [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md). The #104/#119/#166 records live under `closed/`.
 
@@ -41,7 +44,7 @@ Start current Spatial work from [`architecture/spatial-atlas.md`](architecture/s
         └── #152 redundant Home coverage metadata
 ```
 
-#118 is closed audit evidence. #146–#152 are the active implementation follow-ups, but each must be interpreted against the post-#166 Spatial production UI rather than blindly applying pre-cutover launcher assumptions.
+#118 is closed audit evidence and #146–#152 are completed follow-ups. Their shipped behaviour must still be interpreted through the post-#166 Spatial production UI rather than through pre-cutover launcher assumptions.
 
 ## Geography expansion lineage
 
@@ -55,9 +58,9 @@ Important shared hardening includes:
 - #115 Western Europe framing;
 - #116 Asia/Russia framing;
 - #117 real-polygon hit precedence;
-- #137 remaining Asia Locations/cartography hardening (still open).
+- #137 Asia Locations/cartography hardening after the Spatial cutover.
 
-#137 predates the Spatial production cutover and must be reconciled semantically against current `main`; do not mechanically merge its old branch.
+**#137 is closed.** Its surviving work was reimplemented from the post-Spatial baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remained authoritative.
 
 ## Learning / achievement lineage
 
@@ -70,11 +73,15 @@ Current hierarchy remains:
 
 `country evidence → region × domain Mastery → complete region → complete continent → World Crown`
 
-## Platform lineage
+## Platform / CI lineage
 
 - #89 completed the React/Vite migration while preserving the typed router, domain engines, persistence and geography boundaries.
 - #46/#106/#107 established optional local-first Firebase cloud progress and secondary Firebase Hosting.
-- #71 remains open only for physical-device Android/iOS/installed-PWA validation; automated emulation must not be cited as that evidence.
+- #191 shipped application-owned PWA update discovery/adoption with safe-boundary deferral.
+- #210 reduced accumulated issue-specific GitHub Actions to the permanent CI, reusable acceptance, Pages and Firebase workflow architecture.
+- #216 then reduced normal PR wall time without weakening exact-production acceptance: the repository gate still produces one tested `flag-atlas-dist`, while desktop Chromium, mobile Chromium and PWA exact-production jobs consume and verify that artifact independently in parallel. PR supersession cancels obsolete work; `main` verification remains coherent. See [`closed/issue-216-ci-wall-time.md`](closed/issue-216-ci-wall-time.md).
+- #212 / PR #213 is the only remaining engineering gate. It reconciles the historical broad Playwright suite with current product contracts and contains the still-unmerged #200 stationary edge-tap versus platform Back-gesture repair. #216's parallel acceptance architecture is authoritative during its final sync.
+- #71 remains the final owner-run physical-device Android/iOS/installed-PWA gate after #212 is resolved; automated emulation must not be cited as physical evidence.
 
 ## Repository-history policy
 
@@ -94,15 +101,9 @@ Delete after capture/merge:
 - acceptance/verification branches;
 - superseded duplicates.
 
-Issue #160 tracks the mechanical branch cleanup.
+Issue #160 completed the mechanical branch-cleanup pass; the policy above remains the ongoing repository rule.
 
-
-### Issue #137 — Asia Locations hardening after Spatial cutover
-
-Reimplemented the surviving Asia Locations work from the post-Spatial production baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remains authoritative and unchanged.
-
-
-### Cartographic colour and in-round game feel
+## Cartographic colour and in-round game feel
 
 Superseded the neutral-cartography design direction. Under it the globe rendered ocean `#DCEAF5`, land `#DFE6EF` and space `#F6F8FB`, and the projected maps rendered context land `#D2DAE5` over answerable land `#F8FAFC`: the dominant object in the product was three near-identical light greys on a near-white page, and colour appeared on essentially one element per screen.
 
