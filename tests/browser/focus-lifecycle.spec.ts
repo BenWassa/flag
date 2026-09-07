@@ -77,7 +77,10 @@ test('same-route quiz advance restores an actionable answer control', async ({ p
   const firstAnswer = page.getByRole('button', { name: /^1\./ });
   await expect(firstAnswer).toBeVisible();
   await firstAnswer.click();
-  await expect.poll(async () => page.locator('.quiz-count').innerText(), { timeout: 3_000 }).toContain('2');
+  // Play owns a readable feedback dwell before same-route advance. Under the
+  // full serial browser suite that dwell can be scheduled late by SwiftShader,
+  // so assert the durable question transition rather than a 3s polling race.
+  await expect(page.locator('.quiz-count')).toHaveText('2/10', { timeout: 8_000 });
   const nextFirstAnswer = page.getByRole('button', { name: /^1\./ });
   await expect(nextFirstAnswer).toBeEnabled();
   await expectFocused(nextFirstAnswer);

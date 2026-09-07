@@ -14,10 +14,6 @@ async function openCaribbean(page: Page) {
   await page.goto('/#/locations/north-america/caribbean');
   await page.getByRole('button', { name: 'Play Caribbean' }).click();
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  // Issue #166: the opening frame lands about 200ms later now that the
-  // launcher route boots the globe first, and much later than that under a
-  // loaded SwiftShader runner. Given the same allowance as the prompt above
-  // it, rather than the 5s expect default.
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
   await page.waitForFunction(() => {
     const viewport = document.querySelector<HTMLElement>('[data-map-viewport]');
@@ -30,8 +26,12 @@ async function currentId(page: Page): Promise<string> {
   return countryIdForName(await page.locator('#map-prompt-heading').innerText());
 }
 
-async function waitForAdvance(page: Page, previousName: string) {
-  await expect(page.locator('#map-prompt-heading')).not.toHaveText(previousName, { timeout: 4_000 });
+async function expectCleanResolution(page: Page) {
+  await expect(page.locator('.answer-feedback--correct')).toContainText('First try');
+}
+
+async function waitForRoundAdvance(page: Page, nextIndex: number, total: number) {
+  await expect(page.locator('.map-round-count')).toHaveText(`${nextIndex} / ${total}`, { timeout: 10_000 });
 }
 
 async function polygonInteriorPoint(page: Page, countryId: string): Promise<{ x: number; y: number }> {
@@ -99,9 +99,9 @@ test('captures only established drags and never converts a pan into an answer', 
 
 test('sub-threshold movement preserves assisted-tap scoring', async ({ page }) => {
   await openCaribbean(page);
-  for (let index = 0; index < 13; index += 1) {
+  const total = Number((await page.locator('.map-round-count').innerText()).split('/')[1]);
+  for (let index = 0; index < total; index += 1) {
     const id = await currentId(page);
-    const name = await page.locator('#map-prompt-heading').innerText();
     if (HIT_ASSIST_IDS.has(id)) {
       const hit = page.locator(`.map-current-target-hit[data-id="${id}"]`);
       await expect(hit).toBeVisible();
@@ -113,33 +113,37 @@ test('sub-threshold movement preserves assisted-tap scoring', async ({ page }) =
       await page.mouse.down();
       await page.mouse.move(x + 3, y);
       await page.mouse.up();
-      await waitForAdvance(page, name);
+      // The current #202 contract is resolution, not immediate prompt change.
+      // Prove the sub-threshold physical tap scored cleanly and stop here.
+      await expectCleanResolution(page);
       return;
     }
     const keyboardStop = page.locator(`[data-action="map-answer"][data-id="${id}"][tabindex="0"]`);
     await keyboardStop.focus();
     await keyboardStop.press('Enter');
-    await waitForAdvance(page, name);
+    await expectCleanResolution(page);
+    if (index < total - 1) await waitForRoundAdvance(page, index + 2, total);
   }
   throw new Error('No assisted Caribbean target encountered');
 });
 
 test('a physical click on a real country polygon still scores normally', async ({ page }) => {
   await openCaribbean(page);
-  for (let index = 0; index < 13; index += 1) {
+  const total = Number((await page.locator('.map-round-count').innerText()).split('/')[1]);
+  for (let index = 0; index < total; index += 1) {
     const id = await currentId(page);
-    const name = await page.locator('#map-prompt-heading').innerText();
     if (!HIT_ASSIST_IDS.has(id)) {
       const point = await polygonInteriorPoint(page, id);
       await page.mouse.click(point.x, point.y);
-      await waitForAdvance(page, name);
+      await expectCleanResolution(page);
       return;
     }
     const hit = page.locator(`.map-current-target-hit[data-id="${id}"]`);
     const box = await hit.boundingBox();
     expect(box).not.toBeNull();
     await page.mouse.click(box!.x + box!.width / 2, box!.y + box!.height / 2);
-    await waitForAdvance(page, name);
+    await expectCleanResolution(page);
+    if (index < total - 1) await waitForRoundAdvance(page, index + 2, total);
   }
   throw new Error('No non-assisted Caribbean target encountered');
 });

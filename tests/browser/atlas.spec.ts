@@ -1,13 +1,15 @@
 import { expect, test, type Page } from '@playwright/test';
 
+const scope = (page: Page, id: string) => page.locator(`.spatial-scope[data-scope-id="${id}"]`);
+
 test('walks domain to continent to Play without a launcher page', async ({ page }) => {
   await page.goto('/');
   await expect(page.getByRole('heading', { name: 'Atlas' })).toBeVisible();
   await page.getByRole('button', { name: /^Flags/ }).click();
   await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
-  // #197 names Africa on the globe as well, so the surface under test is named
-  // explicitly: this walk is the command surface's own path.
-  await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
+  // #198 made projected geography the normal scope-selection control. The
+  // command band deliberately contains no duplicate continent/region list.
+  await scope(page, 'africa').click();
   // The selected place is the dominant label and Play is immediately available.
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
   await expect(page.locator('.page--launcher')).toHaveCount(0);
@@ -18,9 +20,10 @@ test('walks domain to continent to Play without a launcher page', async ({ page 
 
 test('selecting a region focuses it, and Play is a separate deliberate act', async ({ page }) => {
   await page.goto('/#/flags/africa');
-  // Issue #166: choosing an area selects the durable scope; it never starts a
+  await page.waitForSelector('.spatial-stage[data-ready="true"] canvas', { timeout: 30_000 });
+  // The projected region control owns the durable selection; it never starts a
   // round. The region is a real route, so Back returns to it.
-  await page.locator('.spatial-chip', { hasText: 'West Africa' }).click();
+  await scope(page, 'west-africa').click();
   await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toHaveCount(0);
 

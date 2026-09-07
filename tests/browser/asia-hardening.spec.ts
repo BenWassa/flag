@@ -4,10 +4,24 @@ import { COUNTRIES } from '../../src/data/countries.js';
 const ASSIST_IDS = ['BHR', 'BRN', 'ISR', 'KWT', 'LBN', 'MDV', 'PSE', 'QAT', 'SGP'] as const;
 const MARKER_IDS = ['BHR', 'BRN', 'MDV', 'SGP'] as const;
 
+// The broad serial Chromium run can leave SwiftShader/browser-context startup
+// materially slower than the 30s default. Apply the budget before fixtures are
+// created so context provisioning is covered without retries.
+test.setTimeout(120_000);
+
 function idForName(name: string): string {
   const country = COUNTRIES.find((item) => item.name === name);
   if (!country) throw new Error(`Unknown country prompt: ${name}`);
   return country.id;
+}
+
+async function fixSessionId(page: Page, sessionId: string) {
+  await page.addInitScript(({ id }) => {
+    Object.defineProperty(globalThis.crypto, 'randomUUID', {
+      configurable: true,
+      value: () => id,
+    });
+  }, { id: sessionId });
 }
 
 async function openScope(page: Page, route: string, label: string) {
@@ -133,30 +147,28 @@ test('feedback rerender preserves shared hit sizes and previously answered count
   await expect(page.locator(`.map-country[data-id="${first}"]`)).toHaveClass(/map-country--wrong-pulse/);
 });
 
-test('an assisted country resolved earlier remains a normal wrong guess in a region round', async ({ page }) => {
-  test.setTimeout(150_000);
+test('an assisted country resolved earlier remains a normal retryable miss in Play', async ({ page }) => {
+  await fixSessionId(page, 'asia-assisted-5');
   await page.setViewportSize({ width: 390, height: 844 });
-  await openScope(page, '/#/locations/asia/southeast-asia', 'Learn Southeast Asia');
-  for (let index = 0; index < 11; index += 1) {
-    const name = await page.locator('#map-prompt-heading').innerText();
-    const id = idForName(name);
-    if (id === 'BRN' || id === 'SGP') {
-      const point = await actionablePoint(page, id);
-      await page.mouse.click(point.x, point.y);
-      await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
-      await waitForAdvance(page, name);
-      const wrongPoint = await actionablePoint(page, id);
-      await page.mouse.click(wrongPoint.x, wrongPoint.y);
-      await expect(page.locator(`.map-country[data-id="${id}"]`)).toHaveClass(/map-country--wrong-pulse/);
-      return;
-    }
-    await answerKeyboard(page, id);
-    await waitForAdvance(page, name);
-  }
-  throw new Error('No assisted Southeast Asia country encountered');
+  await openScope(page, '/#/locations/asia/southeast-asia', 'Play Southeast Asia');
+  expect(await currentId(page)).toBe('BRN');
+
+  const point = await actionablePoint(page, 'BRN');
+  await page.mouse.click(point.x, point.y);
+  await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
+  await expect(page.locator('.map-round-count')).toHaveText('2 / 11', { timeout: 15_000 });
+
+  const activeName = await page.locator('#map-prompt-heading').innerText();
+  const wrongPoint = await actionablePoint(page, 'BRN');
+  await page.mouse.click(wrongPoint.x, wrongPoint.y);
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+  await expect(page.locator('#map-prompt-heading')).toHaveText(activeName);
+  await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+  await expect(page.locator('.map-country[data-id="BRN"]')).toHaveClass(/map-country--wrong-pulse/);
 });
 
-test('Play also re-enables the previous country only after advance', async ({ page }) => {
+test('Play re-enables the previous country after advance as an ordinary retryable miss', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await openScope(page, '/#/locations/asia/caucasus', 'Play Caucasus');
   const firstName = await page.locator('#map-prompt-heading').innerText();
@@ -164,11 +176,18 @@ test('Play also re-enables the previous country only after advance', async ({ pa
   await answerKeyboard(page, first);
   await expect(page.locator('[data-action="map-answer"]')).toHaveCount(0);
   await waitForAdvance(page, firstName);
+  const activeName = await page.locator('#map-prompt-heading').innerText();
   const previous = page.locator(`.map-country[data-id="${first}"]`);
   await expect(previous).toHaveAttribute('data-action', 'map-answer');
   await previous.focus();
   await previous.press('Enter');
-  await expect(page.locator('.answer-feedback--wrong')).toBeVisible();
+  // #202: a first miss in Play no longer resolves the target. It stays neutral,
+  // leaves the prompt active and exposes the remaining retrieval attempts.
+  await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
+  await expect(page.locator('.answer-feedback--wrong')).toHaveCount(0);
+  await expect(page.locator('#map-prompt-heading')).toHaveText(activeName);
+  await expect(page.locator('.map-country--revealed')).toHaveCount(0);
+  await expect(previous).toHaveClass(/map-country--wrong-pulse/);
 });
 
 for (const viewport of [{ width: 768, height: 1024 }, { width: 1280, height: 800 }]) {
