@@ -24,6 +24,17 @@ jobs:
         run: grep -Fq "name=\"atlas-build\" content=\"${GITHUB_SHA}\"" dist/index.html
       - name: Install Chromium
         run: npx playwright install --with-deps chromium
+      # Temporary #212 diagnostic. Keep the single remaining broad Locations
+      # contract at the front of the exact-production job while it is being
+      # reconciled; remove this step with the broad evidence step before merge.
+      - name: Remaining Locations broad contract
+        run: >-
+          npx playwright test
+          tests/browser/map-neighbors-rounds.spec.ts
+          --grep "answers correct and wrong"
+          --project=chromium
+          --workers=1
+          --retries=0
       - name: Current desktop product contracts
         run: >-
           npx playwright test
