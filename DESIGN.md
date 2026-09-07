@@ -27,7 +27,7 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 9. Each learning domain has one accent, on its own icon and its own meter. Mode identity is not geography identity.
 10. Geography identity comes from shape, name, hierarchy and context — not continent/region colour branding.
 11. Use spacing, alignment, rules and proximity before adding cards/containers.
-12. Modest radii and controlled depth; no default glassmorphism, bento dashboards, decorative gradients or excessive elevation. The Spatial Home chooser is the one documented neutral translucent exception.
+12. Modest radii and controlled depth; no glassmorphism, bento dashboards, decorative gradients or excessive elevation. Home uses the same opaque cool-neutral chrome family as the rest of Atlas.
 13. Tactile press physics communicate activation without springy/toy-like bounce.
 14. Momentum and arrival may be felt, not only read. Every gesture that carries them decorates a state the DOM already states, and removing the whole layer must leave the round correct.
 15. Progressive disclosure beats explanatory text in routine flows.
@@ -146,13 +146,13 @@ At Home:
 - one bounded, centred chooser contains `Atlas`, Profile, an earned World Crown when present and all four learning modes;
 - ordinary phone portrait uses an icon-led 2 × 2 mode grid; short landscape adapts compactly so all four modes remain visible in one viewport;
 - each mode carries its short learner-facing name and quiet `cleared / total` progress;
-- the chooser may use one neutral translucent surface with a thin structural edge and modest depth so the globe remains recognisable around it;
-- it is bounded to the width its four modes need, and its fill is roughly 82% rather than near-opaque: against the near-white space it used to sit on, opacity was a texture choice; against a planet it decides whether there is a planet behind the chooser at all. Text stays far clear of 4.5:1 at that value even over the deepest ocean;
-- do not nest translucent cards, add colourful gradients/glow or depend on decorative blur; a sufficiently opaque treatment without `backdrop-filter` is preferred when it is clearer or cheaper;
+- the chooser uses an opaque cool-neutral surface from the existing Atlas surface/canvas family, with a thin structural edge and restrained depth;
+- globe colour must not tint the chooser as ocean, land, night or loading states move behind it. The globe remains dominant through scale and the surrounding full-canvas geography, not by showing through the chrome;
+- do not nest cards, add colourful gradients/glow or decorative blur; `backdrop-filter` has no role in Home;
 - forced-colours mode uses a solid real-DOM presentation;
 - the globe is geographic context until a domain exists: it may be rotated deliberately, but country selection cannot navigate from Home.
 
-This is the sole translucency exception in the navigation system. It is page content, not a modal dialog: no `aria-modal`, focus trap or parallel open/close state is introduced.
+The centred overlay is ordinary page content, not a glass/modal exception: no `aria-modal`, focus trap or parallel open/close state is introduced.
 
 At continent/region focus:
 
@@ -167,7 +167,7 @@ At continent/region focus:
 - whole-continent Play is available at continent focus;
 - region Play follows deliberate region focus.
 
-Outside the documented Home exception, the command surface is label, proximity, rules and a small control group — not a dashboard/card stack or translucent panel.
+Outside Home's overlay composition, the command surface is label, proximity, rules and a small control group — not a dashboard/card stack or translucent panel.
 
 The conventional `Launcher` is renderer-failure fallback only. Do not restore it beneath the globe or document its old full-width rows as the normal product experience.
 
@@ -317,7 +317,7 @@ Learner-facing copy uses modern British English: **Neighbours, colour, centre, b
 
 ## Intentionally excluded aesthetics
 
-No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, currencies, levels, daily-streak obligations, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The only translucent navigation surface is the single neutral Spatial Home chooser documented above; that exception must not propagate into nested glass cards or other screens.
+No glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, currencies, levels, daily-streak obligations, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. Home's centred chooser is an opaque neutral Atlas surface, not a translucency exception, and that quiet chrome rule applies throughout navigation.
 
 Saturated colour stays on the geography. Panels, cards, page backgrounds and chrome remain neutral: the break recorded here gives the Earth its colour back, it does not licence a colourful interface around it.
 
