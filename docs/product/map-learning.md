@@ -43,7 +43,17 @@ The map shows immediate corrective state in Learn. Resolved targets become non-i
 
 ## Play
 
-Locations Play gives one scored tap per target. The current React surface provides immediate answer feedback/live score and advances through the selected scope; correctness is no longer documented as a neutral “recorded only” state.
+Locations Play uses the three-strike graded-retrieval contract restored by #202 rather than resolving on the first wrong tap.
+
+For each target:
+
+- first-try correct resolves as the strongest Play retrieval;
+- wrong guesses one and two keep the same target active and provide bounded wrong feedback without revealing the answer;
+- a correct recovery after one or two misses resolves the target with assisted/weaker evidence and is not Perfect;
+- the third wrong guess reveals/locks the target resolution and then allows advancement;
+- immediate feedback remains contained inside canonical country geometry.
+
+This interaction does **not** weaken Mastery. Complete-region Mastery still depends on the existing strict miss-free qualifying results and exact supported-target coverage guard.
 
 A miss-free Play result receives transient **Perfect round** treatment on Results.
 
@@ -51,7 +61,7 @@ Normal region Play uses the full selected-scope map target set. Locations and th
 
 ## Results and review
 
-Results communicate first-try performance, misses and the completed map context. Mistake review re-enters Learn/Review using the missed target set. Repeat preserves the previous scope/mode.
+Results communicate first-try performance, assisted recoveries, misses/reveals and the completed map context. Mistake review re-enters Learn/Review using the missed target set. Repeat preserves the previous scope/mode.
 
 Perfect round is one-result feedback, not persistent Mastery.
 
@@ -89,6 +99,7 @@ Touch/pointer interaction includes the current pinch/wheel zoom and swipe/drag p
 - green remains first-try/correct feedback where the established mechanic uses it;
 - red remains wrong/reveal feedback;
 - intermediate assisted outcomes may retain established restrained corrective colours;
+- all correctness feedback is clipped/contained to canonical country geometry rather than painting a generic rectangular overlay;
 - Atlas Blue remains action/selection, not a progress-by-saturation geography encoding;
 - text/live announcements accompany colour state.
 

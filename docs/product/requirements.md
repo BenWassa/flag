@@ -62,8 +62,10 @@ Projected learning assets and spherical Spatial assets derive from the same pinn
 - canonical generated projected cartography;
 - geography dominant/mobile-usable;
 - Learn distinguishes clean, assisted and revealed outcomes;
-- Play gives one scored selection per target under current semantics;
-- preserve pan/zoom/context and truthful geography.
+- Play uses the current three-strike graded-retrieval contract: early wrong guesses keep the same target active without answer leakage, a correct recovery resolves with weaker evidence than first-try success, and the third miss reveals/locks the resolution;
+- Mastery qualification remains stricter than assisted Play resolution and is not weakened by the three-strike interaction;
+- preserve pan/zoom/context and truthful geography;
+- wrong/correct/reveal feedback colour stays contained inside canonical country geometry.
 
 ### Outlines
 - canonical geometry only;
@@ -80,7 +82,7 @@ Projected learning assets and spherical Spatial assets derive from the same pinn
 
 ## 6. Spatial activity boundary
 
-Locations, Outlines, Neighbours and Flags Learn yield the globe when their own learning surface should dominate. Flags Play may retain quiet inert context only if it cannot hint an answer. Results may reframe the completed scope.
+Geography owns scope selection, then domain-native live activities own the viewport when geography is no longer part of the decision. Locations, Outlines, Neighbours, Flags Learn and Flags Play all yield the Spatial stage during their live activity surfaces. Flags Play carries no inert globe strip or duplicated geographic context once the scope has been chosen (#207). Results may reframe the completed scope.
 
 ## 7. Learning evidence
 
@@ -104,11 +106,11 @@ Domain ledgers stay independent; achievements/streaks persist separately; schema
 
 ## 11. Progress
 
-The dedicated Progress screen is retired. Ordinary progress is a quiet blue successful-retrieval strip disclosed in current navigation/activity/results surfaces. Mastery/completion remains distinct and scarce.
+The dedicated Progress screen is retired. Ordinary progress is a quiet successful-retrieval strip in the active domain accent, disclosed in current navigation/activity/results surfaces. Mastery/completion remains distinct and scarce.
 
 ## 12. Visual requirements
 
-`DESIGN.md` is authoritative. Atlas Blue `#2563EB` = ordinary action/progress; green `#137A55` = correct; red `#B42318` = wrong; purple `#6D3FC0` = durable Mastery; gold `#E0AF2F` = scarce prestige. State is never colour-only. Geography is normally the richest object. No glassmorphism, bento dashboard or decorative overload.
+`DESIGN.md` is authoritative. Atlas Blue `#2563EB` = ordinary action/selection; green `#137A55` = correct; red `#B42318` = wrong; purple `#6D3FC0` = durable Mastery; gold `#E0AF2F` = scarce prestige. Domain accents may identify a domain's own icon and progress meter. State is never colour-only. Geography is normally the richest object. The centred Home chooser uses ordinary opaque neutral Atlas chrome; no glassmorphism, bento dashboard or decorative overload.
 
 ## 13. Cartography
 
@@ -120,4 +122,4 @@ Preserve real DOM equivalents for spatial controls, keyboard operation where app
 
 ## 15. History and supersession
 
-#104's separate map-first launcher idea is historical and superseded by the accepted Spatial path. #119 established Spatial; #166 made it production. #118 is closed audit evidence whose surviving follow-ups are #146–#152. See `../history.md` rather than reopening those historical briefs as current requirements.
+#104's separate map-first launcher idea is historical and superseded by the accepted Spatial path. #119 established Spatial; #166 made it production. #118 is closed audit evidence and its concrete follow-ups #146–#152 are completed. See `../history.md` rather than reopening those historical briefs as current requirements.
