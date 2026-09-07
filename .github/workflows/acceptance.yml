@@ -7,14 +7,17 @@ permissions:
   contents: read
 
 jobs:
-  exact-production:
+  desktop:
+    name: Desktop Chromium product contracts
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
       - name: Download repository-gate production artifact
         uses: actions/download-artifact@v4
         with:
@@ -42,6 +45,36 @@ jobs:
           --project=chromium
           --workers=1
           --retries=0
+      - name: Upload desktop diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flag-atlas-browser-diagnostics-desktop
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+
+  mobile:
+    name: Mobile Chromium product contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Download repository-gate production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: flag-atlas-dist
+          path: dist
+      - name: Verify exact artifact identity
+        run: grep -Fq "name=\"atlas-build\" content=\"${GITHUB_SHA}\"" dist/index.html
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
       # #212 tracks two pre-existing mobile marker-parity failures already present
       # on #200's final head. Do not make a known-broken historical assertion a
       # permanent merge gate; restore it here once #212 proves it genuinely green.
@@ -57,6 +90,36 @@ jobs:
           --project=mobile-chromium
           --workers=1
           --retries=0
+      - name: Upload mobile diagnostics on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: flag-atlas-browser-diagnostics-mobile
+          path: |
+            test-results
+            playwright-report
+          if-no-files-found: ignore
+
+  pwa:
+    name: PWA lifecycle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Download repository-gate production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: flag-atlas-dist
+          path: dist
+      - name: Verify exact artifact identity
+        run: grep -Fq "name=\"atlas-build\" content=\"${GITHUB_SHA}\"" dist/index.html
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
       - name: Exact-production PWA lifecycle
         run: >-
           npx playwright test
@@ -64,11 +127,11 @@ jobs:
           --project=chromium
           --workers=1
           --retries=0
-      - name: Upload browser diagnostics on failure
+      - name: Upload PWA diagnostics on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: flag-atlas-browser-diagnostics
+          name: flag-atlas-browser-diagnostics-pwa
           path: |
             test-results
             playwright-report
