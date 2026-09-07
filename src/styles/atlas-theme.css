@@ -1277,7 +1277,7 @@ body { letter-spacing: -.006em; }
   border-radius: 999px;
   border: 1px solid var(--line);
   background: var(--surface);
-  animation: streak-pop 240ms cubic-bezier(.2, .9, .3, 1.35);
+  animation: streak-pop 240ms cubic-bezier(.22, 1, .36, 1);
 }
 
 .round-streak__marks {
@@ -1319,7 +1319,7 @@ body { letter-spacing: -.006em; }
  * gesture on `transform` only, and both are already stated by the option's
  * colour, its key mark and the feedback panel underneath.
  */
-.answer-button--correct { animation: answer-pop 260ms cubic-bezier(.2, .9, .3, 1.3); }
+.answer-button--correct { animation: answer-pop 260ms cubic-bezier(.22, 1, .36, 1); }
 .answer-button--wrong { animation: answer-refuse 260ms ease-out; }
 
 @keyframes answer-pop {

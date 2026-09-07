@@ -341,7 +341,7 @@ const andeanAsset = await loadMapAsset('andean');
 assert.ok(andeanAsset, 'Andean asset loads for continent-specific Locations copy verification.');
 const andeanSession = buildMapSession(andeanAsset, 'test', 'locations-south-america-copy', ['PER']);
 const andeanHtml = renderMapQuiz(andeanAsset, andeanSession, null);
-assert.ok(andeanHtml.includes('pan South America'), 'Locations Play names the active continent in pan guidance.');
+assert.ok(andeanHtml.includes('drag to pan South America'), 'Locations Play names the active continent in pan guidance.');
 assert.ok(andeanHtml.includes('South America map with Andean active'), 'Locations map aria copy names the active continent.');
 assert.ok(!andeanHtml.includes('pan Africa'), 'Non-Africa Locations rounds no longer leak Africa-specific guidance.');
 
@@ -352,7 +352,7 @@ const learnHtml = renderQuiz(learnSession, null);
 assert.ok(!learnHtml.includes('round-score'), 'Flags Learn stays low-pressure and carries no live score.');
 const mapLearn = buildMapSession(westAsset, 'learn', 'locations-learn-unchanged', ['GHA']);
 const mapLearnHtml = renderMapQuiz(westAsset, mapLearn, null);
-assert.ok(mapLearnHtml.includes('Tap the country'), 'Locations Learn retains its existing guided instruction.');
+assert.ok(mapLearnHtml.includes('Click a country'), 'Locations Learn retains concise guided instruction for the rendered input mode.');
 assert.ok(!mapLearnHtml.includes('round-score'), 'Locations Learn stays low-pressure and carries no live score.');
 assert.ok(!mapLearnHtml.includes('answer-feedback'), 'Locations Learn does not inherit the Play feedback panel.');
 

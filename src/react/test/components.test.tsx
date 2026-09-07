@@ -59,6 +59,15 @@ describe('React screen actions', () => {
     }
   });
 
+  it('keeps pristine Spatial totals accessible without repeating zero-state meters', () => {
+    const state = deriveSpatialState({ route: { name: 'home' }, view: 'home', achievements: createInitialAchievementState() });
+    const { container } = render(<AtlasActionsContext value={actions()}><SpatialCommand state={state} ledgers={ledgers()} achievements={createInitialAchievementState()} persisting /></AtlasActionsContext>);
+
+    expect(screen.getByRole('button', { name: /Flags, 0 of 195 cleared/i })).toBeTruthy();
+    expect(container.querySelectorAll('.spatial-mode__meter')).toHaveLength(0);
+    expect(container.querySelectorAll('.spatial-mode__meta')).toHaveLength(0);
+  });
+
   it('shows the World Crown only when the persisted achievement is earned', () => {
     const earned = { ...createInitialAchievementState(), worldCrown: true };
     render(<AtlasActionsContext value={actions()}><HomeScreen ledgers={ledgers()} achievements={earned} persisting /></AtlasActionsContext>);

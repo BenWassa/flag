@@ -240,7 +240,7 @@ assert.ok(westQuizHtml.includes('map-context-country'), 'Out-of-region Africa re
 assert.ok(westQuizHtml.includes('map-context-locator'), 'Out-of-region island dots remain visible as context.');
 assert.ok(westQuizHtml.includes('data-map-viewport'), 'Map gameplay exposes a dedicated pannable viewport.');
 assert.ok(westQuizHtml.includes('data-map-focus='), 'The viewport carries the preferred starting region.');
-assert.ok(westQuizHtml.includes('swipe or drag to pan Africa'), 'The first prompt teaches the continent-pan gesture once.');
+assert.ok(westQuizHtml.includes('Click a country. Scroll to zoom, drag to pan Africa.'), 'The first server-rendered prompt teaches precise-pointer map controls once.');
 assert.ok(westQuizHtml.includes('map-country__callout-line'), 'Approved mainland callouts render leader lines.');
 assert.ok(westQuizHtml.includes('--map-canvas-width: 835px'), 'The renderer respects the wider shared Africa canvas including eastern islands.');
 

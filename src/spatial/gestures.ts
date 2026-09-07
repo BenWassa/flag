@@ -33,6 +33,8 @@
 
 export interface GestureHandlers {
   onTap(clientX: number, clientY: number): void;
+  /** The first deliberate drag crossed the movement threshold. */
+  onDragStart?(): void;
   onRotate(deltaLonDeg: number, deltaLatDeg: number): void;
   onDolly(factor: number): void;
 }
@@ -102,6 +104,7 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
     if (!dragging) {
       if (Math.hypot(event.clientX - origin.x, event.clientY - origin.y) <= DRAG_THRESHOLD_PX) return;
       dragging = true;
+      handlers.onDragStart?.();
       // Capture only now, so a press that stays a tap keeps ordinary delegated
       // semantics. The threshold itself is absorbed rather than applied, so the
       // globe does not jump the moment a drag is recognised.

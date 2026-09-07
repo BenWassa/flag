@@ -28,7 +28,7 @@ function pointer(type: string, id: number, x: number, y: number) {
   return event;
 }
 
-const handlers = () => ({ onTap: vi.fn(), onRotate: vi.fn(), onDolly: vi.fn() });
+const handlers = () => ({ onTap: vi.fn(), onDragStart: vi.fn(), onRotate: vi.fn(), onDolly: vi.fn() });
 
 describe('spatial stage gestures', () => {
   it('reports a still tap at the position the press began', () => {
@@ -70,10 +70,12 @@ describe('spatial stage gestures', () => {
     installGestures(element, spy);
     element.dispatchEvent(pointer('pointerdown', 1, 180, 300));
     element.dispatchEvent(pointer('pointermove', 1, 220, 300));
+    expect(spy.onDragStart).toHaveBeenCalledTimes(1);
     element.dispatchEvent(pointer('pointermove', 1, 260, 300));
     element.dispatchEvent(pointer('pointerup', 1, 260, 300));
     expect(spy.onRotate).toHaveBeenCalled();
     expect(spy.onTap).not.toHaveBeenCalled();
+    expect(spy.onDragStart).toHaveBeenCalledTimes(1);
   });
 
   it('absorbs the threshold rather than applying it, so the globe does not jump', () => {

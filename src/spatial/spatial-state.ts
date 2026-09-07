@@ -412,7 +412,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       boundaries: 'region',
       // #197 named each area on the Earth itself, so the description says where
       // the choices are rather than describing a tap on a country.
-      description: `${route.scope.label} is framed on the globe. Each area is named on it, and can be chosen there or below.`,
+      description: `${route.scope.label} is framed on the globe. Each area name is a focusable control. Focusing an area that is out of view turns the Earth towards it.`,
       navigation: 'scope',
     };
   }
@@ -428,7 +428,7 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
     labelLevel: domain ? 'continent' : null,
     boundaries: 'continent',
     description: domain
-      ? 'The whole Earth is framed. Each continent is named on it, and can be chosen there or below.'
+      ? 'The whole Earth is framed. Each continent name is a focusable control. Focusing a continent that is out of view turns the Earth towards it.'
       : 'The whole Earth is framed. Choose what to learn.',
     navigation: domain ? 'continents' : 'domains',
   };

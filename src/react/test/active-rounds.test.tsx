@@ -192,6 +192,30 @@ describe('Locations active round', () => {
     expect(document.querySelectorAll('[data-action="map-answer"]').length).toBeGreaterThan(0);
   });
 
+  it('uses touch-specific guidance for coarse pointers', () => {
+    const originalMatchMedia = window.matchMedia;
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        matches: query === '(pointer: coarse)',
+        media: query,
+        onchange: null,
+        addEventListener: vi.fn(),
+        removeEventListener: vi.fn(),
+        addListener: vi.fn(),
+        removeListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+      })),
+    });
+    try {
+      const session = buildMapSession(asset, 'test', 'locations-touch-guidance');
+      renderWith(actions(), <LocationQuizScreen asset={asset} session={session} lastWrongCountryId={null} />);
+      expect(screen.getByText(/Tap a country\. Pinch to zoom, drag to pan Africa\. 3 tries\./)).toBeTruthy();
+    } finally {
+      Object.defineProperty(window, 'matchMedia', { configurable: true, value: originalMatchMedia });
+    }
+  });
+
   it('offers every scoped country as an answerable target', () => {
     const session = buildMapSession(asset, 'test', 'locations-targets-round');
     renderWith(actions(), <LocationQuizScreen asset={asset} session={session} lastWrongCountryId={null} />);

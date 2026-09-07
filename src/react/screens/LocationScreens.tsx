@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { getMapContinentConfigForScope } from '../../data/map-scopes.js';
 import { currentMapTarget } from '../../domain/map-game.js';
@@ -78,7 +78,24 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
   />;
 }
 
-function visibleFeedback(session: MapSession, resolution: MapSession['targets'][string]['resolution'], misses: number, continent: string, wrong?: string) {
+function useCoarsePointer(): boolean {
+  const query = '(pointer: coarse)';
+  const read = () => typeof window !== 'undefined'
+    && typeof window.matchMedia === 'function'
+    && window.matchMedia(query).matches;
+  const [coarse, setCoarse] = useState(read);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const media = window.matchMedia(query);
+    const update = () => setCoarse(media.matches);
+    update();
+    media.addEventListener('change', update);
+    return () => media.removeEventListener('change', update);
+  }, []);
+  return coarse;
+}
+
+function visibleFeedback(session: MapSession, resolution: MapSession['targets'][string]['resolution'], misses: number, continent: string, coarsePointer: boolean, wrong?: string) {
   if (resolution === 'first-try') return { text: 'Correct · first try', className: 'map-prompt__status--correct' };
   if (resolution === 'one-miss') return { text: 'Correct · after 1 miss', className: 'map-prompt__status--correct' };
   if (resolution === 'two-miss') return { text: 'Correct · after 2 misses', className: 'map-prompt__status--correct' };
@@ -87,10 +104,12 @@ function visibleFeedback(session: MapSession, resolution: MapSession['targets'][
     const left = Math.max(0, 3 - misses);
     return { text: `${wrong ? `Not ${wrong}. ` : 'Not there. '}Try again · ${left} ${left === 1 ? 'try' : 'tries'} before reveal`, className: 'map-prompt__status--wrong' };
   }
+  const action = coarsePointer ? 'Tap' : 'Click';
+  const controls = coarsePointer ? 'Pinch to zoom, drag to pan' : 'Scroll to zoom, drag to pan';
   if (session.mode === 'test') {
-    return { text: session.currentIndex === 0 ? `Tap the country · up to 3 tries · pinch or wheel to zoom · swipe or drag to pan ${continent}.` : 'Tap the country on the map.', className: '' };
+    return { text: session.currentIndex === 0 ? `${action} a country. ${controls} ${continent}. 3 tries.` : `${action} the country on the map.`, className: '' };
   }
-  return { text: session.currentIndex === 0 ? `Tap the country · pinch to zoom · swipe or drag to pan ${continent}.` : 'Tap the country on the map.', className: '' };
+  return { text: session.currentIndex === 0 ? `${action} a country. ${controls} ${continent}.` : `${action} the country on the map.`, className: '' };
 }
 
 function locationPlayScore(session: MapSession): RoundScore {
@@ -130,6 +149,7 @@ function locationPlayFeedback(session: MapSession, targetName: string, wrongName
 
 export function LocationQuizScreen({ asset, session, lastWrongCountryId }: { asset: MapRegionAsset; session: MapSession; lastWrongCountryId: string | null }) {
   const actions = useAtlasActions();
+  const coarsePointer = useCoarsePointer();
   const targetId = currentMapTarget(session);
   const target = targetId ? COUNTRY_BY_ID.get(targetId) : undefined;
   if (!targetId || !target) return <main className="page"><h1 tabIndex={-1} data-autofocus>Map round unavailable</h1><button className="button" onClick={actions.exitRound}>Back</button></main>;
@@ -139,7 +159,7 @@ export function LocationQuizScreen({ asset, session, lastWrongCountryId }: { ass
   const lastWrongName = lastAttempt?.targetCountryId === targetId && !lastAttempt.correct
     ? COUNTRY_BY_ID.get(lastAttempt.selectedCountryId)?.name
     : undefined;
-  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, continent, lastWrongName);
+  const feedback = visibleFeedback(session, state?.resolution, state?.misses ?? 0, continent, coarsePointer, lastWrongName);
   const playFeedback = session.mode === 'test' ? locationPlayFeedback(session, target.name, lastWrongName) : null;
   const mapLabel = session.scope.kind === 'continent' ? `${continent} country map` : `${continent} map with ${session.scope.label} active`;
   return <main className="page page--map-quiz">

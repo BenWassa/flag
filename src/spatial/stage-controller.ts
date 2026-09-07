@@ -51,6 +51,8 @@ export interface StageControllerOptions {
   onSelectCountry(countryId: string): void;
   /** A name written on the geography was chosen. Same action as a tap (#197). */
   onSelectScope(scopeId: string): void;
+  /** A learner deliberately rotated the Earth. */
+  onExplore(): void;
   prefersReducedMotion(): boolean;
 }
 
@@ -340,6 +342,7 @@ export async function createStageController(
       const countryId = resolveCountry(x, y);
       if (countryId) options.onSelectCountry(countryId);
     },
+    onDragStart: options.onExplore,
     onRotate: (deltaLon, deltaLat) => {
       const { lon, lat, distance } = director.pose;
       director.nudge({

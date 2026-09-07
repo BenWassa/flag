@@ -34,6 +34,7 @@ export function SpatialStage({ state, onSelectCountry, onSelectScope, onUnavaila
   const select = useRef(onSelectCountry);
   const selectScope = useRef(onSelectScope);
   const [ready, setReady] = useState(false);
+  const [explored, setExplored] = useState(false);
 
   // Declared before the boot effect so both refs are current by the time it
   // runs, without writing to a ref during render.
@@ -55,6 +56,7 @@ export function SpatialStage({ state, onSelectCountry, onSelectScope, onUnavaila
         const instance = await createStageController(host, {
           onSelectCountry: (countryId) => select.current(countryId),
           onSelectScope: (scopeId) => selectScope.current(scopeId),
+          onExplore: () => setExplored(true),
           prefersReducedMotion,
         });
         // The dynamic import can resolve after an unmount, and a controller
@@ -82,9 +84,12 @@ export function SpatialStage({ state, onSelectCountry, onSelectScope, onUnavaila
   return (
     <div className="spatial-stage" data-mode={state.mode} data-ready={ready ? 'true' : undefined}>
       <div className="spatial-stage__surface" ref={container} />
+      {ready && state.navigation === 'continents' && !explored
+        ? <p className="spatial-stage__hint" aria-hidden="true">Drag the Earth to find a continent.</p>
+        : null}
       {/* The geography's own description. Every action it offers is a real
-          control in the command surface below, so this describes rather than
-          instructs, and it takes no visible space away from the globe. */}
+          control anchored over the globe, so this takes no visible space away
+          from the geography. */}
       {state.description
         ? <p className="spatial-stage__caption visually-hidden">{state.description}</p>
         : null}

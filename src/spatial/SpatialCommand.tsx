@@ -110,6 +110,7 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
       <nav className="spatial-command__choices" aria-label="Learning modes">
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
+          const pristine = summary.unseen === summary.total;
           return (
             <button className="spatial-mode" type="button" key={domain} data-domain={domain}
               aria-label={`${summary.label}, ${summary.cleared} of ${summary.total} cleared`}
@@ -117,8 +118,10 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
             >
               <span className="spatial-mode__mark" aria-hidden="true"><DomainIcon domain={domain} /></span>
               <span className="spatial-mode__name">{summary.label}</span>
-              <span className="spatial-mode__meter" aria-hidden="true"><ProgressStrip stats={summaryStats(summary)} domain={domain} /></span>
-              <span className="spatial-mode__meta" aria-hidden="true">{summary.cleared}/{summary.total}</span>
+              {pristine ? null : <>
+                <span className="spatial-mode__meter" aria-hidden="true"><ProgressStrip stats={summaryStats(summary)} domain={domain} /></span>
+                <span className="spatial-mode__meta" aria-hidden="true">{summary.cleared}/{summary.total}</span>
+              </>}
             </button>
           );
         })}
