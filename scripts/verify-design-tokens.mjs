@@ -48,20 +48,29 @@ assert.ok(playTiming.includes('PLAY_FEEDBACK_DWELL_WRONG_MS = 1500'), 'Accepted 
 assert.ok(!camera.includes('--motion-'), 'Camera motion remains independently owned and is not coupled to CSS UI tokens.');
 
 assert.ok(design.includes('## Motion and control geometry'), 'DESIGN.md documents the small motion/control scale.');
-assert.ok(design.includes('sole translucency exception'), 'DESIGN.md explicitly records the narrow Spatial Home translucency exception.');
+assert.ok(design.includes('composition exception in the navigation system, not a material exception'),
+  'DESIGN.md records Spatial Home as a composition exception rather than a translucency exception.');
 assert.equal(impeccable.tokens.controlHeight.compact, '44px');
 assert.equal(impeccable.tokens.controlHeight.standard, '52px');
 assert.equal(impeccable.tokens.motion.press, '100ms ease-out');
 assert.equal(impeccable.tokens.motion.ui, '160ms ease-out');
 assert.equal(impeccable.tokens.homeChooser.blur, 'none by default; backdrop-filter is not required');
 assert.ok(
-  impeccable.principles.some((principle) => principle.includes('sole neutral translucency exception')),
-  '.impeccable/design.json explicitly limits translucency to the Spatial Home chooser.',
+  impeccable.tokens.homeChooser.surface.includes('opaque cool near-white Atlas chrome'),
+  '.impeccable/design.json keeps the Home chooser in the ordinary opaque Atlas chrome family.',
+);
+assert.ok(
+  impeccable.principles.some((principle) => principle.includes('not a translucency exception')),
+  '.impeccable/design.json records Home as a composition exception rather than a separate material system.',
 );
 assert.match(spatial, /\.spatial-shell\[data-surface='domains'\][\s\S]*\.spatial-command\[data-surface='domains'\]/,
   'Spatial Home has an explicit composition state rather than inheriting the ordinary command band.');
-assert.equal(spatial.includes('backdrop-filter'), true,
-  'Spatial Home documents that backdrop-filter is deliberately not required.');
+assert.match(spatial, /\.spatial-command\[data-surface='domains'\][\s\S]*background:\s*var\(--canvas\)/,
+  'Spatial Home uses the ordinary opaque Atlas canvas neutral rather than a globe-tinted translucent surface.');
+assert.match(spatial, /\.spatial-command\[data-surface='domains'\][\s\S]*box-shadow:\s*var\(--depth-tile\)/,
+  'Spatial Home uses the restrained shared tile depth rather than bespoke heavy elevation.');
+assert.equal(spatial.includes('backdrop-filter'), false,
+  'Spatial Home no longer needs backdrop-filter language or a decorative compositing path.');
 assert.equal(/backdrop-filter\s*:/.test(spatial), false,
   'Spatial Home does not pay a decorative backdrop-filter compositing cost.');
 
