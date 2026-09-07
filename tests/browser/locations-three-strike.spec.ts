@@ -34,7 +34,14 @@ function answerControl(page: Page, countryId: string) {
 }
 
 async function expectCountryFocus(page: Page, countryId: string) {
-  await expect.poll(() => page.evaluate(() => (document.activeElement as HTMLElement | null)?.dataset.id ?? null)).toBe(countryId);
+  // The focusable answer can be a descendant of the canonical country group
+  // (for example helper/callout geometry). Assert canonical identity rather
+  // than assuming the focused DOM node itself owns data-id.
+  await expect.poll(() => page.evaluate(() => {
+    const active = document.activeElement;
+    if (!(active instanceof Element)) return null;
+    return active.closest('[data-id]')?.getAttribute('data-id') ?? active.getAttribute('data-id');
+  })).toBe(countryId);
 }
 
 async function answer(page: Page, countryId: string) {

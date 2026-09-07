@@ -317,16 +317,13 @@ for (const domain of LEARNING_DOMAIN_IDS) {
 }
 
 // Country detail appears only where the activity is actually about countries.
-for (const view of ['map-quiz', 'outline-quiz', 'neighbor-quiz', 'flags-study', 'profile']) {
+for (const view of ['quiz', 'map-quiz', 'outline-quiz', 'neighbor-quiz', 'flags-study', 'profile']) {
   const live = state({ name: 'learning', domain: 'flags', scope: { kind: 'region', id: 'west-africa', label: 'West Africa' }, activity: 'test' }, view);
   assert.equal(live.labels.length, 0, `${view} names no geography while the activity owns the screen.`);
   assert.notEqual(live.boundaries, 'country', `${view} does not expose country borders.`);
 }
 {
   const scope = { kind: 'region', id: 'west-africa', label: 'West Africa' };
-  const context = state({ name: 'learning', domain: 'flags', scope, activity: 'test' }, 'quiz');
-  assert.equal(context.labels.length, 0, 'A live Flags question names no geography behind itself.');
-  assert.equal(context.boundaries, 'region', 'A live question keeps the level the learner navigated at.');
   const results = state({ name: 'learning', domain: 'flags', scope, activity: 'test' }, 'results', { resultScope: scope });
   assert.equal(results.labels.length, 0, 'Results offers no geography selection.');
   assert.equal(results.boundaries, 'country', 'Results reframes the countries the round was actually about.');

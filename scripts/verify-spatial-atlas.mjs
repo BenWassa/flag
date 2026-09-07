@@ -276,10 +276,12 @@ for (const domain of LEARNING_DOMAIN_IDS) {
   }
 }
 
-// NO ANSWER LEAKAGE. A live question must never carry scope highlighting, and the
-// domains whose own learning object is a map must not have a second map behind it.
+// LIVE ACTIVITIES OWN THE SCREEN (#207). Every live question yields the stage:
+// the map-native domains because a second map behind them could carry the
+// answer, and Flags because the flag is the learning object and a backdrop that
+// contributes nothing must not charge a phone viewport for the space.
 for (const [view, expectedMode] of [
-  ['quiz', 'context'],
+  ['quiz', 'yielded'],
   ['map-quiz', 'yielded'],
   ['outline-quiz', 'yielded'],
   ['neighbor-quiz', 'yielded'],

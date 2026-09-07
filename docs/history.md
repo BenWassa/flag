@@ -22,6 +22,8 @@ Spatial Atlas is the default production presentation
 - **#119** proved the persistent-Earth interaction, renderer choice, canonical spherical asset generation, route→spatial adapter, accessibility equivalence and activity boundary.
 - **#166** removed the `globe + old page underneath` composition, made Spatial the default, fixed shared tiny-geography picking, retired the preview path and preserved graceful classic fallback.
 
+- **#207** ended the last shared composition: the live Flags question yielded the stage like every other activity, and the accompanying product question — whether Flags should choose its scope on the Earth at all — was answered by measuring the production flow. Geography-led selection stayed, because a Flags-specific list would have saved no taps, no touch precision and no 3D cost while discarding geographic orientation. See [`closed/issue-207-flags-activity-viewport.md`](closed/issue-207-flags-activity-viewport.md).
+
 - **#197** made geographic detail follow the learner's current decision: world navigation reads as continents, a framed continent reveals its learner-facing areas, and country boundaries appear only where the activity is about countries. Continent/area shells are derived from the canonical country geometry by cancelling shared edges, and each selectable scope is named on the Earth by a real DOM control.
 
 Start current Spatial work from [`architecture/spatial-atlas.md`](architecture/spatial-atlas.md). The #104/#119/#166 records live under `closed/`.

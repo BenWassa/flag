@@ -32,11 +32,14 @@ import { isContinentId } from './scope-geography.js';
  *
  * `world`    whole-Earth frame; continents are the selectable unit.
  * `focus`    a continent or region is framed; regions are the selectable unit.
- * `context`  an activity is running and geography is a quiet, inert backdrop.
  * `results`  the round has resolved; the scope just played is re-framed.
  * `yielded`  the activity owns the screen entirely; the renderer is paused.
+ *
+ * Issue #207 retired a fifth mode. `context` kept an inert globe strip above a
+ * live Flags question; there is no longer any live activity that shares the
+ * viewport with geography, so the mode has no remaining meaning to express.
  */
-export type SpatialStageMode = 'world' | 'focus' | 'context' | 'results' | 'yielded';
+export type SpatialStageMode = 'world' | 'focus' | 'results' | 'yielded';
 
 /**
  * Country presentation. Deliberately small, and deliberately not a choropleth.
@@ -142,13 +145,21 @@ export interface SpatialInput {
 const RESULT_VIEWS = new Set(['results', 'map-results', 'outline-results', 'neighbor-results']);
 const LAUNCHER_VIEWS = new Set(['scope', 'map-home', 'outline-home', 'neighbor-home']);
 /**
- * Activity views whose own learning object is itself geography, or whose answer
- * could be read off the globe. These take the whole screen: a persistent globe
- * behind a "where is Ghana?" question is a second map competing with the answer
- * surface, and behind an outline question it is a shape the learner could match.
- * Spatial continuity is between activities, not during them.
+ * Live activity views. Every one of them takes the whole screen.
+ *
+ * For the map-native domains that is an answer-safety rule as much as a layout
+ * one: a persistent globe behind a "where is Ghana?" question is a second map
+ * competing with the answer surface, and behind an outline question it is a
+ * shape the learner could match.
+ *
+ * Issue #207 brought the live Flags question (`quiz`) in on layout grounds
+ * instead. A flag cannot be read off the globe, so an inert backdrop was
+ * answer-safe — but it was still charging a repeated-recognition game a fixed
+ * share of a phone viewport for a backdrop that contributes nothing once the
+ * scope has been chosen. The flag is the learning object and it should own the
+ * screen. Spatial continuity is between activities, not during them.
  */
-const YIELDING_VIEWS = new Set(['map-quiz', 'outline-quiz', 'neighbor-quiz', 'flags-study', 'profile']);
+const YIELDING_VIEWS = new Set(['quiz', 'map-quiz', 'outline-quiz', 'neighbor-quiz', 'flags-study', 'profile']);
 
 /**
  * Learner-facing regions for one continent and domain, from the same table the
@@ -377,28 +388,6 @@ export function deriveSpatialState(input: SpatialInput): SpatialState {
       // actually looking at.
       boundaries: 'country',
       description: scope ? `${scope.label} is framed on the globe.` : '',
-      navigation: null,
-    };
-  }
-
-  // A live activity that is safe over geography: the flag is the recognition
-  // object and cannot be read off the map. The globe carries NO scope
-  // highlighting here — an in-scope highlight during a question is a hint.
-  if (view === 'quiz') {
-    return {
-      mode: 'context',
-      detail: route.name === 'learning' && route.scope ? detailContinent(route.scope) : null,
-      framedScope: route.name === 'learning' ? route.scope : undefined,
-      picking: 'none',
-      domain,
-      countryStates: EMPTY,
-      scopeStatus: NO_STATUS,
-      labels: NO_LABELS,
-      labelLevel: null,
-      // A live question needs no country detail — the flag is the recognition
-      // object — so the backdrop stays at the level the learner navigated at.
-      boundaries: route.name === 'learning' && route.scope && detailContinent(route.scope) ? 'region' : 'continent',
-      description: '',
       navigation: null,
     };
   }
