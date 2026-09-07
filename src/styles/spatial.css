@@ -3,9 +3,9 @@
  *
  * Geography is the dominant object. Ordinary domain/scope navigation keeps its
  * compact command band, while Home is the one composition exception: the whole
- * Earth owns the viewport and a single neutral translucent chooser is layered
- * over it. That surface deliberately uses no `backdrop-filter` blur, so the
- * exception does not create a continuous compositing/rendering cost on phone GPUs.
+ * Earth owns the viewport and a single bounded neutral chooser is layered over
+ * it. The chooser is ordinary opaque Atlas chrome: no backdrop tint, blur or
+ * special compositing path competes with the geography behind and around it.
  */
 
 .spatial-shell {
@@ -224,18 +224,18 @@
   overscroll-behavior-y: contain;
 }
 
-/* Home-only translucent chooser. This is one surface over the Earth, not a
-   stack of glass cards. */
+/* Home-only chooser. This is one ordinary neutral Atlas surface over the
+   Earth, not a glass exception or a stack of cards. */
 .spatial-command[data-surface='domains'] {
   z-index: 1;
   place-self: center;
   width: min(432px, calc(100% - 56px - env(safe-area-inset-left) - env(safe-area-inset-right)));
   max-height: calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
   padding: clamp(14px, 3.4vw, 20px);
-  border: 1px solid color-mix(in srgb, var(--line-strong) 76%, transparent);
+  border: 1px solid var(--line);
   border-radius: var(--radius-tile);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow: 0 0 0 1px rgba(10, 23, 37, .5), 0 18px 44px rgba(10, 23, 37, .45);
+  background: var(--canvas);
+  box-shadow: var(--depth-tile);
   overflow-y: auto;
 }
 

@@ -61,6 +61,58 @@ test.describe('Spatial Home overlay', () => {
     await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
   });
 
+  test('chooser material stays opaque Atlas chrome as the globe moves behind it', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openHome(page);
+
+    const chooser = page.locator('.spatial-command[data-surface="domains"]');
+    const surface = async () => chooser.evaluate((element) => {
+      const style = getComputedStyle(element);
+      const canvas = getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim();
+      const probe = document.createElement('span');
+      probe.style.color = canvas;
+      document.body.append(probe);
+      const canvasColour = getComputedStyle(probe).color;
+      probe.remove();
+      return {
+        background: style.backgroundColor,
+        canvas: canvasColour,
+        image: style.backgroundImage,
+        backdrop: style.backdropFilter,
+        webkitBackdrop: (style as CSSStyleDeclaration & { webkitBackdropFilter?: string }).webkitBackdropFilter ?? '',
+      };
+    });
+
+    const initial = await surface();
+    expect(initial.background).toBe(initial.canvas);
+    expect(initial.image).toBe('none');
+    expect(['', 'none']).toContain(initial.backdrop);
+    expect(['', 'none']).toContain(initial.webkitBackdrop);
+
+    const stage = page.locator('.spatial-stage__surface');
+    const box = (await stage.boundingBox())!;
+    const drags = [
+      { dx: box.width * 0.34, dy: 0 },
+      { dx: -box.width * 0.58, dy: box.height * 0.08 },
+    ];
+    const backgrounds = [initial.background];
+    await page.screenshot({ path: test.info().outputPath('home-material-default.png') });
+    for (let index = 0; index < drags.length; index += 1) {
+      await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+      await page.mouse.down();
+      await page.mouse.move(
+        box.x + box.width * 0.5 + drags[index].dx,
+        box.y + box.height * 0.5 + drags[index].dy,
+        { steps: 12 },
+      );
+      await page.mouse.up();
+      await page.waitForTimeout(250);
+      backgrounds.push((await surface()).background);
+      await page.screenshot({ path: test.info().outputPath(`home-material-rotated-${index + 1}.png`) });
+    }
+    expect(new Set(backgrounds)).toEqual(new Set([initial.canvas]));
+  });
+
   test('all four modes use the authoritative route and Back restores Home', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openHome(page);
