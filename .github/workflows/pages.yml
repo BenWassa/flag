@@ -39,7 +39,9 @@ jobs:
         if: github.event_name == 'workflow_dispatch'
         with:
           node-version: 22
-      - run: npm install
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
         if: github.event_name == 'workflow_dispatch'
       - run: npm run build
         if: github.event_name == 'workflow_dispatch'
