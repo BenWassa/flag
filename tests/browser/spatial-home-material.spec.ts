@@ -24,6 +24,14 @@ async function material(page: Page) {
   });
 }
 
+function expectOpaque(background: string) {
+  // Chromium may serialise modern color-mix output as rgb(), rgba() or
+  // color(srgb ...). Explicit alpha below 1 is the contract violation; the
+  // serialisation family itself is not a product behaviour.
+  expect(background).not.toMatch(/\/\s*0(?:\.\d+)?\s*\)?$/);
+  expect(background).not.toMatch(/rgba\([^)]*,\s*0(?:\.\d+)?\s*\)$/);
+}
+
 async function rotateGlobe(page: Page, dx: number, dy: number) {
   const stage = page.locator('.spatial-stage__surface');
   const box = (await stage.boundingBox())!;
@@ -45,8 +53,7 @@ test('#196 Home chooser is stable neutral chrome across globe positions and core
     await openHome(page, viewport.width, viewport.height);
     const initial = await material(page);
 
-    expect(initial.background).toMatch(/^rgb\(/);
-    expect(initial.background).not.toMatch(/^rgba\([^)]*,\s*0\./);
+    expectOpaque(initial.background);
     expect(initial.backdrop).toBe('none');
     expect(initial.shadow).not.toBe('none');
 
@@ -74,7 +81,7 @@ test('#196 neutral material is already present while WebGL loads and remains acc
     await page.goto('/#/', { waitUntil: 'domcontentloaded' });
     await expect(page.locator(HOME)).toBeVisible();
     const loading = await material(page);
-    expect(loading.background).toMatch(/^rgb\(/);
+    expectOpaque(loading.background);
     expect(loading.backdrop).toBe('none');
   } finally {
     release();
