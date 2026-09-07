@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 const theme = readFileSync('src/styles/atlas-theme.css', 'utf8');
 const base = readFileSync('src/styles/styles.css', 'utf8');
 const spatial = readFileSync('src/styles/spatial.css', 'utf8');
+const homeMaterial = readFileSync('src/styles/spatial-home-material.css', 'utf8');
+const index = readFileSync('index.html', 'utf8');
 const neighbors = readFileSync('src/styles/neighbors.css', 'utf8');
 const map = readFileSync('src/styles/map.css', 'utf8');
 const locationsTiming = readFileSync('src/state/locations-round.ts', 'utf8');
@@ -48,15 +50,20 @@ assert.ok(playTiming.includes('PLAY_FEEDBACK_DWELL_WRONG_MS = 1500'), 'Accepted 
 assert.ok(!camera.includes('--motion-'), 'Camera motion remains independently owned and is not coupled to CSS UI tokens.');
 
 assert.ok(design.includes('## Motion and control geometry'), 'DESIGN.md documents the small motion/control scale.');
-assert.ok(design.includes('sole translucency exception'), 'DESIGN.md explicitly records the narrow Spatial Home translucency exception.');
+assert.ok(design.includes('Home uses the same opaque cool-neutral chrome family as the rest of Atlas'),
+  'DESIGN.md records the #196 opaque Home chrome contract.');
+assert.ok(design.includes('not a translucency exception'),
+  'DESIGN.md explicitly retires the former Spatial Home translucency exception.');
 assert.equal(impeccable.tokens.controlHeight.compact, '44px');
 assert.equal(impeccable.tokens.controlHeight.standard, '52px');
 assert.equal(impeccable.tokens.motion.press, '100ms ease-out');
 assert.equal(impeccable.tokens.motion.ui, '160ms ease-out');
-assert.equal(impeccable.tokens.homeChooser.blur, 'none by default; backdrop-filter is not required');
+assert.equal(impeccable.tokens.homeChooser.blur, 'none; Home no longer has a translucency or glass exception');
+assert.ok(impeccable.tokens.homeChooser.surface.includes('opaque cool-neutral Atlas chrome'),
+  '.impeccable/design.json records the #196 opaque Home surface.');
 assert.ok(
-  impeccable.principles.some((principle) => principle.includes('sole neutral translucency exception')),
-  '.impeccable/design.json explicitly limits translucency to the Spatial Home chooser.',
+  impeccable.principles.some((principle) => principle.includes('no glass/translucency exception')),
+  '.impeccable/design.json explicitly retires the former Home translucency exception.',
 );
 assert.match(spatial, /\.spatial-shell\[data-surface='domains'\][\s\S]*\.spatial-command\[data-surface='domains'\]/,
   'Spatial Home has an explicit composition state rather than inheriting the ordinary command band.');
@@ -64,5 +71,11 @@ assert.equal(spatial.includes('backdrop-filter'), true,
   'Spatial Home documents that backdrop-filter is deliberately not required.');
 assert.equal(/backdrop-filter\s*:/.test(spatial), false,
   'Spatial Home does not pay a decorative backdrop-filter compositing cost.');
+assert.match(homeMaterial, /background:\s*color-mix\(in srgb, var\(--surface\) 94%, var\(--canvas\)\);/,
+  'The #196 Home material is derived only from existing opaque Atlas neutral surfaces.');
+assert.equal(homeMaterial.includes('transparent'), false,
+  'The #196 Home material does not mix transparency into the chooser surface.');
+assert.ok(index.indexOf('spatial-home-material.css') > index.indexOf('spatial.css'),
+  'The focused #196 Home material override loads after the base Spatial composition sheet.');
 
 console.log('Design motion/control token verification passed.');
