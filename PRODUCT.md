@@ -149,8 +149,8 @@ The dedicated Progress screen remains retired. Progress and prestige are progres
 - tactile depth is purposeful but not toy-like;
 - PWA/offline and renderer-failure behaviour remain product requirements.
 
-## Historical decisions and active work
+## Historical decisions and current work
 
 Closed issues are retained as project history. #104 is the earlier map-first launcher exploration; #119 proved the continuous Spatial model; #166 made it production. The accepted Spatial direction supersedes #104 as a separate future launcher programme.
 
-The #118 specialist UX audit is also closed; its concrete surviving defects are tracked by #146–#152. Current open work and sequencing live in [`docs/open/index.md`](docs/open/index.md); historical relationships live in [`docs/history.md`](docs/history.md).
+The #118 specialist UX audit is also closed, and its concrete follow-ups #146–#152 are completed. Current open work and sequencing live in [`docs/open/index.md`](docs/open/index.md); historical relationships live in [`docs/history.md`](docs/history.md).
