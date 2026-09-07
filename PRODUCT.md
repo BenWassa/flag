@@ -38,7 +38,7 @@ Results / geographic context
 The important product rules are:
 
 - geographic detail is disclosed progressively (#197): world navigation shows continents rather than a country tessellation, a framed continent reveals its learner-facing areas, selecting an area keeps navigation at area level, and country boundaries appear only where the learning mechanic is actually about countries;
-- each currently selectable continent or area is named on the Earth itself by a real, focusable control that dispatches the same action as its equivalent chip;
+- each currently selectable continent or area is named on the Earth itself by a real, focusable control that dispatches the same action as a geography tap;
 - the typed hash router remains authoritative;
 - the persistent Earth interprets route state rather than creating a second navigation stack;
 - tapping geography **selects/focuses** a durable scope and never starts a round accidentally;
@@ -87,7 +87,7 @@ Country records are the live learning/scheduling layer. They can record encounte
 
 Country evidence is **not learner-facing prestige**. Internal compatibility state may still use names such as `mastered`; routine UI must not promote an individual country into a prestigious Mastery achievement.
 
-Ordinary progress is the restrained Atlas Blue successful-retrieval strip.
+Ordinary progress is the restrained successful-retrieval strip in the active domain accent.
 
 ## Perfect round and Mastery
 
@@ -142,7 +142,7 @@ The dedicated Progress screen remains retired. Progress and prestige are progres
 - typed hash routes and browser Back/Forward remain authoritative;
 - one canonical Natural Earth 1:10m source/provenance policy owns projected and spherical geography;
 - no handwritten country geometry, second topology source or handwritten neighbour table;
-- Atlas Blue = ordinary action/progress; green/red = correctness; purple = durable Mastery; gold = scarce prestige;
+- Atlas Blue = ordinary action/selection; green/red = correctness; purple = durable Mastery; gold = scarce prestige; domain accents identify their own icon/meter;
 - state cannot rely on colour alone;
 - geography should normally be the richest visual object;
 - no glassmorphism, bento dashboard treatment, decorative overload or reward economy;
