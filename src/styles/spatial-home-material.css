@@ -1,0 +1,23 @@
+/*
+ * Issue #196 — Home chooser material.
+ *
+ * Home remains the one centred surface over the full globe, but the surface is
+ * now ordinary Atlas chrome rather than translucent material. The globe carries
+ * the saturated colour; the chooser stays a stable cool neutral as ocean, land,
+ * night and the loading state move behind it.
+ */
+.spatial-command[data-surface='domains'] {
+  border-color: color-mix(in srgb, var(--line-strong) 68%, var(--surface));
+  background: color-mix(in srgb, var(--surface) 94%, var(--canvas));
+  box-shadow:
+    0 1px 0 rgba(10, 23, 37, 0.08),
+    0 14px 32px rgba(10, 23, 37, 0.28);
+}
+
+@media (forced-colors: active) {
+  .spatial-command[data-surface='domains'] {
+    border-color: CanvasText;
+    background: Canvas;
+    box-shadow: none;
+  }
+}
