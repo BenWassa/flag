@@ -29,6 +29,7 @@ jobs:
           npx playwright test
           tests/browser/spatial-home-overlay.spec.ts
           tests/browser/spatial-home-matrix.spec.ts
+          tests/browser/spatial-home-material.spec.ts
           tests/browser/world-crown.spec.ts
           tests/browser/spatial-scope-selection.spec.ts
           tests/browser/spatial-framing.spec.ts
@@ -49,6 +50,7 @@ jobs:
         run: >-
           npx playwright test
           tests/browser/spatial-home-overlay.spec.ts
+          tests/browser/spatial-home-material.spec.ts
           tests/browser/world-crown.spec.ts
           tests/browser/spatial-scope-selection.spec.ts
           tests/browser/spatial-framing.spec.ts
