@@ -317,7 +317,7 @@ Learner-facing copy uses modern British English: **Neighbours, colour, centre, b
 
 ## Intentionally excluded aesthetics
 
-No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, currencies, levels, daily-streak obligations, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. The only translucent navigation surface is the single neutral Spatial Home chooser documented above; that exception must not propagate into nested glass cards or other screens.
+No default glassmorphism, bento/dashboard grids, ornamental structural gradients, decorative illustration competing with geography, fantasy ranks, XP/coin economies, currencies, levels, daily-streak obligations, constant crowns/medals/confetti, continent/region colour branding, large floating-card stacks, or exaggerated spring motion. Spatial Home's bounded chooser is a composition exception, not a material exception: it remains ordinary opaque Atlas chrome and does not license nested glass/cards or translucent navigation elsewhere.
 
 Saturated colour stays on the geography. Panels, cards, page backgrounds and chrome remain neutral: the break recorded here gives the Earth its colour back, it does not licence a colourful interface around it.
 
