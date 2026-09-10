@@ -1,0 +1,104 @@
+name: Temporary #212 code integration
+
+on:
+  push:
+    branches: [issue-212-playwright-reconciliation]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate-code:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconcile code and browser contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          STALE=a528f9e9c4765111cf04609c64c7242473cf4103
+          if grep -q 'test:browser:chromium' package.json && grep -q 'edgeOwned' src/spatial/gestures.ts; then
+            echo 'Code integration already present.'
+            exit 0
+          fi
+          git fetch origin "$STALE"
+          for file in \
+            src/spatial/gestures.test.ts \
+            src/spatial/gestures.ts \
+            tests/browser/asia-hardening.spec.ts \
+            tests/browser/atlas.spec.ts \
+            tests/browser/design-token-regression.spec.ts \
+            tests/browser/focus-lifecycle.spec.ts \
+            tests/browser/locations-feedback-geometry.spec.ts \
+            tests/browser/map-neighbors-rounds.spec.ts \
+            tests/browser/map-pointer-capture.spec.ts \
+            tests/browser/navigation-mastery.spec.ts \
+            tests/browser/north-america.spec.ts \
+            tests/browser/oceania.spec.ts \
+            tests/browser/production-matrix.spec.ts \
+            tests/browser/spatial-atlas.spec.ts \
+            tests/browser/spatial-disclosure.spec.ts
+          do
+            git show "$STALE:$file" > "$file"
+          done
+
+          python <<'PY'
+          import json
+          from pathlib import Path
+
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          rebuilt = {}
+          for key, value in package['scripts'].items():
+              if key == 'test:browser':
+                  rebuilt['test:browser'] = 'npm run test:browser:chromium && npm run test:browser:mobile'
+                  rebuilt['test:browser:chromium'] = 'playwright test --project=chromium --workers=1 --retries=0'
+                  rebuilt['test:browser:mobile'] = 'playwright test --project=mobile-chromium --workers=1 --retries=0'
+              else:
+                  rebuilt[key] = value
+          package['scripts'] = rebuilt
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+
+          path = Path('tests/browser/map-neighbors-rounds.spec.ts')
+          text = path.read_text()
+          stale_wait = '''  // Each answer replaces the raw SVG. The next keyboard answer must use the\n  // replacement map only after its real viewport contract is restored; this is\n  // a lifecycle boundary, not a dwell or retry.\n  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');\n'''
+          if stale_wait not in text:
+              raise SystemExit('Expected stale Locations viewport wait not found')
+          path.write_text(text.replace(stale_wait, ''))
+
+          path = Path('tests/browser/spatial-atlas.spec.ts')
+          text = path.read_text()
+          old = '''    expect(await stageMode(page)).toBe('context');\n    await expect(page.locator('.spatial-stage[data-mode="context"] .spatial-stage__surface')).toHaveCSS('pointer-events', 'none');\n    await expect(page.locator('.spatial-command')).toHaveCount(0);\n    await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);\n'''
+          new = '''    await page.waitForFunction(() => document.querySelector('.spatial-shell')?.getAttribute('data-mode') === 'yielded', null, { timeout: 30000 });\n    expect(await stageMode(page)).toBe('yielded');\n    await expect(page.locator('.spatial-stage')).toBeHidden();\n    await expect(page.locator('.spatial-command')).toHaveCount(0);\n    await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);\n'''
+          if old not in text:
+              raise SystemExit('Expected pre-#207 Flags viewport block not found')
+          path.write_text(text.replace(old, new))
+
+          path = Path('tests/browser/spatial-disclosure.spec.ts')
+          text = path.read_text()
+          old = '''  test('names retire while an activity owns the geography', async ({ page }) => {\n    await openSpatial(page, '/flags/africa/southern-africa');\n    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);\n    await page.getByRole('button', { name: 'Play Southern Africa' }).click();\n    // A live question: geography is inert context and offers nothing to choose.\n    await expect(scopeNames(page)).toHaveCount(0);\n  });\n'''
+          new = '''  test('names retire while an activity owns the geography', async ({ page }) => {\n    for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {\n      await openSpatial(page, `/${domain}/africa/southern-africa`);\n      await expect(scopeNames(page), domain).toHaveCount(EXPECTED_AREAS.africa.length);\n      await page.getByRole('button', { name: 'Play Southern Africa' }).click();\n      await expect(scopeNames(page), domain).toHaveCount(0);\n    }\n  });\n'''
+          if old not in text:
+              raise SystemExit('Expected pre-#207 disclosure block not found')
+          path.write_text(text.replace(old, new))
+
+          path = Path('AGENTS.md')
+          text = path.read_text()
+          anchor = '- `npm test` is the primary full repository gate under Node 22.\n'
+          addition = '- `npm run test:browser:chromium` and `npm run test:browser:mobile` are the deterministic broad browser suites. They run serially with zero retries; `npm run test:browser` runs both in sequence. Do not use parallelism or retries to hide broad-suite instability.\n'
+          if addition not in text:
+              text = text.replace(anchor, anchor + addition)
+          anchor2 = '- The normal PR/main automation entry point is `.github/workflows/ci.yml`. Its repository gate produces `flag-atlas-dist`, then reusable exact-production acceptance runs independent desktop Chromium, mobile Chromium and PWA jobs in parallel against that same artifact.\n'
+          addition2 = '- The permanent acceptance list is a focused cross-cutting merge gate, not a duplicate of every historical browser test. Broader suites remain available for reconciliation, expansion and higher-risk work when warranted.\n'
+          if addition2 not in text:
+              text = text.replace(anchor2, anchor2 + addition2)
+          path.write_text(text)
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json AGENTS.md src/spatial tests/browser
+          git commit -m 'Reconcile #212 code and broad browser contracts'
+          git push origin HEAD:issue-212-playwright-reconciliation
