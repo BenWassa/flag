@@ -1,0 +1,161 @@
+name: Temporary #212 semantic integration
+
+on:
+  push:
+    branches: [issue-212-playwright-reconciliation]
+
+permissions:
+  contents: write
+
+jobs:
+  integrate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Reconcile stale #213 work onto current main
+        shell: bash
+        run: |
+          set -euo pipefail
+          STALE=a528f9e9c4765111cf04609c64c7242473cf4103
+
+          # A subsequent connector-authored cleanup push may still see this
+          # temporary workflow. Once the semantic integration is present, do
+          # nothing rather than manufacturing another commit.
+          if grep -q 'test:browser:chromium' package.json && grep -q 'edgeOwned' src/spatial/gestures.ts; then
+            echo 'Semantic integration already present.'
+            exit 0
+          fi
+
+          git fetch origin "$STALE"
+
+          # Files whose production/main side did not move after the #213 merge
+          # base can be recovered exactly from the useful stale branch work.
+          for file in \
+            src/spatial/gestures.test.ts \
+            src/spatial/gestures.ts \
+            tests/browser/asia-hardening.spec.ts \
+            tests/browser/atlas.spec.ts \
+            tests/browser/design-token-regression.spec.ts \
+            tests/browser/focus-lifecycle.spec.ts \
+            tests/browser/locations-feedback-geometry.spec.ts \
+            tests/browser/map-neighbors-rounds.spec.ts \
+            tests/browser/map-pointer-capture.spec.ts \
+            tests/browser/navigation-mastery.spec.ts \
+            tests/browser/north-america.spec.ts \
+            tests/browser/oceania.spec.ts \
+            tests/browser/production-matrix.spec.ts \
+            tests/browser/spatial-atlas.spec.ts \
+            tests/browser/spatial-disclosure.spec.ts
+          do
+            git show "$STALE:$file" > "$file"
+          done
+
+          python <<'PY'
+          import json
+          from pathlib import Path
+
+          # Keep current main package authority and add deterministic broad
+          # commands only; workers=1/retries=0 are explicit rather than hidden
+          # in global Playwright settings.
+          package_path = Path('package.json')
+          package = json.loads(package_path.read_text())
+          scripts = package['scripts']
+          rebuilt = {}
+          for key, value in scripts.items():
+              if key == 'test:browser':
+                  rebuilt['test:browser'] = 'npm run test:browser:chromium && npm run test:browser:mobile'
+                  rebuilt['test:browser:chromium'] = 'playwright test --project=chromium --workers=1 --retries=0'
+                  rebuilt['test:browser:mobile'] = 'playwright test --project=mobile-chromium --workers=1 --retries=0'
+              else:
+                  rebuilt[key] = value
+          package['scripts'] = rebuilt
+          package_path.write_text(json.dumps(package, indent=2) + '\n')
+
+          # The final stale #213 commit waited for an imperative diagnostic
+          # attribute after every Locations answer. React can legitimately
+          # reconcile that attribute away while the replacement map remains
+          # usable; durable round progress and the next focusable answer are the
+          # actual contract. Remove only that invalid harness assertion.
+          path = Path('tests/browser/map-neighbors-rounds.spec.ts')
+          text = path.read_text()
+          stale_wait = '''  // Each answer replaces the raw SVG. The next keyboard answer must use the\n  // replacement map only after its real viewport contract is restored; this is\n  // a lifecycle boundary, not a dwell or retry.\n  await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true');\n'''
+          if stale_wait not in text:
+              raise SystemExit('Expected stale Locations viewport wait not found')
+          path.write_text(text.replace(stale_wait, ''))
+
+          # #207 landed after #213: every live activity, including Flags, owns
+          # the viewport. Preserve that production contract while retaining the
+          # broad suite's current scope-selector reconciliation.
+          path = Path('tests/browser/spatial-atlas.spec.ts')
+          text = path.read_text()
+          old = '''    expect(await stageMode(page)).toBe('context');\n    await expect(page.locator('.spatial-stage[data-mode="context"] .spatial-stage__surface')).toHaveCSS('pointer-events', 'none');\n    await expect(page.locator('.spatial-command')).toHaveCount(0);\n    await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);\n'''
+          new = '''    await page.waitForFunction(() => document.querySelector('.spatial-shell')?.getAttribute('data-mode') === 'yielded', null, { timeout: 30000 });\n    expect(await stageMode(page)).toBe('yielded');\n    await expect(page.locator('.spatial-stage')).toBeHidden();\n    await expect(page.locator('.spatial-command')).toHaveCount(0);\n    await expect(page.locator('.spatial-stage__caption')).toHaveCount(0);\n'''
+          if old not in text:
+              raise SystemExit('Expected pre-#207 Flags viewport block not found')
+          path.write_text(text.replace(old, new))
+
+          # #207 also broadened the disclosure regression from Flags-only to all
+          # four live domains. Keep that later contract while using canonical
+          # MAP_CONTINENT_CONFIGS rather than retired command chips.
+          path = Path('tests/browser/spatial-disclosure.spec.ts')
+          text = path.read_text()
+          old = '''  test('names retire while an activity owns the geography', async ({ page }) => {\n    await openSpatial(page, '/flags/africa/southern-africa');\n    await expect(scopeNames(page)).toHaveCount(EXPECTED_AREAS.africa.length);\n    await page.getByRole('button', { name: 'Play Southern Africa' }).click();\n    // A live question: geography is inert context and offers nothing to choose.\n    await expect(scopeNames(page)).toHaveCount(0);\n  });\n'''
+          new = '''  test('names retire while an activity owns the geography', async ({ page }) => {\n    for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {\n      await openSpatial(page, `/${domain}/africa/southern-africa`);\n      await expect(scopeNames(page), domain).toHaveCount(EXPECTED_AREAS.africa.length);\n      await page.getByRole('button', { name: 'Play Southern Africa' }).click();\n      await expect(scopeNames(page), domain).toHaveCount(0);\n    }\n  });\n'''
+          if old not in text:
+              raise SystemExit('Expected pre-#207 disclosure block not found')
+          path.write_text(text.replace(old, new))
+
+          # Main already contains the #213 three-strike focus-identity correction
+          # plus later production changes, so it was deliberately not replaced.
+
+          # Merge the durable broad-suite commands into the current repository
+          # instructions without reverting #218's CI architecture wording.
+          path = Path('AGENTS.md')
+          text = path.read_text()
+          anchor = '- `npm test` is the primary full repository gate under Node 22.\n'
+          addition = '- `npm run test:browser:chromium` and `npm run test:browser:mobile` are the deterministic broad browser suites. They run serially with zero retries; `npm run test:browser` runs both in sequence. Do not use parallelism or retries to hide broad-suite instability.\n'
+          if addition not in text:
+              if anchor not in text:
+                  raise SystemExit('AGENTS verification anchor not found')
+              text = text.replace(anchor, anchor + addition)
+          anchor2 = '- The normal PR/main automation entry point is `.github/workflows/ci.yml`. Its repository gate produces `flag-atlas-dist`, then reusable exact-production acceptance runs independent desktop Chromium, mobile Chromium and PWA jobs in parallel against that same artifact.\n'
+          addition2 = '- The permanent acceptance list is a focused cross-cutting merge gate, not a duplicate of every historical browser test. Broader suites remain available for reconciliation, expansion and higher-risk work when warranted.\n'
+          if addition2 not in text:
+              if anchor2 not in text:
+                  raise SystemExit('AGENTS acceptance anchor not found')
+              text = text.replace(anchor2, anchor2 + addition2)
+          path.write_text(text)
+
+          # Restore the edge-marker regression to the normal mobile acceptance
+          # list now that #212 carries the edge ownership repair. Keep all three
+          # #218 jobs and the single shared production artifact unchanged.
+          path = Path('.github/workflows/acceptance.yml')
+          text = path.read_text()
+          comment = '''      # #212 tracks two pre-existing mobile marker-parity failures already present\n      # on #200's final head. Do not make a known-broken historical assertion a\n      # permanent merge gate; restore it here once #212 proves it genuinely green.\n'''
+          text = text.replace(comment, '')
+          before_mobile, mobile = text.split('  mobile:\n', 1)
+          marker = '          tests/browser/spatial-marker-parity.spec.ts\n'
+          if marker not in mobile.split('  pwa:\n', 1)[0]:
+              needle = '          tests/browser/spatial-framing.spec.ts\n'
+              if needle not in mobile:
+                  raise SystemExit('Mobile acceptance insertion anchor not found')
+              mobile = mobile.replace(needle, needle + marker, 1)
+          path.write_text(before_mobile + '  mobile:\n' + mobile)
+
+          # Temporary #212 evidence only. It consumes the SAME repository-gate
+          # dist as the three permanent #218 acceptance jobs and is removed
+          # before merge.
+          path = Path('.github/workflows/ci.yml')
+          text = path.read_text()
+          if '  broad-evidence:' not in text:
+              text += '''\n  broad-evidence:\n    name: Temporary #212 broad browser evidence\n    needs: verify\n    runs-on: ubuntu-latest\n    steps:\n      - uses: actions/checkout@v4\n      - uses: actions/setup-node@v4\n        with:\n          node-version: 22\n          cache: npm\n          cache-dependency-path: package-lock.json\n      - run: npm ci\n      - name: Download repository-gate production artifact\n        uses: actions/download-artifact@v4\n        with:\n          name: flag-atlas-dist\n          path: dist\n      - name: Verify exact artifact identity\n        run: grep -Fq "name=\\"atlas-build\\" content=\\"${GITHUB_SHA}\\"" dist/index.html\n      - name: Install Chromium\n        run: npx playwright install --with-deps chromium\n      - name: Broad desktop Chromium\n        run: npm run test:browser:chromium\n      - name: Broad mobile Chromium\n        run: npm run test:browser:mobile\n      - name: Combined broad command\n        run: npm run test:browser\n'''
+          path.write_text(text)
+          PY
+
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json AGENTS.md .github/workflows/ci.yml .github/workflows/acceptance.yml src/spatial tests/browser
+          git commit -m 'Reconcile #212 onto current production main'
+          git push origin HEAD:issue-212-playwright-reconciliation
