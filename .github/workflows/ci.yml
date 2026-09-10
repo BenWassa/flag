@@ -38,3 +38,31 @@ jobs:
   acceptance:
     needs: verify
     uses: ./.github/workflows/acceptance.yml
+
+  broad-evidence:
+    name: Temporary #212 broad browser evidence
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - run: npm ci
+      - name: Download repository-gate production artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: flag-atlas-dist
+          path: dist
+      - name: Verify exact artifact identity
+        run: grep -Fq "name=\"atlas-build\" content=\"${GITHUB_SHA}\"" dist/index.html
+      - name: Install Chromium
+        run: npx playwright install --with-deps chromium
+      - name: Broad desktop Chromium
+        run: npm run test:browser:chromium
+      - name: Broad mobile Chromium
+        run: npm run test:browser:mobile
+      - name: Combined broad command
+        run: npm run test:browser
