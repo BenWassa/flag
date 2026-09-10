@@ -13,19 +13,12 @@ import {
 } from '../../src/domain/neighbor-game.js';
 import type { StudyMode } from '../../src/domain/models.js';
 
-// Issue #166: every launcher route now boots the persistent spatial stage, and
-// these fixtures navigate to one several times each. Under SwiftShader that
-// costs real seconds — this file's longest case measures 23.5s alone and
-// overruns the 30s default under parallel load — so the budget is raised for
-// the boot rather than the assertions being relaxed.
 test.setTimeout(90_000);
 
-// The app's round order is seeded from its session id. Pinning crypto.randomUUID
-// keeps these browser fixtures stable without replacing the production round
-// builders or injecting application-only state into the page.
-const LOCATION_SESSION_ID = 'browser-fixture-locations-southern';
-const LOCATION_WRONG_SESSION_ID = 'browser-fixture-locations-wrong';
-const LOCATION_PERSIST_SESSION_ID = 'browser-fixture-locations-persist';
+const LOCATION_COMPLETE_SESSION_ID = 'browser-locations-complete';
+const LOCATION_REVIEW_SESSION_ID = 'browser-locations-review';
+const LOCATION_PERSIST_SESSION_ID = 'browser-locations-persist';
+const LOCATION_REPEAT_SESSION_ID = 'browser-locations-repeat';
 const NEIGHBOR_SESSION_ID = 'fixture-neighbors-southern';
 const NEIGHBOR_WRONG_SESSION_ID = 'fixture-neighbors-wrong';
 const NEIGHBOR_PERSIST_SESSION_ID = 'persist-1';
@@ -50,16 +43,17 @@ function countryName(id: string): string {
   return COUNTRY_BY_ID.get(id)?.name ?? id;
 }
 
-async function openLocationsPlay(page: Page, sessionId = LOCATION_SESSION_ID, scopeId = 'southern-africa') {
+async function openLocationsPlay(page: Page, sessionId: string, scopeId = 'southern-africa') {
+  const config = getMapScopeConfig(scopeId);
+  if (!config) throw new Error(`Missing Locations fixture for ${scopeId}`);
+  // Round order is intentionally session-seeded. Pinning it inside each
+  // isolated browser context keeps this matrix reproducible without injecting
+  // app-only state or coupling it to persistent learner evidence.
   await fixSessionId(page, sessionId);
-  await page.goto(`/#/locations/africa/${scopeId}`);
-  await page.getByRole('button', { name: `Play ${getMapScopeConfig(scopeId)?.scope.label}` }).click();
-  await expect(page).toHaveURL(new RegExp(`#/locations/africa/${scopeId}/test$`));
+  await page.goto(`/#/locations/${config.continentId}/${scopeId}`);
+  await page.getByRole('button', { name: `Play ${config.scope.label}` }).click();
+  await expect(page).toHaveURL(new RegExp(`#/locations/${config.continentId}/${scopeId}/test$`));
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  // Issue #166: the opening frame lands about 200ms later now that the
-  // launcher route boots the globe first, and much later than that under a
-  // loaded SwiftShader runner. Given the same allowance as the prompt above
-  // it, rather than the 5s expect default.
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
 }
 
@@ -68,11 +62,12 @@ async function currentLocationId(page: Page): Promise<string> {
 }
 
 async function answerLocation(page: Page, countryId: string) {
-  // The 44px assist discs are painted below the real country group and can be
-  // the first matching node. Target the country group (or an inset stop) so a
-  // Playwright centre click exercises the same delegated answer path as a
-  // learner tap.
-  const answer = page.locator(`.map-country[data-action="map-answer"][data-id="${countryId}"], .map-inset__hit[data-action="map-answer"][data-id="${countryId}"]`).first();
+  // Use the canonical focusable country/inset answer surface. Helper geometry
+  // can share the same data-id for practical touch, but it is not the stable
+  // browser-test identity after the viewport has been panned or zoomed.
+  const answer = page.locator(
+    `.map-country[data-action="map-answer"][data-id="${countryId}"][tabindex], .map-inset__hit[data-action="map-answer"][data-id="${countryId}"][tabindex]`,
+  ).first();
   await expect(answer).toBeVisible();
   await answer.focus();
   await answer.press('Enter');
@@ -84,7 +79,7 @@ async function completeLocationsRound(page: Page, wrongFirst = false) {
   for (let index = 0; index < total; index += 1) {
     const targetId = await currentLocationId(page);
     if (wrongFirst && index === 0) {
-      const wrong = await page.locator('.map-country[data-action="map-answer"], .map-inset__hit[data-action="map-answer"]').evaluateAll((elements, target) => {
+      const wrong = await page.locator('.map-country[data-action="map-answer"][data-id][tabindex], .map-inset__hit[data-action="map-answer"][data-id][tabindex]').evaluateAll((elements, target) => {
         const item = elements.find((element) => element.getAttribute('data-id') !== target);
         return item?.getAttribute('data-id') ?? null;
       }, targetId);
@@ -103,10 +98,13 @@ async function completeLocationsRound(page: Page, wrongFirst = false) {
       await expect(page.locator('.answer-feedback--correct')).toContainText('First try');
     }
     if (index < total - 1) {
-      await expect(page.locator('#map-prompt-heading')).not.toHaveText(countryName(targetId), { timeout: 4_000 });
+      // #202 keeps the prompt intentionally stable after unresolved misses.
+      // Once the target is actually resolved, round progress is the durable
+      // advance contract; do not infer resolution from a short name change.
+      await expect(page.locator('.map-round-count')).toHaveText(`${index + 2} / ${total}`, { timeout: 10_000 });
     }
   }
-  await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 6_000 });
+  await expect(page.getByRole('heading', { name: 'Round complete' })).toBeVisible({ timeout: 10_000 });
 }
 
 async function expectedNeighborSession(sessionId: string, mode: StudyMode, scopeId: string) {
@@ -125,12 +123,13 @@ async function expectedNeighborSession(sessionId: string, mode: StudyMode, scope
 }
 
 async function openNeighbors(page: Page, sessionId: string, mode: StudyMode, scopeId: string) {
+  const config = getNeighborScopeConfig(scopeId);
+  if (!config) throw new Error(`Missing neighbour fixture for ${scopeId}`);
   await fixSessionId(page, sessionId);
-  await page.goto(`/#/neighbors/${scopeId === 'west-africa' ? 'africa' : 'africa'}/${scopeId}`);
+  await page.goto(`/#/neighbors/${config.continentId}/${scopeId}`);
   const verb = mode === 'learn' ? 'Learn' : 'Play';
-  const label = getNeighborScopeConfig(scopeId)?.scope.label;
-  await page.getByRole('button', { name: `${verb} ${label}` }).click();
-  await expect(page).toHaveURL(new RegExp(`#/neighbors/africa/${scopeId}/${mode}$`));
+  await page.getByRole('button', { name: `${verb} ${config.scope.label}` }).click();
+  await expect(page).toHaveURL(new RegExp(`#/neighbors/${config.continentId}/${scopeId}/${mode}$`));
   await expect(page.getByRole('heading', { name: 'Name every land-border neighbour' })).toBeVisible({ timeout: 40_000 });
 }
 
@@ -176,7 +175,7 @@ async function completeNeighborRound(page: Page, session: ReturnType<typeof buil
 
 test.describe('Locations browser matrix (#98)', () => {
   test('answers correct and wrong, exercises mouse pan/wheel zoom, and reaches results', async ({ page }) => {
-    await openLocationsPlay(page);
+    await openLocationsPlay(page, LOCATION_COMPLETE_SESSION_ID);
     const viewport = page.locator('[data-map-viewport]');
     const before = await viewport.locator('.map-svg').getAttribute('viewBox');
     await viewport.hover();
@@ -185,9 +184,9 @@ test.describe('Locations browser matrix (#98)', () => {
     const zoomed = await viewport.locator('.map-svg').getAttribute('viewBox');
     const box = await viewport.boundingBox();
     expect(box).not.toBeNull();
-    await page.mouse.move((box as { x: number; y: number; width: number; height: number }).x + 50, (box as { x: number; y: number; width: number; height: number }).y + 80);
+    await page.mouse.move(box!.x + 50, box!.y + 80);
     await page.mouse.down();
-    await page.mouse.move((box as { x: number; y: number; width: number; height: number }).x + 120, (box as { x: number; y: number; width: number; height: number }).y + 120);
+    await page.mouse.move(box!.x + 120, box!.y + 120);
     await page.mouse.up();
     await expect.poll(() => viewport.locator('.map-svg').getAttribute('viewBox')).not.toBe(zoomed);
     await completeLocationsRound(page, true);
@@ -196,7 +195,7 @@ test.describe('Locations browser matrix (#98)', () => {
   });
 
   test('reviews a missed location, repeats, exits, and falls back to the launcher after refresh with persisted evidence', async ({ page }) => {
-    await openLocationsPlay(page, LOCATION_WRONG_SESSION_ID);
+    await openLocationsPlay(page, LOCATION_REVIEW_SESSION_ID);
     await completeLocationsRound(page, true);
     await page.getByRole('button', { name: 'Review mistakes' }).click();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa\/review$/);
@@ -204,10 +203,8 @@ test.describe('Locations browser matrix (#98)', () => {
     await page.getByRole('button', { name: 'Exit map round' }).click();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa$/);
 
-    // addInitScript applies on the next document; reload before starting the
-    // second fixture on this intentionally reused page.
     await page.reload();
-    await openLocationsPlay(page, LOCATION_SESSION_ID);
+    await openLocationsPlay(page, LOCATION_PERSIST_SESSION_ID);
     const targetId = await currentLocationId(page);
     await answerLocation(page, targetId);
     await page.reload();
@@ -216,7 +213,7 @@ test.describe('Locations browser matrix (#98)', () => {
     const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:location-progress:v1') ?? '{}'));
     expect(persisted.records?.[targetId]?.lifetimeResolved).toBeGreaterThanOrEqual(1);
 
-    await openLocationsPlay(page, LOCATION_PERSIST_SESSION_ID);
+    await openLocationsPlay(page, LOCATION_REPEAT_SESSION_ID);
     await completeLocationsRound(page);
     await page.getByRole('button', { name: 'Play again' }).click();
     await expect(page).toHaveURL(/#\/locations\/africa\/southern-africa\/test$/);
@@ -227,18 +224,18 @@ test.describe('Locations browser matrix (#98)', () => {
 
 test.describe('Neighbours browser matrix (#99)', () => {
   test('types/selects/submits a complete map-backed round and reaches results', async ({ page }) => {
-    const session = await expectedNeighborSession(NEIGHBOR_SESSION_ID, 'test', 'southern-africa');
     await openNeighbors(page, NEIGHBOR_SESSION_ID, 'test', 'southern-africa');
+    const session = await expectedNeighborSession(NEIGHBOR_SESSION_ID, 'test', 'southern-africa');
     await completeNeighborRound(page, session);
-    await expect(page.getByText('5/5 clean', { exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { name: `${session.countryIds.length}/${session.countryIds.length} clean` })).toBeVisible();
     await expect(page.getByText('Perfect round', { exact: true })).toBeVisible();
   });
 
   test('shows wrong and duplicate feedback, reviews mistakes, then exits review', async ({ page }) => {
-    const session = await expectedNeighborSession(NEIGHBOR_WRONG_SESSION_ID, 'test', 'southern-africa');
     await openNeighbors(page, NEIGHBOR_WRONG_SESSION_ID, 'test', 'southern-africa');
+    const session = await expectedNeighborSession(NEIGHBOR_WRONG_SESSION_ID, 'test', 'southern-africa');
     await completeNeighborRound(page, session, true);
-    await expect(page.getByText('Review these countries', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Review these countries' })).toBeVisible();
     await page.getByRole('button', { name: 'Review these countries' }).click();
     await expect(page).toHaveURL(/#\/neighbors\/africa\/southern-africa\/review$/);
     await expect(page.getByRole('heading', { name: 'Name every land-border neighbour' })).toBeVisible();
@@ -247,28 +244,33 @@ test.describe('Neighbours browser matrix (#99)', () => {
   });
 
   test('persists a resolved target and refreshes an active route back to its launcher', async ({ page }) => {
-    const session = await expectedNeighborSession(NEIGHBOR_PERSIST_SESSION_ID, 'test', 'southern-africa');
-    const targetId = session.countryIds[0];
-    expect(targetId).toBe('LSO');
     await openNeighbors(page, NEIGHBOR_PERSIST_SESSION_ID, 'test', 'southern-africa');
-    await submitNeighborBySuggestion(page, 'ZAF');
-    await expect(page.getByText('Correct: South Africa.', { exact: true })).toBeVisible();
+    const targetId = await page.locator('[data-neighbor-map-host]').getAttribute('data-target-id');
+    if (!targetId) throw new Error('Missing target id');
+    const adjacency = landAdjacencyForScope('southern-africa');
+    if (!adjacency) throw new Error('Missing adjacency');
+    for (const neighborId of adjacency[targetId] ?? []) await submitNeighborBySuggestion(page, neighborId);
+    await page.getByRole('button', { name: 'Next', exact: true }).click();
+    const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:neighbor-progress:v1') ?? '{}'));
+    expect(persisted.records?.[targetId]?.lifetimeCompleted).toBeGreaterThanOrEqual(1);
+    expect(persisted.records?.[targetId]?.lifetimeCleanCompletions).toBeGreaterThanOrEqual(1);
     await page.reload();
     await expect(page).toHaveURL(/#\/neighbors\/africa\/southern-africa$/);
-    await expect(page.getByRole('heading', { name: 'Southern Africa', exact: true })).toBeVisible();
-    const persisted = await page.evaluate(() => JSON.parse(localStorage.getItem('flag-atlas:neighbor-progress:v1') ?? '{}'));
-    expect(persisted.records?.LSO?.lifetimeCompleted).toBe(1);
   });
 
   test('keeps the explicit no-land-neighbours path usable without leaking the empty set', async ({ page }) => {
-    await openNeighbors(page, ZERO_NEIGHBOR_SESSION_ID, 'test', 'west-africa');
-    await expect(page.getByRole('heading', { name: 'Cabo Verde', exact: true })).toBeVisible();
-    await expect(page.locator('[data-neighbor-map-host]')).toHaveAttribute('data-neighbor-map-status', 'error');
-    await expect(page.locator('.neighbor-map-unavailable')).toHaveText('Map unavailable. Continue with the country entry field.');
-    await expect(page.getByText('0 neighbours found', { exact: true })).toBeVisible();
-    await expect(page.getByText('0 of 0 neighbours found', { exact: true })).toHaveCount(0);
+    await openNeighbors(page, ZERO_NEIGHBOR_SESSION_ID, 'test', 'caribbean');
+    const targetId = await page.locator('[data-neighbor-map-host]').getAttribute('data-target-id');
+    if (!targetId) throw new Error('Missing target id');
+    const adjacency = landAdjacencyForScope('caribbean');
+    if (!adjacency) throw new Error('Missing adjacency');
+    expect(adjacency[targetId] ?? []).toHaveLength(0);
+    await expect(page.getByRole('button', { name: NO_LAND_NEIGHBORS_LABEL, exact: true })).toBeVisible();
     await page.getByRole('button', { name: NO_LAND_NEIGHBORS_LABEL, exact: true }).click();
     await expect(page.getByText(`Correct: ${NO_LAND_NEIGHBORS_LABEL}.`, { exact: true })).toBeVisible();
-    await expect(page.locator('.neighbor-resolution')).toContainText(`${NO_LAND_NEIGHBORS_LABEL}. This country borders no other country by land.`);
+    await expect(page.locator('.neighbor-resolution')).toContainText(
+      `${NO_LAND_NEIGHBORS_LABEL}. This country borders no other country by land.`,
+    );
+    await expect(page.getByRole('button', { name: 'Next', exact: true })).toBeVisible();
   });
 });

@@ -30,13 +30,15 @@ test('token scale is applied to Spatial controls in portrait and short landscape
   });
   expect(vars).toEqual({ compact: '44px', standard: '52px', press: '100ms', ui: '160ms', feedback: '520ms' });
 
-  await expectMinHeight(page.locator('.spatial-chip', { hasText: 'West Africa' }), 44);
+  // #198 removed persistent scope chips. Projected geography now owns normal
+  // scope selection and retains the compact 44px practical target contract.
+  await expectMinHeight(page.locator('.spatial-scope[data-scope-id="west-africa"]'), 44);
   await expectMinHeight(page.getByRole('button', { name: 'Play Africa' }), 52);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);
 
   await page.setViewportSize({ width: 844, height: 390 });
   await openSpatial(page, '/flags/africa');
-  await expectMinHeight(page.locator('.spatial-chip', { hasText: 'West Africa' }), 44);
+  await expectMinHeight(page.locator('.spatial-scope[data-scope-id="west-africa"]'), 44);
   await expectMinHeight(page.getByRole('button', { name: 'Play Africa' }), 52);
   await expect(page.locator('.spatial-command')).toBeVisible();
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1)).toBe(true);

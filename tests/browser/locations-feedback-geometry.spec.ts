@@ -45,8 +45,10 @@ async function openPlay(page: Page, fixture: FeedbackCase) {
 }
 
 async function freezeFeedbackTimers(page: Page) {
+  // Installing the clock already freezes Date/timers at a coherent instant.
+  // Calling pauseAt(new Date()) afterwards can ask Playwright to travel a few
+  // milliseconds backwards under broad parallel load and intermittently fail.
   await page.clock.install();
-  await page.clock.pauseAt(new Date());
 }
 
 async function currentTargetId(page: Page): Promise<string> {
