@@ -18,7 +18,7 @@ test('an unearned World Crown adds no routine Crown decoration', async ({ page }
   await page.goto('/');
   await expect(page.locator('[data-world-crown-earned]')).toHaveCount(0);
   await expect(page.getByRole('heading', { name: 'World Crown' })).toHaveCount(0);
-  await expect(page.getByRole('heading', { name: 'Modes' })).toBeVisible();
+  await expect(page.getByRole('navigation', { name: 'Learning modes' })).toBeVisible();
 });
 
 for (const viewport of VIEWPORTS) {
@@ -33,7 +33,7 @@ for (const viewport of VIEWPORTS) {
     await expect(crown).toBeVisible();
     await expect(page.getByRole('heading', { name: 'World Crown' })).toBeVisible();
     await expect(page.getByText('Earned · all six continents complete')).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Modes' })).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Learning modes' })).toBeVisible();
     await expect(page.getByRole('button', { name: /Flags/i })).toBeVisible();
 
     const layout = await page.evaluate(() => {

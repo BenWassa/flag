@@ -106,7 +106,6 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
       {crown ? <section className="world-crown" aria-labelledby="world-crown-title" data-world-crown-earned>
         <div className="world-crown__identity"><h2 id="world-crown-title">World Crown</h2><p>Earned · all six continents complete</p></div>
       </section> : null}
-      <h2 className="atlas-eyebrow">Modes</h2>
       <nav className="spatial-command__choices" aria-label="Learning modes">
         {LEARNING_DOMAIN_IDS.map((domain) => {
           const summary = buildDomainProgressSummary(ledgers, domain);
@@ -120,7 +119,6 @@ function Domains({ ledgers, achievements }: { ledgers: ProgressLedgers; achievem
               <span className="spatial-mode__name">{summary.label}</span>
               {pristine ? null : <>
                 <span className="spatial-mode__meter" aria-hidden="true"><ProgressStrip stats={summaryStats(summary)} domain={domain} /></span>
-                <span className="spatial-mode__meta" aria-hidden="true">{summary.cleared}/{summary.total}</span>
               </>}
             </button>
           );
@@ -145,7 +143,7 @@ function Continents({ domain, ledgers, forcedColours }: {
         <p className="spatial-command__domain"><span className="spatial-command__domain-mark" aria-hidden="true"><DomainIcon domain={domain} /></span>Choose a continent</p>
         <h1 className="spatial-command__place" tabIndex={-1} data-autofocus>{domainDisplayName(domain)}</h1>
       </div>
-      {world ? <div className="spatial-command__actions">
+      {world ? <div className="spatial-command__actions spatial-command__actions--scope">
         <button className="button button--primary" type="button" onClick={() => actions.startFlags('test')}>Play world</button>
         <button className="button button--secondary" type="button" onClick={() => actions.startFlags('learn')}>Learn world</button>
       </div> : null}
@@ -221,11 +219,7 @@ function Scope({ state, ledgers, achievements, forcedColours }: {
         </div>
       </div>
 
-      <div className="spatial-command__progress" data-scope-id={activeId}>
-        <ProgressStrip stats={model.stats} domain={domain} />
-      </div>
-
-      <div className="spatial-command__actions">
+      <div className="spatial-command__actions spatial-command__actions--scope">
         <button
           className="button button--primary"
           type="button"
@@ -242,6 +236,10 @@ function Scope({ state, ledgers, achievements, forcedColours }: {
           data-scope-id={activeId}
           onClick={(event) => activeId && actions.learnScope(domain, activeId, event.currentTarget)}
         >Learn {active.label}</button>
+      </div>
+
+      <div className="spatial-command__progress" data-scope-id={activeId}>
+        <ProgressStrip stats={model.stats} domain={domain} />
       </div>
 
       {forcedColours ? <nav className="spatial-command__fallback-choices" aria-label={`Areas of ${model.continentScope.label}`}>

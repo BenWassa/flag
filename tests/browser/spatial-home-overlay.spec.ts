@@ -23,7 +23,7 @@ async function modeBoxes(page: Page) {
 }
 
 test.describe('Spatial Home overlay', () => {
-  test('390x844 is globe-first with a centred 2x2 icon-led chooser', async ({ page }) => {
+  test('390x844 is globe-first with a screen header and separate 2x2 mode tiles', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openHome(page);
 
@@ -35,6 +35,7 @@ test.describe('Spatial Home overlay', () => {
     expect(stage.height).toBeGreaterThanOrEqual(843);
     expect(Math.abs(chooser.x + chooser.width / 2 - 195)).toBeLessThanOrEqual(2);
     expect(Math.abs(chooser.y + chooser.height / 2 - 422)).toBeLessThanOrEqual(2);
+    await expect(page.getByRole('heading', { name: 'Modes' })).toHaveCount(0);
 
     expect(Math.abs(boxes[0].y - boxes[1].y)).toBeLessThanOrEqual(2);
     expect(Math.abs(boxes[2].y - boxes[3].y)).toBeLessThanOrEqual(2);
@@ -61,12 +62,13 @@ test.describe('Spatial Home overlay', () => {
     await expect(page.locator('[aria-modal="true"]')).toHaveCount(0);
   });
 
-  test('chooser material stays opaque Atlas chrome as the globe moves behind it', async ({ page }) => {
+  test('individual mode surfaces stay opaque Atlas chrome as the globe moves behind them', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await openHome(page);
 
-    const chooser = page.locator('.spatial-command[data-surface="domains"]');
-    const surface = async () => chooser.evaluate((element) => {
+    const modes = page.locator('.spatial-mode');
+    const surface = async () => modes.evaluateAll((elements) => {
+      const element = elements[0];
       const style = getComputedStyle(element);
       const canvas = getComputedStyle(document.documentElement).getPropertyValue('--canvas').trim();
       const probe = document.createElement('span');
@@ -75,7 +77,7 @@ test.describe('Spatial Home overlay', () => {
       const canvasColour = getComputedStyle(probe).color;
       probe.remove();
       return {
-        background: style.backgroundColor,
+        backgrounds: elements.map((mode) => getComputedStyle(mode).backgroundColor),
         canvas: canvasColour,
         image: style.backgroundImage,
         backdrop: style.backdropFilter,
@@ -84,7 +86,7 @@ test.describe('Spatial Home overlay', () => {
     });
 
     const initial = await surface();
-    expect(initial.background).toBe(initial.canvas);
+    expect(new Set(initial.backgrounds)).toEqual(new Set([initial.canvas]));
     expect(initial.image).toBe('none');
     expect(['', 'none']).toContain(initial.backdrop);
     expect(['', 'none']).toContain(initial.webkitBackdrop);
@@ -95,7 +97,7 @@ test.describe('Spatial Home overlay', () => {
       { dx: box.width * 0.34, dy: 0 },
       { dx: -box.width * 0.58, dy: box.height * 0.08 },
     ];
-    const backgrounds = [initial.background];
+    const backgrounds = [...initial.backgrounds];
     await page.screenshot({ path: test.info().outputPath('home-material-default.png') });
     for (let index = 0; index < drags.length; index += 1) {
       await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
@@ -107,7 +109,7 @@ test.describe('Spatial Home overlay', () => {
       );
       await page.mouse.up();
       await page.waitForTimeout(250);
-      backgrounds.push((await surface()).background);
+      backgrounds.push(...(await surface()).backgrounds);
       await page.screenshot({ path: test.info().outputPath(`home-material-rotated-${index + 1}.png`) });
     }
     expect(new Set(backgrounds)).toEqual(new Set([initial.canvas]));
@@ -121,6 +123,13 @@ test.describe('Spatial Home overlay', () => {
     for (let index = 0; index < MODE_NAMES.length; index += 1) {
       await modeButton(page, MODE_NAMES[index]).click();
       await expect(page).toHaveURL(new RegExp(`#/${routes[index]}$`));
+      if (index === 0) {
+        const command = (await page.locator('.spatial-command').boundingBox())!;
+        const stage = (await page.locator('.spatial-stage').boundingBox())!;
+        expect(command.y).toBeLessThan(stage.y);
+        const labelSize = await page.locator('.spatial-scope').first().evaluate((element) => parseFloat(getComputedStyle(element).fontSize));
+        expect(labelSize).toBeGreaterThanOrEqual(16);
+      }
       await page.goBack();
       await expect(page).toHaveURL(/#\/$/);
       await expect(page.locator('.spatial-command[data-surface="domains"]')).toBeVisible();
@@ -130,6 +139,23 @@ test.describe('Spatial Home overlay', () => {
     await expect(page).toHaveURL(/#\/profile$/);
     await page.goBack();
     await expect(page.locator('.spatial-command[data-surface="domains"]')).toBeVisible();
+  });
+
+  test('scope actions make Play dominant and place it directly below the selected region name', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await openHome(page);
+    await page.goto('/#/flags/africa/west-africa');
+    await page.waitForSelector(STAGE, { timeout: 30_000 });
+
+    const heading = (await page.getByRole('heading', { name: 'West Africa' }).boundingBox())!;
+    const play = page.getByRole('button', { name: 'Play West Africa' });
+    const learn = page.getByRole('button', { name: 'Learn West Africa' });
+    const playBox = (await play.boundingBox())!;
+    const learnBox = (await learn.boundingBox())!;
+    expect(playBox.y).toBeGreaterThanOrEqual(heading.y + heading.height);
+    expect(playBox.height).toBeGreaterThan(learnBox.height);
+    await expect(play).toHaveCSS('font-size', '18px');
+    await expect(learn).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
   });
 
   test('cold Home stays focus-neutral, then keyboard reaches Profile and modes in logical order', async ({ page }) => {

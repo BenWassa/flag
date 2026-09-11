@@ -43,6 +43,9 @@ test.describe('the Earth names what can be chosen', () => {
     for (const label of await names(scopeNames(page))) {
       expect(['Africa', 'Asia', 'Europe', 'North America', 'South America', 'Oceania']).toContain(label);
     }
+    for (const region of ['West Africa', 'Caribbean', 'Middle East', 'Melanesia']) {
+      await expect(named(page, region)).toHaveCount(0);
+    }
   });
 
   test('a name on the globe reaches the same route as its equivalent control', async ({ page }) => {
@@ -72,10 +75,12 @@ test.describe('the Earth names what can be chosen', () => {
     await openSpatial(page, '/flags/africa');
     await named(page, 'West Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
-    // The siblings stay named and selectable; only the current one is marked.
+    // The siblings stay named and selectable; route state remains semantic and
+    // does not turn the projected name into a visually selected button.
     await expect(scopeNames(page)).toHaveCount(5);
     await expect(page.locator('.spatial-scope[aria-current="true"]')).toHaveCount(1);
     await expect(page.locator('.spatial-scope[aria-current="true"]')).toContainText('West Africa');
+    await expect(page.locator('.spatial-scope[aria-current="true"] .spatial-scope__name')).toHaveCSS('text-decoration-line', 'none');
     await named(page, 'North Africa').click();
     await expect(page).toHaveURL(/#\/flags\/africa\/north-africa$/);
   });
@@ -118,12 +123,14 @@ test.describe('the Earth names what can be chosen', () => {
   });
 
   test('every named area of every continent is present in every domain', async ({ page }) => {
-    for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
-      for (const continent of ['africa', 'asia', 'europe', 'north-america', 'south-america', 'oceania']) {
+    for (const continent of ['africa', 'asia', 'europe', 'north-america', 'south-america', 'oceania']) {
+      let expected: string[] | null = null;
+      for (const domain of ['flags', 'locations', 'outlines', 'neighbors']) {
         await openSpatial(page, `/${domain}/${continent}`);
-        const chips = await page.locator('.spatial-command__choices .spatial-chip').allTextContents();
-        const areas = chips.map((text) => text.trim()).filter((text) => !text.startsWith('All '));
-        expect(await names(scopeNames(page)), `${domain}/${continent}`).toEqual(areas);
+        const areas = await names(scopeNames(page));
+        expect(areas.length, `${domain}/${continent}`).toBeGreaterThan(0);
+        if (expected === null) expected = areas;
+        else expect(areas, `${domain}/${continent}`).toEqual(expected);
       }
     }
   });

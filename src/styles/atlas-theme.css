@@ -658,16 +658,14 @@ body { letter-spacing: -.006em; }
   font-weight: 800;
 }
 
-.answer-feedback {
-  animation: answer-feedback-in 140ms ease-out;
-}
+.answer-feedback { animation: answer-feedback-in 140ms ease-out; }
 .answer-feedback--correct { border-color: var(--correct-line); background: var(--correct-soft); }
 .answer-feedback--wrong { border-color: var(--wrong-line); background: var(--wrong-soft); }
 .answer-feedback--neutral { border-color: var(--line-strong); }
 
 @keyframes answer-feedback-in {
-  from { opacity: 0; transform: translateY(3px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .round-score__value { transition: color var(--motion-ui) var(--ease-ui); }
@@ -1312,28 +1310,8 @@ body { letter-spacing: -.006em; }
   100% { transform: scale(1); opacity: 1; }
 }
 
-/*
- * Answering.
- *
- * The right option lifts and the chosen wrong one refuses. Both are one short
- * gesture on `transform` only, and both are already stated by the option's
- * colour, its key mark and the feedback panel underneath.
- */
-.answer-button--correct { animation: answer-pop 260ms cubic-bezier(.22, 1, .36, 1); }
-.answer-button--wrong { animation: answer-refuse 260ms ease-out; }
-
-@keyframes answer-pop {
-  0% { transform: translateY(0) scale(1); }
-  42% { transform: translateY(-2px) scale(1.018); }
-  100% { transform: translateY(0) scale(1); }
-}
-
-@keyframes answer-refuse {
-  0%, 100% { transform: translateX(0); }
-  22% { transform: translateX(-5px); }
-  48% { transform: translateX(4px); }
-  74% { transform: translateX(-2px); }
-}
+/* Answer state changes colour, border and copy in place. Correct and incorrect
+   choices do not lift, shake or move the learner's view. */
 
 /*
  * How the round went, in one word.

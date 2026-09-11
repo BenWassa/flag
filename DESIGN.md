@@ -143,11 +143,12 @@ The persistent Earth is the dominant navigation object. A compact real-DOM comma
 At Home:
 
 - the whole Earth owns the Spatial viewport rather than yielding a permanent command band;
-- one bounded, centred chooser contains `Atlas`, Profile, an earned World Crown when present and all four learning modes;
+- `Atlas` sits large at the top left and Profile at the top right, independent of the mode choices;
+- the four learning modes are individual opaque controls with clear structural edges; there is no shared chooser container or redundant “Modes” label;
 - ordinary phone portrait uses an icon-led 2 × 2 mode grid; short landscape adapts compactly so all four modes remain visible in one viewport;
-- each mode carries its short learner-facing name and quiet `cleared / total` progress;
-- the chooser uses the same cool near-white neutral family as ordinary Atlas chrome, with a thin structural edge and restrained tile depth;
-- its surface is opaque, so ocean, land and night never tint the chrome as the globe moves behind it. The globe remains recognisable because the chooser is bounded and the Earth owns the full canvas around it, not because geography bleeds through the controls;
+- each mode carries its short learner-facing name and quiet progress strip, without a numeric count beneath it;
+- each mode surface uses the same cool near-white neutral family as ordinary Atlas chrome, with a thin structural edge and restrained tile depth;
+- each mode surface is opaque, so ocean, land and night never tint its contents as the globe moves behind it;
 - do not introduce translucent cards, colourful gradients/glow or decorative blur; Home is a composition exception, not a separate material system;
 - forced-colours mode uses a solid real-DOM presentation;
 - the globe is geographic context until a domain exists: it may be rotated deliberately, but country selection cannot navigate from Home.
@@ -162,7 +163,8 @@ At continent/region focus:
 - exactly one quiet progress strip belongs to the currently selected scope;
 - a selected continent reserves a small stable slot for its existing completion crest, rendered only when the persisted achievement is earned; do not invent continent-level Mastery wording;
 - **Play {Scope}** is the primary action and immediately available;
-- **Learn {Scope}** is secondary where supported;
+- **Play {Scope}** is taller and bolder, directly beneath the selected scope name;
+- **Learn {Scope}** is a quiet, discrete secondary action where supported;
 - tapping geography or its projected label selects/focuses scope and never starts a round;
 - whole-continent Play is available at continent focus;
 - region Play follows deliberate region focus.
@@ -258,7 +260,7 @@ Target geography and complete land-neighbour context remain primary. Input/sugge
 Momentum and arrival are felt as well as read. Every rule in this layer decorates a state the DOM already states in words and in shape, so the whole layer can be removed and the round stays correct. That is what makes it compatible with reduced motion and forced colours rather than merely tolerated by them.
 
 - **Streak.** A running streak surfaces from two correct answers and escalates through three tiers at 3, 6 and 10. Each tier carries its own count of marks as well as its own colour. Nothing about it is stored, spent or accumulated, and a missed answer takes the tier with the streak.
-- **Answering.** The correct option lifts; a chosen wrong one refuses. One short gesture each, on `transform` only.
+- **Answering.** Correct and incorrect state resolves in place through colour, border, marks and copy. It does not shift, lift or shake the learner's view.
 - **Haptics.** A short pulse confirms a resolved Play answer where the platform supports it. `navigator.vibrate` is an Android/Chromium feature and is absent on iOS Safari, so this is a no-op on iPhone and nothing may be built on top of it. It is suppressed under reduced motion.
 - **Round rank.** One word for how a completed Play round went. Transient result feedback in the same family as the Perfect round badge: never stored, never accumulated, never a rank the learner holds. Learn takes no rank, because Learn is not scored against a bar.
 - **Arrival.** The earned Perfect round badge takes a single sheen, once. It is the accepted brushed-metal gold treatment moving, not a repeating celebration.

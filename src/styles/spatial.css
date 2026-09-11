@@ -3,9 +3,8 @@
  *
  * Geography is the dominant object. Ordinary domain/scope navigation keeps its
  * compact command band, while Home is the one composition exception: the whole
- * Earth owns the viewport and a single bounded neutral chooser is layered over
- * it. The chooser is ordinary opaque Atlas chrome: no backdrop tint, blur or
- * special compositing path competes with the geography behind and around it.
+ * Earth owns the viewport beneath a screen header and four independent neutral
+ * mode controls. Their ordinary opaque Atlas chrome keeps the geography clear.
  */
 
 .spatial-shell {
@@ -14,9 +13,11 @@
   background: var(--canvas);
 }
 
-/* Navigating: geography gets every pixel the compact selected-scope command
-   surface does not need. No persistent geography list competes for this space. */
-.spatial-shell[data-surface] { grid-template-rows: minmax(96px, 1fr) minmax(0, auto); }
+/* Navigating: name the chosen mode first, then give the remaining screen to
+   geography. This keeps the learner's active mode anchored at the top edge. */
+.spatial-shell[data-surface] { grid-template-rows: minmax(0, auto) minmax(96px, 1fr); }
+.spatial-shell[data-surface]:not([data-surface='domains']) > .spatial-command { grid-row: 1; }
+.spatial-shell[data-surface]:not([data-surface='domains']) > .spatial-stage { grid-row: 2; }
 
 /* Issue #187 — Home is globe-first rather than globe-plus-command-band. The
    stage and chooser occupy the same grid cell; only the chooser itself receives
@@ -164,9 +165,9 @@
   border: 0;
   background: none;
   color: var(--map-label-halo);
-  font-size: 12.5px;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.025em;
   line-height: 1.1;
   white-space: nowrap;
   /* Map lettering, not a chip. There is no surface behind a name — a row of
@@ -181,15 +182,9 @@
   transition: opacity var(--motion-ui) var(--ease-ui), color var(--motion-ui) var(--ease-ui);
 }
 
-/* The selected area keeps its name where the others are: one quiet rule under
-   the word itself, in the ordinary action tone, rather than a louder second
-   style or a surface the other names do not have. */
-.spatial-scope[aria-current='true'] .spatial-scope__name {
-  text-decoration: underline;
-  text-decoration-color: color-mix(in srgb, var(--action) 85%, var(--map-label-halo));
-  text-decoration-thickness: 2px;
-  text-underline-offset: 3px;
-}
+/* A projected name is simply a larger hit target for the geography underneath.
+   Route selection is expressed by the framing and command surface, not by
+   restyling the label after it is pressed. */
 
 .spatial-scope__mark { font-size: 10px; }
 .spatial-scope[data-status='mastered'] .spatial-scope__mark { color: var(--map-mastery); }
@@ -238,19 +233,21 @@
   overscroll-behavior-y: contain;
 }
 
-/* Home-only chooser. This is one ordinary neutral Atlas surface over the
-   Earth, not a glass exception or a stack of cards. */
+/* Home is a screen-level overlay with no shared panel. Its header and four
+   individual mode surfaces float independently above the globe. */
 .spatial-command[data-surface='domains'] {
   z-index: 1;
-  place-self: center;
-  width: min(432px, calc(100% - 56px - env(safe-area-inset-left) - env(safe-area-inset-right)));
-  max-height: calc(100svh - 32px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-  padding: clamp(14px, 3.4vw, 20px);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-tile);
-  background: var(--canvas);
-  box-shadow: var(--depth-tile);
-  overflow-y: auto;
+  align-self: stretch;
+  width: 100%;
+  max-height: 100svh;
+  padding:
+    max(18px, env(safe-area-inset-top))
+    max(18px, env(safe-area-inset-right))
+    max(22px, env(safe-area-inset-bottom))
+    max(18px, env(safe-area-inset-left));
+  background: transparent;
+  overflow: hidden;
+  pointer-events: none;
 }
 
 .spatial-command__head {
@@ -264,17 +261,25 @@
 .spatial-command[data-surface='domains'] .spatial-command__head {
   grid-template-columns: minmax(0, 1fr) auto;
   min-height: var(--control-height-compact);
+  pointer-events: auto;
 }
 
 .spatial-command[data-surface='domains'] .spatial-command__place {
   grid-column: 1;
   grid-row: 1;
-  font-size: clamp(26px, 7vw, 32px);
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: -0.035em;
+  color: var(--map-label-halo);
+  text-shadow: 0 2px 10px var(--map-space);
 }
 
 .spatial-command[data-surface='domains'] .spatial-command__aside {
   grid-column: 2;
   grid-row: 1;
+  border: 1px solid color-mix(in srgb, var(--map-label-halo) 45%, transparent);
+  background: var(--canvas);
+  box-shadow: 0 3px 0 color-mix(in srgb, var(--map-space) 22%, transparent);
 }
 
 /* Domain is present but secondary: it sits above the place, quiet and small. */
@@ -357,6 +362,41 @@
 .spatial-command__actions { display: grid; gap: var(--space-2); }
 .spatial-command__actions .button { width: 100%; }
 
+/* Play is the clear next step. Learn remains available without competing with
+   the main action, and the group sits directly beneath the selected name. */
+.spatial-command__actions--scope .button--primary {
+  min-height: 64px;
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.spatial-command__actions--scope .button--secondary {
+  min-height: var(--control-height-compact);
+  border-color: transparent;
+  background: transparent;
+  color: var(--text-muted);
+  font-size: 13px;
+  font-weight: 700;
+  box-shadow: none;
+}
+
+.spatial-command__actions--scope .button--secondary:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* Yielding to a domain-native activity changes the learning surface but keeps
+   one continuous canvas. The entry is opacity-only, so nothing travels or
+   changes position during the hand-off. */
+.spatial-shell[data-mode='yielded'] .spatial-shell__panel {
+  animation: spatial-activity-enter var(--motion-ui) var(--ease-ui);
+}
+
+@keyframes spatial-activity-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
 /* Home still uses this class for mode choice. Geographic choice does not. */
 .spatial-command__choices { display: grid; gap: 6px; }
 
@@ -413,14 +453,11 @@
 .spatial-mode__name { font-size: 15px; font-weight: 700; }
 .spatial-mode__meta { color: var(--text-muted); font-size: 12px; font-weight: 700; }
 
-.spatial-command[data-surface='domains'] > .atlas-eyebrow {
-  margin: 0;
-  color: var(--text-muted);
-}
-
 .spatial-command[data-surface='domains'] .spatial-command__choices {
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
+  margin-block-start: auto;
+  pointer-events: auto;
 }
 
 .spatial-command[data-surface='domains'] .spatial-mode {
@@ -430,15 +467,22 @@
   place-items: center;
   align-content: center;
   gap: 6px;
-  min-height: 104px;
-  padding: 12px 10px;
-  border-color: transparent;
-  background: transparent;
+  min-height: 112px;
+  padding: 14px 12px 12px;
+  border-color: color-mix(in srgb, var(--line) 82%, var(--text-muted));
+  background: var(--canvas);
+  box-shadow: var(--depth-tile);
   text-align: center;
 }
 
 .spatial-command[data-surface='domains'] .spatial-mode:hover {
-  background: color-mix(in srgb, var(--surface) 68%, var(--action-soft));
+  border-color: color-mix(in srgb, var(--text-muted) 45%, var(--line));
+  background: var(--surface);
+}
+
+.spatial-command[data-surface='domains'] .spatial-mode:active {
+  translate: 0 3px;
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--map-space) 18%, transparent);
 }
 
 /*
@@ -476,15 +520,11 @@
    the same figure in its accessible name, so this is decoration on a number
    that is stated, not a second source of it. */
 .spatial-command[data-surface='domains'] .spatial-mode__meter {
-  width: min(100%, 92px);
+  width: min(100%, 104px);
   display: block;
 }
 
 .spatial-command[data-surface='domains'] .spatial-mode__meter .status-strip { height: 5px; }
-
-.spatial-command[data-surface='domains'] .spatial-mode__meta {
-  font-size: 12px;
-}
 
 .spatial-command[data-surface='domains'] .spatial-mode:focus-visible {
   outline-color: var(--focus-ring);
@@ -495,6 +535,7 @@
 .spatial-command[data-surface='domains'] .world-crown {
   margin: 0;
   padding: 9px 0 10px;
+  pointer-events: auto;
 }
 
 .spatial-command[data-surface='domains'] .world-crown__identity {
@@ -520,6 +561,9 @@
   }
   .spatial-command { align-content: start; max-height: none; }
 
+  .spatial-shell[data-surface]:not([data-surface='domains']) > .spatial-command { grid-row: auto; grid-column: 2; }
+  .spatial-shell[data-surface]:not([data-surface='domains']) > .spatial-stage { grid-row: auto; grid-column: 1; }
+
   .spatial-shell[data-surface='domains'] {
     grid-template: minmax(0, 1fr) / minmax(0, 1fr);
   }
@@ -539,9 +583,9 @@
    left for a 844x390 phone to have to undo. */
 @media (orientation: landscape) and (max-height: 540px) {
   .spatial-command[data-surface='domains'] {
-    width: min(720px, calc(100% - 32px - env(safe-area-inset-left) - env(safe-area-inset-right)));
-    max-height: calc(100svh - 24px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
-    padding: 12px 16px;
+    width: 100%;
+    max-height: 100svh;
+    padding: max(10px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
     gap: 8px;
   }
 
@@ -552,6 +596,8 @@
   .spatial-command[data-surface='domains'] .spatial-command__choices {
     grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 8px;
+    width: min(720px, 100%);
+    justify-self: center;
   }
 
   .spatial-command[data-surface='domains'] .spatial-mode {
@@ -559,6 +605,8 @@
     padding: 10px 8px;
     gap: 4px;
   }
+
+  .spatial-command[data-surface='domains'] .spatial-command__place { font-size: 32px; }
 
   .spatial-command[data-surface='domains'] .spatial-mode__mark {
     width: 32px;
@@ -593,7 +641,6 @@
     height: 28px;
   }
 
-  .spatial-command[data-surface='domains'] .spatial-mode__meta { justify-self: end; }
   .spatial-command[data-surface='domains'] .spatial-mode__meter { display: none; }
 
   .spatial-command__crest-slot { flex-basis: 36px; width: 36px; height: 36px; }
@@ -603,6 +650,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .spatial-stage__surface > canvas { transition: none; }
+  .spatial-shell[data-mode='yielded'] .spatial-shell__panel { animation: none; }
 }
 
 /*
@@ -637,7 +685,7 @@
     width: auto;
     max-height: none;
     margin: 0;
-    border: 1px solid CanvasText;
+    border: 0;
     background: Canvas;
     color: CanvasText;
     box-shadow: none;
@@ -645,6 +693,7 @@
   }
 
   .spatial-command[data-surface='domains'] .spatial-mode {
+    border: 1px solid ButtonText;
     background: ButtonFace;
     color: ButtonText;
   }
