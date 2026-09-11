@@ -17,7 +17,7 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 ## Locked principles
 
 1. Mobile portrait is the primary composition; short landscape must remain usable.
-2. System sans typography; cool near-white canvas and graphite text form the neutral base for chrome.
+2. System sans typography; a deep near-black canvas and near-white text form the neutral base for chrome — Atlas is dark by default, no light theme, no toggle.
 3. Cartography is the one saturated surface: land green, water blue, space night.
 4. Atlas Blue is ordinary action/selection/progress.
 5. Green/red are correctness feedback, not navigation identity. Correctness green is deeper and more saturated than any land green, and outranks it wherever the two meet.
@@ -39,15 +39,15 @@ Spatial Atlas is the accepted production navigation presentation. It is not deco
 
 | Role | Value | Meaning |
 | --- | --- | --- |
-| Canvas | `#F6F8FB` | cool near-white ground |
-| Primary text | `#101318` | graphite text / strongest neutral |
-| Atlas Blue | `#2563EB` | ordinary action, selection, focus, progress |
+| Canvas | `#0D1117` | deep near-black ground |
+| Primary text | `#EEF2F7` | near-white text / strongest neutral |
+| Atlas Blue | `#4C8DFF` | ordinary action, selection, focus, progress |
 | Pressed blue | `#1749B8` | physical pressed/depth state |
-| Action tint | `#EAF0FF` | quiet selected/action background |
-| Correct | `#137A55` | correct retrieval feedback |
-| Wrong | `#B42318` | incorrect retrieval feedback |
-| Mastery | `#6D3FC0` | durable region × domain competency |
-| Prestige | `#E0AF2F` | scarce completion/prestige |
+| Action tint | `#16233A` | quiet selected/action background |
+| Correct | `#3DDC97` | correct retrieval feedback |
+| Wrong | `#FF6B5E` | incorrect retrieval feedback |
+| Mastery | `#A685E6` | durable region × domain competency |
+| Prestige | `#F0C14D` | scarce completion/prestige |
 
 ### Cartography
 
@@ -124,7 +124,7 @@ The shared Play reading dwells remain `620ms` correct / `1500ms` wrong in `src/s
 
 ## Spatial navigation composition
 
-The Spatial screen is two-tone: night geography above, light real controls below. The stage's own background matches the renderer's clear colour exactly, so the canvas fading in has nothing to flash against, and the globe carries a single procedural atmosphere rim at the limb. That rim is the one lit element in the scene; there are still no textures, no terrain, no photographic Earth and no starfield.
+The Spatial screen is two-tone: night geography above, dark real controls below — the same dark Atlas chrome used everywhere else, not a separate light band. The stage's own background matches the renderer's clear colour exactly, so the canvas fading in has nothing to flash against, and the globe carries a single procedural atmosphere rim at the limb. That rim is the one lit element in the scene; there are still no textures, no terrain, no photographic Earth and no starfield.
 
 Current production hierarchy:
 
@@ -147,7 +147,7 @@ At Home:
 - the four learning modes are individual opaque controls with clear structural edges; there is no shared chooser container or redundant “Modes” label;
 - ordinary phone portrait uses an icon-led 2 × 2 mode grid; short landscape adapts compactly so all four modes remain visible in one viewport;
 - each mode carries its short learner-facing name and quiet progress strip, without a numeric count beneath it;
-- each mode surface uses the same cool near-white neutral family as ordinary Atlas chrome, with a thin structural edge and restrained tile depth;
+- each mode surface uses the same dark neutral family as ordinary Atlas chrome, with a thin structural edge and restrained tile depth;
 - each mode surface is opaque, so ocean, land and night never tint its contents as the globe moves behind it;
 - do not introduce translucent cards, colourful gradients/glow or decorative blur; Home is a composition exception, not a separate material system;
 - forced-colours mode uses a solid real-DOM presentation;

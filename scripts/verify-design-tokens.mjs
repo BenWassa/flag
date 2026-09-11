@@ -56,7 +56,7 @@ assert.equal(impeccable.tokens.motion.press, '100ms ease-out');
 assert.equal(impeccable.tokens.motion.ui, '160ms ease-out');
 assert.equal(impeccable.tokens.homeChooser.blur, 'none by default; backdrop-filter is not required');
 assert.ok(
-  impeccable.tokens.homeChooser.surface.includes('opaque cool near-white Atlas chrome'),
+  impeccable.tokens.homeChooser.surface.includes('opaque dark Atlas chrome'),
   '.impeccable/design.json keeps the Home chooser in the ordinary opaque Atlas chrome family.',
 );
 assert.ok(

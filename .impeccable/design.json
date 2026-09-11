@@ -55,7 +55,7 @@
     },
     "homeChooser": {
       "composition": "one bounded centred surface over the full world globe, no wider than its four modes need; 2x2 modes on ordinary phone portrait and compact adaptation in short landscape",
-      "surface": "opaque cool near-white Atlas chrome with a thin neutral structural edge and restrained tile depth; the globe stays dominant around the bounded chooser without tinting it",
+      "surface": "opaque dark Atlas chrome with a thin neutral structural edge and restrained tile depth; the globe stays dominant around the bounded chooser without tinting it",
       "blur": "none by default; backdrop-filter is not required",
       "fallback": "the same solid real-DOM material model; forced colours replaces palette values with system colours"
     },

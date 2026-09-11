@@ -1,38 +1,37 @@
 :root {
-  --canvas: #f6f8fb;
-  --surface: #ffffff;
-  --surface-subtle: #eef3fb;
-  --track: #e3e9f2;
-  --text: #101318;
-  /* Darkened from #667085, which cleared 4.5:1 on the canvas (4.68) but not on
-     the --action-soft background a selected continent/region row uses (4.36),
-     failing WCAG 2.2 SC 1.4.3 for the evidence line. This value clears both
-     (5.58 on canvas, 5.20 on --action-soft) and stays clearly secondary. */
-  --text-muted: #5b6478;
-  --line: #d9e0ea;
-  --line-strong: #b7c2d1;
-  --action: #2563eb;
-  --action-hover: #1d55cf;
+  --canvas: #0d1117;
+  --surface: #171c26;
+  --surface-subtle: #1f2733;
+  --track: #2a3342;
+  --text: #eef2f7;
+  /* Kept clearly secondary against both the canvas and the --action-soft
+     tint a selected continent/region row uses, per the same WCAG 2.2
+     SC 1.4.3 constraint the light palette held itself to. */
+  --text-muted: #97a2b8;
+  --line: #2a3140;
+  --line-strong: #3c4658;
+  --action: #4c8dff;
+  --action-hover: #2f6fdb;
   --action-pressed: #1749b8;
-  --action-soft: #eaf0ff;
+  --action-soft: #16233a;
   --on-action: #ffffff;
   --on-action-muted: rgba(255, 255, 255, .84);
-  /* Solid rather than a 32% tint: as the sole focus indicator the old value
-     sat near 1.6:1 against the canvas, under WCAG 2.2 SC 1.4.11's 3:1 for
-     non-text indicators. Pressed-blue clears it at roughly 7:1 and stays
-     distinguishable from the Atlas Blue fill of a focused primary button. */
-  --focus-ring: #1749b8;
-  --correct: #137a55;
-  --correct-soft: #e8f5ef;
-  --correct-line: #8bc7ad;
-  --wrong: #b42318;
-  --wrong-soft: #fce8e6;
-  --wrong-line: #dca7a2;
-  --mastery: #6d3fc0;
-  --mastery-soft: #f0eafd;
-  --prestige: #e0af2f;
-  --prestige-soft: #fff8df;
-  --prestige-shadow: #9b6813;
+  /* A lighter, more saturated blue than --action itself: the sole focus
+     indicator still needs to clear WCAG 2.2 SC 1.4.11's 3:1 for non-text
+     indicators against the dark canvas and stay distinguishable from a
+     focused primary button's own fill. */
+  --focus-ring: #7ab6ff;
+  --correct: #3ddc97;
+  --correct-soft: #113828;
+  --correct-line: #2f6b52;
+  --wrong: #ff6b5e;
+  --wrong-soft: #3a1512;
+  --wrong-line: #7a3a34;
+  --mastery: #a685e6;
+  --mastery-soft: #241a3d;
+  --prestige: #f0c14d;
+  --prestige-soft: #362a10;
+  --prestige-shadow: #6b4a10;
   --prestige-highlight: #f7dfa0;
   /* Compatibility aliases. Eighteen rules across styles.css, map.css and
      neighbors.css still reference the legacy --mastered* family, which would
@@ -43,9 +42,9 @@
   --mastered: var(--correct);
   --mastered-soft: var(--correct-soft);
   --mastered-line: var(--correct-line);
-  --learning: #8b6214;
-  --learning-soft: #fff4da;
-  --unseen: #667085;
+  --learning: #d9a441;
+  --learning-soft: #332711;
+  --unseen: #7c869c;
   /*
    * Cartographic colour. Land is green, water is blue, space is night.
    *
@@ -111,9 +110,13 @@
   --ease-feedback: ease-out;
   --depth-primary: 0 4px 0 var(--action-pressed);
   --depth-arcade: 2px 2px 0 var(--text);
-  --depth-tile: 0 1px 2px rgba(16, 19, 24, .05), 0 7px 18px rgba(16, 19, 24, .055);
-  --depth-tile-hover: 0 2px 4px rgba(16, 19, 24, .06), 0 10px 24px rgba(16, 19, 24, .075);
-  --flag-shadow: 0 9px 24px rgba(16, 19, 24, .09);
+  /* On the dark canvas a near-black shadow needs far more opacity than the
+     light palette did to read as depth at all, since --canvas itself sits
+     close to black; --surface's own step up in lightness carries most of
+     the elevation cue, with these as a supporting halo. */
+  --depth-tile: 0 1px 2px rgba(0, 0, 0, .35), 0 7px 18px rgba(0, 0, 0, .4);
+  --depth-tile-hover: 0 2px 4px rgba(0, 0, 0, .4), 0 10px 24px rgba(0, 0, 0, .45);
+  --flag-shadow: 0 9px 24px rgba(0, 0, 0, .5);
 }
 
 html,
@@ -179,7 +182,7 @@ body { letter-spacing: -.006em; }
 .icon-button {
   background: var(--surface);
   border-color: var(--line);
-  box-shadow: 0 1px 2px rgba(16, 19, 24, .035);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, .35);
 }
 
 .icon-button:active {
@@ -1179,9 +1182,9 @@ body { letter-spacing: -.006em; }
   display: grid;
   gap: 1rem;
   padding: 1.25rem;
-  border: 1px solid #cbd5e1;
+  border: 1px solid var(--line);
   border-radius: 1rem;
-  background: #fff;
+  background: var(--surface);
 }
 
 .dev-sandbox__heading,
@@ -1200,8 +1203,8 @@ body { letter-spacing: -.006em; }
 .dev-sandbox__status {
   padding: .3rem .6rem;
   border-radius: .5rem;
-  background: #eaf0ff;
-  color: #1749b8;
+  background: var(--action-soft);
+  color: var(--action);
   font-weight: 700;
 }
 
@@ -1218,8 +1221,10 @@ body { letter-spacing: -.006em; }
   width: 100%;
   resize: vertical;
   padding: .75rem;
-  border: 1px solid #94a3b8;
+  border: 1px solid var(--line-strong);
   border-radius: .65rem;
+  background: var(--surface);
+  color: var(--text);
   font: .75rem/1.45 ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 

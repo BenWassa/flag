@@ -2,19 +2,19 @@
 
 **Status:** locked production semantic palette
 
-Atlas uses one restrained semantic colour system across all learning domains and Spatial navigation. Geography does not receive an identity palette by continent, region or hemisphere.
+Atlas uses one restrained semantic colour system across all learning domains and Spatial navigation. Geography does not receive an identity palette by continent, region or hemisphere. The palette is dark by default (no light theme, no toggle); the semantic roles and rules below hold, only the underlying lightness/hue values changed.
 
 | Role | Value | Use |
 | --- | --- | --- |
-| Canvas | `#F6F8FB` | cool near-white ground |
-| Primary text | `#101318` | graphite text / strongest neutral |
-| Atlas Blue | `#2563EB` | ordinary action, selection, focus and progress |
+| Canvas | `#0D1117` | deep near-black ground |
+| Primary text | `#EEF2F7` | near-white text / strongest neutral |
+| Atlas Blue | `#4C8DFF` | ordinary action, selection, focus and progress |
 | Pressed blue | `#1749B8` | tactile pressed/depth state |
-| Action tint | `#EAF0FF` | quiet action/selection background |
-| Correct | `#137A55` | correct retrieval feedback |
-| Wrong | `#B42318` | incorrect retrieval feedback |
-| Mastery | `#6D3FC0` | durable region × domain Mastery |
-| Prestige | `#E0AF2F` | scarce completion/prestige |
+| Action tint | `#16233A` | quiet action/selection background |
+| Correct | `#3DDC97` | correct retrieval feedback |
+| Wrong | `#FF6B5E` | incorrect retrieval feedback |
+| Mastery | `#A685E6` | durable region × domain Mastery |
+| Prestige | `#F0C14D` | scarce completion/prestige |
 
 ## Rules
 

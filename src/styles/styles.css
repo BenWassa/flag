@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light;
+  color-scheme: dark;
   /*
    * This is the pre-Atlas token set. atlas-theme.css is loaded last (see
    * index.html) and, per DESIGN.md's Implementation constraints, is a

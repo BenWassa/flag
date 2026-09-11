@@ -341,7 +341,7 @@ const indexHtml = await readFile('dist/index.html', 'utf8');
 assert.ok(indexHtml.includes('./map-viewport.js'), 'The production shell loads map pan preservation behaviour.');
 assert.ok(indexHtml.includes('./atlas-theme.css'), 'The production shell loads the Tactile Atlas visual layer.');
 const atlasTheme = await readFile('dist/atlas-theme.css', 'utf8');
-assert.ok(atlasTheme.includes('--action: #2563eb'), 'The built Atlas theme carries the locked primary action blue.');
+assert.ok(atlasTheme.includes('--action: #4c8dff'), 'The built Atlas theme carries the locked primary action blue.');
 assert.ok(atlasTheme.includes('prefers-reduced-motion: reduce'), 'The built Atlas theme includes reduced-motion behaviour.');
 const viewportJs = await readFile('dist/map-viewport.js', 'utf8');
 assert.ok(viewportJs.includes('data-map-viewport') || viewportJs.includes('mapViewport'), 'Built viewport helper preserves pan across rerenders.');
