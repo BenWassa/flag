@@ -57,10 +57,10 @@ async function screenDiameter(page: Page, id: string): Promise<number> {
   });
 }
 
-async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number; y: number }> {
+async function findActionableHitPoint(page: Page, id: string): Promise<{ x: number; y: number } | null> {
   const hit = persistentHit(page, id);
   await expect(hit).toHaveCount(1);
-  const point = await hit.evaluate((circle, expectedId) => {
+  return hit.evaluate((circle, expectedId) => {
     const item = circle as SVGCircleElement;
     const matrix = item.getScreenCTM();
     if (!matrix) return null;
@@ -83,8 +83,44 @@ async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number;
     }
     return null;
   }, id);
+}
+
+async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number; y: number }> {
+  const point = await findActionableHitPoint(page, id);
   expect(point, `${id} exposes part of its practical hit envelope`).not.toBeNull();
   return point!;
+}
+
+async function actionableCountryPoint(page: Page, id: string): Promise<{ x: number; y: number }> {
+  const shape = page.locator(`.map-country[data-action="map-answer"][data-id="${id}"] .map-country__shape`).first();
+  if (await shape.count()) {
+    const point = await shape.evaluate((path, expectedId) => {
+      const item = path as SVGGraphicsElement;
+      const matrix = item.getScreenCTM();
+      if (!matrix) return null;
+      const box = item.getBBox();
+      const steps = 15;
+      for (let row = 0; row < steps; row += 1) {
+        for (let column = 0; column < steps; column += 1) {
+          const local = new DOMPoint(
+            box.x + box.width * ((column + 0.5) / steps),
+            box.y + box.height * ((row + 0.5) / steps),
+          );
+          const screen = local.matrixTransform(matrix);
+          const owner = document.elementFromPoint(screen.x, screen.y)
+            ?.closest('[data-action="map-answer"]')
+            ?.getAttribute('data-id');
+          if (owner === expectedId) return { x: screen.x, y: screen.y };
+        }
+      }
+      return null;
+    }, id);
+    if (point) return point;
+  }
+
+  const assistPoint = await findActionableHitPoint(page, id);
+  expect(assistPoint, `${id} remains physically selectable through real land or assistance`).not.toBeNull();
+  return assistPoint!;
 }
 
 async function assertPersistentHitSizes(page: Page, ids: readonly string[]) {
@@ -171,7 +207,13 @@ test('Asia practical hit size remains screen-stable after map zoom', async ({ pa
   await page.mouse.move(viewport!.x + viewport!.width / 2, viewport!.y + viewport!.height / 2);
   for (let index = 0; index < 6; index += 1) await page.mouse.wheel(0, -700);
 
-  await assertPersistentHitContracts(page, ASIA_ASSISTS);
+  // The invisible assist disc must stay 44px at every zoom. Once real country
+  // land becomes large enough it may cover that disc by design (#117), so the
+  // interaction invariant is that the country remains selectable through its
+  // real polygon or any still-exposed assist area, not that water assistance
+  // must always win a pixel after zooming in.
+  await assertPersistentHitSizes(page, ASIA_ASSISTS);
+  for (const id of ASIA_ASSISTS) await actionableCountryPoint(page, id);
 });
 
 test('Oceania tiny-island assistance remains practical before and after a Learn advance', async ({ page }) => {
