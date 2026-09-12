@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 
 const ROOT = resolve('.pwa-runtime-builds');
 const VERSIONS = ['runtime-a', 'runtime-b'] as const;
+const BUILD_ADOPTION_TIMEOUT_MS = 15_000;
 type Version = typeof VERSIONS[number];
 
 type FixtureIdentity = {
@@ -111,7 +112,15 @@ async function waitForWaitingWorker(page: Page) {
 }
 
 async function expectBuild(page: Page, version: Version) {
-  await expect(page.locator('meta[name="atlas-build"]')).toHaveAttribute('content', buildIdentity(version));
+  // Atlas deliberately retries an already-waiting worker every 10 seconds when
+  // a fail-closed client handshake races a safety transition. The acceptance
+  // window must cover that documented retry without adding a sleep or retrying
+  // the test itself; a worker that never adopts still fails deterministically.
+  await expect(page.locator('meta[name="atlas-build"]')).toHaveAttribute(
+    'content',
+    buildIdentity(version),
+    { timeout: BUILD_ADOPTION_TIMEOUT_MS },
+  );
 }
 
 async function cacheState(page: Page, targetUrl?: string) {
