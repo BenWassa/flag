@@ -14,7 +14,12 @@
     "build": "vite build && npm run build:verify && node scripts/finalize-production-build.mjs",
     "build:verify": "node scripts/build-verifier-output.mjs",
     "test:unit": "vitest run",
-    "test:browser": "playwright test",
+    "test:browser": "playwright test --project=chromium --project=mobile-chromium",
+    "test:browser:desktop": "playwright test --project=chromium",
+    "test:browser:mobile": "playwright test --project=mobile-chromium",
+    "test:browser:acceptance:desktop": "playwright test --project=acceptance-desktop --workers=1 --retries=0",
+    "test:browser:acceptance:mobile": "playwright test --project=acceptance-mobile --workers=1 --retries=0",
+    "test:browser:acceptance:pwa": "playwright test --project=acceptance-pwa-desktop --workers=1 --retries=0",
     "probe:stage1": "vite --host 0.0.0.0 --port 5199",
     "test:spatial-baseline": "playwright test --config=playwright.spatial-baseline.config.ts",
     "test:pwa-runtime": "npm run build && playwright test tests/browser/pwa-runtime.spec.ts --project=chromium",
@@ -27,7 +32,7 @@
     "verify:clean": "node scripts/build-verifier-output.mjs --clean",
     "test": "npm run check && npm run test:unit && npm run test:firebase-rules && npm run build && npm run verify",
     "globe:generate": "node scripts/generate-globe-assets.mjs",
-    "test:spatial": "npm run build && playwright test spatial-atlas.spec.ts",
+    "test:spatial": "npm run build && playwright test spatial-atlas.spec.ts --project=chromium",
     "check:experiments": "tsc -p tsconfig.experiments.json --noEmit"
   },
   "devDependencies": {
