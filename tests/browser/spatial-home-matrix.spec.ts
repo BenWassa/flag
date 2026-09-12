@@ -30,8 +30,10 @@ for (const viewport of [
     expect(chooserBox.y).toBeGreaterThanOrEqual(0);
     expect(chooserBox.y + chooserBox.height).toBeLessThanOrEqual(viewport.height + 1);
 
-    if (viewport.width >= 768) expect(chooserBox.width).toBeLessThanOrEqual(562);
-
+    // #196/#217 replaced the old bounded chooser panel with a full-bleed
+    // command overlay whose individual mode tiles are the bounded surfaces.
+    // The wrapper is therefore allowed to span the viewport; each tile below
+    // remains independently required to stay fully on-screen.
     for (const mode of MODES) {
       const button = page.getByRole('button', { name: new RegExp(`^${mode}, \\d+ of \\d+ cleared$`) });
       await expect(button).toBeVisible();
