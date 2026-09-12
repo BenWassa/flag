@@ -55,7 +55,7 @@ test.describe('the Earth names what can be chosen', () => {
     const viaName = page.url();
     await page.goBack();
     await expect(page).toHaveURL(/#\/flags$/);
-    await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
+    await named(page, 'Africa').click();
     expect(page.url()).toBe(viaName);
   });
 
