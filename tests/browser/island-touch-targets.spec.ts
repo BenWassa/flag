@@ -87,14 +87,18 @@ async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number;
   return point!;
 }
 
-async function assertPersistentHitContracts(page: Page, ids: readonly string[]) {
+async function assertPersistentHitSizes(page: Page, ids: readonly string[]) {
   for (const id of ids) {
     await expect.poll(() => screenDiameter(page, id), {
       timeout: 5_000,
       message: `${id} keeps the shared 44px practical target`,
     }).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
-    await actionableEdgePoint(page, id);
   }
+}
+
+async function assertPersistentHitContracts(page: Page, ids: readonly string[]) {
+  await assertPersistentHitSizes(page, ids);
+  for (const id of ids) await actionableEdgePoint(page, id);
 }
 
 async function tapPoint(page: Page, point: { x: number; y: number }) {
@@ -126,12 +130,16 @@ test('Africa locator and callout islands keep practical working targets across a
   await tapCountryAndAssert(page, 'STP');
 });
 
-test('Europe locator and microstate callouts retain the same contract in short landscape', async ({ page }) => {
+test('Europe keeps 44px generated assist geometry while Malta remains directly tappable in short landscape', async ({ page }) => {
   await openLocations(page, '/#/locations/europe', 'Learn Europe', { width: 844, height: 390 });
-  await assertPersistentHitContracts(page, EUROPE_LEGACY_ASSISTS);
+  await assertPersistentHitSizes(page, EUROPE_LEGACY_ASSISTS);
+  await actionableEdgePoint(page, 'MLT');
 
+  // Landlocked microstate callouts deliberately sit underneath real surrounding
+  // country polygons (#117), so they are not required to own exposed pixels
+  // where real geography wins. Malta is the island locator contract at issue.
   await answerCurrentByKeyboard(page);
-  await assertPersistentHitContracts(page, EUROPE_LEGACY_ASSISTS);
+  await assertPersistentHitSizes(page, EUROPE_LEGACY_ASSISTS);
   await tapCountryAndAssert(page, 'MLT');
 });
 
@@ -140,14 +148,13 @@ test('Asia hit-assist countries survive Play feedback and question replacement a
   await assertPersistentHitContracts(page, ASIA_ASSISTS);
 
   // Force the Play feedback rerender with an assisted wrong guess. This is the
-  // same replacement lifecycle that exposed #221, but verifies actual pointer
-  // ownership and current three-strike semantics as well as circle dimensions.
+  // same replacement lifecycle that exposed #221. The persistent feedback is
+  // authoritative here; the graphite wrong-map pulse is intentionally brief.
   const target = await currentTarget(page);
   const wrongId = ASIA_ASSISTS.find((id) => id !== target.id)!;
   await tapPoint(page, await actionableEdgePoint(page, wrongId));
   await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
   await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
-  await expect(page.locator(`.map-country[data-id="${wrongId}"]`)).toHaveClass(/map-country--wrong-pulse/);
   await assertPersistentHitContracts(page, ASIA_ASSISTS);
 
   await answerCurrentByKeyboard(page);
