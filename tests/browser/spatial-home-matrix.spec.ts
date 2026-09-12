@@ -30,7 +30,11 @@ for (const viewport of [
     expect(chooserBox.y).toBeGreaterThanOrEqual(0);
     expect(chooserBox.y + chooserBox.height).toBeLessThanOrEqual(viewport.height + 1);
 
-    if (viewport.width >= 768) expect(chooserBox.width).toBeLessThanOrEqual(562);
+    // Home moved from one bounded neutral card to a screen-level overlay with
+    // independent floating mode tiles (#187 overlay disclosure polish): the
+    // chooser surface is now deliberately full-bleed, so a fixed width cap no
+    // longer applies. Each tile's own on-screen containment is still checked
+    // below, which is what actually matters for usability.
 
     for (const mode of MODES) {
       const button = page.getByRole('button', { name: new RegExp(`^${mode}, \\d+ of \\d+ cleared$`) });
