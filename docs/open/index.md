@@ -20,9 +20,11 @@ Permanent CI is also now settled: `.github/workflows/ci.yml` produces the single
 
 ## Remaining engineering gate — #212
 
-[#212](https://github.com/BenWassa/flag/issues/212) / [PR #213](https://github.com/BenWassa/flag/pull/213) is the only remaining implementation stream.
+[#212](https://github.com/BenWassa/flag/issues/212) / [PR #222](https://github.com/BenWassa/flag/pull/222) is the only remaining implementation stream, pending merge and CI verification.
 
-It reconciles the broad Playwright suite with the current post-#197–#202, #207 and #196 product contracts and carries the still-unmerged #200 stationary edge-tap versus platform Back-gesture repair. The branch predates the current CI architecture, so #218's parallel exact-production jobs are authoritative during its final sync; temporary #212 broad-evidence workflow steps must not become permanent infrastructure.
+PR #213 (`issue-212-playwright-reconciliation`) predated the current CI architecture and #196/#198/#202/#207/#218; its useful work (the #200 stationary edge-tap versus platform Back-gesture repair, the mega-matrix reductions, the three-strike Play assertion fixes) has been synced semantically onto current `main` in PR #222 rather than merged mechanically. #213 is superseded and should be closed once #222 merges. #218's parallel exact-production jobs remain authoritative; #222 introduces no permanent broad-evidence CI machinery.
+
+One real defect surfaced during reconciliation was split out rather than fixed inline: [#221](https://github.com/BenWassa/flag/issues/221) tracks a deterministic BHR assist-hit sizing regression in whole-Asia Learn.
 
 Do not begin the final all-programme physical-device pass while #212 can still alter gesture evidence.
 
