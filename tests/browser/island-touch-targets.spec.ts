@@ -42,19 +42,40 @@ function persistentHit(page: Page, id: string) {
   return page.locator(`.map-assist-hits [data-action="map-answer"][data-id="${id}"] [data-map-hit]`);
 }
 
-async function screenDiameter(page: Page, id: string): Promise<number> {
+async function screenDiameters(page: Page, ids: readonly string[]): Promise<Record<string, number>> {
+  return page.evaluate((expectedIds) => {
+    const diameters: Record<string, number> = {};
+    for (const id of expectedIds) {
+      const item = document.querySelector<SVGCircleElement>(
+        `.map-assist-hits [data-action="map-answer"][data-id="${id}"] [data-map-hit]`,
+      );
+      const matrix = item?.getScreenCTM();
+      if (!item || !matrix) {
+        diameters[id] = 0;
+        continue;
+      }
+      const radius = item.r.baseVal.value;
+      diameters[id] = Math.min(
+        radius * 2 * Math.hypot(matrix.a, matrix.b),
+        radius * 2 * Math.hypot(matrix.c, matrix.d),
+      );
+    }
+    return diameters;
+  }, [...ids]);
+}
+
+async function hitCenter(page: Page, id: string): Promise<{ x: number; y: number }> {
   const hit = persistentHit(page, id);
   await expect(hit).toHaveCount(1);
-  return hit.evaluate((circle) => {
+  const point = await hit.evaluate((circle) => {
     const item = circle as SVGCircleElement;
     const matrix = item.getScreenCTM();
-    if (!matrix) return 0;
-    const radius = item.r.baseVal.value;
-    return Math.min(
-      radius * 2 * Math.hypot(matrix.a, matrix.b),
-      radius * 2 * Math.hypot(matrix.c, matrix.d),
-    );
+    if (!matrix) return null;
+    const screen = new DOMPoint(item.cx.baseVal.value, item.cy.baseVal.value).matrixTransform(matrix);
+    return { x: screen.x, y: screen.y };
   });
+  expect(point, `${id} assist has a screen-space centre`).not.toBeNull();
+  return point!;
 }
 
 async function findActionableHitPoint(page: Page, id: string): Promise<{ x: number; y: number } | null> {
@@ -124,11 +145,17 @@ async function actionableCountryPoint(page: Page, id: string): Promise<{ x: numb
 }
 
 async function assertPersistentHitSizes(page: Page, ids: readonly string[]) {
+  let snapshot: Record<string, number> = {};
+  await expect.poll(async () => {
+    snapshot = await screenDiameters(page, ids);
+    return Math.min(...ids.map((id) => snapshot[id] ?? 0));
+  }, {
+    timeout: 5_000,
+    message: `${ids.join(', ')} keep the shared 44px practical target in one stable frame`,
+  }).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
+
   for (const id of ids) {
-    await expect.poll(() => screenDiameter(page, id), {
-      timeout: 5_000,
-      message: `${id} keeps the shared 44px practical target`,
-    }).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
+    expect(snapshot[id], `${id} keeps the shared 44px practical target`).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
   }
 }
 
@@ -202,18 +229,19 @@ test('Asia practical hit size remains screen-stable after map zoom', async ({ pa
   await openLocations(page, '/#/locations/asia', 'Learn Asia', { width: 390, height: 844 });
   await assertPersistentHitContracts(page, ASIA_ASSISTS);
 
-  const viewport = await page.locator('[data-map-viewport]').boundingBox();
-  expect(viewport).not.toBeNull();
-  await page.mouse.move(viewport!.x + viewport!.width / 2, viewport!.y + viewport!.height / 2);
+  // Anchor the zoom on Bahrain, the #221 regression country. Requiring every
+  // Asia assist to remain exposed after a strong arbitrary centre zoom would
+  // incorrectly treat countries that have left the viewport as interaction
+  // failures. The size invariant still applies to every generated assist.
+  const bahrain = await hitCenter(page, 'BHR');
+  await page.mouse.move(bahrain.x, bahrain.y);
   for (let index = 0; index < 6; index += 1) await page.mouse.wheel(0, -700);
 
   // The invisible assist disc must stay 44px at every zoom. Once real country
-  // land becomes large enough it may cover that disc by design (#117), so the
-  // interaction invariant is that the country remains selectable through its
-  // real polygon or any still-exposed assist area, not that water assistance
-  // must always win a pixel after zooming in.
+  // land becomes large enough it may cover that disc by design (#117), so BHR
+  // may be selectable through its real polygon instead of exposed water assist.
   await assertPersistentHitSizes(page, ASIA_ASSISTS);
-  for (const id of ASIA_ASSISTS) await actionableCountryPoint(page, id);
+  await actionableCountryPoint(page, 'BHR');
 });
 
 test('Oceania tiny-island assistance remains practical before and after a Learn advance', async ({ page }) => {
