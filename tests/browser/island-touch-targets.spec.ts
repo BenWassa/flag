@@ -30,12 +30,20 @@ async function currentTarget(page: Page): Promise<{ id: string; name: string }> 
 }
 
 async function answerCurrentByKeyboard(page: Page): Promise<void> {
-  const { id, name } = await currentTarget(page);
+  const { id } = await currentTarget(page);
+  const roundCount = page.locator('.map-round-count');
+  const beforeCount = await roundCount.textContent();
+  expect(beforeCount, 'active Locations round exposes its current question count').not.toBeNull();
+
   const answer = page.locator(`[data-action="map-answer"][data-id="${id}"][tabindex]`).first();
   await expect(answer).toBeVisible();
   await answer.focus();
   await answer.press('Enter');
-  await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(name);
+
+  // Correct answers advance after at most 850ms. Use the round counter as the
+  // durable state transition rather than repeatedly forcing layout through
+  // innerText while a newly active inset is being mounted.
+  await expect(roundCount, `${id} keyboard answer advances the round`).not.toHaveText(beforeCount!, { timeout: 4_000 });
 }
 
 function persistentHit(page: Page, id: string) {
@@ -164,6 +172,18 @@ async function assertPersistentHitContracts(page: Page, ids: readonly string[]) 
   for (const id of ids) await actionableEdgePoint(page, id);
 }
 
+async function assertAsiaPersistentHitContracts(page: Page) {
+  await assertPersistentHitSizes(page, ASIA_ASSISTS);
+  for (const id of ASIA_ASSISTS) {
+    // Brunei can sit wholly beneath canonical Borneo land after a responsive
+    // feedback rerender. #117 requires that real land keep the actionable
+    // pixel; the generated assist must still stay 44px and BRN itself must
+    // remain physically selectable through its polygon or assistance.
+    if (id === 'BRN') await actionableCountryPoint(page, id);
+    else await actionableEdgePoint(page, id);
+  }
+}
+
 async function tapPoint(page: Page, point: { x: number; y: number }) {
   if (test.info().project.name.includes('mobile')) await page.touchscreen.tap(point.x, point.y);
   else await page.mouse.click(point.x, point.y);
@@ -208,7 +228,7 @@ test('Europe keeps 44px generated assist geometry while Malta remains directly t
 
 test('Asia hit-assist countries survive Play feedback and question replacement at 44px', async ({ page }) => {
   await openLocations(page, '/#/locations/asia', 'Play Asia', { width: 390, height: 844 });
-  await assertPersistentHitContracts(page, ASIA_ASSISTS);
+  await assertAsiaPersistentHitContracts(page);
 
   // Force the Play feedback rerender with an assisted wrong guess. This is the
   // same replacement lifecycle that exposed #221. The persistent feedback is
@@ -218,16 +238,16 @@ test('Asia hit-assist countries survive Play feedback and question replacement a
   await tapPoint(page, await actionableEdgePoint(page, wrongId));
   await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
   await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
-  await assertPersistentHitContracts(page, ASIA_ASSISTS);
+  await assertAsiaPersistentHitContracts(page);
 
   await answerCurrentByKeyboard(page);
-  await assertPersistentHitContracts(page, ASIA_ASSISTS);
+  await assertAsiaPersistentHitContracts(page);
 });
 
 test('Asia practical hit size remains screen-stable after map zoom', async ({ page }) => {
   test.skip(test.info().project.name.includes('mobile'), 'Desktop wheel path owns deterministic zoom-scale acceptance; mobile project exercises real touch taps.');
   await openLocations(page, '/#/locations/asia', 'Learn Asia', { width: 390, height: 844 });
-  await assertPersistentHitContracts(page, ASIA_ASSISTS);
+  await assertAsiaPersistentHitContracts(page);
 
   // Anchor the zoom on Bahrain, the #221 regression country. Requiring every
   // Asia assist to remain exposed after a strong arbitrary centre zoom would
