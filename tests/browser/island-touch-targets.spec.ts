@@ -30,20 +30,29 @@ async function currentTarget(page: Page): Promise<{ id: string; name: string }> 
 }
 
 async function answerCurrentByKeyboard(page: Page): Promise<void> {
+  const { id, name } = await currentTarget(page);
+  const answer = page.locator(`[data-action="map-answer"][data-id="${id}"][tabindex]`).first();
+  await expect(answer).toBeVisible();
+  await answer.focus();
+  await answer.press('Enter');
+  await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(name);
+}
+
+async function advanceCaribbeanByKeyboard(page: Page): Promise<void> {
   const { id } = await currentTarget(page);
   const roundCount = page.locator('.map-round-count');
   const beforeCount = await roundCount.textContent();
-  expect(beforeCount, 'active Locations round exposes its current question count').not.toBeNull();
+  expect(beforeCount, 'active Caribbean round exposes its current question count').not.toBeNull();
 
   const answer = page.locator(`[data-action="map-answer"][data-id="${id}"][tabindex]`).first();
   await expect(answer).toBeVisible();
   await answer.focus();
   await answer.press('Enter');
 
-  // Correct answers advance after at most 850ms. Use the round counter as the
-  // durable state transition rather than repeatedly forcing layout through
-  // innerText while a newly active inset is being mounted.
-  await expect(roundCount, `${id} keyboard answer advances the round`).not.toHaveText(beforeCount!, { timeout: 4_000 });
+  // The Caribbean regression crosses between the main map and a conditional
+  // inset. The round counter is stable across that remount; polling heading
+  // innerText can observe the outgoing heading while the next inset mounts.
+  await expect(roundCount, `${id} keyboard answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 4_000 });
 }
 
 function persistentHit(page: Page, id: string) {
@@ -289,7 +298,7 @@ test('Caribbean true-scale inset exposes a practical touch target and scores thr
       await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(target.name);
       return;
     }
-    await answerCurrentByKeyboard(page);
+    await advanceCaribbeanByKeyboard(page);
   }
   throw new Error('No Caribbean inset member was reached in the complete region round');
 });
