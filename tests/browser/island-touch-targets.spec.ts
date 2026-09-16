@@ -298,8 +298,12 @@ test('Caribbean true-scale inset exposes a practical touch target and scores thr
       const box = await hit.boundingBox();
       expect(box).not.toBeNull();
       expect(Math.min(box!.width, box!.height), `${target.id} inset keeps a practical target`).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
+      const roundCount = page.locator('.map-round-count');
+      const beforeCount = await roundCount.textContent();
+      expect(beforeCount, 'Caribbean inset question exposes its round count').not.toBeNull();
       await tapPoint(page, { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
-      await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(target.name);
+      await expect(roundCount, `${target.id} inset tap is accepted by the shared scoring path`).not.toHaveText(beforeCount!, { timeout: 15_000 });
+      await expect(page.getByText('Correct', { exact: true })).toBeVisible();
       return;
     }
     await advanceCaribbeanByPointer(page);
