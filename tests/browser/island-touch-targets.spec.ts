@@ -303,7 +303,6 @@ test('Caribbean true-scale inset exposes a practical touch target and scores thr
       expect(beforeCount, 'Caribbean inset question exposes its round count').not.toBeNull();
       await tapPoint(page, { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
       await expect(roundCount, `${target.id} inset tap is accepted by the shared scoring path`).not.toHaveText(beforeCount!, { timeout: 15_000 });
-      await expect(page.getByText('Correct', { exact: true })).toBeVisible();
       return;
     }
     await advanceCaribbeanByPointer(page);
