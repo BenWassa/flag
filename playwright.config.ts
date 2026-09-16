@@ -23,6 +23,7 @@ const acceptanceMobileTests = [
   'tests/browser/spatial-framing.spec.ts',
   'tests/browser/locations-three-strike.spec.ts',
   'tests/browser/island-touch-targets.spec.ts',
+  'tests/browser/inset-hit-debug.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
 ];
 
