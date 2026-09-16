@@ -666,11 +666,33 @@ export function buildInsets(config, geometry, catalog) {
       }
     }
     const pxPerUnit = INSET_MARK_SEPARATION_PX / closest;
+    // The source window must contain the complete practical touch surface, not
+    // merely each country's canonical land. Otherwise an edge member can ship
+    // a nominal 44px SVG circle whose actionable area is clipped by the inset
+    // viewBox. Derive the required map-unit radius from the same true-scale
+    // panel scale, then expand only the source window; country geometry stays
+    // canonical and the practical surface remains invisible.
+    const idealHitRadius = (HIT_SURFACE_CSS_PX / 2) / pxPerUnit;
+    let sourceMinX = x0 - INSET_SOURCE_PADDING;
+    let sourceMinY = y0 - INSET_SOURCE_PADDING;
+    let sourceMaxX = x1 + INSET_SOURCE_PADDING;
+    let sourceMaxY = y1 + INSET_SOURCE_PADDING;
+    for (const mark of marks) {
+      sourceMinX = Math.min(sourceMinX, mark.cx - idealHitRadius);
+      sourceMinY = Math.min(sourceMinY, mark.cy - idealHitRadius);
+      sourceMaxX = Math.max(sourceMaxX, mark.cx + idealHitRadius);
+      sourceMaxY = Math.max(sourceMaxY, mark.cy + idealHitRadius);
+    }
+    // Round outward so serialisation can never shave the edge off a hit disc.
+    const sourceX = Math.floor(sourceMinX * 100) / 100;
+    const sourceY = Math.floor(sourceMinY * 100) / 100;
+    const sourceRight = Math.ceil(sourceMaxX * 100) / 100;
+    const sourceBottom = Math.ceil(sourceMaxY * 100) / 100;
     const source = {
-      x: Number((x0 - INSET_SOURCE_PADDING).toFixed(2)),
-      y: Number((y0 - INSET_SOURCE_PADDING).toFixed(2)),
-      width: Number((x1 - x0 + INSET_SOURCE_PADDING * 2).toFixed(2)),
-      height: Number((y1 - y0 + INSET_SOURCE_PADDING * 2).toFixed(2)),
+      x: sourceX,
+      y: sourceY,
+      width: Number((sourceRight - sourceX).toFixed(2)),
+      height: Number((sourceBottom - sourceY).toFixed(2)),
     };
     // Round the panel up, then read the scale back off the rounded size. Deriving
     // the hit radius from the ideal scale instead would ship a surface fractionally
