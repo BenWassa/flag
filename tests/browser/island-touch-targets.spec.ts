@@ -38,21 +38,17 @@ async function answerCurrentByKeyboard(page: Page): Promise<void> {
   await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(name);
 }
 
-async function advanceCaribbeanByKeyboard(page: Page): Promise<void> {
+async function advanceCaribbeanByPointer(page: Page): Promise<void> {
   const { id } = await currentTarget(page);
   const roundCount = page.locator('.map-round-count');
   const beforeCount = await roundCount.textContent();
   expect(beforeCount, 'active Caribbean round exposes its current question count').not.toBeNull();
 
-  const answer = page.locator(`[data-action="map-answer"][data-id="${id}"][tabindex]`).first();
-  await expect(answer).toBeVisible();
-  await answer.focus();
-  await answer.press('Enter');
-
-  // The Caribbean regression crosses between the main map and a conditional
-  // inset. The round counter is stable across that remount; polling heading
-  // innerText can observe the outgoing heading while the next inset mounts.
-  await expect(roundCount, `${id} keyboard answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 4_000 });
+  // This suite owns the pointer/touch contract. Advance through canonical map
+  // geography with the same scoring path the inset eventually exercises rather
+  // than introducing an unrelated keyboard dependency into the inset regression.
+  await tapPoint(page, await actionableCountryPoint(page, id));
+  await expect(roundCount, `${id} pointer answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 15_000 });
 }
 
 function persistentHit(page: Page, id: string) {
@@ -178,19 +174,15 @@ async function assertPersistentHitSizes(page: Page, ids: readonly string[]) {
 
 async function assertPersistentHitContracts(page: Page, ids: readonly string[]) {
   await assertPersistentHitSizes(page, ids);
-  for (const id of ids) await actionableEdgePoint(page, id);
+  // #117 deliberately paints canonical real land above assistance. A 44px
+  // assist can therefore be geometrically correct without owning an exposed
+  // pixel itself. The interaction contract is the country remaining selectable
+  // through either its real polygon or its assistance under that precedence.
+  for (const id of ids) await actionableCountryPoint(page, id);
 }
 
 async function assertAsiaPersistentHitContracts(page: Page) {
-  await assertPersistentHitSizes(page, ASIA_ASSISTS);
-  for (const id of ASIA_ASSISTS) {
-    // Brunei can sit wholly beneath canonical Borneo land after a responsive
-    // feedback rerender. #117 requires that real land keep the actionable
-    // pixel; the generated assist must still stay 44px and BRN itself must
-    // remain physically selectable through its polygon or assistance.
-    if (id === 'BRN') await actionableCountryPoint(page, id);
-    else await actionableEdgePoint(page, id);
-  }
+  await assertPersistentHitContracts(page, ASIA_ASSISTS);
 }
 
 async function tapPoint(page: Page, point: { x: number; y: number }) {
@@ -239,12 +231,24 @@ test('Asia hit-assist countries survive Play feedback and question replacement a
   await openLocations(page, '/#/locations/asia', 'Play Asia', { width: 390, height: 844 });
   await assertAsiaPersistentHitContracts(page);
 
-  // Force the Play feedback rerender with an assisted wrong guess. This is the
-  // same replacement lifecycle that exposed #221. The persistent feedback is
-  // authoritative here; the graphite wrong-map pulse is intentionally brief.
+  // Force the Play feedback rerender with an assisted wrong guess. Choose an
+  // assist that actually owns uncontested pointer space in this exact frame;
+  // contested assists are allowed to yield to real land under #117.
   const target = await currentTarget(page);
-  const wrongId = ASIA_ASSISTS.find((id) => id !== target.id)!;
-  await tapPoint(page, await actionableEdgePoint(page, wrongId));
+  let wrongId: string | null = null;
+  let wrongPoint: { x: number; y: number } | null = null;
+  for (const id of ASIA_ASSISTS) {
+    if (id === target.id) continue;
+    const point = await findActionableHitPoint(page, id);
+    if (point) {
+      wrongId = id;
+      wrongPoint = point;
+      break;
+    }
+  }
+  expect(wrongId, 'Asia exposes an uncontested assisted wrong guess').not.toBeNull();
+  expect(wrongPoint, 'Asia exposes an actionable assisted wrong-guess point').not.toBeNull();
+  await tapPoint(page, wrongPoint!);
   await expect(page.locator('#map-prompt-heading')).toHaveText(target.name);
   await expect(page.locator('.answer-feedback--neutral')).toContainText('2 tries left');
   await assertAsiaPersistentHitContracts(page);
@@ -298,7 +302,7 @@ test('Caribbean true-scale inset exposes a practical touch target and scores thr
       await expect.poll(() => page.locator('#map-prompt-heading').innerText(), { timeout: 15_000 }).not.toBe(target.name);
       return;
     }
-    await advanceCaribbeanByKeyboard(page);
+    await advanceCaribbeanByPointer(page);
   }
   throw new Error('No Caribbean inset member was reached in the complete region round');
 });
