@@ -167,6 +167,7 @@
 .map-inset__hit {
   fill: transparent;
   stroke: none;
+  pointer-events: all;
 }
 
 .map-inset__hit:focus-visible {
