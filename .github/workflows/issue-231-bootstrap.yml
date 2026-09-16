@@ -20,6 +20,10 @@ jobs:
         with:
           node-version: 22
           cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
       - run: npm ci
       - run: node scripts/issue-231-inset-hardening.mjs
       - run: npm run maps:generate
