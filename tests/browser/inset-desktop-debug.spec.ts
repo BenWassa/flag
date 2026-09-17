@@ -35,6 +35,7 @@ test('debug desktop inset hit routing', async ({ page }) => {
     const before = await page.locator('.map-round-count').textContent();
     const diagnostics = await page.evaluate(({ id: targetId, point: p }) => {
       const hit = document.querySelector<SVGCircleElement>(`.map-inset__hit[data-id="${targetId}"]`)!;
+      const surface = document.querySelector<HTMLElement>('.map-stage__surface')!;
       const style = getComputedStyle(hit);
       const describe = (element: Element) => ({
         tag: element.tagName,
@@ -45,11 +46,14 @@ test('debug desktop inset hit routing', async ({ page }) => {
         zIndex: getComputedStyle(element).zIndex,
       });
       (window as unknown as { __insetEvents: string[] }).__insetEvents = [];
+      const events = (window as unknown as { __insetEvents: string[] }).__insetEvents;
       for (const type of ['pointerdown', 'mousedown', 'pointerup', 'mouseup', 'click']) {
-        hit.addEventListener(type, () => (window as unknown as { __insetEvents: string[] }).__insetEvents.push(`hit:${type}`));
+        hit.addEventListener(type, () => events.push(`hit:${type}`));
+        surface.addEventListener(type, () => events.push(`surface:${type}`));
+        surface.addEventListener(type, () => events.push(`surface-capture:${type}`), true);
         document.addEventListener(type, (event) => {
           const target = event.target as Element | null;
-          (window as unknown as { __insetEvents: string[] }).__insetEvents.push(`document:${type}:${target?.getAttribute('class') ?? target?.tagName ?? '?'}`);
+          events.push(`document:${type}:${target?.getAttribute('class') ?? target?.tagName ?? '?'}`);
         }, { once: true });
       }
       return {
@@ -62,10 +66,14 @@ test('debug desktop inset hit routing', async ({ page }) => {
     }, { id, point });
     console.log(`INSET_DIAGNOSTICS ${JSON.stringify(diagnostics)}`);
     await page.mouse.click(point.x, point.y);
-    await page.waitForTimeout(250);
+    await page.waitForTimeout(2_000);
     const after = await page.locator('.map-round-count').textContent();
+    const heading = await page.locator('#map-prompt-heading').innerText();
+    const feedback = await page.locator('.answer-feedback').textContent().catch(() => null);
+    const status = await page.locator('.map-prompt__status').textContent().catch(() => null);
+    const live = await page.locator('[role="status"][aria-live="polite"]').allTextContents();
     const events = await page.evaluate(() => (window as unknown as { __insetEvents: string[] }).__insetEvents);
-    console.log(`INSET_EVENTS ${JSON.stringify({ id, before, after, events })}`);
+    console.log(`INSET_EVENTS ${JSON.stringify({ id, before, after, heading, feedback, status, live, events })}`);
     return;
   }
   throw new Error('No inset target reached');
