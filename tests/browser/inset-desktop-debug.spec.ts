@@ -67,13 +67,15 @@ test('debug desktop inset hit routing', async ({ page }) => {
     console.log(`INSET_DIAGNOSTICS ${JSON.stringify(diagnostics)}`);
     await page.mouse.click(point.x, point.y);
     await page.waitForTimeout(2_000);
-    const after = await page.locator('.map-round-count').textContent();
-    const heading = await page.locator('#map-prompt-heading').innerText();
-    const feedback = await page.locator('.answer-feedback').textContent().catch(() => null);
-    const status = await page.locator('.map-prompt__status').textContent().catch(() => null);
-    const live = await page.locator('[role="status"][aria-live="polite"]').allTextContents();
-    const events = await page.evaluate(() => (window as unknown as { __insetEvents: string[] }).__insetEvents);
-    console.log(`INSET_EVENTS ${JSON.stringify({ id, before, after, heading, feedback, status, live, events })}`);
+    const afterState = await page.evaluate(() => ({
+      after: document.querySelector('.map-round-count')?.textContent ?? null,
+      heading: document.querySelector('#map-prompt-heading')?.textContent ?? null,
+      feedback: document.querySelector('.answer-feedback')?.textContent ?? null,
+      status: document.querySelector('.map-prompt__status')?.textContent ?? null,
+      live: [...document.querySelectorAll('[role="status"][aria-live="polite"]')].map((item) => item.textContent),
+      events: (window as unknown as { __insetEvents: string[] }).__insetEvents,
+    }));
+    console.log(`INSET_EVENTS ${JSON.stringify({ id, before, ...afterState })}`);
     return;
   }
   throw new Error('No inset target reached');
