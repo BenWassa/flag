@@ -4,7 +4,7 @@ This is the authoritative active checklist for Issue #71. Earlier #71 documents 
 
 ## Status
 
-**DEFERRED — run the final all-programme physical pass after #212 / PR #213 is merged and deployed, or explicitly removed from this gate.**
+**DEFERRED — final hardware evidence belongs after #212 / successor PR #222, #220 (unless explicitly removed), and the #226 Locations programme are integrated and deployed. Re-pin GitHub #71 to the exact final production SHA.**
 
 The automatic PWA update lifecycle from #191 is implemented and deployed. Since then the production surface has also absorbed the final Spatial/Home hardening relevant to device validation:
 
@@ -13,7 +13,7 @@ The automatic PWA update lifecycle from #191 is implemented and deployed. Since 
 - #196 — the centred Home chooser uses ordinary opaque cool near-white Atlas chrome rather than translucent glass;
 - #216 — CI/deployment architecture was restructured only; it does not change learner-facing behaviour.
 
-#212 / PR #213 remains the sole engineering dependency because it contains the still-unmerged stationary edge-tap versus platform Back-gesture repair and broad browser reconciliation.
+#212 / PR #222 remains an engineering dependency for the stationary edge-tap versus platform Back-gesture repair and broad browser reconciliation. PR #213 is a superseded draft, not the current delivery branch. #226 adds the global Locations framing/touch audit; #220 adds the optional German-state learning surface and is in the recorded #71 final pass. Before a final device run, also confirm whether the inset touch follow-up PR #231 has merged or been otherwise resolved.
 
 The exact production SHA to use for the physical gate is recorded in GitHub Issue #71. That issue is intentionally the canonical SHA pin: embedding the final housekeeping SHA in this file would itself create another build SHA and make the value self-invalidating.
 
@@ -23,7 +23,7 @@ Before a physical run, confirm the SHA recorded in #71 is still current `main` a
 
 - Physical hardware is required. Playwright/device emulation does not satisfy this gate.
 - Record device model, OS version, browser/version or installed-PWA context, production SHA, orientation and result.
-- Do not spend the final all-programme pass on an intermediate SHA while #212 remains capable of changing gesture evidence.
+- Do not spend the final all-programme pass on an intermediate SHA while #212, #226 or the retained #220 work can still change the assessed interaction surface.
 - Do not reopen the old pre-Spatial Home → Continent → Region → Country model.
 - Spatial Atlas is the production navigation presentation; typed hash routing/browser history remain authoritative.
 - `docs/architecture/pwa-update-lifecycle.md` is authoritative for service-worker discovery/adoption; do not substitute manual-refresh/cache-clear rituals during update scenarios.
