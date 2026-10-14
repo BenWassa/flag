@@ -1,64 +1,41 @@
 # Open Work
 
-GitHub Issues are the canonical task tracker. Closed implementation/design records belong in `docs/closed/` and are linked through [`../history.md`](../history.md).
+GitHub Issues are the canonical task tracker. This page is an **index and dependency map**, not a second issue tracker. Check issue and PR states and CI before work; historical SHA pins and PR references in older comments are not current authority.
 
 ## Production baseline
 
-Spatial Atlas is the accepted/default navigation presentation. The automated hardening programme, #186/#187 Home/focus corrections, #191 automatic PWA update lifecycle, #207 Flags live-activity viewport ownership, #196 Home chooser material correction and #216 CI restructuring are merged and deployed. Current `main` must preserve the typed router, learning/evidence/mastery semantics, canonical geography, offline/PWA behaviour and British English unless a future issue explicitly changes one of those contracts.
+Spatial Atlas is the default production navigation. Flags, Locations, Outlines and Neighbours cover the intended six-continent curriculum. Preserve the typed hash router, independent progress and Mastery, canonical Natural Earth geometry, automatic PWA update/offline behaviour and British English. Current contracts are in [PRODUCT.md](../../PRODUCT.md), [DESIGN.md](../../DESIGN.md) and [Spatial architecture](../architecture/spatial-atlas.md).
 
-Geographic detail is progressively disclosed (#197): world navigation reads as continents, a framed continent reveals its learner-facing areas, and country boundaries appear only where the activity is about countries. Continent and area shells are derived from the canonical country geometry by cancelling shared edges — there is no second geography source — and each selectable scope is named on the Earth by a real DOM control. See [`../architecture/spatial-atlas.md`](../architecture/spatial-atlas.md) and `DESIGN.md`.
+## Active programme — Locations usability (#226)
 
-The centred Home chooser now uses ordinary opaque cool near-white Atlas chrome rather than a translucent material, while the full globe remains the dominant saturated object. Live Flags questions yield the Spatial stage completely after geography-led scope selection.
+**Order:** [#227 shared foundation](https://github.com/BenWassa/flag/issues/227) → four region-audit lanes (parallel after foundation merges) → [#226 final 31-scope audit](https://github.com/BenWassa/flag/issues/226) → [#71 physical-device acceptance](https://github.com/BenWassa/flag/issues/71).
 
-Authoritative PWA update architecture:
+| Issue | Lane | Scope and dependency |
+| --- | --- | --- |
+| [#227](https://github.com/BenWassa/flag/issues/227) | Shared foundation | Initial-fit geography distinct from canonical rendered/scored geometry; reproducible fit, target size and assistance audit. Must precede region implementation. |
+| [#228](https://github.com/BenWassa/flag/issues/228) | Europe | Europe and four regions; Southern Europe, Spain/Canary Islands, microstates. After #227. |
+| [#137](https://github.com/BenWassa/flag/issues/137) | Asia | Whole Asia and six regions; original Asia fixes **already merged via #174**, issue reused for new #226 audit. After #227. |
+| [#229](https://github.com/BenWassa/flag/issues/229) | North America and Oceania | Nine scopes; remote islands, insets, practical hit areas. After #227. |
+| [#230](https://github.com/BenWassa/flag/issues/230) | Africa and South America | Ten scopes; mainland calibration and remote island cases. After #227. |
+| [#226](https://github.com/BenWassa/flag/issues/226) | Programme | Verify all 31 scopes, production evidence and post-merge regression/deployment. Close after all lanes. |
 
-- [`../architecture/pwa-update-lifecycle.md`](../architecture/pwa-update-lifecycle.md)
+The #221 question-transition touch lifecycle was delivered through [merged PR #225](https://github.com/BenWassa/flag/pull/225). [PR #231](https://github.com/BenWassa/flag/pull/231) is **still open** for inset edge hit-testing; do not assume it merged or that its failing desktop CI check is cleared. Regional work must consume the final verified contract rather than duplicate it.
 
-Routine Atlas releases now use application-owned update discovery/adoption. The learner should not need manual refresh/cache-clearing/reinstallation rituals, and active ephemeral learning work must not be discarded merely to update the shell.
+## Other outstanding engineering work
 
-Permanent CI is also now settled: `.github/workflows/ci.yml` produces the single tested `flag-atlas-dist`, then reusable exact-production desktop Chromium, mobile Chromium and PWA jobs run independently in parallel against that same verified artifact. GitHub Pages and Firebase deploy only the successful tested-main artifact.
+- [#212 — broad Playwright reconciliation](https://github.com/BenWassa/flag/issues/212): active successor [PR #222](https://github.com/BenWassa/flag/pull/222); the older draft PR #213 is superseded. #222 retains the stationary edge-tap versus platform Back-gesture repair, but cannot merge without full current CI and exact-production verification.
+- [#220 — Germany's 16 Länder](https://github.com/BenWassa/flag/issues/220): planned, additive subnational expansion across four domains. Start after #212 is integrated and deployed; coordinate topology/map ownership with the #226 programme. Do not conflate ISO3 country identity and ISO 3166-2 subdivision identity.
 
-## Remaining engineering gate — #212
+## Final physical-device gate (#71)
 
-[#212](https://github.com/BenWassa/flag/issues/212) / [PR #213](https://github.com/BenWassa/flag/pull/213) is the only remaining implementation stream.
+[#71](https://github.com/BenWassa/flag/issues/71) remains **open and owner-run**. It needs a re-pinned final production SHA after all releases that affect the evaluated interaction surface (at minimum #212 and #220 if retained, plus the #226 Locations programme). Automated Playwright/mobile emulation does not count as Android/iPhone evidence.
 
-It reconciles the broad Playwright suite with the current post-#197–#202, #207 and #196 product contracts and carries the still-unmerged #200 stationary edge-tap versus platform Back-gesture repair. The branch predates the current CI architecture, so #218's parallel exact-production jobs are authoritative during its final sync; temporary #212 broad-evidence workflow steps must not become permanent infrastructure.
+Use [the active physical-device checklist](issue-71-physical-device-gate.md) for real Android Chrome, iPhone Safari, installed-PWA automatic A→B adoption, active-round deferral, offline→online update, gesture/safe-area and domain-specific checks. Log hardware, browser/OS, SHA, orientation and result against #71.
 
-Do not begin the final all-programme physical-device pass while #212 can still alter gesture evidence.
+## PR and dependency hygiene
 
-## Final physical-device gate — #71
-
-[#71](https://github.com/BenWassa/flag/issues/71) remains the final owner-run product gate after #212 is merged/deployed or explicitly removed from its dependency set.
-
-Its final pass must use the exact deployed production SHA recorded in the GitHub issue. The issue, rather than this file, is the canonical SHA pin so documentation commits do not invalidate their own recorded build identity.
-
-Authoritative active checklist:
-
-- [`issue-71-physical-device-gate.md`](issue-71-physical-device-gate.md)
-
-The final physical pass covers:
-
-- physical Android Chrome;
-- physical iPhone/iOS Safari;
-- installed-PWA behaviour;
-- automatic A → B version discovery/adoption;
-- active-round update deferral;
-- offline → online update discovery;
-- current Home material and Flags full-viewport composition;
-- retained gesture, safe-area, orientation, navigation and offline behaviour;
-- the stationary edge-tap/platform Back boundary once #212 lands.
-
-Historical implementation/specification evidence retained for context:
-
-- [`issue-71-mobile-interaction.md`](issue-71-mobile-interaction.md)
-- [`issue-71-implementation-notes.md`](issue-71-implementation-notes.md)
-
-Do not derive new implementation work from stale pre-Spatial route or renderer assumptions in those historical records. Do not claim physical-device evidence from Playwright, CDP or browser emulation.
-
-## Working rules
-
-- Finish #212 before treating #71 as the final all-programme physical gate.
-- Test #71 only against the exact deployed `main` SHA recorded in the issue.
-- Record device/OS/browser or PWA context, orientation, scenarios and PASS/FAIL evidence.
-- If a material physical-device defect appears, keep #71 as validation owner and split non-trivial implementation into a focused issue.
-- Close #71 only after physical Android, physical iPhone and installed-PWA evidence is complete and any material defects are resolved/revalidated or separately tracked.
+- PR #222 replaces, but does not prove completion of, #213. Do not silently restore outdated Spatial UI assumptions.
+- PR #231 requires its failing desktop acceptance to be diagnosed and made green before merge.
+- Do not merge PRs on green `npm test` alone. Sync latest `main`, inspect the exact artifact, verify desktop/mobile/PWA gates and required CI.
+- Close an issue only once its full acceptance evidence exists. Move its working document to [`../closed/`](../closed/) and update this index at closeout.
+- Completed/superseded records belong in [`../closed/`](../closed/) and are contextualised by [`../history.md`](../history.md). Not every open issue requires a duplicate Markdown specification when GitHub has the full authoritative brief.
