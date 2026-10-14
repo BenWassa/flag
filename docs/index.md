@@ -25,7 +25,7 @@ Atlas documentation is organised by **authority and purpose** so current product
 ### Historical evidence
 
 - [`history.md`](history.md) — issue lineage, major supersessions and where to look for decision history.
-- [`closed/`](closed/) — completed issue worklogs, experiments, closeout evidence and superseded plans.
+- [`closed/index.md`](closed/index.md) — completed issue worklogs, experiments, closeout evidence and superseded plans.
 - [`research/`](research/) — supporting investigations/evidence that inform but do not override current product truth.
 
 ## Current production state
@@ -36,7 +36,7 @@ The conventional launcher remains only as the WebGL/renderer-failure fallback. T
 
 The World Crown is reachable and #138 already shipped its earned-only learner-facing Home surface.
 
-Issue #191 now owns the planned automatic PWA update lifecycle. Until it is implemented and deployed, #71 remains paused rather than spending final installed-PWA evidence against a service-worker lifecycle that is about to change.
+Issue #191's automatic PWA update lifecycle has shipped. The remaining physical-device gate is #71, scheduled after the interaction-changing work identified by the current [open-work index](open/index.md); device evidence must use the exact final deployed SHA, not a historical baseline.
 
 ## Documentation rules
 
