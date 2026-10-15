@@ -28,6 +28,12 @@ export interface CountryAudit {
   hasVisibleCue: boolean;
   hasCallout: boolean;
   inInset: boolean;
+  /**
+   * Share (0–1) of each practical hit disc's area samples that a real pointer
+   * resolves to this country. A disc buried under neighbouring land (#117 paints
+   * real polygons above assistance) reads near 0 even though it is 44px wide.
+   */
+  exposedHitFractions: number[];
   /** A pointer at this point is owned by the country, or null when none exists. */
   actionablePoint: { x: number; y: number } | null;
   class: TargetClass;
@@ -159,10 +165,29 @@ export async function auditFrame(
           }
         }
       }
+      const exposedHitFractions = hits.map((hit) => {
+        const m = hit.getScreenCTM()!;
+        let owned = 0;
+        let total = 0;
+        for (const fraction of [0.2, 0.45, 0.7, 0.92]) {
+          const samples = Math.max(6, Math.round(24 * fraction));
+          for (let i = 0; i < samples; i += 1) {
+            const a = (Math.PI * 2 * i) / samples;
+            const p = new DOMPoint(
+              hit.cx.baseVal.value + hit.r.baseVal.value * fraction * Math.cos(a),
+              hit.cy.baseVal.value + hit.r.baseVal.value * fraction * Math.sin(a),
+            ).matrixTransform(m);
+            total += 1;
+            if (owner(p.x, p.y) === id) owned += 1;
+          }
+        }
+        return total ? owned / total : 0;
+      });
       return {
         id,
         polygonExtentPx: extentUnits * pxPerUnit,
         hitDiametersPx,
+        exposedHitFractions,
         hasVisibleCue: Boolean(group.querySelector('.map-country__marker, .map-country__locator')),
         hasCallout: Boolean(group.querySelector('.map-country__callout-target')),
         inInset: insetIds.has(id),

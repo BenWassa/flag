@@ -121,7 +121,11 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
   islandLocatorIds: Object.freeze(['MLT']),
   precisionSensitiveCountryIds: Object.freeze(['AND', 'LIE', 'LUX', 'MCO', 'SMR', 'VAT', 'MLT']),
   callouts: Object.freeze({
-    AND: Object.freeze({ dx: -28, dy: 18, r: 10 }),
+    // Andorra is enclosed by Spain and France, so its old south-west target lay
+    // inside Spain with 5% of its 44 px hit disc exposed (0 at the Europe
+    // frame). The Mediterranean target below exposes 86-100% at every phone
+    // opening frame while the leader still reads as "Andorra".
+    AND: Object.freeze({ dx: 36, dy: 20, r: 10 }),
     LIE: Object.freeze({ dx: 24, dy: -20, r: 10 }),
     LUX: Object.freeze({ dx: -25, dy: -20, r: 10 }),
     MCO: Object.freeze({ dx: 27, dy: 16, r: 10 }),

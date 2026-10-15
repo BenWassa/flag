@@ -90,6 +90,13 @@ for (const viewport of VIEWPORTS) {
 
     assertEveryTargetActionable(frame, label);
     assertAssistedTargetsPractical(frame, label, ['AND', 'SMR', 'VAT', 'MLT']);
+    // Real land paints above assistance (#117), so a 44px disc can be wide yet
+    // buried. Andorra's target sits in the Mediterranean precisely so that most
+    // of its practical disc stays exposed.
+    expect(
+      Math.max(...frame.countries.find((entry) => entry.id === 'AND')!.exposedHitFractions),
+      `${label}: Andorra's practical target is mostly exposed, not buried under Spain/France`,
+    ).toBeGreaterThanOrEqual(0.6);
     for (const large of ['ESP', 'PRT', 'ITA', 'GRC']) {
       const item = frame.countries.find((entry) => entry.id === large)!;
       expect(item.class, `${label}: ${large} stays an ordinary canonical polygon`).toBe('A');
