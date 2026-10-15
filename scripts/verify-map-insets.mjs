@@ -59,6 +59,16 @@ for (let i = 0; i < inset.marks.length; i += 1) {
     assert.ok(apart >= 43.99, `${inset.marks[i].countryId} and ${inset.marks[j].countryId} are ${apart.toFixed(1)} px apart, so their touch surfaces do not overlap.`);
   }
 }
+for (const mark of inset.marks) {
+  const left = (mark.cx - inset.hitRadius - inset.source.x) * pxPerUnit;
+  const right = (inset.source.x + inset.source.width - mark.cx - inset.hitRadius) * pxPerUnit;
+  const top = (mark.cy - inset.hitRadius - inset.source.y) * pxPerUnit;
+  const bottom = (inset.source.y + inset.source.height - mark.cy - inset.hitRadius) * pxPerUnit;
+  assert.ok(
+    Math.min(left, right, top, bottom) >= -0.05,
+    `${mark.countryId} practical touch disc is fully contained by the true-scale inset source window.`,
+  );
+}
 assert.ok(inset.size.width <= 260 && inset.size.height <= 260, 'The panel stays small enough to be an answer surface, not the screen.');
 
 /* --- Refusals: an inset must never cost more than it buys --- */
@@ -145,6 +155,7 @@ assert.ok(
   'The panel survives forced-colours mode, so its boundary never depends on colour alone.',
 );
 assert.ok(/\.map-inset__context[\s\S]{0,80}pointer-events: none/.test(cartographyCss), 'Only the panel members answer inside the panel.');
+assert.ok(/\.map-inset__hit\s*\{[^}]*pointer-events:\s*all/.test(cartographyCss), 'Inset practical surfaces are explicitly hit-testable even with transparent paint.');
 
 const configSource = await readFile('scripts/map-continent-configs.mjs', 'utf8');
 assert.ok(
