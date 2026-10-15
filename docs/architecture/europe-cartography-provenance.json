@@ -60,6 +60,91 @@
     "source": "global canonical Natural Earth application-country topology",
     "globalSourceFeatureCount": 202
   },
+  "initialFit": {
+    "remoteComponents": {
+      "minGapUnits": 40,
+      "maxAreaShare": 0.05
+    },
+    "excludedComponents": {
+      "ESP": {
+        "components": 8,
+        "areaShare": 0.01343,
+        "nearestGapUnits": 94.3,
+        "bounds": [
+          141.6,
+          586.8,
+          190.1,
+          606.9
+        ]
+      },
+      "FRA": {
+        "components": 11,
+        "areaShare": 0.00763,
+        "nearestGapUnits": 665.8,
+        "bounds": [
+          -812.9,
+          742.5,
+          897.2,
+          1201.9
+        ]
+      },
+      "GBR": {
+        "components": 1,
+        "areaShare": 0,
+        "nearestGapUnits": 64.7,
+        "bounds": [
+          205.4,
+          249.9,
+          205.4,
+          249.9
+        ]
+      },
+      "NLD": {
+        "components": 3,
+        "areaShare": 0.00596,
+        "nearestGapUnits": 790.4,
+        "bounds": [
+          -386.3,
+          728.7,
+          -324.6,
+          797
+        ]
+      },
+      "NOR": {
+        "components": 21,
+        "areaShare": 0.03345,
+        "nearestGapUnits": 51.7,
+        "bounds": [
+          253.6,
+          15.2,
+          562.3,
+          1599.8
+        ]
+      },
+      "PRT": {
+        "components": 14,
+        "areaShare": 0.03666,
+        "nearestGapUnits": 83.8,
+        "bounds": [
+          22,
+          459.8,
+          166.1,
+          577.8
+        ]
+      },
+      "RUS": {
+        "components": 6,
+        "areaShare": 0.00748,
+        "nearestGapUnits": 1591.9,
+        "bounds": [
+          -1156.7,
+          100.7,
+          -1040.9,
+          177
+        ]
+      }
+    }
+  },
   "canonicalSourceGeometryMerges": {
     "CYP": [
       {

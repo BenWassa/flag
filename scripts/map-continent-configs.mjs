@@ -142,6 +142,12 @@ export const EUROPE_MAP_GENERATION_CONFIG = Object.freeze({
   // them visually without creating a second geometry source.
   fitExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR', 'NLD']),
   focusExcludeCountryIds: Object.freeze(['RUS', 'FRA', 'NOR', 'NLD']),
+  // Shared initial-fit rule (#227): a country's small, far-flung components
+  // (Canary Islands, Azores, Madeira) stay in its canonical path but stop
+  // deciding where a scope opens. Measured on projected geometry, never by id.
+  initialFit: Object.freeze({
+    remoteComponents: Object.freeze({ minGapUnits: 40, maxAreaShare: 0.05 }),
+  }),
   // Europe and Asia span far more canvas than the Africa-calibrated baseline,
   // so their non-interactive physical context carries proportionally more
   // detail for no learning value. Simplifying ocean/coastline/lake context
