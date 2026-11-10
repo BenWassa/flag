@@ -62,6 +62,10 @@ async function installTouchTimerTrace(page: Page): Promise<void> {
       if (id !== undefined && pending.delete(id)) events.push({ event: 'clear', id, at: performance.now() });
       return realClear(id);
     }) as typeof window.clearTimeout;
+    // Probe timer and frame scheduling at document bootstrap, while the app is
+    // still loading. By the time a round opens this baseline should have fired.
+    window.setTimeout(() => events.push({ event: 'boot-timer-fire', at: performance.now() }), 250);
+    window.requestAnimationFrame(() => events.push({ event: 'boot-frame-fire', at: performance.now() }));
   });
 }
 
@@ -71,14 +75,6 @@ for (const fixture of CASES) {
 
     await installTouchTimerTrace(page);
     await openLocationsScope(page, fixture.route, fixture.label, fixture.viewport);
-    // Establish whether this page's timer and animation-frame queues work
-    // BEFORE an answer. This uses no product state and is only diagnostic.
-    await page.evaluate(() => {
-      const events = (window as Window & { __atlasTouchTimerTrace?: { event: string; at: number }[] }).__atlasTouchTimerTrace;
-      window.setTimeout(() => events?.push({ event: 'pre-tap-timer-fire', at: performance.now() }), 250);
-      window.requestAnimationFrame(() => events?.push({ event: 'pre-tap-frame-fire', at: performance.now() }));
-    });
-    await page.waitForTimeout(400);
     const target = await currentTarget(page);
     const point = await fingerPoint(page, target.id);
     const owner = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)
