@@ -3,6 +3,7 @@ import type { MapRegionAsset } from '../domain/map-models.js';
 import type { AppRouter } from '../routing/router.js';
 import type { RoundContext } from './round-context.js';
 import { createLocationsRound, LOCATION_WRONG_FEEDBACK_MS } from './locations-round.js';
+import { PLAY_FEEDBACK_DWELL_CORRECT_MS, PLAY_FEEDBACK_DWELL_WRONG_MS } from './play-feedback-timing.js';
 import { AppStore } from './store.js';
 
 const asset: MapRegionAsset = {
@@ -86,5 +87,86 @@ describe('Locations wrong-answer feedback state', () => {
     expect(store.mapSession!.attempts).toEqual(attempts);
     expect(store.locationProgress).toEqual(progress);
     expect(store.mapLastOutcome).toEqual(outcome);
+  });
+});
+
+
+describe('Locations resolved-answer progression (#235)', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.useFakeTimers();
+  });
+
+  afterEach(() => vi.useRealTimers());
+
+  it.each(['learn', 'test'] as const)('%s accepts one correct answer, dwells, then advances exactly once', (mode) => {
+    const store = new AppStore();
+    expect(store.startMapSession(asset, mode)).toBe(true);
+    const first = store.mapSession!.countryIds[0];
+    const second = store.mapSession!.countryIds[1];
+    const finishInteraction = vi.fn();
+    const round = createLocationsRound(context(store, finishInteraction));
+
+    round.submitAnswer(first, `[data-id="${first}"]`);
+    expect(store.mapSession!.currentIndex).toBe(0);
+    expect(store.mapSession!.targets[first]?.resolved).toBe(true);
+    expect(store.mapLastOutcome?.correct).toBe(true);
+    // A repeat input during feedback cannot schedule another advance.
+    round.submitAnswer(first, `[data-id="${first}"]`);
+    expect(store.mapSession!.attempts).toHaveLength(1);
+
+    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_CORRECT_MS - 1);
+    expect(store.mapSession!.currentIndex).toBe(0);
+    vi.advanceTimersByTime(1);
+    expect(store.mapSession!.currentIndex).toBe(1);
+    expect(store.mapSession!.countryIds[store.mapSession!.currentIndex]).toBe(second);
+    expect(store.mapLastOutcome).toBeNull();
+    expect(store.view.name).toBe('map-quiz');
+    expect(finishInteraction).toHaveBeenCalledTimes(2);
+
+    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
+    expect(store.mapSession!.currentIndex).toBe(1);
+    expect(store.mapSession!.attempts).toHaveLength(1);
+  });
+
+  it('cancels an accepted-answer advance when a round is exited', () => {
+    const store = new AppStore();
+    expect(store.startMapSession(asset, 'learn')).toBe(true);
+    const first = store.mapSession!.countryIds[0];
+    const finishInteraction = vi.fn();
+    const round = createLocationsRound(context(store, finishInteraction));
+
+    round.submitAnswer(first, null);
+    expect(store.mapSession!.targets[first]?.resolved).toBe(true);
+    round.cancelPending();
+    store.abandonMapSession();
+    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
+
+    expect(store.mapSession).toBeNull();
+    // Only the answer rerender occurred; no stale timer advanced or rendered.
+    expect(finishInteraction).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not skip on unresolved guesses, but advances after the third-miss reveal dwell', () => {
+    const store = new AppStore();
+    expect(store.startMapSession(asset, 'test')).toBe(true);
+    const first = store.mapSession!.countryIds[0];
+    const wrong = first === 'GHA' ? 'MLI' : 'GHA';
+    const round = createLocationsRound(context(store));
+
+    for (let miss = 1; miss <= 2; miss += 1) {
+      round.submitAnswer(wrong, null);
+      expect(store.mapSession!.targets[first]?.misses).toBe(miss);
+      expect(store.mapSession!.targets[first]?.resolved).toBe(false);
+      vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
+      expect(store.mapSession!.currentIndex).toBe(0);
+    }
+    round.submitAnswer(wrong, null);
+    expect(store.mapSession!.targets[first]?.resolution).toBe('revealed');
+    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS - 1);
+    expect(store.mapSession!.currentIndex).toBe(0);
+    vi.advanceTimersByTime(1);
+    expect(store.mapSession!.currentIndex).toBe(1);
+    expect(store.mapSession!.attempts).toHaveLength(3);
   });
 });
