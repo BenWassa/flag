@@ -47,8 +47,30 @@ async function advanceCaribbeanByPointer(page: Page): Promise<void> {
   // This suite owns the pointer/touch contract. Advance through canonical map
   // geography with the same scoring path the inset eventually exercises rather
   // than introducing an unrelated keyboard dependency into the inset regression.
-  await tapPoint(page, await actionableCountryPoint(page, id));
-  await expect(roundCount, `${id} pointer answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 15_000 });
+  const point = await actionableCountryPoint(page, id);
+  await tapPoint(page, point);
+  try {
+    await expect(roundCount, `${id} pointer answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 15_000 });
+  } catch (error) {
+    // #235: distinguish a wrong/intercepted pointer answer from an accepted
+    // answer whose progression timer did not fire. Keep the failing acceptance.
+    const diagnostic = await page.evaluate(({ x, y, expectedId }) => {
+      const heading = document.querySelector('#map-prompt-heading')?.textContent;
+      const viewport = document.querySelector<HTMLElement>('[data-map-viewport]');
+      const owner = document.elementFromPoint(x, y)
+        ?.closest('[data-action="map-answer"]')?.getAttribute('data-id');
+      const status = document.querySelector('.answer-feedback, .map-prompt__status')?.textContent;
+      const selected = document.querySelector(`.map-country[data-id="${expectedId}"]`);
+      return {
+        expectedId, owner, heading, count: document.querySelector('.map-round-count')?.textContent,
+        status, selectedClass: selected?.getAttribute('class'),
+        viewportPositioned: viewport?.dataset.mapPositioned,
+        viewportSession: viewport?.dataset.mapSession,
+      };
+    }, { x: point.x, y: point.y, expectedId: id });
+    console.log('Locations #235 Caribbean pointer failure:', JSON.stringify(diagnostic));
+    throw error;
+  }
 }
 
 function persistentHit(page: Page, id: string) {
