@@ -71,6 +71,14 @@ for (const fixture of CASES) {
 
     await installTouchTimerTrace(page);
     await openLocationsScope(page, fixture.route, fixture.label, fixture.viewport);
+    // Establish whether this page's timer and animation-frame queues work
+    // BEFORE an answer. This uses no product state and is only diagnostic.
+    await page.evaluate(() => {
+      const events = (window as Window & { __atlasTouchTimerTrace?: { event: string; at: number }[] }).__atlasTouchTimerTrace;
+      window.setTimeout(() => events?.push({ event: 'pre-tap-timer-fire', at: performance.now() }), 250);
+      window.requestAnimationFrame(() => events?.push({ event: 'pre-tap-frame-fire', at: performance.now() }));
+    });
+    await page.waitForTimeout(400);
     const target = await currentTarget(page);
     const point = await fingerPoint(page, target.id);
     const owner = await page.evaluate(({ x, y }) => document.elementFromPoint(x, y)
@@ -87,9 +95,11 @@ for (const fixture of CASES) {
     // The probe is independent of the quiz timer. If it also never fires, the
     // browser event loop is starved, rather than only the Locations controller.
     await page.evaluate(() => {
+      const events = (window as Window & { __atlasTouchTimerTrace?: { event: string; at: number }[] }).__atlasTouchTimerTrace;
+      window.queueMicrotask(() => events?.push({ event: 'post-tap-microtask-fire', at: performance.now() }));
+      window.requestAnimationFrame(() => events?.push({ event: 'post-tap-frame-fire', at: performance.now() }));
       window.setTimeout(() => {
-        (window as Window & { __atlasTouchTimerTrace?: { event: string; at: number }[] })
-          .__atlasTouchTimerTrace?.push({ event: 'independent-probe-fire', at: performance.now() });
+        events?.push({ event: 'independent-probe-fire', at: performance.now() });
       }, 1_000);
     });
     try {
