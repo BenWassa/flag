@@ -33,7 +33,10 @@ describe('Locations wrong-answer feedback state', () => {
     vi.useFakeTimers();
   });
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 
   it('clears the transient Learn highlight without changing the attempt or evidence', () => {
     const store = new AppStore();
@@ -97,7 +100,10 @@ describe('Locations resolved-answer progression (#235)', () => {
     vi.useFakeTimers();
   });
 
-  afterEach(() => vi.useRealTimers());
+  afterEach(() => {
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
 
   it.each(['learn', 'test'] as const)('%s accepts one correct answer, dwells, then advances exactly once', (mode) => {
     const store = new AppStore();
@@ -124,6 +130,45 @@ describe('Locations resolved-answer progression (#235)', () => {
     expect(store.view.name).toBe('map-quiz');
     expect(finishInteraction).toHaveBeenCalledTimes(2);
 
+    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
+    expect(store.mapSession!.currentIndex).toBe(1);
+    expect(store.mapSession!.attempts).toHaveLength(1);
+  });
+
+  it('advances on visible frames when the browser timeout task source is stalled', () => {
+    // Simulate the exact #235 browser condition: setTimeout is scheduled but
+    // never serviced, while requestAnimationFrame continues to run.
+    const frames = new Map<number, FrameRequestCallback>();
+    let nextFrameId = 0;
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      const id = ++nextFrameId;
+      frames.set(id, callback);
+      return id;
+    });
+    vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
+    const frameAt = (time: number) => {
+      const [id, callback] = frames.entries().next().value ?? [];
+      expect(callback).toBeTypeOf('function');
+      frames.delete(id);
+      callback(time);
+    };
+
+    const store = new AppStore();
+    expect(store.startMapSession(asset, 'learn')).toBe(true);
+    const first = store.mapSession!.countryIds[0];
+    const round = createLocationsRound(context(store));
+    const started = performance.now();
+    round.submitAnswer(first, null);
+
+    expect(store.mapSession!.currentIndex).toBe(0);
+    frameAt(started + PLAY_FEEDBACK_DWELL_CORRECT_MS - 1);
+    expect(store.mapSession!.currentIndex).toBe(0);
+    frameAt(started + PLAY_FEEDBACK_DWELL_CORRECT_MS + 1);
+    expect(store.mapSession!.currentIndex).toBe(1);
+    expect(frames.size).toBe(0);
+
+    // The browser may eventually resume its timeout queue. It must not skip
+    // a second country or record a duplicate attempt.
     vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
     expect(store.mapSession!.currentIndex).toBe(1);
     expect(store.mapSession!.attempts).toHaveLength(1);
