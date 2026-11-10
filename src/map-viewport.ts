@@ -363,7 +363,8 @@ function suppressDraggedClick(event: MouseEvent): void {
 function positionViewport(viewport: HTMLElement): void {
   const sessionId = viewport.dataset.mapSession;
   if (!sessionId || viewport.dataset.mapPositioned === 'true') return;
-  requestAnimationFrame(() => {
+  const position = () => {
+    if (viewport.dataset.mapPositioned === 'true') return;
     // A viewport that is not laid out yet has no aspect. `viewportAspect` falls
     // back to 1:1, the opening frame is computed against that square, and
     // `applyBox` then REMEMBERS it — after which the resize path faithfully
@@ -379,7 +380,14 @@ function positionViewport(viewport: HTMLElement): void {
       return;
     }
     fitRegion(viewport);
-  });
+  };
+  // A React answer commit replaces the SVG and its viewport together. In the
+  // mutation callback the new viewport is usually already measurable, and its
+  // untouched source viewBox would otherwise expose undersized island hits for
+  // one animation frame. Position it in that same microtask when possible;
+  // retain the deferred path solely for genuinely unlaid-out subtrees.
+  if (viewport.clientWidth > 0 && viewport.clientHeight > 0) position();
+  else requestAnimationFrame(position);
 }
 
 let resizeObserver: ResizeObserver | null = null;

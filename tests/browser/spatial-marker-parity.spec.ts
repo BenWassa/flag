@@ -106,7 +106,7 @@ async function openCase(page: Page, markerCase: MarkerCase) {
 }
 
 async function tap(page: Page, x: number, y: number) {
-  if (test.info().project.name === 'mobile-chromium') {
+  if (test.info().project.name.includes('mobile')) {
     await page.touchscreen.tap(x, y);
   } else {
     await page.mouse.click(x, y);

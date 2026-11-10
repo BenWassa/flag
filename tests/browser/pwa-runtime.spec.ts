@@ -8,6 +8,7 @@ import { tmpdir } from 'node:os';
 
 const ROOT = resolve('.pwa-runtime-builds');
 const VERSIONS = ['runtime-a', 'runtime-b'] as const;
+const BUILD_ADOPTION_TIMEOUT_MS = 15_000;
 type Version = typeof VERSIONS[number];
 
 type FixtureIdentity = {
@@ -111,7 +112,15 @@ async function waitForWaitingWorker(page: Page) {
 }
 
 async function expectBuild(page: Page, version: Version) {
-  await expect(page.locator('meta[name="atlas-build"]')).toHaveAttribute('content', buildIdentity(version));
+  // Atlas deliberately retries an already-waiting worker every 10 seconds when
+  // a fail-closed client handshake races a safety transition. The acceptance
+  // window must cover that documented retry without adding a sleep or retrying
+  // the test itself; a worker that never adopts still fails deterministically.
+  await expect(page.locator('meta[name="atlas-build"]')).toHaveAttribute(
+    'content',
+    buildIdentity(version),
+    { timeout: BUILD_ADOPTION_TIMEOUT_MS },
+  );
 }
 
 async function cacheState(page: Page, targetUrl?: string) {
@@ -159,7 +168,7 @@ test.beforeAll(() => {
 });
 
 test('fresh install retains shell, lazy geography and honest first-use offline behaviour', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(180_000);
   const server = await startVersionedServer();
   const profileRoot = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-fresh-'));
@@ -206,7 +215,7 @@ test('fresh install retains shell, lazy geography and honest first-use offline b
 });
 
 test('returning learner launch discovers B and performs exactly one controlled reload', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(180_000);
   const server = await startVersionedServer();
   const profile = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-returning-'));
@@ -258,7 +267,7 @@ test('returning learner launch discovers B and performs exactly one controlled r
 });
 
 test('active round defers B until the learner exits to a safe surface', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(180_000);
   const server = await startVersionedServer();
   const profile = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-active-'));
@@ -293,7 +302,7 @@ test('active round defers B until the learner exits to a safe surface', async ({
 });
 
 test('offline to online transition automatically discovers and adopts B', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(180_000);
   const server = await startVersionedServer();
   const profile = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-reconnect-'));
@@ -321,7 +330,7 @@ test('offline to online transition automatically discovers and adopts B', async 
 });
 
 test('safe tab cannot force an active-round tab to reload; all clients adopt once safe', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(220_000);
   const server = await startVersionedServer();
   const profile = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-multiclient-'));
@@ -364,7 +373,7 @@ test('safe tab cannot force an active-round tab to reload; all clients adopt onc
 });
 
 test('failed B update leaves A usable and preserves its offline shell', async ({}, testInfo) => {
-  test.skip(testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
+  test.skip(!testInfo.project.name.includes('desktop') && testInfo.project.name !== 'chromium', 'This persistent-context service-worker test has one desktop Chromium authority.');
   test.setTimeout(180_000);
   const server = await startVersionedServer();
   const profile = await mkdtemp(resolve(tmpdir(), 'atlas-pwa-failure-'));

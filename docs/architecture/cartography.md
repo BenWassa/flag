@@ -267,6 +267,87 @@ The production map uses native SVG `viewBox` handling rather than a runtime pan/
 
 An earlier overlay toolbar was rejected because it could cover Madagascar/Mauritius-area targets. The later dedicated toolbar row is also intentionally absent on mobile: pinch-out supplies the natural return toward the full-continent frame.
 
+### Initial-fit geography is not canonical geometry (Issue #227)
+
+A scope's opening frame optimises **learning usability**, not exhaustive visual
+inclusion. Two things that used to be conflated are separate:
+
+- **Canonical geometry** — the Natural Earth country polygons, ISO3 identity,
+  scoring, adjacency and the Outlines silhouette. It is never filtered for
+  framing, and every component of a country stays in its `path`.
+- **Initial-fit geography** — the subset of that geometry the generator measures
+  to decide where a scope opens (`*_SCOPE_FOCUS`).
+
+One generic, declarative rule connects them. A continent opts in with
+`initialFit.remoteComponents: { minGapUnits, maxAreaShare }` in
+`scripts/map-continent-configs.mjs`. For every multipart country the generator
+takes the largest projected component as its primary landmass and leaves a
+component **out of the opening frame** when it is both far from that landmass
+(`>= minGapUnits` canvas units between bounding boxes) and a small share of the
+country (`<= maxAreaShare` of its projected area). Spain's Canary Islands and
+Portugal's Azores and Madeira are the reference cases, but the rule names no
+country, reads no question and applies identically to every scope containing
+the country.
+
+Rules that keep this safe:
+
+- it is a presentation/interaction operation, never a geopolitical rewrite — an
+  excluded component is still drawn, still scores as its country and can be
+  reached by pan/zoom where the canvas includes it;
+- the decision is scope-stable and question-independent, so it can neither leak
+  an answer nor move the camera between questions;
+- regional overrides use this shared mechanism (or the older whole-country
+  `fit/focusExcludeCountryIds` and `fit/focusCountryBounds` seams it
+  generalises), never a per-device camera table, polygon edit or runtime
+  `if (country)` branch;
+- the applied rule and each country's excluded components (count, share of area,
+  nearest gap, bounds) are recorded under `initialFit` in the continent's
+  `*-cartography-provenance.json`, so a frame is reviewable without
+  reverse-engineering it.
+
+`scripts/verify-initial-fit.mjs` guards the rule (genericity, order-independence,
+non-mutation), proves excluded components remain in the canonical path, and pins
+the Southern Europe reference frame.
+
+#### Visibility and touchability are audited separately
+
+A polygon can be selectable yet undiscoverable, or visible yet too small to hit.
+Each scoring country is therefore classified at the opening frame from evidence,
+not land area:
+
+| Class | Meaning |
+|---|---|
+| A | Canonical polygon is visible and practically selectable on its own |
+| B | Polygon visible; needs the shared invisible ~44 px hit assistance |
+| C | Polygon effectively invisible; persistent restrained cue plus separate practical surface |
+| D | Special geographic treatment: leader-line callout or true-scale inset (rare) |
+
+Real polygons keep hit precedence over assistance in every class.
+
+#### Zoom contract
+
+Minimum zoom is the complete parent continent; maximum is
+`maxZoom` (default 5.5x) relative to the canvas. The opening frame must already
+be useful, so a poor frame is never repaired by raising the ceiling:
+`verify-initial-fit.mjs` requires every scope to keep at least 1.1x of zoom
+headroom beyond its opening frame, and reports the headroom per scope.
+
+#### Measuring a scope
+
+- `node scripts/build-verifier-output.mjs && node scripts/measure-locations-framing.mjs`
+  prints, for all 31 Locations scopes, the opening frame, zoom versus canvas, the
+  countries driving each edge, fit-excluded countries, the A–D classification and
+  estimated phone-scale polygon sizes (`--json` for per-country detail; stage
+  sizes are assumptions, so use it to find problems, not as evidence).
+- `tests/browser/helpers/locations-audit.ts` measures the real production page:
+  fitted viewBox, effective units per CSS pixel, screen-space polygon extent,
+  practical hit diameters, visible cues, inset/callout membership and an
+  actionable pointer point per country, at the opening frame, after a question
+  advance and after zoom.
+- `tests/browser/locations-framing-contract.spec.ts` is the standing
+  exact-production guard: Southern Europe at 320x568, 390x844, 844x390 and
+  desktop, plus representative dense, tiny-island, inset and contiguous scopes.
+
 ### The stage box is the viewport (Issue #112)
 
 `src/map-viewport.ts` reads its aspect ratio from the `[data-map-viewport]`

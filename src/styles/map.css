@@ -158,7 +158,7 @@
 .map-country__callout-hit { pointer-events: none; }
 .map-country[data-action="map-answer"] .map-country__locator-hit,
 .map-country[data-action="map-answer"] .map-country__callout-hit,
-.map-assist-hits [data-action="map-answer"] .map-country__assisted-hit { pointer-events: all; }
+.map-assist-hits [data-action="map-answer"] [data-map-hit] { pointer-events: all; }
 .map-current-target-hit { pointer-events: all; }
 
 /* SVG groups otherwise inherit the global tabindex focus rectangle. Focus is

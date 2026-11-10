@@ -30,12 +30,10 @@ for (const viewport of [
     expect(chooserBox.y).toBeGreaterThanOrEqual(0);
     expect(chooserBox.y + chooserBox.height).toBeLessThanOrEqual(viewport.height + 1);
 
-    // Home moved from one bounded neutral card to a screen-level overlay with
-    // independent floating mode tiles (#187 overlay disclosure polish): the
-    // chooser surface is now deliberately full-bleed, so a fixed width cap no
-    // longer applies. Each tile's own on-screen containment is still checked
-    // below, which is what actually matters for usability.
-
+    // #196/#217 replaced the old bounded chooser panel with a full-bleed
+    // command overlay whose individual mode tiles are the bounded surfaces.
+    // The wrapper is therefore allowed to span the viewport; each tile below
+    // remains independently required to stay fully on-screen.
     for (const mode of MODES) {
       const button = page.getByRole('button', { name: new RegExp(`^${mode}, \\d+ of \\d+ cleared$`) });
       await expect(button).toBeVisible();

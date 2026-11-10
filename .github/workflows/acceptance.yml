@@ -30,19 +30,7 @@ jobs:
       - name: Current desktop product contracts
         run: >-
           npx playwright test
-          tests/browser/spatial-home-overlay.spec.ts
-          tests/browser/spatial-home-matrix.spec.ts
-          tests/browser/world-crown.spec.ts
-          tests/browser/spatial-scope-selection.spec.ts
-          tests/browser/spatial-framing.spec.ts
-          tests/browser/spatial-marker-parity.spec.ts
-          tests/browser/locations-three-strike.spec.ts
-          tests/browser/locations-feedback-geometry.spec.ts
-          tests/browser/locations-reduced-motion.spec.ts
-          tests/browser/recognition-rounds.spec.ts
-          tests/browser/flags-activity-viewport.spec.ts
-          tests/browser/neighbors-suggestions-a11y.spec.ts
-          --project=chromium
+          --project=acceptance-desktop
           --workers=1
           --retries=0
       - name: Upload desktop diagnostics on failure
@@ -81,13 +69,7 @@ jobs:
       - name: Current mobile product contracts
         run: >-
           npx playwright test
-          tests/browser/spatial-home-overlay.spec.ts
-          tests/browser/world-crown.spec.ts
-          tests/browser/spatial-scope-selection.spec.ts
-          tests/browser/spatial-framing.spec.ts
-          tests/browser/locations-three-strike.spec.ts
-          tests/browser/flags-activity-viewport.spec.ts
-          --project=mobile-chromium
+          --project=acceptance-mobile
           --workers=1
           --retries=0
       - name: Upload mobile diagnostics on failure
@@ -123,8 +105,7 @@ jobs:
       - name: Exact-production PWA lifecycle
         run: >-
           npx playwright test
-          tests/browser/pwa-runtime.spec.ts
-          --project=chromium
+          --project=acceptance-pwa-desktop
           --workers=1
           --retries=0
       - name: Upload PWA diagnostics on failure

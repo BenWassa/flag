@@ -502,6 +502,73 @@ function boundsToFocus(bounds, padding = 26, minimum = {}) {
   };
 }
 
+// Initial-fit geography is deliberately separate from canonical geometry. A
+// country's remote, subordinate components (Spain's Canary Islands, Portugal's
+// Azores) stay in its path, its scoring identity and its Outlines silhouette;
+// they merely stop deciding where a scope opens. The rule is one generic,
+// scope-stable measurement of the projected geometry — never a country id and
+// never the current question — so every continent consumes the same mechanism.
+function boxGap(a, b) {
+  const dx = Math.max(a[0][0] - b[1][0], b[0][0] - a[1][0], 0);
+  const dy = Math.max(a[0][1] - b[1][1], b[0][1] - a[1][1], 0);
+  return Math.hypot(dx, dy);
+}
+
+export function partitionRemoteComponents(item, policy, measure) {
+  const geometry = item.geometry;
+  if (!policy || geometry?.type !== 'MultiPolygon' || geometry.coordinates.length < 2) {
+    return { kept: item, excluded: [] };
+  }
+  const components = geometry.coordinates.map((coordinates) => {
+    const polygon = { type: 'Polygon', coordinates };
+    return { coordinates, bounds: measure.bounds(polygon), area: Math.abs(measure.area(polygon)) };
+  });
+  const totalArea = components.reduce((sum, component) => sum + component.area, 0);
+  if (!(totalArea > 0)) return { kept: item, excluded: [] };
+  const primary = components.reduce((best, component) => (component.area > best.area ? component : best));
+  const kept = [];
+  const excluded = [];
+  for (const component of components) {
+    const gap = component === primary ? 0 : boxGap(component.bounds, primary.bounds);
+    const areaShare = component.area / totalArea;
+    if (component !== primary && gap >= policy.minGapUnits && areaShare <= policy.maxAreaShare) {
+      excluded.push({
+        bounds: component.bounds.flat().map((value) => Number(value.toFixed(1))),
+        gapUnits: Number(gap.toFixed(1)),
+        areaShare: Number(areaShare.toFixed(5)),
+      });
+    } else {
+      kept.push(component.coordinates);
+    }
+  }
+  if (!excluded.length) return { kept: item, excluded };
+  return { kept: { ...item, geometry: { ...geometry, coordinates: kept } }, excluded };
+}
+
+function summariseExcluded(excluded) {
+  const xs = excluded.flatMap((item) => [item.bounds[0], item.bounds[2]]);
+  const ys = excluded.flatMap((item) => [item.bounds[1], item.bounds[3]]);
+  return {
+    components: excluded.length,
+    areaShare: Number(excluded.reduce((sum, item) => sum + item.areaShare, 0).toFixed(5)),
+    nearestGapUnits: Math.min(...excluded.map((item) => item.gapUnits)),
+    bounds: [Math.min(...xs), Math.min(...ys), Math.max(...xs), Math.max(...ys)],
+  };
+}
+
+function resolveInitialFitPolicy(config) {
+  const policy = config.initialFit?.remoteComponents;
+  if (!policy) return null;
+  const { minGapUnits, maxAreaShare, ...unknown } = policy;
+  if (Object.keys(unknown).length) {
+    throw new Error(`${config.displayName} initialFit.remoteComponents accepts only minGapUnits and maxAreaShare.`);
+  }
+  if (!(minGapUnits > 0) || !(maxAreaShare > 0 && maxAreaShare < 1)) {
+    throw new Error(`${config.displayName} initialFit.remoteComponents needs minGapUnits > 0 and 0 < maxAreaShare < 1.`);
+  }
+  return { minGapUnits, maxAreaShare };
+}
+
 function geometryBounds(geometry) {
   const bounds = [[Infinity, Infinity], [-Infinity, -Infinity]];
   for (const [, x, y] of (geometry.path ?? geometry.outlinePath ?? '').matchAll(/(-?[\d.]+),(-?[\d.]+)/g)) {
@@ -951,11 +1018,28 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
         }];
       }),
   );
+  // Measured once per country from the same simplified geometry the runtime
+  // draws, so the decision is identical for every scope that contains it.
+  const initialFitPolicy = resolveInitialFitPolicy(config);
+  const initialFitById = new Map();
+  const initialFitReport = {};
+  if (initialFitPolicy) {
+    for (const [id, item] of simplifiedById) {
+      if (item.properties?.role !== 'country') continue;
+      const { kept, excluded } = partitionRemoteComponents(
+        focusProjectedById.get(id) ?? item,
+        initialFitPolicy,
+        { bounds: (value) => planarPath.bounds(value), area: (value) => planarPath.area(value) },
+      );
+      initialFitById.set(id, kept);
+      if (excluded.length) initialFitReport[id] = excluded;
+    }
+  }
   const focusForIds = (ids, scopeId) => {
     const preferredIds = ids.filter((id) => !focusExcludedIds.has(id));
     const focusIds = preferredIds.length ? preferredIds : ids;
     const regionFeatures = focusIds
-      .map((id) => focusProjectedById.get(id) ?? simplifiedById.get(id))
+      .map((id) => initialFitById.get(id) ?? focusProjectedById.get(id) ?? simplifiedById.get(id))
       .filter(Boolean);
     const bounds = planarPath.bounds(featureCollection(regionFeatures));
     // A locator dot or leader-line target can sit outside its own polygon, and
@@ -1049,6 +1133,15 @@ async function generateContinent({ config, catalog, sourceResults, manifest, glo
       source: config.adjacencyMode === 'global' ? 'global canonical Natural Earth application-country topology' : 'continent-local canonical topology',
       globalSourceFeatureCount: globalGraph.sourceFeatureCount,
     },
+    ...(initialFitPolicy ? {
+      initialFit: {
+        remoteComponents: initialFitPolicy,
+        // Fit-only: these components remain in the country's canonical path.
+        excludedComponents: Object.fromEntries(Object.entries(initialFitReport)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([id, excluded]) => [id, summariseExcluded(excluded)])),
+      },
+    } : {}),
     ...(Object.keys(geographicAudit).length ? { geographicAudit } : {}),
     canonicalSourceGeometryMerges: CANONICAL_SOURCE_GEOMETRY_MERGES,
     boundaryPolicy: {
