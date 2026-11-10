@@ -27,14 +27,6 @@ const MapMarkup = memo(function MapMarkup({ asset, session, currentIndex: _curre
   const actions = useAtlasActions();
   const surfaceRef = useRef<HTMLDivElement>(null);
   const keyboardFocusCountryId = useRef<string | null>(null);
-  const pendingPointerAnswerFrame = useRef<number | null>(null);
-
-  useEffect(() => () => {
-    if (pendingPointerAnswerFrame.current !== null) {
-      window.cancelAnimationFrame(pendingPointerAnswerFrame.current);
-      pendingPointerAnswerFrame.current = null;
-    }
-  }, []);
 
   const restoreKeyboardCountry = () => {
     const countryId = keyboardFocusCountryId.current;
@@ -78,25 +70,7 @@ const MapMarkup = memo(function MapMarkup({ asset, session, currentIndex: _curre
       if (!interactive) return;
       keyboardFocusCountryId.current = null;
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
-      if (!element?.dataset.id) return;
-      if (event.detail === 0) {
-        // Keyboard-generated clicks do not have a pointer sequence to finish.
-        actions.answerLocation(element.dataset.id, element);
-        return;
-      }
-      // A real touch/mouse click must finish before React replaces the source
-      // SVG. Chromium prioritises pending touch input over timer tasks; in
-      // exact-production mobile acceptance the answer was recorded but both
-      // the 620ms advance timer and an unrelated timer then stopped firing
-      // while animation frames continued. Commit the answer on the next frame,
-      // after the input event has fully unwound, without changing dwell or
-      // scoring. Keep only one pending answer per pointer frame.
-      if (pendingPointerAnswerFrame.current !== null) return;
-      const countryId = element.dataset.id;
-      pendingPointerAnswerFrame.current = window.requestAnimationFrame(() => {
-        pendingPointerAnswerFrame.current = null;
-        if (surfaceRef.current?.contains(element)) actions.answerLocation(countryId, element);
-      });
+      if (element?.dataset.id) actions.answerLocation(element.dataset.id, element);
     }}
     onKeyDown={(event) => {
       if (!interactive || (event.key !== 'Enter' && event.key !== ' ')) return;
