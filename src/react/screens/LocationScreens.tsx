@@ -1,4 +1,4 @@
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { memo, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { COUNTRY_BY_ID } from '../../data/countries.js';
 import { getMapContinentConfigForScope } from '../../data/map-scopes.js';
 import { currentMapTarget } from '../../domain/map-game.js';
@@ -10,9 +10,15 @@ import { useAtlasActions } from '../actions.js';
 import { Icon } from '../components/Icon.js';
 import { AnswerFeedbackPanel, LiveScore } from '../components/RoundFeedback.js';
 
-function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountryId, labelledBy }: {
+// Atlas mutates the active session in place. Explicit primitive revision props
+// make it safe to memoise the expensive SVG subtree: a live-region announcement
+// or other shell re-render must not tear down the map's active touch surface.
+// Current index changes without a new attempt on the automatic advance.
+const MapMarkup = memo(function MapMarkup({ asset, session, currentIndex: _currentIndex, attemptCount: _attemptCount, interactive, showFeedback, lastWrongCountryId, labelledBy }: {
   asset: MapRegionAsset;
   session: MapSession;
+  currentIndex: number;
+  attemptCount: number;
   interactive: boolean;
   showFeedback: boolean;
   lastWrongCountryId?: string | null;
@@ -76,7 +82,7 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
     }}
     dangerouslySetInnerHTML={{ __html: renderMapSvg(asset, session, { interactive, showFeedback, lastWrongCountryId, labelledBy }) }}
   />;
-}
+});
 
 function useCoarsePointer(): boolean {
   const query = '(pointer: coarse)';
@@ -165,7 +171,7 @@ export function LocationQuizScreen({ asset, session, lastWrongCountryId }: { ass
   return <main className="page page--map-quiz">
     <header className="map-quiz-topbar"><button className="icon-button" onClick={actions.exitRound} aria-label="Exit map round"><Icon name="close" /></button><div className="map-quiz-topbar__title"><strong>{session.scope.label}</strong><span className="map-quiz-topbar__meta">{session.mode === 'learn' ? 'Learn' : 'Play'} locations</span></div><span className="map-round-count">{session.currentIndex + 1} / {session.countryIds.length}</span></header>
     <section className="map-prompt" aria-labelledby="map-prompt-heading"><p className="map-prompt__kicker">Find</p><h1 id="map-prompt-heading" tabIndex={-1} data-autofocus>{target.name}</h1>{session.mode === 'test' ? <LiveScore score={locationPlayScore(session)} /> : null}{playFeedback ? <AnswerFeedbackPanel feedback={playFeedback} /> : <p className={`map-prompt__status ${feedback.className}`}>{feedback.text}</p>}</section>
-    <section className="map-stage" aria-label={mapLabel}><MapMarkup asset={asset} session={session} interactive showFeedback lastWrongCountryId={state?.resolved ? null : lastWrongCountryId} labelledBy="map-prompt-heading" /></section>
+    <section className="map-stage" aria-label={mapLabel}><MapMarkup asset={asset} session={session} currentIndex={session.currentIndex} attemptCount={session.attempts.length} interactive showFeedback lastWrongCountryId={state?.resolved ? null : lastWrongCountryId} labelledBy="map-prompt-heading" /></section>
   </main>;
 }
 
@@ -183,7 +189,7 @@ export function LocationResultsScreen({ asset, result }: { asset: MapRegionAsset
   return <main className="page page--map-results">
     <header className="topbar topbar--detail"><button className="icon-button" onClick={actions.exitRound} aria-label={exitRoundLabel('locations')}><Icon name="back" /></button><div className="screen-title"><h1 id="map-result-heading" tabIndex={-1} data-autofocus>Round complete</h1><span>Locations · {result.session.scope.label} · {result.session.mode === 'learn' ? 'Learn' : 'Play'}</span></div></header>
     <section className={`map-result-summary${perfect ? ' map-result-summary--perfect' : ''}`} aria-labelledby="map-result-heading"><h1>{result.firstTryCorrect} of {result.total} first try</h1>{rank ? <p className="result-rank-line" data-rank={rank.id}><strong className="result-rank">{rank.label}</strong> · {rank.detail}</p> : null}<p>{result.missedCountryIds.length === 0 ? 'Clean round. Every location was right immediately.' : `${result.missedCountryIds.length} ${result.missedCountryIds.length === 1 ? 'location needs' : 'locations need'} another pass.`}</p>{perfect ? <span className="result-score__badge">Perfect round</span> : null}<div className="map-result-breakdown" aria-label={`${result.session.mode === 'learn' ? 'Learn' : 'Play'} round breakdown`}><span><i className="map-swatch map-swatch--first" aria-hidden="true" /><strong>{result.firstTryCorrect}</strong> first try</span><span><i className="map-swatch map-swatch--one" aria-hidden="true" /><strong>{counts.one}</strong> after 1 miss</span><span><i className="map-swatch map-swatch--two" aria-hidden="true" /><strong>{counts.two}</strong> after 2 misses</span><span><i className="map-swatch map-swatch--reveal" aria-hidden="true" /><strong>{failed}</strong> revealed / failed</span></div></section>
-    <section className="map-stage map-stage--results" aria-label={`Completed ${result.session.scope.label} map`}><MapMarkup asset={asset} session={result.session} interactive={false} showFeedback labelledBy="map-result-heading" /></section>
+    <section className="map-stage map-stage--results" aria-label={`Completed ${result.session.scope.label} map`}><MapMarkup asset={asset} session={result.session} currentIndex={result.session.currentIndex} attemptCount={result.session.attempts.length} interactive={false} showFeedback labelledBy="map-result-heading" /></section>
     <div className="map-results-actions">{result.missedCountryIds.length ? <button className="button button--primary" onClick={() => actions.review('locations')}>Review mistakes</button> : null}<button className="button button--secondary" onClick={() => actions.repeat('locations')}>{repeatRoundLabel(result.session.mode)}</button><button className="button button--tertiary" onClick={actions.exitRound}>{exitRoundLabel('locations')}</button></div>
   </main>;
 }
