@@ -72,6 +72,20 @@ function assistedHitTarget(asset: MapRegionAsset, session: MapSession, interacti
   `;
 }
 
+/**
+ * A callout target and its leader line are decoration (#117): the practical
+ * surface is the hit disc beneath real land, so paint order never decides who
+ * answers a tap. It does decide whether the learner can see the cue. A target
+ * that sits over a neighbour (Andorra's lies in Spain) is buried when that
+ * neighbour paints later, so callout-bearing countries paint after the rest.
+ */
+function calloutsPaintLast(countries: readonly MapCountryGeometry[]): MapCountryGeometry[] {
+  return [
+    ...countries.filter((geometry) => !geometry.callout),
+    ...countries.filter((geometry) => geometry.callout),
+  ];
+}
+
 function renderContextCountry(geometry: MapCountryGeometry): string {
   return `
     ${geometry.path ? `<path class="map-context-country" d="${geometry.path}" />` : ''}
@@ -328,7 +342,7 @@ export function renderMapSvg(
           ${assistHitLayer()}
           ${assistedHitTarget(asset, session, interactive)}
           <g class="map-active-countries">
-            ${asset.countries.map((geometry) => countryMarkup(geometry, !activeInset?.countryIds.includes(geometry.countryId), false)).join('')}
+            ${calloutsPaintLast(asset.countries).map((geometry) => countryMarkup(geometry, !activeInset?.countryIds.includes(geometry.countryId), false)).join('')}
           </g>
           ${renderInlandWater(asset)}
           ${renderBoundaries(asset)}

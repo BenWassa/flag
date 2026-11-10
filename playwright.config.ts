@@ -11,6 +11,7 @@ const acceptanceDesktopTests = [
   'tests/browser/locations-feedback-geometry.spec.ts',
   'tests/browser/locations-reduced-motion.spec.ts',
   'tests/browser/island-touch-targets.spec.ts',
+  'tests/browser/locations-framing-contract.spec.ts',
   'tests/browser/recognition-rounds.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
   'tests/browser/neighbors-suggestions-a11y.spec.ts',
@@ -23,6 +24,7 @@ const acceptanceMobileTests = [
   'tests/browser/spatial-framing.spec.ts',
   'tests/browser/locations-three-strike.spec.ts',
   'tests/browser/island-touch-targets.spec.ts',
+  'tests/browser/locations-framing-contract.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
 ];
 

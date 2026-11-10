@@ -8,18 +8,18 @@ Spatial Atlas is the default production navigation. Flags, Locations, Outlines a
 
 ## Active programme — Locations usability (#226)
 
-**Order:** [#227 shared foundation](https://github.com/BenWassa/flag/issues/227) → four region-audit lanes (parallel after foundation merges) → [#226 final 31-scope audit](https://github.com/BenWassa/flag/issues/226) → [#71 physical-device acceptance](https://github.com/BenWassa/flag/issues/71).
+**Order:** completed [#227 shared foundation](https://github.com/BenWassa/flag/issues/227) → four region-audit lanes (now unblocked; may run in parallel) → [#226 final 31-scope audit](https://github.com/BenWassa/flag/issues/226) → [#71 physical-device acceptance](https://github.com/BenWassa/flag/issues/71).
 
 | Issue | Lane | Scope and dependency |
 | --- | --- | --- |
-| [#227](https://github.com/BenWassa/flag/issues/227) | Shared foundation | Initial-fit geography distinct from canonical rendered/scored geometry; reproducible fit, target size and assistance audit. Must precede region implementation. |
+| [#227](https://github.com/BenWassa/flag/issues/227) | **Completed foundation** | Delivered via merged [PR #233](https://github.com/BenWassa/flag/pull/233), verified on deployed main (`ae9bfb6`). Initial-fit geometry is separate from canonical scoring geometry; regional implementation is unblocked. |
 | [#228](https://github.com/BenWassa/flag/issues/228) | Europe | Europe and four regions; Southern Europe, Spain/Canary Islands, microstates. After #227. |
 | [#137](https://github.com/BenWassa/flag/issues/137) | Asia | Whole Asia and six regions; original Asia fixes **already merged via #174**, issue reused for new #226 audit. After #227. |
 | [#229](https://github.com/BenWassa/flag/issues/229) | North America and Oceania | Nine scopes; remote islands, insets, practical hit areas. After #227. |
 | [#230](https://github.com/BenWassa/flag/issues/230) | Africa and South America | Ten scopes; mainland calibration and remote island cases. After #227. |
 | [#226](https://github.com/BenWassa/flag/issues/226) | Programme | Verify all 31 scopes, production evidence and post-merge regression/deployment. Close after all lanes. |
 
-The #221 question-transition touch lifecycle was delivered through [merged PR #225](https://github.com/BenWassa/flag/pull/225). [PR #231](https://github.com/BenWassa/flag/pull/231) is **still open** for inset edge hit-testing; do not assume it merged or that its failing desktop CI check is cleared. Regional work must consume the final verified contract rather than duplicate it.
+The #221 question-transition touch lifecycle was delivered through [merged PR #225](https://github.com/BenWassa/flag/pull/225). [PR #231](https://github.com/BenWassa/flag/pull/231) remains **open** for inset edge hit-testing; a current-main sync was submitted 10 November 2026. Do not merge without new passing CI for this exact head. Regional work must consume the final verified contract rather than duplicate it.
 
 ## Other outstanding engineering work
 
@@ -35,7 +35,7 @@ Use [the active physical-device checklist](issue-71-physical-device-gate.md) for
 ## PR and dependency hygiene
 
 - PR #222 replaces, but does not prove completion of, #213. Do not silently restore outdated Spatial UI assumptions.
-- PR #231 requires its failing desktop acceptance to be diagnosed and made green before merge.
+- PR #231 requires fresh green exact-production desktop acceptance after the 10 November main sync before merge.
 - Do not merge PRs on green `npm test` alone. Sync latest `main`, inspect the exact artifact, verify desktop/mobile/PWA gates and required CI.
 - Close an issue only once its full acceptance evidence exists. Move its working document to [`../closed/`](../closed/) and update this index at closeout.
 - Completed/superseded records belong in [`../closed/`](../closed/) and are contextualised by [`../history.md`](../history.md). Not every open issue requires a duplicate Markdown specification when GitHub has the full authoritative brief.
