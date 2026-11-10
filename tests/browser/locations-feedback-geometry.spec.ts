@@ -45,8 +45,12 @@ async function openPlay(page: Page, fixture: FeedbackCase) {
 }
 
 async function freezeFeedbackTimers(page: Page) {
-  await page.clock.install();
-  await page.clock.pauseAt(new Date());
+  // The Playwright clock continues ticking between install() and pauseAt().
+  // Pausing at a freshly sampled Date can therefore race into the past on CI.
+  // Give the clock a fixed, future pause point before exercising feedback timers.
+  const startedAt = Date.now();
+  await page.clock.install({ time: startedAt });
+  await page.clock.pauseAt(startedAt + 10_000);
 }
 
 async function currentTargetId(page: Page): Promise<string> {
