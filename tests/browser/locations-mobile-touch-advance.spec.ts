@@ -33,10 +33,43 @@ async function fingerPoint(page: Page, id: string): Promise<{ x: number; y: numb
   return point!;
 }
 
+// This diagnostic is intentionally limited to Locations' known feedback
+// dwell timers. It distinguishes an accepted tap whose timer is never queued,
+// one cancelled by route/state lifecycle, and a timer whose callback is starved.
+async function installTouchTimerTrace(page: Page): Promise<void> {
+  await page.addInitScript(() => {
+    type Event = { event: string; id?: number; delay?: number; at: number };
+    const events: Event[] = [];
+    const win = window as Window & { __atlasTouchTimerTrace?: Event[] };
+    win.__atlasTouchTimerTrace = events;
+    const realSet = window.setTimeout.bind(window);
+    const realClear = window.clearTimeout.bind(window);
+    const pending = new Set<number>();
+    window.setTimeout = ((handler: TimerHandler, delay?: number, ...args: unknown[]) => {
+      if (typeof handler !== 'function' || ![620, 700, 850, 1500].includes(Number(delay))) {
+        return realSet(handler, delay, ...args);
+      }
+      const id = realSet(() => {
+        pending.delete(id);
+        events.push({ event: 'fire', id, delay, at: performance.now() });
+        handler(...args);
+      }, delay);
+      pending.add(id);
+      events.push({ event: 'schedule', id, delay, at: performance.now() });
+      return id;
+    }) as typeof window.setTimeout;
+    window.clearTimeout = ((id?: number) => {
+      if (id !== undefined && pending.delete(id)) events.push({ event: 'clear', id, at: performance.now() });
+      return realClear(id);
+    }) as typeof window.clearTimeout;
+  });
+}
+
 for (const fixture of CASES) {
   test(`${fixture.activity} accepts a finger tap and advances exactly once on a phone`, async ({ page }) => {
     test.skip(!test.info().project.name.includes('mobile'), 'A mobile touchscreen is the product acceptance surface.');
 
+    await installTouchTimerTrace(page);
     await openLocationsScope(page, fixture.route, fixture.label, fixture.viewport);
     const target = await currentTarget(page);
     const point = await fingerPoint(page, target.id);
@@ -51,7 +84,28 @@ for (const fixture of CASES) {
     // The accepted-answer feedback precedes the 620ms question transition.
     await expect(page.locator('.map-prompt__status--correct, .answer-feedback--correct').first(),
       'finger tap is accepted by the normal scoring path').toBeVisible({ timeout: 2_000 });
-    await expect(counter, 'the accepted touch advances the round').not.toHaveText(firstCount, { timeout: 10_000 });
+    // The probe is independent of the quiz timer. If it also never fires, the
+    // browser event loop is starved, rather than only the Locations controller.
+    await page.evaluate(() => {
+      window.setTimeout(() => {
+        (window as Window & { __atlasTouchTimerTrace?: { event: string; at: number }[] })
+          .__atlasTouchTimerTrace?.push({ event: 'independent-probe-fire', at: performance.now() });
+      }, 1_000);
+    });
+    try {
+      await expect(counter, 'the accepted touch advances the round').not.toHaveText(firstCount, { timeout: 10_000 });
+    } catch (error) {
+      const diagnostics = await page.evaluate(() => ({
+        now: performance.now(),
+        visible: document.visibilityState,
+        heading: document.querySelector('#map-prompt-heading')?.textContent,
+        count: document.querySelector('.map-round-count')?.textContent,
+        feedback: document.querySelector('.map-prompt__status, .answer-feedback')?.textContent,
+        timers: (window as Window & { __atlasTouchTimerTrace?: unknown[] }).__atlasTouchTimerTrace ?? [],
+      }));
+      console.log('Locations #235 real touch timer diagnostics:', JSON.stringify(diagnostics));
+      throw error;
+    }
 
     const secondCount = await counter.innerText();
     const secondTarget = await currentTarget(page);
