@@ -147,8 +147,9 @@ describe('Locations resolved-answer progression (#235)', () => {
     });
     vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
     const frameAt = (time: number) => {
-      const [id, callback] = frames.entries().next().value ?? [];
-      expect(callback).toBeTypeOf('function');
+      const entry = frames.entries().next().value;
+      if (!entry) throw new Error('Expected a pending animation frame.');
+      const [id, callback] = entry;
       frames.delete(id);
       callback(time);
     };
