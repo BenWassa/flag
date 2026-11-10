@@ -25,6 +25,7 @@ const acceptanceMobileTests = [
   'tests/browser/locations-three-strike.spec.ts',
   'tests/browser/island-touch-targets.spec.ts',
   'tests/browser/locations-framing-contract.spec.ts',
+  'tests/browser/locations-mobile-touch-advance.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
 ];
 
