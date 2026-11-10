@@ -26,6 +26,7 @@ const acceptanceMobileTests = [
   'tests/browser/island-touch-targets.spec.ts',
   'tests/browser/locations-framing-contract.spec.ts',
   'tests/browser/locations-mobile-touch-advance.spec.ts',
+  'tests/browser/locations-timer-isolation.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
 ];
 
