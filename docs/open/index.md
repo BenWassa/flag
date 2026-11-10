@@ -25,10 +25,12 @@ The #221 question-transition touch lifecycle was delivered through [merged PR #2
 
 - [#212 — broad Playwright reconciliation](https://github.com/BenWassa/flag/issues/212): active successor [PR #222](https://github.com/BenWassa/flag/pull/222); the older draft PR #213 is superseded. #222 retains the stationary edge-tap versus platform Back-gesture repair, but cannot merge without full current CI and exact-production verification.
 - [#220 — Germany's 16 Länder](https://github.com/BenWassa/flag/issues/220): planned, additive subnational expansion across four domains. Start after #212 is integrated and deployed; coordinate topology/map ownership with the #226 programme. Do not conflate ISO3 country identity and ISO 3166-2 subdivision identity.
+- [#235 — Locations answer-advance stalls](https://github.com/BenWassa/flag/issues/235): intermittently accepted correct answers do not advance in exact-production acceptance. Draft [PR #236](https://github.com/BenWassa/flag/pull/236) instruments timer scheduling and adds controller regression tests; it is not a verified fix. Keep related PRs red/unmerged until the browser cause is classified and repaired.
+- [#234 — full mobile-first UI/UX critique and polish](https://github.com/BenWassa/flag/issues/234): a separate product-quality gate after functional/Locations changes, before final #71 physical-device sign-off. Review screenshots and actual interactions across all domains, routes, viewports and accessibility modes; CI success alone does not constitute design acceptance.
 
 ## Final physical-device gate (#71)
 
-[#71](https://github.com/BenWassa/flag/issues/71) remains **open and owner-run**. It needs a re-pinned final production SHA after all releases that affect the evaluated interaction surface (at minimum #212 and #220 if retained, plus the #226 Locations programme). Automated Playwright/mobile emulation does not count as Android/iPhone evidence.
+[#71](https://github.com/BenWassa/flag/issues/71) remains **open and owner-run**. It needs a re-pinned final production SHA after all releases that affect the evaluated interaction surface (at minimum #212, #220 if retained, and the #226 Locations programme, plus any subsequent #234 UI/UX changes). Automated Playwright/mobile emulation does not count as Android/iPhone evidence.
 
 Use [the active physical-device checklist](issue-71-physical-device-gate.md) for real Android Chrome, iPhone Safari, installed-PWA automatic A→B adoption, active-round deferral, offline→online update, gesture/safe-area and domain-specific checks. Log hardware, browser/OS, SHA, orientation and result against #71.
 
