@@ -6,6 +6,18 @@ GitHub Issues are the canonical task tracker. This page is an **index and depend
 
 Spatial Atlas is the default production navigation. Flags, Locations, Outlines and Neighbours cover the intended six-continent curriculum. Preserve the typed hash router, independent progress and Mastery, canonical Natural Earth geometry, automatic PWA update/offline behaviour and British English. Current contracts are in [PRODUCT.md](../../PRODUCT.md), [DESIGN.md](../../DESIGN.md) and [Spatial architecture](../architecture/spatial-atlas.md).
 
+## Execution priority after the 10 November issue review
+
+1. Resolve [#235](https://github.com/BenWassa/flag/issues/235) on draft [PR #236](https://github.com/BenWassa/flag/pull/236). Accepted-answer progression is the first mobile priority and currently blocks trustworthy acceptance of the interaction work. Repository/PWA success alone is insufficient.
+2. Finish current-main verification of [#212 / PR #222](https://github.com/BenWassa/flag/pull/222) and [PR #231](https://github.com/BenWassa/flag/pull/231), preserving their distinct gesture and inset fixes.
+3. Complete #226's regional lanes with **#228 Europe first**, then #137 Asia, #229 North America/Oceania and #230 Africa/South America. #227 is already delivered; do not rebuild its shared foundation.
+4. Start #220 German states after #212 is integrated/deployed, coordinating shared geography with #226.
+5. Complete #234's final mobile UI/UX critique and remediation against the integrated functional build, then re-pin #71 for owner-run Android/iPhone/PWA acceptance.
+
+Mobile touchscreen is the product-optimisation target throughout. Existing desktop/accessibility and PWA gates remain required compatibility checks. Read-only audit/screenshot collection may proceed before the dependencies above finish.
+
+The latest #235 CI inspected in this review, [42918364163](https://github.com/BenWassa/flag/actions/runs/42918364163), passed repository and PWA gates but failed desktop and mobile. Its temporary mobile scheduler diagnostics prevented the subsequent full mobile gate from running. See [the investigation evidence](issue-235-investigation.md); neither the draft nor the timer/frame watchdog is a verified repair.
+
 ## Active programme — Locations usability (#226)
 
 **Order:** completed [#227 shared foundation](https://github.com/BenWassa/flag/issues/227) → four region-audit lanes (now unblocked; may run in parallel) → [#226 final 31-scope audit](https://github.com/BenWassa/flag/issues/226) → [#71 physical-device acceptance](https://github.com/BenWassa/flag/issues/71).
