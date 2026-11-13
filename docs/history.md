@@ -60,7 +60,7 @@ Important shared hardening includes:
 - #117 real-polygon hit precedence;
 - #137 Asia Locations/cartography hardening after the Spatial cutover.
 
-**#137 is closed.** Its surviving work was reimplemented from the post-Spatial baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remained authoritative.
+**#137's original Asia hardening was delivered by merged PR #174.** Its surviving work was reimplemented from the post-Spatial baseline: generic Asia max zoom, removal of the Levant question popup, shared invisible projected hit assistance, canonical source-derived Cyprus reconciliation shared with the globe, and restored selectability of countries answered earlier in a round. Spatial interaction behaviour from #166 remained authoritative. **GitHub issue #137 is now open again as the Asia audit lane under #226** (amended 14 September 2026); do not mistake the historical #174 closeout for completion of its new seven-scope framing/touch audit.
 
 ## Learning / achievement lineage
 
@@ -80,8 +80,10 @@ Current hierarchy remains:
 - #191 shipped application-owned PWA update discovery/adoption with safe-boundary deferral.
 - #210 reduced accumulated issue-specific GitHub Actions to the permanent CI, reusable acceptance, Pages and Firebase workflow architecture.
 - #216 then reduced normal PR wall time without weakening exact-production acceptance: the repository gate still produces one tested `flag-atlas-dist`, while desktop Chromium, mobile Chromium and PWA exact-production jobs consume and verify that artifact independently in parallel. PR supersession cancels obsolete work; `main` verification remains coherent. See [`closed/issue-216-ci-wall-time.md`](closed/issue-216-ci-wall-time.md).
-- #212 / PR #213 is the only remaining engineering gate. It reconciles the historical broad Playwright suite with current product contracts and contains the still-unmerged #200 stationary edge-tap versus platform Back-gesture repair. #216's parallel acceptance architecture is authoritative during its final sync.
-- #71 remains the final owner-run physical-device Android/iOS/installed-PWA gate after #212 is resolved; automated emulation must not be cited as physical evidence.
+- #212's active replacement is PR #222, superseding the stale draft PR #213. This work reconciles the historical broad Playwright suite with current product contracts and includes the stationary edge-tap versus platform Back-gesture repair. CI remains a merge gate.
+- #221 / PR #225 delivered island touch-target lifecycle hardening; the later inset-edge follow-up PR #231 is still open and must pass desktop acceptance before merge.
+- #226 coordinates the new 31-scope Locations framing/discoverability audit; #227 establishes the shared foundation before #228, reopened #137, #229 and #230 regional lanes.
+- #220 is an additional planned bilingual German-state curriculum. #71 remains the final owner-run Android/iOS/installed-PWA gate after the relevant interaction-changing work has landed; emulation is not physical-device evidence.
 
 ## Repository-history policy
 

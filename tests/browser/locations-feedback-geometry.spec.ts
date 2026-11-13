@@ -37,6 +37,9 @@ function expectNoVisibleStroke(stroke: string, label?: string) {
 }
 
 async function openPlay(page: Page, fixture: FeedbackCase) {
+  // Install before navigation: the application must create its timers under
+  // the controlled clock. A fixed epoch avoids runner/browser clock drift.
+  await page.clock.install({ time: new Date('2026-11-10T00:00:00.000Z') });
   await page.setViewportSize(fixture.viewport);
   await page.goto(`/#/locations/${fixture.continent}/${fixture.region}`);
   await page.getByRole('button', { name: `Play ${fixture.scopeLabel}` }).click();
@@ -45,12 +48,9 @@ async function openPlay(page: Page, fixture: FeedbackCase) {
 }
 
 async function freezeFeedbackTimers(page: Page) {
-  // The Playwright clock continues ticking between install() and pauseAt().
-  // Pausing at a freshly sampled Date can therefore race into the past on CI.
-  // Give the clock a fixed, future pause point before exercising feedback timers.
-  const startedAt = Date.now();
-  await page.clock.install({ time: startedAt });
-  await page.clock.pauseAt(startedAt + 10_000);
+  // A known future time avoids "Cannot fast-forward to the past" on busy CI.
+  // Every test's 90s wall-clock cap is well below this ten-minute interval.
+  await page.clock.pauseAt(new Date('2026-11-10T00:10:00.000Z'));
 }
 
 async function currentTargetId(page: Page): Promise<string> {
@@ -163,6 +163,8 @@ test('reduced motion and forced colours keep unresolved feedback contained and e
     groups.map((group) => group.getAttribute('data-id')).find((id) => id && id !== target) ?? null
   ), targetId);
   expect(wrongId).toBeTruthy();
+  // Examine the transient 520ms wrong-pulse while time is deliberately paused.
+  await freezeFeedbackTimers(page);
   await answerMainMapCountry(page, wrongId!);
   const group = page.locator('.map-svg .map-country--wrong-pulse').first();
   await expect(group).toBeAttached();
