@@ -146,6 +146,8 @@ assert.ok(
 );
 assert.ok(/\.map-inset__context[\s\S]{0,80}pointer-events: none/.test(cartographyCss), 'Only the panel members answer inside the panel.');
 
+assert.ok(/\.map-inset__hit\s*\{[^}]*pointer-events:\s*all/.test(cartographyCss), 'Inset practical surfaces are explicitly hit-testable even with transparent paint.');
+
 const configSource = await readFile('scripts/map-continent-configs.mjs', 'utf8');
 assert.ok(
   !/insets:[\s\S]{0,600}?(source|marks|hitRadius):/.test(configSource),

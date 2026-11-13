@@ -54,10 +54,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       "ATG"
     ],
     "source": {
-      "x": 534.91,
+      "x": 534.27,
       "y": 474.1,
-      "width": 8.25,
-      "height": 7.06
+      "width": 9.31,
+      "height": 7.35
     },
     "marks": [
       {
@@ -72,10 +72,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       }
     ],
     "size": {
-      "width": 80,
-      "height": 69
+      "width": 90,
+      "height": 72
     },
-    "hitRadius": 2.2687,
+    "hitRadius": 2.2758,
     "anchor": "top-right"
   },
   {
@@ -86,10 +86,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       "LCA"
     ],
     "source": {
-      "x": 540.91,
-      "y": 486.46,
-      "width": 4.78,
-      "height": 13.73
+      "x": 538.34,
+      "y": 484.15,
+      "width": 10,
+      "height": 18.31
     },
     "marks": [
       {
@@ -104,10 +104,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       }
     ],
     "size": {
-      "width": 24,
-      "height": 69
+      "width": 51,
+      "height": 94
     },
-    "hitRadius": 4.3817,
+    "hitRadius": 4.3137,
     "anchor": "top-right"
   },
   {
@@ -119,10 +119,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       "BRB"
     ],
     "source": {
-      "x": 537.96,
-      "y": 499.76,
-      "width": 14.76,
-      "height": 10.52
+      "x": 536.33,
+      "y": 498.45,
+      "width": 17.91,
+      "height": 13.53
     },
     "marks": [
       {
@@ -142,10 +142,10 @@ export const NORTH_AMERICA_INSETS: readonly MapInset[] = [
       }
     ],
     "size": {
-      "width": 97,
-      "height": 70
+      "width": 117,
+      "height": 89
     },
-    "hitRadius": 3.3476,
+    "hitRadius": 3.3677,
     "anchor": "top-right"
   }
 ];
