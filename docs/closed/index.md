@@ -34,7 +34,7 @@ After a PR merges and its verification evidence is preserved, delete its short-l
 - `issue-199-spatial-framing` (merged PR #208)
 - `issue-210-actions-cleanup` (superseded by merged PR #211)
 - `issue-212-main-acceptance-unblock` (merged PR #223)
-- `issue-212-playwright-reconciliation` (closed draft PR #213, superseded by active PR #222)
+- `issue-212-playwright-reconciliation` (closed draft PR #213, superseded by merged PR #222)
 - `issue-221-island-touch-contract` (merged PR #225)
 
 **Later:** delete `chore/issue-docs-reconciliation-2026-10-14` after PR #232 merges, and delete `issue-212-broad-suite-reconciliation` / `fix-inset-touch-pointer-events` only after PRs #222 / #231 respectively merge or are explicitly retired.

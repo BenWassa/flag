@@ -1,6 +1,6 @@
 # #235 — investigation evidence
 
-Status: **cause identified; repair green on CI, awaiting merge and issue closure**. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance; [draft PR #236](https://github.com/BenWassa/flag/pull/236) owns the candidate. This record captures the evidence, not a second specification.
+Status: **closed** (13 November 2026). The cause was a browser-harness artefact; PR #236 merged with green CI and deploys. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance. This record captures the evidence, not a second specification.
 
 ## Cause
 
