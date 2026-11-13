@@ -106,50 +106,11 @@ for (const viewport of VIEWPORTS) {
 }
 
 test('the opening frame is deterministic and independent of the question, mode and advance', async ({ page }) => {
-  // #235 diagnostic: distinguish an advance timer never being queued, being
-  // cleared by navigation, and firing without a visible next question. Observe
-  // only the known Locations feedback dwell values, not arbitrary app timers.
-  await page.addInitScript(() => {
-    const trace: { event: string; id: number; delay?: number; at: number; stack?: string }[] = [];
-    const win = window as Window & { __locationsAdvanceTimers?: typeof trace };
-    win.__locationsAdvanceTimers = trace;
-    const set = window.setTimeout.bind(window);
-    const clear = window.clearTimeout.bind(window);
-    const pending = new Set<number>();
-    window.setTimeout = ((handler: TimerHandler, delay?: number, ...args: unknown[]) => {
-      if (typeof handler !== 'function' || ![620, 700, 850, 1500].includes(Number(delay))) {
-        return set(handler, delay, ...args);
-      }
-      const id = set(() => {
-        pending.delete(id);
-        trace.push({ event: 'fire', id, at: performance.now() });
-        handler(...args);
-      }, delay);
-      pending.add(id);
-      trace.push({ event: 'schedule', id, delay, at: performance.now(), stack: new Error().stack });
-      return id;
-    }) as typeof window.setTimeout;
-    window.clearTimeout = ((id?: number) => {
-      if (id !== undefined && pending.delete(id)) {
-        trace.push({ event: 'clear', id, at: performance.now(), stack: new Error().stack });
-      }
-      return clear(id);
-    }) as typeof window.clearTimeout;
-  });
-
   await openLocationsScope(page, SOUTHERN_EUROPE, 'Learn Southern Europe', PHONE_PORTRAIT);
   const first = await auditFrame(page);
   const firstFit = await readFitData(page);
 
-  try {
-    await advanceByKeyboard(page);
-  } catch (error) {
-    const trace = await page.evaluate(() => (
-      window as Window & { __locationsAdvanceTimers?: unknown[] }
-    ).__locationsAdvanceTimers ?? []);
-    console.log('Locations #235 timer lifecycle:', JSON.stringify(trace.slice(-15)));
-    throw error;
-  }
+  await advanceByKeyboard(page);
   const advanced = await auditFrame(page);
   expect(advanced.viewBox, 'a question advance never moves the frame').toEqual(first.viewBox);
   const assisted = ['AND', 'SMR', 'VAT', 'MLT'];

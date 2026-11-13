@@ -390,25 +390,10 @@ function positionViewport(viewport: HTMLElement): void {
   else requestAnimationFrame(position);
 }
 
-// One observer owns each mounted viewport for its lifetime. Previously every
-// unrelated React DOM mutation disconnected and rebuilt ResizeObserver, causing
-// repeated layout notifications during answer feedback and accessibility updates.
-// React still replaces the actual map viewport on a new question, so detect
-// additions/removals and normalise fresh SVG hit areas as before.
-const observedViewports = new Set<HTMLElement>();
-const resizeObserver = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver((entries) => {
-  for (const entry of entries) {
-    const viewport = entry.target as HTMLElement;
-    // Gaining a size is the signal a deferred opening frame was waiting for.
-    if (viewport.dataset.mapPositioned !== 'true') { positionViewport(viewport); continue; }
-    const box = currentBox(viewport);
-    if (box) applyBox(viewport, box);
-  }
-});
+let resizeObserver: ResizeObserver | null = null;
 
 function discoverViewports(): void {
   const viewports = root ? [...root.querySelectorAll<HTMLElement>('[data-map-viewport]')] : [];
-  const present = new Set(viewports);
   for (const viewport of viewports) {
     if (viewport.dataset.mapPositioned === 'true') {
       const box = currentBox(viewport);
@@ -416,15 +401,19 @@ function discoverViewports(): void {
     } else {
       positionViewport(viewport);
     }
-    if (resizeObserver && !observedViewports.has(viewport)) {
-      observedViewports.add(viewport);
-      resizeObserver.observe(viewport);
-    }
   }
-  for (const previous of observedViewports) {
-    if (present.has(previous)) continue;
-    resizeObserver?.unobserve(previous);
-    observedViewports.delete(previous);
+  if (typeof ResizeObserver !== 'undefined') {
+    resizeObserver?.disconnect();
+    resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const viewport = entry.target as HTMLElement;
+        // Gaining a size is the signal a deferred opening frame was waiting for.
+        if (viewport.dataset.mapPositioned !== 'true') { positionViewport(viewport); continue; }
+        const box = currentBox(viewport);
+        if (box) applyBox(viewport, box);
+      }
+    });
+    for (const viewport of viewports) resizeObserver.observe(viewport);
   }
 }
 

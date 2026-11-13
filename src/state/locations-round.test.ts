@@ -135,46 +135,6 @@ describe('Locations resolved-answer progression (#235)', () => {
     expect(store.mapSession!.attempts).toHaveLength(1);
   });
 
-  it('advances on visible frames when the browser timeout task source is stalled', () => {
-    // Simulate the exact #235 browser condition: setTimeout is scheduled but
-    // never serviced, while requestAnimationFrame continues to run.
-    const frames = new Map<number, FrameRequestCallback>();
-    let nextFrameId = 0;
-    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
-      const id = ++nextFrameId;
-      frames.set(id, callback);
-      return id;
-    });
-    vi.stubGlobal('cancelAnimationFrame', (id: number) => { frames.delete(id); });
-    const frameAt = (time: number) => {
-      const entry = frames.entries().next().value;
-      if (!entry) throw new Error('Expected a pending animation frame.');
-      const [id, callback] = entry;
-      frames.delete(id);
-      callback(time);
-    };
-
-    const store = new AppStore();
-    expect(store.startMapSession(asset, 'learn')).toBe(true);
-    const first = store.mapSession!.countryIds[0];
-    const round = createLocationsRound(context(store));
-    const started = performance.now();
-    round.submitAnswer(first, null);
-
-    expect(store.mapSession!.currentIndex).toBe(0);
-    frameAt(started + PLAY_FEEDBACK_DWELL_CORRECT_MS - 1);
-    expect(store.mapSession!.currentIndex).toBe(0);
-    frameAt(started + PLAY_FEEDBACK_DWELL_CORRECT_MS + 1);
-    expect(store.mapSession!.currentIndex).toBe(1);
-    expect(frames.size).toBe(0);
-
-    // The browser may eventually resume its timeout queue. It must not skip
-    // a second country or record a duplicate attempt.
-    vi.advanceTimersByTime(PLAY_FEEDBACK_DWELL_WRONG_MS * 2);
-    expect(store.mapSession!.currentIndex).toBe(1);
-    expect(store.mapSession!.attempts).toHaveLength(1);
-  });
-
   it('cancels an accepted-answer advance when a round is exited', () => {
     const store = new AppStore();
     expect(store.startMapSession(asset, 'learn')).toBe(true);

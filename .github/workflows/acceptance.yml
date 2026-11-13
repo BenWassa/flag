@@ -66,16 +66,6 @@ jobs:
       # #212 tracks two pre-existing mobile marker-parity failures already present
       # on #200's final head. Do not make a known-broken historical assertion a
       # permanent merge gate; restore it here once #212 proves it genuinely green.
-      # Temporary #235 diagnostic: separate short run before the full suite to
-      # distinguish native touchscreen scheduler failure from the map runtime.
-      # Remove this duplication before merging the production fix.
-      - name: Isolate real-touch timer/frame scheduling
-        run: >-
-          npx playwright test
-          tests/browser/locations-timer-isolation.spec.ts
-          --project=acceptance-mobile
-          --workers=1
-          --retries=0
       - name: Current mobile product contracts
         run: >-
           npx playwright test

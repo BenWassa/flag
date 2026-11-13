@@ -35,63 +35,24 @@ function resolvedFeedbackDwellMs(outcome: MapGuessOutcome): number {
   return playFeedbackDwellMs(true);
 }
 
-/**
- * Resolve visible feedback through a single, cancellable completion callback.
- *
- * Chromium can defer the timer task source after a real touch gesture while
- * still delivering animation frames. #235 exact-production mobile evidence
- * showed both the 620ms quiz timer and a separate 1s timeout stalled for
- * >15s after an accepted answer, but frame callbacks continued. A frame
- * watchdog therefore enforces the same dwell without relying solely on the
- * timer queue. A normal timeout remains the efficient fallback for hidden
- * documents, where animation frames can pause. Either path cancels the other,
- * so scoring and question advancement happen exactly once.
- */
-function scheduleFeedbackDwell(durationMs: number, callback: () => void): () => void {
-  const startedAt = performance.now();
-  let finished = false;
-  let timeoutId: number | null = null;
-  let frameId: number | null = null;
-
-  const cancel = () => {
-    if (finished) return;
-    finished = true;
-    if (timeoutId !== null) window.clearTimeout(timeoutId);
-    if (frameId !== null) window.cancelAnimationFrame(frameId);
-    timeoutId = null;
-    frameId = null;
-  };
-  const finish = () => {
-    if (finished) return;
-    cancel();
-    callback();
-  };
-  timeoutId = window.setTimeout(finish, durationMs);
-  if (typeof window.requestAnimationFrame === 'function') {
-    const checkFrame = (now: number) => {
-      if (finished) return;
-      if (now - startedAt >= durationMs) finish();
-      else frameId = window.requestAnimationFrame(checkFrame);
-    };
-    frameId = window.requestAnimationFrame(checkFrame);
-  }
-  return cancel;
-}
-
 export function createLocationsRound(context: RoundContext): LocationsRound {
   const { store, router, announce, notify, finishInteraction, getCurrentRoute, cancelAllPending } = context;
 
-  let pendingMapAdvance: (() => void) | null = null;
-  let pendingWrongReset: (() => void) | null = null;
+  let pendingMapAdvance: number | null = null;
+  let pendingWrongReset: number | null = null;
 
   function cancelMapAdvance(): void {
-    pendingMapAdvance?.();
-    pendingMapAdvance = null;
+    if (pendingMapAdvance !== null) {
+      window.clearTimeout(pendingMapAdvance);
+      pendingMapAdvance = null;
+    }
   }
 
   function cancelWrongReset(): void {
-    pendingWrongReset?.();
-    pendingWrongReset = null;
+    if (pendingWrongReset !== null) {
+      window.clearTimeout(pendingWrongReset);
+      pendingWrongReset = null;
+    }
   }
 
   function cancelPending(): void {
@@ -177,16 +138,16 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
     finishInteraction(retryFocusSelector);
 
     if (!outcome.correct && !outcome.revealed) {
-      pendingWrongReset = scheduleFeedbackDwell(LOCATION_WRONG_FEEDBACK_MS, () => {
+      pendingWrongReset = window.setTimeout(() => {
         pendingWrongReset = null;
         if (store.view.name !== 'map-quiz') return;
         if (store.clearMapWrongFeedback(countryId)) finishInteraction(retryFocusSelector);
-      });
+      }, LOCATION_WRONG_FEEDBACK_MS);
     }
 
     if (!outcome.resolved) return;
     cancelMapAdvance();
-    pendingMapAdvance = scheduleFeedbackDwell(resolvedFeedbackDwellMs(outcome), () => {
+    pendingMapAdvance = window.setTimeout(() => {
       pendingMapAdvance = null;
       if (store.view.name !== 'map-quiz') return;
       const result = store.advanceMap();
@@ -197,7 +158,7 @@ export function createLocationsRound(context: RoundContext): LocationsRound {
         if (next) announce(`Next country. Find ${next.name}.`);
       }
       finishInteraction(null);
-    });
+    }, resolvedFeedbackDwellMs(outcome));
   }
 
   function reviewMistakes(): void {
