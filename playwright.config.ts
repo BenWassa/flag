@@ -26,7 +26,6 @@ const acceptanceMobileTests = [
   'tests/browser/island-touch-targets.spec.ts',
   'tests/browser/locations-framing-contract.spec.ts',
   'tests/browser/locations-mobile-touch-advance.spec.ts',
-  'tests/browser/locations-timer-isolation.spec.ts',
   'tests/browser/flags-activity-viewport.spec.ts',
 ];
 
@@ -43,7 +42,16 @@ export default defineConfig({
       // no GPU, so the suite runs against SwiftShader; that is engineering
       // evidence, never physical-device evidence.
       ...(process.env.ATLAS_CHROMIUM_PATH ? { executablePath: process.env.ATLAS_CHROMIUM_PATH } : {}),
-      args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist'],
+      //
+      // #235: SwiftShader is for the globe's WebGL context only. Left to its
+      // defaults, Chromium also rasterises ordinary page content through that
+      // software GL device, where one repaint of a Locations map costs about a
+      // second and blocks main-thread commits. Feedback timers then fire
+      // seconds late and an accepted answer appears not to advance. No real
+      // device paints pages through a software GPU, so page raster stays on
+      // Chromium's normal CPU path and the timing the suite observes is the
+      // application's own.
+      args: ['--use-gl=angle', '--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--ignore-gpu-blocklist', '--disable-gpu-rasterization'],
     },
   },
   projects: [
