@@ -150,14 +150,28 @@ test('a pan across Southern Europe never submits an answer', async ({ page }) =>
   await openLocationsScope(page, SOUTHERN_EUROPE, 'Play Southern Europe', PHONE_PORTRAIT);
   const viewport = page.locator('[data-map-viewport]');
   const box = (await viewport.boundingBox())!;
-  const beforeName = await page.locator('#map-prompt-heading').innerText();
-  const beforeViewBox = await page.locator('.map-svg').getAttribute('viewBox');
-  await page.mouse.move(box.x + box.width * 0.5, box.y + box.height * 0.5);
+  const prompt = page.locator('#map-prompt-heading');
+  const beforeName = await prompt.innerText();
+  const viewBox = page.locator('.map-svg');
+  const initialWidth = Number((await viewBox.getAttribute('viewBox'))!.split(/[ ,]+/)[2]);
+  const centerX = box.x + box.width * 0.5;
+  const centerY = box.y + box.height * 0.5;
+
+  // The fitted opening frame can sit against the permitted pan boundary.
+  // Establish actual room to pan first; a drag against a clamp is correctly
+  // ignored and must not be mistaken for a broken gesture implementation.
+  await page.mouse.move(centerX, centerY);
+  await page.mouse.wheel(0, -650);
+  await expect.poll(async () => Number((await viewBox.getAttribute('viewBox'))!.split(/[ ,]+/)[2]))
+    .toBeLessThan(initialWidth);
+  const beforePan = await viewBox.getAttribute('viewBox');
+
+  await page.mouse.move(centerX, centerY);
   await page.mouse.down();
-  await page.mouse.move(box.x + box.width * 0.5 + 40, box.y + box.height * 0.5 + 10, { steps: 6 });
+  await page.mouse.move(centerX - 40, centerY - 10, { steps: 6 });
   await page.mouse.up();
-  await expect.poll(() => page.locator('.map-svg').getAttribute('viewBox'), { timeout: 15_000 }).not.toBe(beforeViewBox);
-  await expect(page.locator('#map-prompt-heading'), 'a drag across the map submits no answer').toHaveText(beforeName);
+  await expect.poll(() => viewBox.getAttribute('viewBox'), { timeout: 15_000 }).not.toBe(beforePan);
+  await expect(prompt, 'a drag across the map submits no answer').toHaveText(beforeName);
 });
 
 // An inset panel is only mounted while the current question is one of its

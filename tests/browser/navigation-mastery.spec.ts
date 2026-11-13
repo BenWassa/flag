@@ -38,22 +38,20 @@ async function disableWebGl(page: Page) {
   });
 }
 
-test('Spatial controls expose Mastery in colour, shape and accessible text', async ({ page }) => {
+test('selected region exposes earned domain Mastery without restoring a persistent scope list', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await seedAchievements(page, mastered);
-  await page.goto('/#/flags/africa');
+  await page.goto('/#/flags/africa/west-africa');
   await page.waitForSelector('.spatial-stage[data-ready="true"] canvas', { timeout: 30_000 });
 
-  const westAfrica = page.locator('.spatial-chip', { hasText: 'West Africa' });
-  await expect(westAfrica).toHaveClass(/spatial-chip--mastered/);
-  await expect(westAfrica).toHaveAccessibleName(/West Africa.*cleared.*Mastered/i);
-  await expect(westAfrica.locator('.spatial-chip__mark')).toHaveText('●');
-
-  await westAfrica.focus();
-  await page.keyboard.press('Enter');
-  await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
+  // #198 deliberately moved progress into the selected geography. Sibling
+  // projected labels remain quiet navigation controls rather than carrying a
+  // duplicate wall of Mastery state.
+  await expect(page.locator('.spatial-chip')).toHaveCount(0);
+  await expect(page.locator('.spatial-command__progress[data-scope-id="west-africa"]')).toHaveCount(1);
   await expect(page.getByRole('heading', { level: 1 })).toHaveAccessibleName(/West Africa.*Mastered/i);
   await expect(page.getByRole('button', { name: 'Play West Africa' })).toBeVisible();
+  await expect(page.locator('.spatial-scope[data-scope-id="north-africa"]')).not.toHaveAccessibleName(/Mastered|Complete/i);
 });
 
 test('complete-region semantics survive the short-landscape renderer fallback', async ({ page }) => {

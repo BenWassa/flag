@@ -6,6 +6,22 @@ const VIEWPORTS = [
   { label: 'short landscape', width: 740, height: 360 },
 ] as const;
 
+const scope = (page: Page, id: string) => page.locator(`.spatial-scope[data-scope-id="${id}"]`);
+
+async function chooseScope(page: Page, id: string) {
+  const target = scope(page, id);
+  await expect(target).toBeAttached();
+  // A projected name can legitimately begin on the far side of the globe.
+  // Keyboard focus turns the Earth to that geography; Enter then selects it.
+  // This is the current operable Spatial contract, unlike a forced click
+  // through the canvas on a back-facing label.
+  await target.focus();
+  if (await target.getAttribute('data-facing') === 'back') {
+    await expect(target).toHaveAttribute('data-facing', 'front', { timeout: 5_000 });
+  }
+  await target.press('Enter');
+}
+
 async function expectNoHorizontalOverflow(page: Page) {
   const overflow = await page.evaluate(() => ({
     viewport: window.innerWidth,
@@ -27,18 +43,17 @@ test('keeps Home and domain launchers usable without horizontal overflow', async
     await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
     await expectNoHorizontalOverflow(page);
 
-    // Africa is also named on the globe (#197); this matrix covers the command
-    // surface, so it names that control rather than either at random.
-    await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
+    await chooseScope(page, 'africa');
     await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
     await expectNoHorizontalOverflow(page);
+    await expect(page.locator('.spatial-chip')).toHaveCount(0);
   }
 });
 
 test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fallback', async ({ page }) => {
   await page.goto('/');
   await page.getByRole('button', { name: 'Flags' }).click();
-  await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
+  await chooseScope(page, 'africa');
   await page.getByRole('button', { name: 'Learn Africa' }).click();
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
@@ -50,15 +65,12 @@ test('preserves typed hash navigation, browser Back/Forward, and cold-refresh fa
   await expect(page).toHaveURL(/#\/flags\/africa\/learn$/);
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
 
-  // A directly typed stable Learn route remains usable on a new document.
   await page.goto('/#/flags/asia/caucasus/learn');
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
   await page.reload();
   await expect(page).toHaveURL(/#\/flags\/asia\/caucasus\/learn$/);
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
 
-  // Active rounds are ephemeral; a cold refresh deliberately returns to the
-  // stable scope rather than pretending that the in-memory round survived.
   await page.goto('/#/flags/asia/caucasus/test');
   await expect(page).toHaveURL(/#\/flags\/asia\/caucasus$/);
   await expect(page.getByRole('heading', { name: 'Caucasus', exact: true })).toBeVisible();
@@ -68,44 +80,35 @@ test('keeps North America and Oceania live after complete continent coverage', a
   await page.goto('/#/locations');
   await expect(page.getByRole('heading', { name: 'Locations' })).toBeVisible();
 
-  const northAmerica = page.locator('.spatial-chip', { hasText: 'North America' });
-  await expect(northAmerica).toBeVisible();
-  await northAmerica.click();
+  await chooseScope(page, 'north-america');
   await expect(page).toHaveURL(/#\/locations\/north-america$/);
   await expect(page.getByRole('heading', { name: 'North America', exact: true })).toBeVisible();
-  // Issue #166: the continent surface offers its own Play and every area as a
-  // quiet selection control; the area's own Play appears once it is focused.
   await expect(page.getByRole('button', { name: 'Play North America' })).toBeVisible();
-  for (const area of ['Northern America', 'Central America', 'Caribbean']) {
-    await expect(page.locator('.spatial-chip', { hasText: area })).toBeVisible();
+  for (const area of ['northern-america', 'central-america', 'caribbean']) {
+    await expect(scope(page, area)).toBeAttached();
   }
-  await page.locator('.spatial-chip', { hasText: 'Caribbean' }).click();
+  await chooseScope(page, 'caribbean');
   await expect(page).toHaveURL(/#\/locations\/north-america\/caribbean$/);
   await expect(page.getByRole('button', { name: 'Play Caribbean' })).toBeVisible();
 
-  // The stacked #22 + #27 curriculum deliberately completes every production
-  // continent. Unavailable-shell behaviour is covered with a genuinely
-  // unsupported synthetic scope in verify-action-feedback rather than making
-  // a real production continent unavailable for this browser fixture.
   await page.goto('/#/locations');
-  await expect(page.locator('.spatial-command[data-surface="continents"] .spatial-chip')).toHaveCount(6);
+  await page.waitForSelector('.spatial-stage[data-ready="true"] canvas', { timeout: 30_000 });
+  await expect(page.locator('.spatial-scopes .spatial-scope')).toHaveCount(6);
+  await expect(page.locator('.spatial-chip')).toHaveCount(0);
   await expect(page.locator('.continent-row--shell')).toHaveCount(0);
   await expect(page.getByText('Coming soon')).toHaveCount(0);
 
-  const oceania = page.locator('.spatial-chip', { hasText: 'Oceania' });
-  await expect(oceania).toBeVisible();
-  await oceania.click();
+  await chooseScope(page, 'oceania');
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
   await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Play Oceania' })).toBeVisible();
-  for (const area of ['Australia & New Zealand', 'Melanesia', 'Micronesia', 'Polynesia']) {
-    await expect(page.locator('.spatial-chip', { hasText: area })).toBeVisible();
+  for (const area of ['australia-new-zealand', 'melanesia', 'micronesia', 'polynesia']) {
+    await expect(scope(page, area)).toBeAttached();
   }
-  await page.locator('.spatial-chip', { hasText: 'Polynesia' }).click();
+  await chooseScope(page, 'polynesia');
   await expect(page).toHaveURL(/#\/locations\/oceania\/polynesia$/);
   await expect(page.getByRole('button', { name: 'Play Polynesia' })).toBeVisible();
 
-  // A directly typed durable Oceania scope now resolves to the real launcher.
   await page.goto('/#/locations/oceania');
   await expect(page).toHaveURL(/#\/locations\/oceania$/);
   await expect(page.getByRole('heading', { name: 'Oceania', exact: true })).toBeVisible();
@@ -115,8 +118,6 @@ test('reports a failed lazy map load and recovers on retry', async ({ page }) =>
   let africaChunkRequests = 0;
   await page.route(/\/assets\/africa-[^/]+\.js$/, async (route) => {
     africaChunkRequests += 1;
-    // The launcher prewarms the continent once. Fail that request and the
-    // first launch, then allow the explicit retry through.
     if (africaChunkRequests === 1) await route.abort();
     else await route.continue();
   });
@@ -126,18 +127,11 @@ test('reports a failed lazy map load and recovers on retry', async ({ page }) =>
   await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page.getByRole('status').filter({ hasText: 'Africa map could not be loaded' })).toBeVisible();
 
-  // Chromium keeps a failed dynamic-import URL rejected for the lifetime of a
-  // document. A reload is the user-visible recovery path; the loader itself
-  // also drops its rejected promise so the next document can retry cleanly.
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
   await page.getByRole('button', { name: 'Play Africa' }).click();
   await expect(page).toHaveURL(/#\/locations\/africa\/test$/);
   await expect(page.locator('#map-prompt-heading')).toBeVisible({ timeout: 40_000 });
-  // Issue #166: the opening frame lands about 200ms later now that the
-  // launcher route boots the globe first, and much later than that under a
-  // loaded SwiftShader runner. Given the same allowance as the prompt above
-  // it, rather than the 5s expect default.
   await expect(page.locator('[data-map-viewport]')).toHaveAttribute('data-map-positioned', 'true', { timeout: 40_000 });
   expect(africaChunkRequests).toBeGreaterThanOrEqual(1);
 });
@@ -145,8 +139,9 @@ test('reports a failed lazy map load and recovers on retry', async ({ page }) =>
 test('keeps focus, live feedback, and reduced-motion behaviour accessible', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' });
   await page.goto('/#/flags/asia/caucasus/learn');
-  await expect(page.getByRole('heading', { name: 'Caucasus' })).toBeVisible();
-  await expect(page.locator('[data-autofocus]').first()).toBeFocused();
+  const heading = page.getByRole('heading', { name: 'Caucasus' });
+  await expect(heading).toBeVisible();
+  await expect(heading).not.toBeFocused();
 
   const firstFlag = page.locator('.flag-card').first();
   await expect(firstFlag).toHaveAttribute('aria-expanded', 'false');

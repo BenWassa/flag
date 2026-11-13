@@ -7,7 +7,7 @@ test('walks domain to continent to Play without a launcher page', async ({ page 
   await expect(page.getByRole('heading', { name: 'Flags' })).toBeVisible();
   // #197 names Africa on the globe as well, so the surface under test is named
   // explicitly: this walk is the command surface's own path.
-  await page.locator('.spatial-chip', { hasText: 'Africa' }).click();
+  await page.locator('.spatial-scope[data-scope-id="africa"]').click();
   // The selected place is the dominant label and Play is immediately available.
   await expect(page.getByRole('heading', { name: 'Africa', exact: true })).toBeVisible();
   await expect(page.locator('.page--launcher')).toHaveCount(0);
@@ -20,7 +20,7 @@ test('selecting a region focuses it, and Play is a separate deliberate act', asy
   await page.goto('/#/flags/africa');
   // Issue #166: choosing an area selects the durable scope; it never starts a
   // round. The region is a real route, so Back returns to it.
-  await page.locator('.spatial-chip', { hasText: 'West Africa' }).click();
+  await page.locator('.spatial-scope[data-scope-id="west-africa"]').click();
   await expect(page).toHaveURL(/#\/flags\/africa\/west-africa$/);
   await expect(page.getByRole('progressbar', { name: 'Round progress' })).toHaveCount(0);
 

@@ -60,9 +60,14 @@ function MapMarkup({ asset, session, interactive, showFeedback, lastWrongCountry
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
       if (element?.dataset.id) keyboardFocusCountryId.current = element.dataset.id;
     }}
+    onPointerDownCapture={() => {
+      // A real pointer starts a new focus intent. Do not clear it in onClick:
+      // keyboard activation may also synthesize a click after onKeyDown has
+      // recorded the country to restore across the SVG replacement.
+      keyboardFocusCountryId.current = null;
+    }}
     onClick={(event) => {
       if (!interactive) return;
-      keyboardFocusCountryId.current = null;
       const element = event.target instanceof Element ? event.target.closest<HTMLElement>('[data-action="map-answer"]') : null;
       if (element?.dataset.id) actions.answerLocation(element.dataset.id, element);
     }}
