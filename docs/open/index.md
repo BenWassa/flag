@@ -16,7 +16,7 @@ Spatial Atlas is the default production navigation. Flags, Locations, Outlines a
 
 Mobile touchscreen is the product-optimisation target throughout. Existing desktop/accessibility and PWA gates remain required compatibility checks. Read-only audit/screenshot collection may proceed before the dependencies above finish.
 
-The latest #235 CI inspected in this review, [42918364163](https://github.com/BenWassa/flag/actions/runs/42918364163), passed repository and PWA gates but failed desktop and mobile. Its temporary mobile scheduler diagnostics prevented the subsequent full mobile gate from running. See [the investigation evidence](issue-235-investigation.md); neither the draft nor the timer/frame watchdog is a verified repair.
+The #235 cause was identified on 13 November 2026: the browser harness rasterised page content through SwiftShader, so Locations map repaints blocked main-thread commits and delayed feedback timers. PR #236 now carries a harness-only repair and no application change. See [the investigation evidence](issue-235-investigation.md); CI on the repaired head is the deciding evidence.
 
 ## Active programme — Locations usability (#226)
 
@@ -37,7 +37,7 @@ The #221 question-transition touch lifecycle was delivered through [merged PR #2
 
 - [#212 — broad Playwright reconciliation](https://github.com/BenWassa/flag/issues/212): active successor [PR #222](https://github.com/BenWassa/flag/pull/222); the older draft PR #213 is superseded. #222 retains the stationary edge-tap versus platform Back-gesture repair, but cannot merge without full current CI and exact-production verification.
 - [#220 — Germany's 16 Länder](https://github.com/BenWassa/flag/issues/220): planned, additive subnational expansion across four domains. Start after #212 is integrated and deployed; coordinate topology/map ownership with the #226 programme. Do not conflate ISO3 country identity and ISO 3166-2 subdivision identity.
-- [#235 — Locations answer-advance stalls](https://github.com/BenWassa/flag/issues/235): intermittently accepted correct answers do not advance in exact-production acceptance. Draft [PR #236](https://github.com/BenWassa/flag/pull/236) instruments timer scheduling and adds controller regression tests; it is not a verified fix. Keep related PRs red/unmerged until the browser cause is classified and repaired.
+- [#235 — Locations answer-advance stalls](https://github.com/BenWassa/flag/issues/235): accepted answers intermittently did not advance in exact-production acceptance. The cause is software-GPU page rasterisation in the Playwright harness, not the Locations controller. Draft [PR #236](https://github.com/BenWassa/flag/pull/236) disables it and drops the earlier speculative application changes. Close only after green desktop and mobile acceptance on CI.
 - [#234 — full mobile-first UI/UX critique and polish](https://github.com/BenWassa/flag/issues/234): a separate product-quality gate after functional/Locations changes, before final #71 physical-device sign-off. Review screenshots and actual interactions across all domains, routes, viewports and accessibility modes; CI success alone does not constitute design acceptance.
 
 ## Final physical-device gate (#71)

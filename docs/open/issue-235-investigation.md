@@ -1,25 +1,35 @@
 # #235 — investigation evidence
 
-Status: **unresolved**. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance; [draft PR #236](https://github.com/BenWassa/flag/pull/236) owns the candidate. This record captures the 10 November 2026 review, not a second specification.
+Status: **cause identified, repair awaiting CI**. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance; [draft PR #236](https://github.com/BenWassa/flag/pull/236) owns the candidate. This record captures the evidence, not a second specification.
 
-## Current verified limits
+## Cause
 
-- Latest inspected candidate: `9ff003e2fd72091992431cdce98ad1cd410eadc5`.
-- [CI 42918364163](https://github.com/BenWassa/flag/actions/runs/42918364163): repository/PWA green, desktop/mobile red. Desktop still includes an accepted-answer progression timeout. The separate temporary mobile scheduler-isolation step failed, so the full mobile product-contract step did not run.
-- Mobile isolation reproduced a timer/frame stall immediately after touchscreen launch as well as after an accepted country answer. A bare button control passed. The existing timeout plus animation-frame watchdog therefore does not establish resolution.
-- Local production-build isolation reproduced scheduling failures in Playwright's Chromium headless shell and the full Chromium binary. Switching binaries did not resolve them. These were emulated phone runs, not physical-device evidence.
-- One local CPU profile spent approximately 2.1 seconds of a 3.1-second capture idle, with approximately 0.7 seconds in the spatial bundle. This argues against a continuously running JavaScript loop in that capture; it does not establish the browser scheduler's cause.
+The stall is a browser-harness artefact, not a Locations controller defect.
 
-## Diagnostic caveats and rejected experiments
+The Playwright projects launch Chromium with SwiftShader so the globe has a WebGL surface. With no further flag, Chromium also rasterises ordinary page content through that software GL device. A Locations map is roughly 900 KB of SVG path data, and one full repaint of it costs about 0.8 s of GPU-process time on a fast laptop (about two thirds of that is boundary and coastline stroking). Each accepted answer rebuilds the map twice, and launching a round repaints it several times.
 
-The temporary isolation test requires fifteen animation frames within a fixed 1.8-second observation. Locally that assertion also failed when the independent timeout fired and the round had already advanced. A failed frame-count probe must not be reported as an accepted-answer stall without checking the actual counter and feedback. Keep the genuine touch/ownership/progression tests authoritative.
+While those rasters are outstanding the renderer's main thread waits on compositor commits. Timers queued in that window fire late: the 620 ms advance timer was observed firing after 4.2 s locally under a raised device scale factor, and CI runners are several times slower again, which matches the 15 s stalls recorded there. Animation frames and microtasks still slip through between commits, which is why earlier probes saw frames continue while timers did not.
 
-A renderer-failure launch control had functioning timers/frames in one local run. This is a lead, not proof that WebGL owns the defect. The fallback uses different launcher labels, so a probe must actually reach the activity before its scheduling evidence is meaningful.
+No physical phone paints page content through a software GPU, so this timing was never the application's own.
 
-An experiment deferred globe construction while its stage had no layout size. Six Learn/Play touch cases passed with the existing watchdog, but a subsequent native-timer-only run had five passes and a missed-touch failure. No reliable causal conclusion followed. The experiment and local CPU-profile/fallback test changes were removed; they are not production fixes. An overlapping-run attempt also lost its preview server and is excluded from product evidence.
+## Evidence (13 November 2026, local production build, Pixel 7 emulation)
 
-## Next investigation
+- A trace across round launch showed 250–850 ms `RasterDecoderImpl::DoEndRasterCHROMIUM` slices back to back in the GPU process, with no main-thread long task. Frame gaps of 1.4 s and 1.25 s followed launch.
+- Hiding `.map-boundaries` cut one full raster from 818 ms to 293 ms; removing all strokes gave the same figure. Fill animation, `vector-effect`, clip paths and hit targets made no measurable difference.
+- At device scale factor 9, an answer tapped straight after launch advanced after 4.9 s, with the 500 ms and 620 ms timers both firing at 4,174 ms. With boundaries hidden the same run advanced in 1.06 s.
+- With `--disable-gpu-rasterization` added and nothing else changed, the same runs at scale factors 2.625, 9 and 14 advanced in 1.02–1.08 s with every timer on time and no frame gap above 300 ms. Without the flag, scale factors 9 and 14 took 3.5–3.7 s.
 
-Capture browser scheduling and spatial boot/visibility events around a genuine failed advance, distinguishing JavaScript work, native rendering, page lifecycle and pending input. Compare the same question/input path with and without concurrent renderer initialisation. Use event/lifecycle boundaries rather than artificial pre-answer sleeps. Retain controller cancellation/exactly-once tests and real mobile touch progression checks; do not enlarge timeouts or declare success from the diagnostic probes alone.
+## Repair
 
-Full current-head repository, desktop, mobile, PWA, exact-artifact and deployment evidence is still required before merge or issue closure. #71 remains the separate physical-device gate.
+`playwright.config.ts` adds `--disable-gpu-rasterization`. WebGL still runs on SwiftShader; page content returns to Chromium's CPU raster path.
+
+The earlier candidate changes on PR #236 were removed because the cause is not in the application: the timeout-plus-animation-frame watchdog in the Locations round controller, the map markup memoisation, the single-observer viewport change, the temporary scheduler-isolation spec with its CI step, and the timer-trace diagnostics in the framing and island specs. The controller unit tests for dwell, single advance, exit cancellation and third-miss reveal stay, as does the real-touch mobile acceptance spec and the Playwright clock correction in the feedback-geometry spec.
+
+## Not yet verified
+
+- CI on the repaired head. Local runs never reproduced the CI failure at normal scale, so green exact-production desktop and mobile acceptance on CI is the deciding evidence.
+- Physical devices. #71 remains the separate owner-run gate; nothing here is device evidence.
+
+## Possible follow-up, not part of this repair
+
+The map's raster cost is real work on any device, only far cheaper on a hardware GPU. Unrelated shell mutations currently reach `applyBox` through the viewport mutation observer and rewrite an unchanged `viewBox`, which repaints the whole map, and the map shares compositor tiles with the prompt text. Neither was shown to affect a real device, so neither is changed here.
