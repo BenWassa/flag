@@ -1,6 +1,6 @@
 # #235 — investigation evidence
 
-Status: **cause identified, repair awaiting CI**. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance; [draft PR #236](https://github.com/BenWassa/flag/pull/236) owns the candidate. This record captures the evidence, not a second specification.
+Status: **cause identified; repair green on CI, awaiting merge and issue closure**. [GitHub #235](https://github.com/BenWassa/flag/issues/235) owns scope and acceptance; [draft PR #236](https://github.com/BenWassa/flag/pull/236) owns the candidate. This record captures the evidence, not a second specification.
 
 ## Cause
 
@@ -25,10 +25,11 @@ No physical phone paints page content through a software GPU, so this timing was
 
 The earlier candidate changes on PR #236 were removed because the cause is not in the application: the timeout-plus-animation-frame watchdog in the Locations round controller, the map markup memoisation, the single-observer viewport change, the temporary scheduler-isolation spec with its CI step, and the timer-trace diagnostics in the framing and island specs. The controller unit tests for dwell, single advance, exit cancellation and third-miss reveal stay, as does the real-touch mobile acceptance spec and the Playwright clock correction in the feedback-geometry spec.
 
-## Not yet verified
+## Verification
 
-- CI on the repaired head. Local runs never reproduced the CI failure at normal scale, so green exact-production desktop and mobile acceptance on CI is the deciding evidence.
-- Physical devices. #71 remains the separate owner-run gate; nothing here is device evidence.
+- [CI 43438262382](https://github.com/BenWassa/flag/actions/runs/43438262382) on `c7ed36a`: repository verify, mobile acceptance, desktop acceptance and PWA lifecycle all green. This is the first fully green run on PR #236; the three before it failed desktop or mobile acceptance. The run took 7 minutes against 12 to 15 previously.
+- Local production build: mobile acceptance 89 passed, desktop acceptance 120 passed.
+- Not verified: physical devices. #71 remains the separate owner-run gate; nothing here is device evidence.
 
 ## Possible follow-up, not part of this repair
 
