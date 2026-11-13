@@ -47,30 +47,8 @@ async function advanceCaribbeanByPointer(page: Page): Promise<void> {
   // This suite owns the pointer/touch contract. Advance through canonical map
   // geography with the same scoring path the inset eventually exercises rather
   // than introducing an unrelated keyboard dependency into the inset regression.
-  const point = await actionableCountryPoint(page, id);
-  await tapPoint(page, point);
-  try {
-    await expect(roundCount, `${id} pointer answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 15_000 });
-  } catch (error) {
-    // #235: distinguish a wrong/intercepted pointer answer from an accepted
-    // answer whose progression timer did not fire. Keep the failing acceptance.
-    const diagnostic = await page.evaluate(({ x, y, expectedId }) => {
-      const heading = document.querySelector('#map-prompt-heading')?.textContent;
-      const viewport = document.querySelector<HTMLElement>('[data-map-viewport]');
-      const owner = document.elementFromPoint(x, y)
-        ?.closest('[data-action="map-answer"]')?.getAttribute('data-id');
-      const status = document.querySelector('.answer-feedback, .map-prompt__status')?.textContent;
-      const selected = document.querySelector(`.map-country[data-id="${expectedId}"]`);
-      return {
-        expectedId, owner, heading, count: document.querySelector('.map-round-count')?.textContent,
-        status, selectedClass: selected?.getAttribute('class'),
-        viewportPositioned: viewport?.dataset.mapPositioned,
-        viewportSession: viewport?.dataset.mapSession,
-      };
-    }, { x: point.x, y: point.y, expectedId: id });
-    console.log('Locations #235 Caribbean pointer failure:', JSON.stringify(diagnostic));
-    throw error;
-  }
+  await tapPoint(page, await actionableCountryPoint(page, id));
+  await expect(roundCount, `${id} pointer answer advances the Caribbean round`).not.toHaveText(beforeCount!, { timeout: 15_000 });
 }
 
 function persistentHit(page: Page, id: string) {
@@ -115,30 +93,40 @@ async function hitCenter(page: Page, id: string): Promise<{ x: number; y: number
 
 async function findActionableHitPoint(page: Page, id: string): Promise<{ x: number; y: number } | null> {
   const hit = persistentHit(page, id);
-  await expect(hit).toHaveCount(1);
-  return hit.evaluate((circle, expectedId) => {
-    const item = circle as SVGCircleElement;
-    const matrix = item.getScreenCTM();
-    if (!matrix) return null;
-    const { cx, cy, r } = item;
-    const fractions = [0.82, 0.7, 0.55, 0.35, 0];
-    for (const fraction of fractions) {
-      const samples = fraction === 0 ? 1 : 24;
-      for (let index = 0; index < samples; index += 1) {
-        const angle = (Math.PI * 2 * index) / samples;
-        const local = new DOMPoint(
-          cx.baseVal.value + r.baseVal.value * fraction * Math.cos(angle),
-          cy.baseVal.value + r.baseVal.value * fraction * Math.sin(angle),
-        );
-        const screen = local.matrixTransform(matrix);
-        const owner = document.elementFromPoint(screen.x, screen.y)
-          ?.closest('[data-action="map-answer"]')
-          ?.getAttribute('data-id');
-        if (owner === expectedId) return { x: screen.x, y: screen.y };
+  // React replaces the whole map SVG on a re-render. A circle resolved just
+  // before that replacement is detached by the time it is measured, and a
+  // detached SVG node reports an identity screen matrix, so every sample lands
+  // at raw map coordinates and misses. Measure again against the live node
+  // instead of reporting a country as unreachable.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await expect(hit).toHaveCount(1);
+    const result = await hit.evaluate((circle, expectedId) => {
+      const item = circle as SVGCircleElement;
+      if (!item.isConnected) return 'detached' as const;
+      const matrix = item.getScreenCTM();
+      if (!matrix) return null;
+      const { cx, cy, r } = item;
+      const fractions = [0.82, 0.7, 0.55, 0.35, 0];
+      for (const fraction of fractions) {
+        const samples = fraction === 0 ? 1 : 24;
+        for (let index = 0; index < samples; index += 1) {
+          const angle = (Math.PI * 2 * index) / samples;
+          const local = new DOMPoint(
+            cx.baseVal.value + r.baseVal.value * fraction * Math.cos(angle),
+            cy.baseVal.value + r.baseVal.value * fraction * Math.sin(angle),
+          );
+          const screen = local.matrixTransform(matrix);
+          const owner = document.elementFromPoint(screen.x, screen.y)
+            ?.closest('[data-action="map-answer"]')
+            ?.getAttribute('data-id');
+          if (owner === expectedId) return { x: screen.x, y: screen.y };
+        }
       }
-    }
-    return null;
-  }, id);
+      return null;
+    }, id);
+    if (result !== 'detached') return result;
+  }
+  throw new Error(`${id} assist was replaced on every measurement attempt`);
 }
 
 async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number; y: number }> {
