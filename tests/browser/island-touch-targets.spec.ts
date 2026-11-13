@@ -305,13 +305,18 @@ test('Caribbean true-scale inset exposes a practical touch target and scores thr
     if (CARIBBEAN_INSET_IDS.has(target.id)) {
       const hit = page.locator(`.map-inset__hit[data-action="map-answer"][data-id="${target.id}"]`);
       await expect(hit).toBeVisible();
-      const box = await hit.boundingBox();
-      expect(box).not.toBeNull();
-      expect(Math.min(box!.width, box!.height), `${target.id} inset keeps a practical target`).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
+      // The question-specific inset is rebuilt after a previous answer.
+      // Resolve geometry within one DOM operation rather than checking visibility,
+      // then making a second detached-element boundingBox() request.
+      const box = await hit.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return { x: rect.x, y: rect.y, width: rect.width, height: rect.height };
+      });
+      expect(Math.min(box.width, box.height), `${target.id} inset keeps a practical target`).toBeGreaterThanOrEqual(PRACTICAL_DIAMETER_PX);
       const roundCount = page.locator('.map-round-count');
       const beforeCount = await roundCount.textContent();
       expect(beforeCount, 'Caribbean inset question exposes its round count').not.toBeNull();
-      await tapPoint(page, { x: box!.x + box!.width / 2, y: box!.y + box!.height / 2 });
+      await tapPoint(page, { x: box.x + box.width / 2, y: box.y + box.height / 2 });
       await expect(roundCount, `${target.id} inset tap is accepted by the shared scoring path`).not.toHaveText(beforeCount!, { timeout: 15_000 });
       return;
     }

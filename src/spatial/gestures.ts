@@ -10,7 +10,13 @@
  * document, so page scrolling outside the stage and the platform edge-back
  * gesture both keep working. A drag that STARTS inside the edge gutter is left
  * entirely to the browser: Android and iOS both begin their back gesture there,
- * and a globe that swallows it would break system navigation.
+ * and a globe that captures or rotates it would break system navigation.
+ *
+ * A stationary edge tap is different: #200 requires a visible tiny-country
+ * marker to stay selectable even when framing places it inside that reserved
+ * gutter. Edge presses are therefore tracked without capture or rotation.
+ * Movement past the drag threshold is ceded to the browser, while a completed
+ * stationary tap still resolves where the learner pressed.
  *
  * POINTER OWNERSHIP (#166) follows the contract #22 established for the
  * projected 2D map, for the same reason it was established there — a tap on a
@@ -59,7 +65,8 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   let origin: { x: number; y: number } | null = null;
   let dragging = false;
   let pinchStart = 0;
-  let ignore = false;
+  /** Edge-origin gestures never capture or manipulate the globe. */
+  let edgeOwned = false;
 
   const spread = () => {
     const [a, b] = [...points.values()];
@@ -73,12 +80,17 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   const onPointerDown = (event: PointerEvent) => {
     if (points.size === 0) {
       const rect = stage.getBoundingClientRect();
-      ignore = event.clientX - rect.left < EDGE_GUTTER_PX || rect.right - event.clientX < EDGE_GUTTER_PX;
+      edgeOwned = event.clientX - rect.left < EDGE_GUTTER_PX || rect.right - event.clientX < EDGE_GUTTER_PX;
       origin = { x: event.clientX, y: event.clientY };
       dragging = false;
     }
-    if (ignore) return;
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
+    if (edgeOwned) {
+      // A second pointer can never resolve as an edge tap, and the gesture
+      // stays entirely uncaptured so the platform keeps owning it.
+      if (points.size > 1) dragging = true;
+      return;
+    }
     if (points.size === 2) {
       pinchStart = spread();
       // A second pointer establishes a pinch, which owns the gesture outright
@@ -89,10 +101,16 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   };
 
   const onPointerMove = (event: PointerEvent) => {
-    if (ignore) return;
     const previous = points.get(event.pointerId);
     if (!previous) return;
     points.set(event.pointerId, { x: event.clientX, y: event.clientY });
+
+    if (edgeOwned) {
+      // Only whether the press stopped being a tap matters here; no capture,
+      // rotation or dolly may run while the platform owns the edge gesture.
+      if (origin && Math.hypot(event.clientX - origin.x, event.clientY - origin.y) > DRAG_THRESHOLD_PX) dragging = true;
+      return;
+    }
 
     if (points.size === 2 && pinchStart > 0) {
       const next = spread();
@@ -121,10 +139,18 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   };
 
   const onPointerUp = (event: PointerEvent) => {
-    if (ignore) { if (points.size <= 1) ignore = false; return; }
     const had = points.size;
     points.delete(event.pointerId);
     if (points.size < 2) pinchStart = 0;
+
+    if (edgeOwned) {
+      // A stationary edge press still selects what the learner pressed (#200);
+      // anything that moved belonged to the platform and reports nothing.
+      if (had === 1 && !dragging && origin) handlers.onTap(origin.x, origin.y);
+      if (points.size === 0) { edgeOwned = false; origin = null; dragging = false; }
+      return;
+    }
+
     // The press never became a drag, so it was aimed: report where it started.
     if (had === 1 && !dragging && origin) handlers.onTap(origin.x, origin.y);
     if (points.size === 0) { origin = null; dragging = false; }
@@ -133,7 +159,7 @@ export function installGestures(stage: HTMLElement, handlers: GestureHandlers): 
   const onPointerCancel = (event: PointerEvent) => {
     points.delete(event.pointerId);
     pinchStart = 0;
-    if (points.size === 0) { ignore = false; origin = null; dragging = false; }
+    if (points.size === 0) { edgeOwned = false; origin = null; dragging = false; }
   };
 
   const onWheel = (event: WheelEvent) => {

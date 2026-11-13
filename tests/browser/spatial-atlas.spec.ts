@@ -30,11 +30,11 @@ async function stageMode(page: Page) {
 
 /**
  * Continents and areas are the same control at every level of the spatial
- * interface: a quiet chip whose accessible name also carries its progress, so
- * each is addressed by its visible label rather than by an exact name match.
+ * interface: a real DOM button named on the geography itself (#197), so each
+ * is addressed by its visible label rather than by an exact name match.
  */
 function scopeChip(page: Page, name: string) {
-  return page.locator('.spatial-chip', { hasText: name });
+  return page.locator('.spatial-scope', { hasText: name });
 }
 
 test.describe('persistent spatial shell', () => {
@@ -112,6 +112,7 @@ test.describe('geography and DOM parity', () => {
     const label = { africa: 'Africa', europe: 'Europe', asia: 'Asia' }[continent]!;
     await scopeChip(page, label).click();
     expect(page.url()).toBe(viaGeography);
+    await expect(page.locator('.spatial-chip')).toHaveCount(0);
   });
 
   test('a drag rotates without navigating', async ({ page }) => {
@@ -206,7 +207,7 @@ test.describe('accessibility and resilience', () => {
     await expect(page.getByRole('button', { name: 'Learn Africa' })).toBeVisible();
     // Every area a geography tap could select is also a real control.
     for (const region of ['North Africa', 'West Africa', 'Central Africa', 'East Africa', 'Southern Africa']) {
-      await expect(scopeChip(page, region)).toBeVisible();
+      await expect(scopeChip(page, region)).toBeAttached();
     }
     // Reachable and operable by keyboard, and it selects rather than starting a
     // round: choosing a place and playing it stay separate, deliberate acts.
@@ -222,7 +223,13 @@ test.describe('accessibility and resilience', () => {
     await page.addInitScript(() => {
       (window as unknown as { __frames: number }).__frames = 0;
     });
-    await scopeChip(page, 'Asia').click();
+    const asia = scopeChip(page, 'Asia');
+    await expect(asia).toBeAttached();
+    await asia.focus();
+    if (await asia.getAttribute('data-facing') === 'back') {
+      await expect(asia).toHaveAttribute('data-facing', 'front', { timeout: 5_000 });
+    }
+    await asia.press('Enter');
     await expect(page).toHaveURL(/#\/flags\/asia$/);
     expect(await stageMode(page)).toBe('focus');
   });
