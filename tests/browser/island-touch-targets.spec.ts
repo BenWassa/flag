@@ -93,30 +93,40 @@ async function hitCenter(page: Page, id: string): Promise<{ x: number; y: number
 
 async function findActionableHitPoint(page: Page, id: string): Promise<{ x: number; y: number } | null> {
   const hit = persistentHit(page, id);
-  await expect(hit).toHaveCount(1);
-  return hit.evaluate((circle, expectedId) => {
-    const item = circle as SVGCircleElement;
-    const matrix = item.getScreenCTM();
-    if (!matrix) return null;
-    const { cx, cy, r } = item;
-    const fractions = [0.82, 0.7, 0.55, 0.35, 0];
-    for (const fraction of fractions) {
-      const samples = fraction === 0 ? 1 : 24;
-      for (let index = 0; index < samples; index += 1) {
-        const angle = (Math.PI * 2 * index) / samples;
-        const local = new DOMPoint(
-          cx.baseVal.value + r.baseVal.value * fraction * Math.cos(angle),
-          cy.baseVal.value + r.baseVal.value * fraction * Math.sin(angle),
-        );
-        const screen = local.matrixTransform(matrix);
-        const owner = document.elementFromPoint(screen.x, screen.y)
-          ?.closest('[data-action="map-answer"]')
-          ?.getAttribute('data-id');
-        if (owner === expectedId) return { x: screen.x, y: screen.y };
+  // React replaces the whole map SVG on a re-render. A circle resolved just
+  // before that replacement is detached by the time it is measured, and a
+  // detached SVG node reports an identity screen matrix, so every sample lands
+  // at raw map coordinates and misses. Measure again against the live node
+  // instead of reporting a country as unreachable.
+  for (let attempt = 0; attempt < 5; attempt += 1) {
+    await expect(hit).toHaveCount(1);
+    const result = await hit.evaluate((circle, expectedId) => {
+      const item = circle as SVGCircleElement;
+      if (!item.isConnected) return 'detached' as const;
+      const matrix = item.getScreenCTM();
+      if (!matrix) return null;
+      const { cx, cy, r } = item;
+      const fractions = [0.82, 0.7, 0.55, 0.35, 0];
+      for (const fraction of fractions) {
+        const samples = fraction === 0 ? 1 : 24;
+        for (let index = 0; index < samples; index += 1) {
+          const angle = (Math.PI * 2 * index) / samples;
+          const local = new DOMPoint(
+            cx.baseVal.value + r.baseVal.value * fraction * Math.cos(angle),
+            cy.baseVal.value + r.baseVal.value * fraction * Math.sin(angle),
+          );
+          const screen = local.matrixTransform(matrix);
+          const owner = document.elementFromPoint(screen.x, screen.y)
+            ?.closest('[data-action="map-answer"]')
+            ?.getAttribute('data-id');
+          if (owner === expectedId) return { x: screen.x, y: screen.y };
+        }
       }
-    }
-    return null;
-  }, id);
+      return null;
+    }, id);
+    if (result !== 'detached') return result;
+  }
+  throw new Error(`${id} assist was replaced on every measurement attempt`);
 }
 
 async function actionableEdgePoint(page: Page, id: string): Promise<{ x: number; y: number }> {
