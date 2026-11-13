@@ -6,6 +6,18 @@ GitHub Issues are the canonical task tracker. This page is an **index and depend
 
 Spatial Atlas is the default production navigation. Flags, Locations, Outlines and Neighbours cover the intended six-continent curriculum. Preserve the typed hash router, independent progress and Mastery, canonical Natural Earth geometry, automatic PWA update/offline behaviour and British English. Current contracts are in [PRODUCT.md](../../PRODUCT.md), [DESIGN.md](../../DESIGN.md) and [Spatial architecture](../architecture/spatial-atlas.md).
 
+## Execution priority after the 10 November issue review
+
+1. Resolve [#235](https://github.com/BenWassa/flag/issues/235) on draft [PR #236](https://github.com/BenWassa/flag/pull/236). Accepted-answer progression is the first mobile priority and currently blocks trustworthy acceptance of the interaction work. Repository/PWA success alone is insufficient.
+2. Finish current-main verification of [#212 / PR #222](https://github.com/BenWassa/flag/pull/222) and [PR #231](https://github.com/BenWassa/flag/pull/231), preserving their distinct gesture and inset fixes.
+3. Complete #226's regional lanes with **#228 Europe first**, then #137 Asia, #229 North America/Oceania and #230 Africa/South America. #227 is already delivered; do not rebuild its shared foundation.
+4. Start #220 German states after #212 is integrated/deployed, coordinating shared geography with #226.
+5. Complete #234's final mobile UI/UX critique and remediation against the integrated functional build, then re-pin #71 for owner-run Android/iPhone/PWA acceptance.
+
+Mobile touchscreen is the product-optimisation target throughout. Existing desktop/accessibility and PWA gates remain required compatibility checks. Read-only audit/screenshot collection may proceed before the dependencies above finish.
+
+The #235 cause was identified on 13 November 2026: the browser harness rasterised page content through SwiftShader, so Locations map repaints blocked main-thread commits and delayed feedback timers. PR #236 now carries a harness-only repair and no application change. See [the investigation evidence](issue-235-investigation.md); The repaired head is fully green on CI ([43438262382](https://github.com/BenWassa/flag/actions/runs/43438262382)).
+
 ## Active programme — Locations usability (#226)
 
 **Order:** completed [#227 shared foundation](https://github.com/BenWassa/flag/issues/227) → four region-audit lanes (now unblocked; may run in parallel) → [#226 final 31-scope audit](https://github.com/BenWassa/flag/issues/226) → [#71 physical-device acceptance](https://github.com/BenWassa/flag/issues/71).
@@ -25,7 +37,7 @@ The #221 question-transition touch lifecycle was delivered through [merged PR #2
 
 - [#212 — broad Playwright reconciliation](https://github.com/BenWassa/flag/issues/212): active successor [PR #222](https://github.com/BenWassa/flag/pull/222); the older draft PR #213 is superseded. #222 retains the stationary edge-tap versus platform Back-gesture repair, but cannot merge without full current CI and exact-production verification.
 - [#220 — Germany's 16 Länder](https://github.com/BenWassa/flag/issues/220): planned, additive subnational expansion across four domains. Start after #212 is integrated and deployed; coordinate topology/map ownership with the #226 programme. Do not conflate ISO3 country identity and ISO 3166-2 subdivision identity.
-- [#235 — Locations answer-advance stalls](https://github.com/BenWassa/flag/issues/235): intermittently accepted correct answers do not advance in exact-production acceptance. Draft [PR #236](https://github.com/BenWassa/flag/pull/236) instruments timer scheduling and adds controller regression tests; it is not a verified fix. Keep related PRs red/unmerged until the browser cause is classified and repaired.
+- [#235 — Locations answer-advance stalls](https://github.com/BenWassa/flag/issues/235): accepted answers intermittently did not advance in exact-production acceptance. The cause is software-GPU page rasterisation in the Playwright harness, not the Locations controller. Draft [PR #236](https://github.com/BenWassa/flag/pull/236) disables it and drops the earlier speculative application changes. Desktop and mobile acceptance are green on CI; close on merge.
 - [#234 — full mobile-first UI/UX critique and polish](https://github.com/BenWassa/flag/issues/234): a separate product-quality gate after functional/Locations changes, before final #71 physical-device sign-off. Review screenshots and actual interactions across all domains, routes, viewports and accessibility modes; CI success alone does not constitute design acceptance.
 
 ## Final physical-device gate (#71)
